@@ -1,0 +1,11 @@
+{
+    "__CREATED-ON__": "2021-03-23 14:50:03.235610",
+    "__DEF-TEXT__": "This file contains information about a PyBpod protocol.",
+    "__DEF-URL__": "http://pybpod.readthedocs.org",
+    "__SOFTWARE__": "PyBpod GUI API v1.8.2",
+    "__UPDATED-ON__": "2021-03-23 14:50:03.235610",
+    "__UUID4__": "75b43687-e461-498c-acb6-75924c56f666",
+    "commands": [],
+    "name": "test",
+    "trigger-softcodes": false
+}

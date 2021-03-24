@@ -15,7 +15,7 @@ bpod = Bpod()
 
 for tidx in np.arange(MAX_TRIALS):
     # make state machine
-    sma = StateMachine(bpod=bpod)
+    # sma = StateMachine(bpod=bpod)
 
     # TTL on/off states
     # Center wait for init
@@ -32,5 +32,6 @@ for tidx in np.arange(MAX_TRIALS):
     print(" ")
 
 # close bpod
+bpod.close()
 
 # If camera=True, try to clean up camera object

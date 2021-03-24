@@ -1,0 +1,20 @@
+{
+    "__CREATED-ON__": "2021-03-24 15:53:14.186446",
+    "__DEF-TEXT__": "This file contains information about a PyBpod experiment setup.",
+    "__DEF-URL__": "http://pybpod.readthedocs.org",
+    "__EXTERNAL-REF__": [
+        "d835a8cf-e998-4f10-924f-30b17d317111",
+        "ffd708aa-d923-4dd2-b351-f34b22b2632c"
+    ],
+    "__SOFTWARE__": "PyBpod GUI API v1.8.2",
+    "__UPDATED-ON__": "2021-03-24 15:53:14.186446",
+    "__UUID4__": "43417f9a-148a-4f48-a658-e3a04587b06e",
+    "board": "b1",
+    "detached": false,
+    "subjects": [
+        "testmouse"
+    ],
+    "task": "ProbabilisticSwitching",
+    "update-variables": false,
+    "variables": []
+}

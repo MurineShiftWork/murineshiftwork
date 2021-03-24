@@ -27,6 +27,7 @@
         - habituation to spout: pavlovian (not operant), reward cues, no neutral
         - training 'reward' (OC-R): operant, reward + neutral cues
         - training 'punish' (OC-P): operant, punish + neutral cues
+    - Water calibration -> copy from iblrig
     
     
 ##### Usage
