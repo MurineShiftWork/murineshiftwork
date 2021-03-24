@@ -1,2 +1,5 @@
 .idea/*
 /app.log
+/pybpod-api.log
+#main_project/experiments/
+sessions/

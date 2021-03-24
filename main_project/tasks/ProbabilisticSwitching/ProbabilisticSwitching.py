@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pybpodapi.protocol import Bpod
+from pybpodapi.protocol import Bpod, StateMachine
 
 from task_objects import TaskControl, TaskData, OnlinePlotting
 from .tools import softcode_handler
@@ -18,13 +18,25 @@ def bpod_loop_handler():
 
 
 bpod.loop_handler = bpod_loop_handler
-bpod.softcode_handler_function = softcode_handler()
+# bpod.softcode_handler_function = softcode_handler()
 
-print('bpod session path:', bpod.session.path)
+logging.debug('bpod session path:', bpod.session.path)
 
 for trial_index in np.arange(task_control.MAX_TRIALS):
 
-    next_trial_state_machine = task_control.next_trial()
+    # next_trial_state_machine = task_control.next_trial()
+    next_trial_state_machine = StateMachine(bpod=bpod)
+
+    next_trial_state_machine.add_state(
+        state_name='WaitForPort2Poke',
+        state_timer=1,
+        state_change_conditions={Bpod.Events.Port2In: 'FlashStimulus'},
+        output_actions=[(Bpod.OutputChannels.PWM2, 255)])
+    next_trial_state_machine.add_state(
+        state_name='FlashStimulus',
+        state_timer=0.1,
+        state_change_conditions={Bpod.Events.Tup: 'WaitForResponse'},
+        output_actions=[(Bpod.OutputChannels.PWM1, 255)])
 
     bpod.send_state_machine(sma=next_trial_state_machine)
 
@@ -32,13 +44,12 @@ for trial_index in np.arange(task_control.MAX_TRIALS):
         logging.debug(f"State machine did not return anything on trial {trial_index}")
         break
 
-    task_data.append(trial_data=bpod.session.current_trial.export())
+    # task_data.append(trial_data=bpod.session.current_trial.export())
 
-    # todo: update online plotting here
     online_plotting.update(task_data=task_data)
 
     # update task control on trial outcome
-    task_control.update_task_progress(task_data)
+    # task_control.update_task_progress(task_data)
 
 task_data.save()
 bpod.close()
