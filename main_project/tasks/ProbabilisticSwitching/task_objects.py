@@ -1,4 +1,9 @@
+import logging
+import numpy as np
 import pandas as pd
+import proplot as plot
+import matplotlib.pyplot as plt
+
 from pybpodapi.protocol import Bpod, StateMachine
 
 
@@ -119,7 +124,9 @@ class TaskControl(object):
         )
         return sma
 
-    def update_task_progress(self):
+    def update_task_progress(self, task_data=None):
+        if not task_data:
+            raise ValueError("No task data, although trial ran !?")
         pass
 
 
@@ -141,3 +148,16 @@ class TaskData(object):
     def save(self):
         data = pd.DataFrame(data=self.data)
         data.to_csv(self.save_path)
+
+
+class OnlinePlotting(object):
+    figure = None
+    axes = None
+
+    def __init__(self):
+        super(OnlinePlotting, self).__init__()
+
+        self.figure, self.axes = plot.subplots(ncols=1, nrows=2)
+
+    def update(self, task_data=None):
+        self.axes[0].plot(np.arange(-2, 5))
