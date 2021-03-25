@@ -1,3 +1,4 @@
+*.egg-info
 .idea/*
 /app.log
 /pybpod-api.log

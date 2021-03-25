@@ -9,6 +9,7 @@ def softcode_handler(task_object=None, code=None):
         task_object.stop_sound()
 
 
-def make_protocol_identifier_ttl_sequence(bpod=None, sequence=None):
-    sma = None  # FIXME: add state machine for TTL sequence
-    return sma
+def unpack_input_dict(default_dict, overwrite_dict):
+    for k, v in overwrite_dict.items():
+        default_dict[k] = v
+    return default_dict
