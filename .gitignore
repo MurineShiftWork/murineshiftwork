@@ -1,5 +1,6 @@
 .idea/*
 /app.log
 /pybpod-api.log
-#main_project/experiments/
+*.pyc
+__pychache__
 sessions/
