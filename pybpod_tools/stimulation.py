@@ -2,8 +2,8 @@
 import time
 from numpy import zeros
 
-from pybpod_lbr.external.PulsePal3 import PulsePalObject  # Import PulsePalObject
-from pybpod_lbr.misc import unpack_input_dict
+from pybpod_tools.external.PulsePal3 import PulsePalObject  # Import PulsePalObject
+from pybpod_tools.misc import unpack_input_dict
 
 
 class Stimulation:
