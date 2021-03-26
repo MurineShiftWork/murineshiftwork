@@ -6,13 +6,13 @@
 
 
 - basic task file structure
-    - task settings 
+    - task settings
     - session params
     - trial params
     - online plots
     - main task
     - implementation of sounds ?
-    
+
 - Tasks
     - PS
         - habituation: center init, side light, reward either side
@@ -28,8 +28,8 @@
         - training 'reward' (OC-R): operant, reward + neutral cues
         - training 'punish' (OC-P): operant, punish + neutral cues
     - Water calibration -> copy from iblrig
-    
-    
+
+
 ##### Usage
 
 TODO...

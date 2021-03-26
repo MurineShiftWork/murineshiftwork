@@ -1,15 +1,15 @@
 # !/usr/bin/python3
 # -*- coding: utf-8 -*-
-
 """
 Demonstration of AddTrialEvents used in a simple visual 2AFC session.
 AddTrialEvents formats each trial's data in a human-readable struct, and adds to myBpod.data (to save to disk later)
 Connect noseports to ports 1-3.
 Example adapted from Josh Sanders' original version on Sanworks Bpod repository
 """
-
 import random
-from pybpodapi.protocol import Bpod, StateMachine
+
+from pybpodapi.protocol import Bpod
+from pybpodapi.protocol import StateMachine
 
 my_bpod = Bpod()
 

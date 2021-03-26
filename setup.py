@@ -1,5 +1,5 @@
-from setuptools import setup
 from setuptools import find_packages
+from setuptools import setup
 
 setup(
     name="pybpod_tools",
@@ -10,14 +10,15 @@ setup(
     author="LBR",
     author_email="L.B.Rollik@pm.me",
     description="PyBpod protocols",
-    python_requires='>=3.8'
+    python_requires=">=3.8",
     install_requires=[
         "opencv-python",
-        "PyQtWebEngine"
+        "PyQtWebEngine",
         "numpy",
         "scipy",
         "pandas",
         "matplotlib",
-        "pybpod"
+        "pybpod",
+        "pre-commit",
     ],
 )

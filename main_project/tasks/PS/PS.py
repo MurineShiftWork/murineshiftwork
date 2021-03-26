@@ -1,13 +1,16 @@
 import logging
-
-import numpy as np
-import matplotlib.pyplot as plt
-from pybpodapi.protocol import Bpod, StateMachine
-
-from task_objects import TaskControl, TaskData, OnlinePlotting
-from pybpod_tools.misc import softcode_handler
-from pybpod_tools.external.PulsePal3 import PulsePalObject
 import random
+
+import matplotlib.pyplot as plt
+import numpy as np
+from pybpodapi.protocol import Bpod
+from pybpodapi.protocol import StateMachine
+from task_objects import OnlinePlotting
+from task_objects import TaskControl
+from task_objects import TaskData
+
+from pybpod_tools.external.PulsePal3 import PulsePalObject
+from pybpod_tools.misc import softcode_handler
 
 # FIXME: connect pulsepul if required -> include pulsepal for python3 file in package. take from TrackNZap
 

@@ -1,5 +1,6 @@
 """Code written by Lars B. Rollik 2021."""
 import time
+
 from numpy import zeros
 
 from pybpod_tools.external.PulsePal3 import PulsePalObject  # Import PulsePalObject

@@ -1,3 +1,9 @@
+import math
+import struct
+
+import serial
+
+
 """
 ----------------------------------------------------------------------------
 
@@ -17,16 +23,10 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 """
 Adaptation of Sanworks PulsePal code for python 3.x
 Lars Rollik, 2018, 2019, 2021
 """
-
-import math
-import struct
-
-import serial
 
 
 class PulsePalObject(object):
@@ -154,6 +154,14 @@ class PulsePalObject(object):
             raise PulsePalError(
                 "Error: Pulse Pal did not return an acknowledgement byte after a call to programOutputChannelParam."
             )
+
+        self.update_parameter_fields(
+            self, param_code=param_code, channel=channel, original_value=original_value
+        )
+
+    def update_parameter_fields(
+        self, param_code=None, channel=None, original_value=None
+    ):
         # Update the PulsePal object's parameter fields
         if param_code == 1:
             self.isBiphasic[channel] = original_value

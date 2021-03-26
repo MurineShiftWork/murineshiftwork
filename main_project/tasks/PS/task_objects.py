@@ -1,10 +1,11 @@
 import logging
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import proplot as plot
-import matplotlib.pyplot as plt
-
-from pybpodapi.protocol import Bpod, StateMachine
+from pybpodapi.protocol import Bpod
+from pybpodapi.protocol import StateMachine
 
 
 class TaskControl(object):
@@ -118,9 +119,9 @@ class TaskControl(object):
         else:  # == 0
             pass  # TODO: no outcome
 
-        if choice_outcome_left > 0:
+        if choice_outcome_right > 0:
             pass  # TODO: give reward
-        elif choice_outcome_left < 0:
+        elif choice_outcome_right < 0:
             pass  # TODO: punish with air
         else:  # == 0
             pass  # TODO: no outcome
