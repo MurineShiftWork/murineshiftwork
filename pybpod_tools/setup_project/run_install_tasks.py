@@ -39,6 +39,4 @@ def run_check_install():
 
     # copy user settings
 
-
     print(" ")
-
