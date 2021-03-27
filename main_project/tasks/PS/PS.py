@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
+
 from .task_objects import OnlinePlotting
 from .task_objects import TaskControl
 from .task_objects import TaskData
-
 from pybpod_tools.external.PulsePal3 import PulsePalObject
 from pybpod_tools.misc import softcode_handler
 
