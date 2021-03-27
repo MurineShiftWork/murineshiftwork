@@ -18,6 +18,7 @@ setup(
         "scipy",
         "pandas",
         "matplotlib",
+        "proplot",
         "pybpod",
         "pre-commit",
     ],
