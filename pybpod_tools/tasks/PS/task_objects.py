@@ -182,9 +182,9 @@ class OnlinePlotting(object):
         self.axes = plt.gca()
 
     def update(self, task_data=None):
-        print('here plotting')
-        plt.plot(np.random.random(), np.random.random(), 'k+')
-        plt.xlim(0,1)
-        plt.ylim(0,1)
+        print("here plotting")
+        plt.plot(np.random.random(), np.random.random(), "k+")
+        plt.xlim(0, 1)
+        plt.ylim(0, 1)
         self.figure.canvas.draw_idle()
-        plt.pause(.001)
+        plt.pause(0.001)
