@@ -178,5 +178,13 @@ class OnlinePlotting(object):
 
         self.figure, self.axes = plot.subplots(ncols=1, nrows=2)
 
+        self.figure = plt.figure()
+        self.axes = plt.gca()
+
     def update(self, task_data=None):
-        self.axes[0].plot(np.arange(-2, 5))
+        print('here plotting')
+        plt.plot(np.random.random(), np.random.random(), 'k+')
+        plt.xlim(0,1)
+        plt.ylim(0,1)
+        self.figure.canvas.draw_idle()
+        plt.pause(.001)
