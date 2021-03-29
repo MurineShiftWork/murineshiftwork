@@ -10,7 +10,7 @@ setup(
     author="LBR",
     author_email="L.B.Rollik@pm.me",
     description="PyBpod protocols",
-    python_requires=">=3.8",
+    # python_requires=">=3.8",
     install_requires=[
         "opencv-python",
         "PyQtWebEngine",

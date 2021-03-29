@@ -6,11 +6,11 @@ import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
-from .task_objects import OnlinePlotting
-from .task_objects import TaskControl
-from .task_objects import TaskData
 from pybpod_tools.external.PulsePal3 import PulsePalObject
 from pybpod_tools.misc import softcode_handler
+from pybpod_tools.tasks.PS.task_objects import OnlinePlotting
+from pybpod_tools.tasks.PS.task_objects import TaskControl
+from pybpod_tools.tasks.PS.task_objects import TaskData
 
 # FIXME: connect pulsepul if required -> include pulsepal for python3 file in package. take from TrackNZap
 
