@@ -176,10 +176,7 @@ class OnlinePlotting(object):
     def __init__(self):
         super(OnlinePlotting, self).__init__()
 
-        # self.figure, self.axes = plot.subplots(ncols=1, nrows=2)
-
-        self.figure = plt.figure()
-        self.axes = plt.gca()
+        self.figure, self.axes = plot.subplots(ncols=1, nrows=2)
 
     def update(self, task_data=None):
         print("here plotting")
