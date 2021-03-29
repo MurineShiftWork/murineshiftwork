@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
-from task_objects import OnlinePlotting
-from task_objects import TaskControl
-from task_objects import TaskData
 
 from pybpod_tools.external.PulsePal3 import PulsePalObject
 from pybpod_tools.misc import softcode_handler
+from pybpod_tools.tasks.PS.task_objects import OnlinePlotting
+from pybpod_tools.tasks.PS.task_objects import TaskControl
+from pybpod_tools.tasks.PS.task_objects import TaskData
 
 # FIXME: connect pulsepul if required -> include pulsepal for python3 file in package. take from TrackNZap
 
@@ -93,6 +93,8 @@ for trial_index in np.arange(task_control.MAX_TRIALS):  # Main loop
     print("Waiting for poke. Reward: ", "left" if thisTrialType == 1 else "right")
 
     bpod.run_state_machine(sma)  # Run state machine
+
+    online_plotting.update()
 
     print("Current trial info: {0}".format(bpod.session.current_trial))
 
