@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
+from PyQt5.QtCore import QUrl
+from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QFileDialog
 
 from pybpod_tools.external.PulsePal3 import PulsePalObject
 from pybpod_tools.misc import softcode_handler
@@ -13,6 +16,12 @@ from pybpod_tools.tasks.PS.task_objects import TaskControl
 from pybpod_tools.tasks.PS.task_objects import TaskData
 
 # FIXME: connect pulsepul if required -> include pulsepal for python3 file in package. take from TrackNZap
+dialog = QFileDialog("Test", "")
+dialog.setFileMode(QFileDialog.DirectoryOnly)
+dialog.setSidebarUrls([QUrl.fromLocalFile(".")])
+folder = ""
+if dialog.exec_() == QDialog.Accepted:
+    folder = dialog.selectedFiles()[0]
 
 
 bpod = Bpod()
