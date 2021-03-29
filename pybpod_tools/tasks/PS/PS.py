@@ -10,41 +10,37 @@ from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QFileDialog
 
 from pybpod_tools.external.PulsePal3 import PulsePalObject
-from pybpod_tools.misc import softcode_handler
+from pybpod_tools.misc import softcode_handler, get_session_file_basename
 from pybpod_tools.tasks.PS.task_objects import OnlinePlotting
 from pybpod_tools.tasks.PS.task_objects import TaskControl
 from pybpod_tools.tasks.PS.task_objects import TaskData
 
-# FIXME: connect pulsepul if required -> include pulsepal for python3 file in package. take from TrackNZap
-dialog = QFileDialog("Test", "")
-dialog.setFileMode(QFileDialog.DirectoryOnly)
-dialog.setSidebarUrls([QUrl.fromLocalFile(".")])
-folder = ""
-if dialog.exec_() == QDialog.Accepted:
-    folder = dialog.selectedFiles()[0]
+
+# Bpod startup
+def bpod_loop_handler():
+    online_plotting.figure.canvas.flush_events()
 
 
 bpod = Bpod()
-task_control = TaskControl(bpod=bpod)
-task_data = TaskData(save_path="test")  # fixme: get savepath from session path
-online_plotting = OnlinePlotting()
-
-
-def bpod_loop_handler():
-    online_plotting.figure.canvas.flush_events()
-    # f.canvas.flush_events()
-
-
 bpod.loop_handler = bpod_loop_handler
-bpod.softcode_handler_function = softcode_handler()
+bpod.softcode_handler_function = softcode_handler
 
+# Task objects
+save_path_basename = get_session_file_basename(bpod)
+task_control = TaskControl(bpod=bpod)
+task_data = TaskData(save_path=save_path_basename)  # fixme: get savepath from session path
+online_plotting = OnlinePlotting(save_path=save_path_basename)
 
-nTrials = 5
+# TODO: move task param to GUI to adjust them
 trialTypes = [1, 2]  # 1 (rewarded left) or 2 (rewarded right)
+
+# RUN trials
 
 for trial_index in np.arange(task_control.MAX_TRIALS):  # Main loop
     print("Trial: ", trial_index + 1)
 
+    # TODO: move SMA to task control object
+    # TODO: need multiple SMA for simple training tasks and for TTL init (ephys), air puff, light, stop signal white noise
     thisTrialType = random.choice(trialTypes)  # Randomly choose trial type
     if thisTrialType == 1:
         stimulus = Bpod.OutputChannels.PWM1  # set stimulus channel for trial type 1
@@ -97,14 +93,20 @@ for trial_index in np.arange(task_control.MAX_TRIALS):  # Main loop
         ],
     )  # Signal incorrect choice
 
+    # EXECUTE trial
     bpod.send_state_machine(sma)  # Send state machine description to Bpod device
 
     print("Waiting for poke. Reward: ", "left" if thisTrialType == 1 else "right")
 
-    bpod.run_state_machine(sma)  # Run state machine
+    if not bpod.run_state_machine(sma):
+        logging.info(f"No data returned on trial #{trial_index}. Terminating protocol.")
 
-    online_plotting.update()
+    # TODO: update task data
+    online_plotting.update(task_data=task_data)
+
+    # TODO: control task: (a) next block?, (b) trial types?
 
     print("Current trial info: {0}".format(bpod.session.current_trial))
 
+# TODO: save data/figure
 bpod.close()  # Disconnect Bpod

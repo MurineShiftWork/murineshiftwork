@@ -170,11 +170,17 @@ class TaskData(object):
 
 
 class OnlinePlotting(object):
+    save_path = None
+    save_fig_ext = ".eps"
+    save_fig_param = {"dpi": 400}
+
     figure = None
     axes = None
 
-    def __init__(self):
+    def __init__(self, save_path=None):
         super(OnlinePlotting, self).__init__()
+
+        self.save_path = save_path
 
         self.figure, self.axes = plot.subplots(ncols=1, nrows=2)
 
@@ -185,3 +191,6 @@ class OnlinePlotting(object):
         plt.ylim(0, 1)
         self.figure.canvas.draw_idle()
         plt.pause(0.001)
+
+    def save(self):
+        self.figure.savefig(self.save_path + self.save_fig_ext, **self.save_fig_param)

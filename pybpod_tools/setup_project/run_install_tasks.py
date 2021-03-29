@@ -38,5 +38,6 @@ def run_check_install():
     p.load(project_path=PROJECT_PATH)
 
     # copy user settings
+    # FIXME
 
     print(" ")
