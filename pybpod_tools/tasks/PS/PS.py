@@ -10,7 +10,8 @@ from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QFileDialog
 
 from pybpod_tools.external.PulsePal3 import PulsePalObject
-from pybpod_tools.misc import softcode_handler, get_session_file_basename
+from pybpod_tools.misc import get_session_file_basename
+from pybpod_tools.misc import softcode_handler
 from pybpod_tools.tasks.PS.task_objects import OnlinePlotting
 from pybpod_tools.tasks.PS.task_objects import TaskControl
 from pybpod_tools.tasks.PS.task_objects import TaskData
@@ -28,7 +29,9 @@ bpod.softcode_handler_function = softcode_handler
 # Task objects
 save_path_basename = get_session_file_basename(bpod)
 task_control = TaskControl(bpod=bpod)
-task_data = TaskData(save_path=save_path_basename)  # fixme: get savepath from session path
+task_data = TaskData(
+    save_path=save_path_basename
+)  # fixme: get savepath from session path
 online_plotting = OnlinePlotting(save_path=save_path_basename)
 
 # TODO: move task param to GUI to adjust them
