@@ -41,6 +41,7 @@ def copy_user_settings(overwrite=True):
         # Patch user settings with additional parameters
         with open(target, "a") as f:
             f.write(f"\nDEFAULT_PROJECT_PATH = '{str(default_project_name)}'\n")
+        print(f"Copied user_settings.py to {target}")
 
 
 def create_project():
@@ -110,18 +111,18 @@ def create_subjects(subjects=None, overwrite=True):
             save_project(p=p)
 
 
-def run_check_install():
-    copy_user_settings()
+def run_check_install(overwrite=False):
+    copy_user_settings(overwrite=overwrite)
     create_project()
-    create_tasks()
-    create_users(["_tests", "lbr"])
-    create_boards(name_port_tuples=[("bpod_1", "/dev/ttyACM1")])
-    create_subjects(subjects=["_test_subject"])
+    create_tasks(overwrite=overwrite)
+    create_users(users=["_tests", "lbr"])
+    create_boards(name_port_tuples=[("bpod_1", "/dev/ttyACM1")], overwrite=overwrite)
+    create_subjects(subjects=["_test_subject"], overwrite=overwrite)
 
     # Adding basic experiments
     p = load_project()
     exp_name = "TEST_experiment"
-    if exp_name not in [e.name for e in p.experiments]:
+    if exp_name not in [e.name for e in p.experiments] or overwrite:
         print("Creating TEST experiment..")
         exp = p.create_experiment()
         exp.name = exp_name
@@ -129,11 +130,13 @@ def run_check_install():
         setup = exp.create_setup()
         setup.name = "TEST_setup"
         setup.board = p.boards[0]
+        setup.detached = True
         setup += [s for s in p.subjects if "_test_subject" in s.name][0]
+        setup.task = exp.task
         save_project(p=p)
 
     exp_name = "MAIN_experiment"
-    if exp_name not in [e.name for e in p.experiments]:
+    if exp_name not in [e.name for e in p.experiments] or overwrite:
         print("Creating MAIN experiment..")
         exp = p.create_experiment()
         exp.name = exp_name
@@ -141,7 +144,9 @@ def run_check_install():
         setup = exp.create_setup()
         setup.name = "MAIN_setup"
         setup.board = p.boards[0]
+        setup.detached = True
         setup += [s for s in p.subjects if "_test_subject" in s.name][0]
+        setup.task = exp.task
         save_project(p=p)
 
     print("Finished all install tasks.")

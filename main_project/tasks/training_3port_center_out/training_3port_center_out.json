@@ -1,10 +1,10 @@
 {
-    "__CREATED-ON__": "2021-03-30 17:11:46.796768",
+    "__CREATED-ON__": "2021-03-30 17:28:00.148244",
     "__DEF-TEXT__": "This file contains information about a PyBpod protocol.",
     "__DEF-URL__": "http://pybpod.readthedocs.org",
     "__SOFTWARE__": "PyBpod GUI API v1.8.2",
-    "__UPDATED-ON__": "2021-03-30 17:11:46.796768",
-    "__UUID4__": "00b60963-8440-414b-bc2b-2c9310fd00c9",
+    "__UPDATED-ON__": "2021-03-30 17:28:00.148244",
+    "__UUID4__": "36216437-2613-4c3b-82f8-5e93034e8a85",
     "commands": [],
     "name": "training_3port_center_out",
     "trigger-softcodes": false

@@ -1,5 +1,5 @@
 {
-    "__CREATED-ON__": "2021-03-30 17:27:36.891209",
+    "__CREATED-ON__": "2021-03-30 17:27:36.893395",
     "__DEF-TEXT__": "This file contains information about a PyBpod experiment setup.",
     "__DEF-URL__": "http://pybpod.readthedocs.org",
     "__EXTERNAL-REF__": [
@@ -7,14 +7,14 @@
         "ef16334a-42ab-461c-b9fc-01642a2c7192"
     ],
     "__SOFTWARE__": "PyBpod GUI API v1.8.2",
-    "__UPDATED-ON__": "2021-03-30 17:27:36.891209",
-    "__UUID4__": "2c32d44c-a314-4752-b25e-15008c7c8c10",
+    "__UPDATED-ON__": "2021-03-30 17:27:36.893395",
+    "__UUID4__": "11c48e60-dbae-4926-8367-f5b6173748a1",
     "board": "bpod_1",
     "detached": true,
     "subjects": [
         "_test_subject"
     ],
-    "task": "_test__flush_water",
+    "task": "training_3port_center_out",
     "update-variables": false,
     "variables": []
 }
