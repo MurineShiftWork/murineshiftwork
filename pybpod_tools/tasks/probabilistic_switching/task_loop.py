@@ -1,38 +1,30 @@
 import logging
 import random
 
-import matplotlib.pyplot as plt
 import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
-from PyQt5.QtCore import QUrl
-from PyQt5.QtWidgets import QDialog
-from PyQt5.QtWidgets import QFileDialog
 
-from pybpod_tools.external.PulsePal3 import PulsePalObject
-from pybpod_tools.misc import get_session_file_basename
-from pybpod_tools.misc import softcode_handler
-from pybpod_tools.tasks.PS.task_objects import OnlinePlotting
-from pybpod_tools.tasks.PS.task_objects import TaskControl
-from pybpod_tools.tasks.PS.task_objects import TaskData
+from pybpod_tools.tasks.probabilistic_switching.task_objects import OnlinePlotting
+from pybpod_tools.tasks.probabilistic_switching.task_objects import TaskControl
+from pybpod_tools.tasks.probabilistic_switching.task_objects import TaskData
+from pybpod_tools.tools.misc import get_session_file_basename
+from pybpod_tools.tools.misc import softcode_handler
 
 
 # Bpod startup
-def bpod_loop_handler():
-    online_plotting.figure.canvas.flush_events()
-
-
 bpod = Bpod()
-bpod.loop_handler = bpod_loop_handler
-bpod.softcode_handler_function = softcode_handler
 
 # Task objects
 save_path_basename = get_session_file_basename(bpod)
 task_control = TaskControl(bpod=bpod)
-task_data = TaskData(
-    save_path=save_path_basename
-)  # fixme: get savepath from session path
+task_data = TaskData(save_path=save_path_basename)
 online_plotting = OnlinePlotting(save_path=save_path_basename)
+
+# Bpod event handlers
+bpod.loop_handler = online_plotting.bpod_loop_handler
+bpod.softcode_handler_function = softcode_handler
+
 
 # TODO: move task param to GUI to adjust them
 trialTypes = [1, 2]  # 1 (rewarded left) or 2 (rewarded right)

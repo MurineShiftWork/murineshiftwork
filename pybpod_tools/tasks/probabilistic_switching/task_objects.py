@@ -194,3 +194,6 @@ class OnlinePlotting(object):
 
     def save(self):
         self.figure.savefig(self.save_path + self.save_fig_ext, **self.save_fig_param)
+
+    def bpod_loop_handler(self):
+        self.figure.canvas.flush_events()
