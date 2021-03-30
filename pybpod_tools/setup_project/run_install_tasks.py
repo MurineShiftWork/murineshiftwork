@@ -118,15 +118,28 @@ def run_check_install():
     create_boards(name_port_tuples=[("bpod_1", "/dev/ttyACM1")])
     create_subjects(subjects=["_test_subject"])
 
-    # Create experiment for tests
+    # Adding basic experiments
     p = load_project()
-    if "TEST_experiment" not in [e.name for e in p.experiments]:
+    exp_name = "TEST_experiment"
+    if exp_name not in [e.name for e in p.experiments]:
         print("Creating TEST experiment..")
         exp = p.create_experiment()
-        exp.name = "TEST_experiment"
+        exp.name = exp_name
         exp.task = [t for t in p.tasks if "_test__flush_water" in t.name][0]
         setup = exp.create_setup()
         setup.name = "TEST_setup"
+        setup.board = p.boards[0]
+        setup += [s for s in p.subjects if "_test_subject" in s.name][0]
+        save_project(p=p)
+
+    exp_name = "MAIN_experiment"
+    if exp_name not in [e.name for e in p.experiments]:
+        print("Creating MAIN experiment..")
+        exp = p.create_experiment()
+        exp.name = exp_name
+        exp.task = [t for t in p.tasks if "training" in t.name][0]
+        setup = exp.create_setup()
+        setup.name = "MAIN_setup"
         setup.board = p.boards[0]
         setup += [s for s in p.subjects if "_test_subject" in s.name][0]
         save_project(p=p)
