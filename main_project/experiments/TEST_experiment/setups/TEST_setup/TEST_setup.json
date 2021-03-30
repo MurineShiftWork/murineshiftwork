@@ -1,0 +1,21 @@
+{
+    "__CREATED-ON__": "2021-03-30 17:13:54.194730",
+    "__DEF-TEXT__": "This file contains information about a PyBpod experiment setup.",
+    "__DEF-URL__": "http://pybpod.readthedocs.org",
+    "__EXTERNAL-REF__": [
+        "670912d2-5827-4dd7-a91b-c773c7e2b97f",
+        "c7a235fc-35bf-46b9-aaf2-ec7d0baf9911",
+        "802bce6d-c895-4415-8d1e-591d71ec8466"
+    ],
+    "__SOFTWARE__": "PyBpod GUI API v1.8.2",
+    "__UPDATED-ON__": "2021-03-30 17:15:34.414581",
+    "__UUID4__": "ae2aa9e6-a189-4acf-ad3d-5623cbacc3aa",
+    "board": "bpod_1",
+    "detached": false,
+    "subjects": [
+        "_test_subject"
+    ],
+    "task": null,
+    "update-variables": false,
+    "variables": []
+}

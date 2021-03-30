@@ -1,2 +1,2 @@
 if __name__ == "__main__":
-    import pybpod_tools.tasks.probabilistic_switching.task_loop
+    from pybpod_tools.tasks.probabilistic_switching import probabilistic_switching

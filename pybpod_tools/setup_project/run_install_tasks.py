@@ -1,31 +1,46 @@
 import logging
 import os
 import shutil
-import sys
 from pathlib import Path
 
 from pybpodgui_api.models.project import Project
+
+import pybpod_tools
+import pybpod_tools.tasks as module_tasks
+from pybpod_tools.config_files import user_settings
+from pybpod_tools.tools.misc import list_submodules
 
 PROJECT_NAME = "main_project"
 PROJECT_PATH = Path(__file__).parent.parent.parent / PROJECT_NAME
 
 
-def copy_user_settings(project_name="main_project", overwrite=True):
+def load_project():
+    p = Project()
+    p.load(project_path=PROJECT_PATH)
+    return p
+
+
+def save_project(p=None):
+    p.save(project_path=PROJECT_PATH)
+
+
+def get_default_project_path():
+    return Path(pybpod_tools.__file__).parent.parent / PROJECT_NAME
+
+
+def copy_user_settings(overwrite=True):
     target = str(Path(os.path.expanduser("~")) / "user_settings.py")
+    default_project_name = get_default_project_path()
+
     if Path(target).exists() and not overwrite:
         print("exists and cannot overwrite")
     else:
-        print("found")
-        from pybpod_tools.config_files import user_settings
-
+        # Install new user settings file
         source = user_settings.__file__
         shutil.copyfile(source, target)
-
-        import pybpod_tools
-
-        DEFAULT_PROJECT_PATH = Path(pybpod_tools.__file__).parent.parent / project_name
+        # Patch user settings with additional parameters
         with open(target, "a") as f:
-            f.write(f"\nDEFAULT_PROJECT_PATH = '{str(DEFAULT_PROJECT_PATH)}'\n")
+            f.write(f"\nDEFAULT_PROJECT_PATH = '{str(default_project_name)}'\n")
 
 
 def create_project():
@@ -43,33 +58,77 @@ def create_project():
         logging.debug(f"Project already exists at: {PROJECT_PATH}")
 
 
-def create_tasks():
-    logging.debug("TODO: implement create tassks function")
-    from pkgutil import iter_modules
+def write_task_file(task_name=None):
+    s = (
+        f'if __name__ == "__main__":\n'
+        f"    from pybpod_tools.tasks.{task_name} import {task_name}\n"
+    )
+    return s
 
-    def list_submodules(module):
-        for submodule in iter_modules(module.__path__):
-            print(submodule.name)
 
-    import pybpod_tools.tasks as pt
+def create_tasks(overwrite=False):
+    p = load_project()
+    for task_name in list_submodules(module_tasks):
+        print(f"Installing task: {task_name}")
 
-    list_submodules(pt)
-    # TODO: for task folder in submodules -
-    #  > create new task in project and add .py file with import of this submodule/file in submodule with same name
+        if task_name not in [t.name for t in p.tasks] or overwrite:
+            task_obj = p.create_task()
+            task_obj.name = task_name
+            p.save(project_path=PROJECT_PATH)
+            with open(task_obj.filepath, "w") as f:
+                f.write(write_task_file(task_name=task_name))
+
+
+def create_users(users=None):
+    p = load_project()
+    for user_name in users:
+        if user_name not in [u.name for u in p.users]:
+            p = load_project()
+            user = p.create_user()
+            user.name = user_name
+            save_project(p=p)
+
+
+def create_boards(name_port_tuples=None, overwrite=False):
+    p = load_project()
+    for name, port in name_port_tuples:
+        if name not in [b.name for b in p.boards] or overwrite:
+            print(f"Creating new board: {name} at port {port}")
+            board = p.create_board()
+            board.name = name
+            if port is not None:
+                board.serial_port = port
+            save_project(p=p)
+
+
+def create_subjects(subjects=None, overwrite=True):
+    p = load_project()
+    for subject_name in subjects:
+        if subject_name not in [s.name for s in p.subjects] or overwrite:
+            subj = p.create_subject()
+            subj.name = subject_name
+            save_project(p=p)
 
 
 def run_check_install():
     copy_user_settings()
-
     create_project()
-
     create_tasks()
+    create_users(["_tests", "lbr"])
+    create_boards(name_port_tuples=[("bpod_1", "/dev/ttyACM1")])
+    create_subjects(subjects=["_test_subject"])
 
-    # create: board, setup, subject, task/protocol from tasks
-    p = Project()
-    p.load(project_path=PROJECT_PATH)
+    # Create experiment for tests
+    p = load_project()
+    if "TEST_experiment" not in [e.name for e in p.experiments]:
+        print("Creating TEST experiment..")
+        exp = p.create_experiment()
+        exp.name = "TEST_experiment"
+        exp.task = [t for t in p.tasks if "_test__flush_water" in t.name][0]
+        setup = exp.create_setup()
+        setup.name = "TEST_setup"
+        setup.board = p.boards[0]
+        setup += [s for s in p.subjects if "_test_subject" in s.name][0]
+        save_project(p=p)
 
-    # copy user settings
-    # FIXME
-
-    print(" ")
+    print("Finished all install tasks.")

@@ -1,11 +1,11 @@
 {
-    "__CREATED-ON__": "2021-03-30 17:11:46.795948",
+    "__CREATED-ON__": "2021-03-30 17:11:46.795361",
     "__DEF-TEXT__": "This file contains information about a PyBpod protocol.",
     "__DEF-URL__": "http://pybpod.readthedocs.org",
     "__SOFTWARE__": "PyBpod GUI API v1.8.2",
-    "__UPDATED-ON__": "2021-03-30 17:11:46.795948",
-    "__UUID4__": "9f980c0c-09d8-4439-971f-7650f40ef80a",
+    "__UPDATED-ON__": "2021-03-30 17:11:46.795361",
+    "__UUID4__": "5a5234e4-8101-449b-9b37-83f780e815c4",
     "commands": [],
-    "name": "probabilistic_switching",
+    "name": "_test__water_calibration",
     "trigger-softcodes": false
 }
