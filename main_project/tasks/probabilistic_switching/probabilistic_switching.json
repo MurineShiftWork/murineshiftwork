@@ -6,6 +6,6 @@
     "__UPDATED-ON__": "2021-03-24 17:57:18.039805",
     "__UUID4__": "47faf21b-b920-461b-9f41-5ad05c636f0d",
     "commands": [],
-    "name": "PS",
+    "name": "probabilistic_switching",
     "trigger-softcodes": true
 }
