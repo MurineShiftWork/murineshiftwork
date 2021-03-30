@@ -143,6 +143,16 @@ class TaskControl(object):
         )
         return sma
 
+    def softcode_handler(self, code=None):
+        if code == 0:
+            pass  # some init tasks
+        elif code == 1:
+            self.play_go_cue()
+        elif code == 2:
+            self.play_stop_cue()
+        elif code == -1:
+            self.stop_sound()
+
     def update_task_progress(self, task_data=None):
         if not task_data:
             raise ValueError("No task data, although trial ran !?")

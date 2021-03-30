@@ -9,3 +9,7 @@
 #     iti
 #
 # REPEAT for enough measurements to fit exponential
+# TODO: IMPLEMENT
+
+if __name__ == "__main__":
+    print("main")

@@ -72,3 +72,6 @@ for i in range(nTrials):  # Main loop
     print("Current trial info: {0}".format(my_bpod.session.current_trial))
 
 my_bpod.close()  # Disconnect Bpod
+
+if __name__ == "__main__":
+    print("main")

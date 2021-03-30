@@ -9,7 +9,6 @@ from pybpod_tools.tasks.probabilistic_switching.task_objects import OnlinePlotti
 from pybpod_tools.tasks.probabilistic_switching.task_objects import TaskControl
 from pybpod_tools.tasks.probabilistic_switching.task_objects import TaskData
 from pybpod_tools.tools.misc import get_session_file_basename
-from pybpod_tools.tools.misc import softcode_handler
 
 
 # Bpod startup
@@ -23,7 +22,7 @@ online_plotting = OnlinePlotting(save_path=save_path_basename)
 
 # Bpod event handlers
 bpod.loop_handler = online_plotting.bpod_loop_handler
-bpod.softcode_handler_function = softcode_handler
+bpod.softcode_handler_function = task_control.softcode_handler
 
 
 # TODO: move task param to GUI to adjust them
@@ -105,3 +104,6 @@ for trial_index in np.arange(task_control.MAX_TRIALS):  # Main loop
 
 # TODO: save data/figure
 bpod.close()  # Disconnect Bpod
+
+if __name__ == "__main__":
+    print("main")
