@@ -1,4 +1,5 @@
 import logging
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -172,7 +173,9 @@ class TaskData(object):
         self.save_path = str(save_path)
 
     def append(self, trial_data):
-        pass  # TODO: make list of  for output data, then save as csv
+        self.data.append(
+            trial_data
+        )  # TODO: make list of  for output data, then save as csv
 
     def save(self):
         data = pd.DataFrame(data=self.data)
@@ -190,7 +193,7 @@ class OnlinePlotting(object):
     def __init__(self, save_path=None):
         super(OnlinePlotting, self).__init__()
 
-        self.save_path = save_path
+        self.save_path = os.path.splitext(save_path)[0]
 
         self.figure, self.axes = plot.subplots(ncols=1, nrows=2)
 
