@@ -46,5 +46,3 @@ GENERIC_EDITOR_PLUGINS_LIST = [
 
 PYBPODGUI_API_AUTO_SAVE_PROJECT_ON_RUN = True
 PYBPOD_EXTRA_INFO = {"Users", "Subjects"}
-
-DEFAULT_PROJECT_PATH = "/home/lbr/code/pybpod_lbr/main_project"
