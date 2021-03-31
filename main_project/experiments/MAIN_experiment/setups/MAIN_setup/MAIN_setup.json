@@ -7,13 +7,11 @@
         "ef16334a-42ab-461c-b9fc-01642a2c7192"
     ],
     "__SOFTWARE__": "PyBpod GUI API v1.8.2",
-    "__UPDATED-ON__": "2021-03-30 17:27:36.893395",
+    "__UPDATED-ON__": "2021-03-31 15:09:04.981528",
     "__UUID4__": "11c48e60-dbae-4926-8367-f5b6173748a1",
     "board": "bpod_1",
     "detached": true,
-    "subjects": [
-        "_test_subject"
-    ],
+    "subjects": [],
     "task": "training_3port_center_out",
     "update-variables": false,
     "variables": []
