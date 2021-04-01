@@ -59,9 +59,9 @@ def make_sound(
     win[-len_fade:] = fadeout
 
     tone = tone * win
-    ttl = np.ones(len(tone)) * 0.49  # LBR: original value .992+
+    ttl = np.ones(len(tone)) * 0.99  # LBR: original value .99
     one_ms = (
-        round(sample_rate / 1000) * 50
+        round(sample_rate / 1000) * 10
     )  # LBR: original value was *10 for 1ms, but 5ms seems more stable for detection on bpod
     ttl[one_ms:] = 0
     null = np.zeros(len(tone))
@@ -89,7 +89,7 @@ def make_sound(
 sound_chans = "L+TTL"
 global sound_1
 sound_1 = make_sound(
-    rate=44100, duration=0.5, amplitude=1, frequency=-1, chans=sound_chans
+    rate=44100, duration=0.5, amplitude=0.2, frequency=-1, chans=sound_chans
 )
 sd.play(sound_1, 44100, mapping=[1, 2])
 print("played test sound")
@@ -122,7 +122,7 @@ for t in np.arange(50):
 
     sma.add_state(
         state_name="x",
-        state_timer=0,
+        state_timer=0.005,
         state_change_conditions={"Tup": "next"},
         output_actions=[("SoftCode", 1), (bnc_channel, 1)],
     )
