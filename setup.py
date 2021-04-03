@@ -22,5 +22,6 @@ setup(
         "pybpod",
         "sounddevice",  # might require: sudo apt-get install libportaudio2
         "pre-commit",
+        "tqdm",
     ],
 )

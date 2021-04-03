@@ -10,6 +10,8 @@
 #
 # REPEAT for enough measurements to fit exponential
 # TODO: IMPLEMENT
+# TODO: ask for valve time, repeats, and water weight on command line with "input" function, then use plotext to plot curve for inspection which values to use next for full calibration
+# TODO: implement line fit + save data + protocol needs to load calibration file and get correct value estimate from calibration curve
 
 if __name__ == "__main__":
     print("main")

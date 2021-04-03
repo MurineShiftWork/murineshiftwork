@@ -5,6 +5,9 @@ import sounddevice as sd
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 
+
+# TODO: move sound functions to module + create loop to go over many trials. TTL delay should be <100ms, so 200ms trials should be fine to get correct estimate for sound delay
+
 devices = sd.query_devices()
 
 sd.default.device = [

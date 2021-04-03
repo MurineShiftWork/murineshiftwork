@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import time
 from pathlib import Path
 
 from pybpodgui_api.models.project import Project
@@ -33,15 +34,17 @@ def copy_user_settings(overwrite=True):
     default_project_name = get_default_project_path()
 
     if Path(target).exists() and not overwrite:
-        print("exists and cannot overwrite")
+        logging.info(f"User settings file exists at {target} and overwrite={overwrite}")
     else:
         # Install new user settings file
         source = user_settings.__file__
         shutil.copyfile(source, target)
+
         # Patch user settings with additional parameters
         with open(target, "a") as f:
             f.write(f"\nDEFAULT_PROJECT_PATH = '{str(default_project_name)}'\n")
-        print(f"Copied user_settings.py to {target}")
+
+        logging.info(f"Copied user_settings.py to {target}")
 
 
 def create_project():
@@ -54,9 +57,9 @@ def create_project():
         p.name = PROJECT_NAME
 
         p.save(project_path=str(PROJECT_PATH))
-        logging.debug(f"New project saved at: {PROJECT_PATH}")
+        logging.info(f"New project saved at: {PROJECT_PATH}")
     else:
-        logging.debug(f"Project already exists at: {PROJECT_PATH}")
+        logging.info(f"Project already exists at: {PROJECT_PATH}")
 
 
 def write_task_file(task_name=None):
@@ -70,9 +73,9 @@ def write_task_file(task_name=None):
 def create_tasks(overwrite=False):
     p = load_project()
     for task_name in list_submodules(module_tasks):
-        print(f"Installing task: {task_name}")
-
         if task_name not in [t.name for t in p.tasks] or overwrite:
+            logging.info(f"Adding task: {task_name}")
+
             task_obj = p.create_task()
             task_obj.name = task_name
             p.save(project_path=PROJECT_PATH)
@@ -84,6 +87,8 @@ def create_users(users=None):
     p = load_project()
     for user_name in users:
         if user_name not in [u.name for u in p.users]:
+            logging.info(f"Adding user: {user_name}")
+
             p = load_project()
             user = p.create_user()
             user.name = user_name
@@ -92,11 +97,12 @@ def create_users(users=None):
 
 def create_boards(name_port_tuples=None, overwrite=False):
     p = load_project()
-    for name, port in name_port_tuples:
-        if name not in [b.name for b in p.boards] or overwrite:
-            print(f"Creating new board: {name} at port {port}")
+    for board_name, port in name_port_tuples:
+        if board_name not in [b.name for b in p.boards] or overwrite:
+            logging.info(f"Adding board: {board_name} at port {port}")
+
             board = p.create_board()
-            board.name = name
+            board.name = board_name
             if port is not None:
                 board.serial_port = port
             save_project(p=p)
@@ -106,12 +112,14 @@ def create_subjects(subjects=None, overwrite=True):
     p = load_project()
     for subject_name in subjects:
         if subject_name not in [s.name for s in p.subjects] or overwrite:
+            logging.info(f"Adding subject: {subject_name}")
             subj = p.create_subject()
             subj.name = subject_name
             save_project(p=p)
 
 
 def run_check_install(overwrite=False):
+    this_time = time.time()
     copy_user_settings(overwrite=overwrite)
     create_project()
     create_tasks(overwrite=overwrite)
@@ -123,7 +131,7 @@ def run_check_install(overwrite=False):
     p = load_project()
     exp_name = "TEST_experiment"
     if exp_name not in [e.name for e in p.experiments] or overwrite:
-        print("Creating TEST experiment..")
+        logging.info(f"Creating: {exp_name}")
         exp = p.create_experiment()
         exp.name = exp_name
         exp.task = [t for t in p.tasks if "_test__flush_water" in t.name][0]
@@ -134,10 +142,11 @@ def run_check_install(overwrite=False):
         setup += [s for s in p.subjects if "_test_subject" in s.name][0]
         setup.task = exp.task
         save_project(p=p)
+        logging.info(f"Done: {exp_name} added")
 
     exp_name = "MAIN_experiment"
     if exp_name not in [e.name for e in p.experiments] or overwrite:
-        print("Creating MAIN experiment..")
+        logging.info(f"Creating: {exp_name}")
         exp = p.create_experiment()
         exp.name = exp_name
         exp.task = [t for t in p.tasks if "training" in t.name][0]
@@ -148,5 +157,6 @@ def run_check_install(overwrite=False):
         setup += [s for s in p.subjects if "_test_subject" in s.name][0]
         setup.task = exp.task
         save_project(p=p)
+        logging.info(f"Done: {exp_name} added")
 
-    print("Finished all install tasks.")
+    logging.info(f"Finished all install tasks. Took {time.time()-this_time}s.")
