@@ -24,7 +24,7 @@ for valve in valve_numbers:
 # Flush valves
 bpod = Bpod()
 
-print(f"Flushing water for valve(s) {valve_numbers} for {valve_opening_time}s..")
+logging.info(f"Flushing water for valve(s) {valve_numbers} for {valve_opening_time}s..")
 
 sma = StateMachine(bpod=bpod)
 sma.add_state(
