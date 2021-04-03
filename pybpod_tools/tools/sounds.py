@@ -1,17 +1,28 @@
+import logging
 import sys
 
 import numpy as np
 import sounddevice as sd
 
 
-class Sound(object):
-    ttl = None
+def _get_samplerate(chosen_device=None):
+    chosen_device = chosen_device.lower()
+    if "xonar" in chosen_device:
+        return 192000
+    elif "sysdefault" in chosen_device:
+        return 44100
+    else:
+        logging.error(f"Sound device not recognised: {chosen_device}")
+
+
+class Sounds(object):
+    ttl = "L+TTL"
     ttl_duration_msec = 1
 
-    default_device = "sysdefault"
+    default_device = "XONAR SOUND CARD"
     default_latency = "low"
     default_channels = 2
-    default_samplerate = 44100
+    default_samplerate = 192000
     default_sound_blocking = True
     default_sound_fade = 0.01
 
@@ -21,22 +32,22 @@ class Sound(object):
 
     sound_go_params = {
         "frequency": 5000,
-        "duration": 0.1,
+        "tone_duration": 0.1,
         "amplitude": 0.05,
     }
     sound_stop_params = {
         "frequency": -1,  # -1=noise
-        "duration": 0.1,
+        "tone_duration": 0.1,
         "amplitude": 0.05,
     }
     sound_test_params = {
         "frequency": 5000,
-        "duration": 0.05,
+        "tone_duration": 0.05,
         "amplitude": 0.05,
     }
 
     def __init__(self, sound_device="XONAR SOUND CARD", ttl="L+TTL"):
-        super(Sound, self).__init__()
+        super(Sounds, self).__init__()
 
         self.ttl = ttl
 
@@ -46,23 +57,23 @@ class Sound(object):
 
         self.sound_go_array = self.make_sound(
             **self.sound_go_params,
-            rate=self.default_samplerate,
+            sample_rate=self.default_samplerate,
             chans=ttl,
-            fade=self.default_sound_fade,
+            fade_duration=self.default_sound_fade,
             ttl_duration_msec=self.ttl_duration_msec,
         )
         self.sound_stop_array = self.make_sound(
             **self.sound_stop_params,
-            rate=self.default_samplerate,
+            sample_rate=self.default_samplerate,
             chans=ttl,
-            fade=self.default_sound_fade,
+            fade_duration=self.default_sound_fade,
             ttl_duration_msec=self.ttl_duration_msec,
         )
         self.sound_test_array = self.make_sound(
             **self.sound_test_params,
-            rate=self.default_samplerate,
+            sample_rate=self.default_samplerate,
             chans=ttl,
-            fade=self.default_sound_fade,
+            fade_duration=self.default_sound_fade,
             ttl_duration_msec=self.ttl_duration_msec,
         )
 
@@ -98,11 +109,11 @@ class Sound(object):
 
     def make_sound(
         self,
-        rate=44100,
+        sample_rate=44100,
         frequency=5000,
-        duration=0.1,
+        tone_duration=0.1,
         amplitude=1,
-        fade=0.01,
+        fade_duration=0.01,
         chans="L+TTL",
         ttl_duration_msec=1,
     ):
@@ -110,28 +121,24 @@ class Sound(object):
 
         Build sounds and save bin file for upload to soundcard or play via
         sounddevice lib.
-        :param rate: sample rate of the soundcard use 96000 for Bpod,
+        :param sample_rate: sample rate of the soundcard use 96000 for Bpod,
                         defaults to 44100 for soundcard
-        :type rate: int, optional
+        :type sample_rate: int, optional
         :param frequency: (Hz) of the tone, if -1 will create uniform random white
                         noise, defaults to 10000
         :type frequency: int, optional
-        :param duration: (s) of sound, defaults to 0.1
-        :type duration: float, optional
+        :param tone_duration: (s) of sound, defaults to 0.1
+        :type tone_duration: float, optional
         :param amplitude: E[0, 1] of the sound 1=max 0=min, defaults to 1
         :type amplitude: intor float, optional
-        :param fade: (s) time of fading window rise and decay, defaults to 0.01
-        :type fade: float, optional
+        :param fade_duration: (s) time of fading window rise and decay, defaults to 0.01
+        :type fade_duration: float, optional
         :param chans: ['mono', 'L', 'R', 'stereo', 'L+TTL', 'TTL+R'] number of
                        sound channels and type of output, defaults to 'L+TTL'
         :type chans: str, optional
         :return: stereo sound from mono definitions
         :rtype: np.ndarray with shape (Nsamples, 2)
         """
-        sample_rate = rate  # Sound card dependent,
-        tone_duration = duration  # sec
-        fade_duration = fade  # sec
-
         tvec = np.linspace(0, tone_duration, int(tone_duration * sample_rate))
         tone = amplitude * np.sin(2 * np.pi * frequency * tvec)  # tone vec
 
@@ -179,11 +186,16 @@ class Sound(object):
         ]
         if len(chosen_device) > 1:
             sd.default.device = chosen_device[0][0]
+            chosen_device = chosen_device[0][1]["name"]
         elif len(chosen_device) < 1 and sys.platform == "linux":
             sd.default.device = "sysdefault"
+            chosen_device = "sysdefault"
         else:
             raise OSError(f"Could not find device '{sound_device}'")
 
         sd.default.latency = self.default_latency
         sd.default.channels = self.default_channels
+
+        self.default_samplerate = _get_samplerate(chosen_device=chosen_device)
+        logging.info(f"Sound sample sample_rate set to {self.default_samplerate}")
         sd.default.samplerate = self.default_samplerate

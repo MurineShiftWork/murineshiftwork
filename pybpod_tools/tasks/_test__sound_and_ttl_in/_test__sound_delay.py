@@ -5,11 +5,12 @@ import numpy as np
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 
-from pybpod_tools.tools.sound import Sound
+from pybpod_tools.tools.sounds import Sounds
 
-# TODO: move sound functions to module + create loop to go over many trials. TTL delay should be <100ms, so 200ms trials should be fine to get correct estimate for sound delay
+# TODO: move sound functions to module + create loop to go over many trials.
+#  TTL delay should be <100ms, so 200ms trials should be fine to get correct estimate for sound delay
 
-sounds = Sound()
+sounds = Sounds()
 
 bpod = Bpod()
 bpod.softcode_handler_function = sounds.soft_code_handler_function()

@@ -109,7 +109,7 @@ class Stimulation:
         self.pulsePal.interPulseInterval[channel] = round(
             1 / float(interPulseInterval), 3
         )
-        # total duration of pulses = 3000 sec
+        # total tone_duration of pulses = 3000 sec
         self.pulsePal.pulseTrainDuration[channel] = float(pulseTrainDuration)
         # delay until pulse train starts
         self.pulsePal.pulseTrainDelay[channel] = round(float(pulseTrainDelay), 3)
