@@ -9,6 +9,9 @@ from pybpod_tools.tasks.probabilistic_switching.task_objects import OnlinePlotti
 from pybpod_tools.tasks.probabilistic_switching.task_objects import TaskControl
 from pybpod_tools.tasks.probabilistic_switching.task_objects import TaskData
 from pybpod_tools.tools.misc import get_session_file_basename
+from pybpod_tools.tools.specific_state_machines import (
+    make_protocol_identifier_ttl_sequence,
+)
 
 # TODO: write basic SMA for PS task, including block update rules fixed trials vs criterion
 # TODO: write TTL sequence function for ephys synch
@@ -40,12 +43,18 @@ for trial_index in np.arange(task_control.MAX_TRIALS):  # Main loop
     # TODO: move SMA to task control object
     # TODO: need multiple SMA for simple training tasks and for TTL init (ephys), air puff, light, stop signal white noise
 
-    sma = StateMachine(bpod)
-    sma.add_state(
-        state_name="x",
-        state_timer=1,
-        state_change_conditions={"Tup": "exit"},
-        output_actions=[(Bpod.OutputChannels.PWM2, 255)],
+    # sma = StateMachine(bpod)
+    # sma.add_state(
+    #     state_name="x",
+    #     state_timer=1,
+    #     state_change_conditions={"Tup": "exit"},
+    #     output_actions=[(Bpod.OutputChannels.PWM2, 255)],
+    # )
+
+    sma = make_protocol_identifier_ttl_sequence(
+        bpod=bpod,
+        sequence=task_settings.TTL_IDENTIFIER_SEQUENCE,
+        output_chanel_pulse=Bpod.OutputChannels.BNC2,
     )
 
     # EXECUTE trial

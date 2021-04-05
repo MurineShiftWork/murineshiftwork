@@ -5,19 +5,22 @@ from pybpodapi.state_machine import StateMachine
 def make_protocol_identifier_ttl_sequence(
     bpod=None,
     sequence=None,
-    pulse_length_long=0.2,
-    inter_pulse_duration=0.5,
+    pulse_duration=0.050,
+    inter_pulse_duration_long=0.500,
     inter_trial_interval=4,
     output_chanel_pulse=Bpod.OutputChannels.BNC2,
 ):
+    if isinstance(sequence, str):
+        sequence = [*sequence]
+
     sma = StateMachine(bpod)
 
     for pidx, pulse in enumerate(sequence):
         # make next pulse
-        if pulse.upper() == "LONG":
-            pulse_duration = round(pulse_length_long, 3)
-        elif pulse.upper() == "SHORT":
-            pulse_duration = round(pulse_length_long / 2, 3)
+        if pulse.upper().startswith("L"):
+            inter_pulse_duration = round(inter_pulse_duration_long, 3)
+        elif pulse.upper().startswith("S"):
+            inter_pulse_duration = round(inter_pulse_duration_long / 2, 3)
         else:
             raise ValueError(
                 f"Pulse type has to be either 'LONG' or 'SHORT' as a string, but is {pulse}"
