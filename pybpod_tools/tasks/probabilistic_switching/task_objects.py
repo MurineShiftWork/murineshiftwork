@@ -46,20 +46,16 @@ class TaskControl(object):
 
     def make_state_machine(self):
         output_actions__center_ready = [
-            (Bpod.OutputChannels.PWM2, 255)
-        ]  # TODO: turn lights on
-        state_duration__center_delay = task_settings.DELAY_UNTIL_CENTER_INIT  # 0.15
+            (Bpod.OutputChannels.PWM2, task_settings.HARDWARE_PORT_LIGHT_INTENSITY)
+        ]
+        state_duration__center_delay = task_settings.DELAY_UNTIL_CENTER_INIT
         output_actions__center_delay = output_actions__center_ready
         output_actions__side_ready = [
-            (Bpod.OutputChannels.PWM1, 255),
-            (Bpod.OutputChannels.PWM3, 255),
+            (Bpod.OutputChannels.PWM1, task_settings.HARDWARE_PORT_LIGHT_INTENSITY),
+            (Bpod.OutputChannels.PWM3, task_settings.HARDWARE_PORT_LIGHT_INTENSITY),
         ]
-        state_duration__side_ready = (
-            task_settings.DELAY_UNTIL_SIDE_TIMEOUT
-        )  # 10  # timeout in sec
-        state_duration__final = (
-            task_settings.STATE_DURATION_FINAL
-        )  # 2  # delay to allow port-out event
+        state_duration__side_ready = task_settings.DELAY_UNTIL_SIDE_TIMEOUT
+        state_duration__final = task_settings.STATE_DURATION_FINAL
 
         # SMA
         sma = StateMachine(bpod=self.bpod)
@@ -145,7 +141,7 @@ class TaskControl(object):
             state_name="choice_right",
             state_timer=valve_left_water,
             state_change_conditions={Bpod.Events.Tup: "final"},
-            output_actions=[(Bpod.OutputChannels.Valve, 2)],
+            output_actions=[(Bpod.OutputChannels.Valve, 3)],
         )
 
         sma.add_state(
