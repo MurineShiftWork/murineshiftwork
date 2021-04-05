@@ -31,34 +31,24 @@ online_plotting = OnlinePlotting(save_path=save_path_basename)
 bpod.loop_handler = online_plotting.bpod_loop_handler
 bpod.softcode_handler_function = task_control.softcode_handler
 
-for trial_index in np.arange(task_control.MAX_TRIALS):  # Main loop
+for trial_index in np.arange(task_settings.N_MAX_TRIALS):  # Main loop
     print("Trial: ", trial_index + 1)
-    # if first trial, make ttl sequence + CONTINUE
 
-    # if not task_control.current_probabilities: make first block or if block_switch_criterion: make new block
-    # draw trial from block structure
-    # make trial sma
-    # execute trial sma
-
-    # TODO: move SMA to task control object
-    # TODO: need multiple SMA for simple training tasks and for TTL init (ephys), air puff, light, stop signal white noise
-
-    # sma = StateMachine(bpod)
-    # sma.add_state(
-    #     state_name="x",
-    #     state_timer=1,
-    #     state_change_conditions={"Tup": "exit"},
-    #     output_actions=[(Bpod.OutputChannels.PWM2, 255)],
-    # )
-
-    sma = make_protocol_identifier_ttl_sequence(
-        bpod=bpod,
-        sequence=task_settings.TTL_IDENTIFIER_SEQUENCE,
-        output_chanel_pulse=Bpod.OutputChannels.BNC2,
-    )
+    if trial_index == 0 and not task_settings.TESTING:
+        sma = make_protocol_identifier_ttl_sequence(
+            bpod=bpod,
+            sequence=task_settings.TTL_IDENTIFIER_SEQUENCE,
+            output_chanel_pulse=Bpod.OutputChannels.BNC2,
+        )
+    else:
+        sma = task_control.draw_next_trial()
+        pass
+        # if not task_control.current_probabilities: make first block or if block_switch_criterion: make new block
+        # draw trial from block structure
+        # TODO: need multiple SMA for simple training tasks and for air puff, light, stop signal white noise
 
     # EXECUTE trial
-    bpod.send_state_machine(sma)  # Send state machine description to Bpod device
+    bpod.send_state_machine(sma)
 
     if not bpod.run_state_machine(sma):
         logging.info(f"No data returned on trial #{trial_index}. Terminating protocol.")

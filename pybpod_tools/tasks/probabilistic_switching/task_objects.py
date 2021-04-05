@@ -8,11 +8,20 @@ import proplot as plot
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
+from pybpod_tools.tasks.probabilistic_switching import task_settings
+from pybpod_tools.tools.sounds import Sounds
+from pybpod_tools.tools.specific_state_machines import add_trial_onset_ttl
+
 
 class TaskControl(object):
     bpod = None
-
-    MAX_TRIALS = 1500
+    valve_times_dict = {
+        1: 50,
+        2: 45,
+        3: 30,
+        4: 47,
+    }  # None # FIXME: load from calibration
+    sound = None
 
     def __init__(self, bpod=None):
         super(TaskControl, self).__init__()
@@ -21,63 +30,62 @@ class TaskControl(object):
             raise ValueError("required input argument: bpod")
         self.bpod = bpod
 
+        self.sound = Sounds()
+
     #     FIXME: load valve times from calibration file
 
-    def next_block(self):
+    def draw_next_block(self):
         pass
 
-    def next_trial(self):
+    def draw_next_trial(self):
+        # check if block switch -> update probabilities
+
+        # make SMA
         sma = self.make_state_machine()
         return sma
 
-    def play_go_cue(self):
-        pass
-
-    def play_stop_cue(self):
-        pass
-
-    def stop_sound(self):
-        pass
-
     def make_state_machine(self):
-        state_duration__ttl = 0.010  # 10 msec
-        output_actions__ttl = {Bpod.OutputChannels.BNC2, 1}
-        state_duration__center_delay = 0.15
-        output_actions__center_delay = {}  # TODO: turn lights on
-        state_duration__side_ready = 10  # timeout in sec
-        state_duration__final = 2  # delay to allow port-out event
+        output_actions__center_ready = [
+            (Bpod.OutputChannels.PWM2, 255)
+        ]  # TODO: turn lights on
+        state_duration__center_delay = task_settings.DELAY_UNTIL_CENTER_INIT  # 0.15
+        output_actions__center_delay = output_actions__center_ready
+        output_actions__side_ready = [
+            (Bpod.OutputChannels.PWM1, 255),
+            (Bpod.OutputChannels.PWM3, 255),
+        ]
+        state_duration__side_ready = (
+            task_settings.DELAY_UNTIL_SIDE_TIMEOUT
+        )  # 10  # timeout in sec
+        state_duration__final = (
+            task_settings.STATE_DURATION_FINAL
+        )  # 2  # delay to allow port-out event
 
+        # SMA
         sma = StateMachine(bpod=self.bpod)
+        sma = add_trial_onset_ttl(
+            sma=sma,
+            ttl_pulse_duration=task_settings.TTL_PULSE_DURATION,
+            bnc_channel=eval(
+                f"Bpod.OutputChannels.BNC{task_settings.HARDWARE_BNC_TRIAL_START}"
+            ),
+            next_state="center_ready",
+        )
 
-        # TTL
-        sma.add_state(
-            state_name="ttl_on",
-            state_timer=state_duration__ttl,
-            state_change_conditions={Bpod.Events.Tup, "ttl_off"},
-            output_actions=output_actions__ttl,
-        )
-        sma.add_state(
-            state_name="ttl_off",
-            state_timer=0,
-            state_change_conditions={Bpod.Events.Tup, "center_ready"},
-            output_actions=output_actions__ttl,
-        )
         # TRIAL
         sma.add_state(
             state_name="center_ready",
-            state_timer=0,
-            state_change_conditions={Bpod.Events.Port2In, "center_delay"},
-            output_actions={},  # TODO: add output action?
+            state_timer=60,
+            state_change_conditions={Bpod.Events.Port2In: "center_delay"},
+            output_actions=output_actions__center_ready,
         )
         # INIT long enough -> proceed. pulled out too early -> back to center_ready
         sma.add_state(
             state_name="center_delay",
             state_timer=state_duration__center_delay,
             state_change_conditions={
-                Bpod.Events.Port2Out,
-                "center_ready",  # ABORTED
-                Bpod.Events.Tup,
-                "side_ready",
+                Bpod.Events.Port2Out: "center_ready",  # ABORTED
+                Bpod.Events.Tup: "side_ready",
             },  # CONTINUE
             output_actions=output_actions__center_delay,
         )
@@ -92,24 +100,20 @@ class TaskControl(object):
                 state_name="side_ready",
                 state_timer=state_duration__side_ready,
                 state_change_conditions={
-                    Bpod.Events.Port1In,
-                    "choice_left",
-                    Bpod.Events.Port3In,
-                    "choice_right",
+                    Bpod.Events.Port1In: "choice_left",
+                    Bpod.Events.Port3In: "choice_right",
                 },
-                output_actions=output_actions__center_delay,
+                output_actions=output_actions__side_ready,
             )
         else:
             sma.add_state(
                 state_name="side_ready",
                 state_timer=state_duration__side_ready,
                 state_change_conditions={
-                    Bpod.Events.Port1In,
-                    "choice_left",
-                    Bpod.Events.Port3In,
-                    "choice_right",
+                    Bpod.Events.Port1In: "choice_left",
+                    Bpod.Events.Port3In: "choice_right",
                 },
-                output_actions=output_actions__center_delay,
+                output_actions=output_actions__side_ready,
             )
 
         choice_outcome_left = 0  # 0=unrewarded, 1=rewarded, -1=punish with air
@@ -129,32 +133,37 @@ class TaskControl(object):
         else:  # == 0
             pass  # TODO: no outcome
 
+        valve_left_water = 0.04
+
+        sma.add_state(
+            state_name="choice_left",
+            state_timer=valve_left_water,
+            state_change_conditions={Bpod.Events.Tup: "final"},
+            output_actions=[(Bpod.OutputChannels.Valve, 1)],
+        )
+        sma.add_state(
+            state_name="choice_right",
+            state_timer=valve_left_water,
+            state_change_conditions={Bpod.Events.Tup: "final"},
+            output_actions=[(Bpod.OutputChannels.Valve, 2)],
+        )
+
         sma.add_state(
             state_name="final",
             state_timer=state_duration__final,
             state_change_conditions={
-                Bpod.Events.Port1Out,
-                "exit",
-                Bpod.Events.Port2Out,
-                "exit",
-                Bpod.Events.Port3Out,
-                "exit",
-                Bpod.Events.Tup,
-                "exit",
+                Bpod.Events.Port1Out: "exit",
+                Bpod.Events.Port2Out: "exit",
+                Bpod.Events.Port3Out: "exit",
+                Bpod.Events.Tup: "exit",
             },
-            output_actions={},
+            output_actions=[],
         )
+
         return sma
 
-    def softcode_handler(self, code=None):
-        if code == 0:
-            pass  # some init tasks
-        elif code == 1:
-            self.play_go_cue()
-        elif code == 2:
-            self.play_stop_cue()
-        elif code == -1:
-            self.stop_sound()
+    def softcode_handler(self, softcode=None):
+        self.sound.soft_code_handler_function(softcode=softcode)
 
     def update_task_progress(self, task_data=None):
         if not task_data:

@@ -77,30 +77,30 @@ class Sounds(object):
             ttl_duration_msec=self.ttl_duration_msec,
         )
 
-    def soft_code_handler_function(self, key=None):
+    def soft_code_handler_function(self, softcode=None):
         print("Entering softcode handler.")
-        if key == 1:
+        if softcode == 1:
             print("playing sound: go")
             sd.play(
                 self.sound_go_array,
                 self.default_samplerate,
                 blocking=self.default_sound_blocking,
             )
-        elif key == 2:
+        elif softcode == 2:
             print("playing sound: stop")
             sd.play(
                 self.sound_stop_array,
                 self.default_samplerate,
                 blocking=self.default_sound_blocking,
             )
-        elif key == 3:
+        elif softcode == 3:
             print("playing sound: test")
             sd.play(
                 self.sound_test_array,
                 self.default_samplerate,
                 blocking=self.default_sound_blocking,
             )
-        elif key == 99:
+        elif softcode == 99:
             print("stopped sound")
             sd.stop()
         else:

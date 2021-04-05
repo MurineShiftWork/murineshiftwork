@@ -57,6 +57,27 @@ def make_protocol_identifier_ttl_sequence(
     return sma
 
 
+def add_trial_onset_ttl(
+    sma=None,
+    ttl_pulse_duration=None,
+    bnc_channel=Bpod.OutputChannels.BNC2,
+    next_state=None,
+):
+    sma.add_state(
+        state_name="ttl_on",
+        state_timer=ttl_pulse_duration,
+        state_change_conditions={Bpod.Events.Tup: "ttl_off"},
+        output_actions=[(bnc_channel, 1)],
+    )
+    sma.add_state(
+        state_name="ttl_off",
+        state_timer=0,
+        state_change_conditions={Bpod.Events.Tup: next_state},
+        output_actions=[(bnc_channel, 0)],
+    )
+    return sma
+
+
 def make_sma_for_drop_of_water(bpod=None, valve_on_time=0, valve_code=1):
     sma = StateMachine(bpod=bpod)
     sma.add_state(
