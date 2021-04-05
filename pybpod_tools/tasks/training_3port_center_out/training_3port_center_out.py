@@ -3,6 +3,8 @@ import random
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
+# TODO: take center to side part from PS task. reward sides lenient or strict. no probabilities, etc.
+
 my_bpod = Bpod()
 
 nTrials = 5

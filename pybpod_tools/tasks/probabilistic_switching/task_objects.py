@@ -21,6 +21,8 @@ class TaskControl(object):
             raise ValueError("required input argument: bpod")
         self.bpod = bpod
 
+    #     FIXME: load valve times from calibration file
+
     def next_block(self):
         pass
 

@@ -10,15 +10,18 @@ from pybpod_tools.tools.sounds import Sounds
 # TODO: move sound functions to module + create loop to go over many trials.
 #  TTL delay should be <100ms, so 200ms trials should be fine to get correct estimate for sound delay
 
-sounds = Sounds()
+# TODO: ask for bnc channel to use for TTL out
 
+sounds = Sounds()
 bpod = Bpod()
 bpod.softcode_handler_function = sounds.soft_code_handler_function()
 bnc_channel = Bpod.OutputChannels.BNC2
 
 for t in np.arange(50):
     print(f"\ntrial {t}")
-    time.sleep(1)
+    time.sleep(
+        1
+    )  # TODO: remove all delays to enable high frequency test for estimate of at least 100 pulses/sounds
 
     sma = StateMachine(bpod=bpod)
 

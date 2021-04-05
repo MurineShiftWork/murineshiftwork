@@ -16,6 +16,9 @@
         - stop signal: auditory cue after center init and pulled out
         - punish: stop signal ingnored and side in -> air puff
         - opto stim: init, move2side, choice, ?
+    - [ ] Other paradigms
+        - Open field: ttl sequence + regular synch timestamps. maybe useful in future
+        - Optotagging: excitatory, inhibitory -> several presets for standard opsins
     - [ ] training paradigms
         - habituation: center init, side light, reward either side
         - training 'lenient': center init, side light, one side rewarded, but no timeout on wrong side chosen first

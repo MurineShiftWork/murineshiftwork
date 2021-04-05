@@ -1,5 +1,4 @@
 import logging
-import random
 
 import numpy as np
 from pybpodapi.protocol import Bpod
@@ -11,6 +10,10 @@ from pybpod_tools.tasks.probabilistic_switching.task_objects import TaskControl
 from pybpod_tools.tasks.probabilistic_switching.task_objects import TaskData
 from pybpod_tools.tools.misc import get_session_file_basename
 
+# TODO: write basic SMA for PS task, including block update rules fixed trials vs criterion
+# TODO: write TTL sequence function for ephys synch
+# TODO: write online plotting functions
+# TODO: write analysis module to save data preprocessed
 
 # Bpod startup
 bpod = Bpod()
