@@ -20,7 +20,7 @@ class TaskControl(object):
         2: 45,
         3: 30,
         4: 47,
-    }  # None # FIXME: load from calibration
+    }  # None # FIXME: load from calibration_data
     sound = None
 
     def __init__(self, bpod=None):
@@ -32,7 +32,7 @@ class TaskControl(object):
 
         self.sound = Sounds()
 
-    #     FIXME: load valve times from calibration file
+    #     FIXME: load valve times from calibration_data file
 
     def draw_next_block(self):
         pass

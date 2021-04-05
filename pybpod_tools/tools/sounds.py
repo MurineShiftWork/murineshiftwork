@@ -30,6 +30,11 @@ class Sounds(object):
     sound_stop_array = None
     sound_test_array = None
 
+    sound_go_softcode = 1
+    sound_stop_softcode = 2
+    sound_test_softcode = 3
+    sound_end_softcode = 99
+
     sound_go_params = {
         "frequency": 5000,
         "tone_duration": 0.1,
@@ -79,28 +84,28 @@ class Sounds(object):
 
     def soft_code_handler_function(self, softcode=None):
         print("Entering softcode handler.")
-        if softcode == 1:
+        if softcode == self.sound_go_softcode:
             print("playing sound: go")
             sd.play(
                 self.sound_go_array,
                 self.default_samplerate,
                 blocking=self.default_sound_blocking,
             )
-        elif softcode == 2:
+        elif softcode == self.sound_stop_softcode:
             print("playing sound: stop")
             sd.play(
                 self.sound_stop_array,
                 self.default_samplerate,
                 blocking=self.default_sound_blocking,
             )
-        elif softcode == 3:
+        elif softcode == self.sound_test_softcode:
             print("playing sound: test")
             sd.play(
                 self.sound_test_array,
                 self.default_samplerate,
                 blocking=self.default_sound_blocking,
             )
-        elif softcode == 99:
+        elif softcode == self.sound_end_softcode:
             print("stopped sound")
             sd.stop()
         else:

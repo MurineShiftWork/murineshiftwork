@@ -1,25 +1,24 @@
 import logging
 import time
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 
+from pybpod_tools.tools.calibration_handling import save_sound_delay_data
 from pybpod_tools.tools.sounds import Sounds
 
-# TODO: move sound functions to module + create loop to go over many trials.
-#  TTL delay should be <100ms, so 200ms trials should be fine to get correct estimate for sound delay
 
-# TODO: ask for bnc channel to use for TTL out
-# TODO: remove all delays to enable high frequency test for estimate of at least 100 pulses/sounds
+class TestSettings:
+    bnc_channel = Bpod.OutputChannels.BNC2
+
+
+test_settings = TestSettings()
 
 sounds = Sounds()
 
 bpod = Bpod()
 bpod.softcode_handler_function = sounds.soft_code_handler_function
-bnc_channel = Bpod.OutputChannels.BNC2
 
 delay_measurements = []
 
@@ -32,19 +31,22 @@ for trial_index in np.arange(201):
         state_name="sound_and_bnc_on",
         state_timer=0.005,
         state_change_conditions={"Tup": "bnc_off"},
-        output_actions=[("SoftCode", 3), (bnc_channel, 1)],
+        output_actions=[
+            ("SoftCode", sounds.sound_test_softcode),
+            (test_settings.bnc_channel, 1),
+        ],
     )
     sma.add_state(
         state_name="bnc_off",
         state_timer=0.1,
         state_change_conditions={"Tup": "leave"},
-        output_actions=[(bnc_channel, 0)],  # ("SoftCode", 99),
+        output_actions=[(test_settings.bnc_channel, 0)],  # ("SoftCode", 99),
     )
     sma.add_state(
         state_name="leave",
         state_timer=0,
         state_change_conditions={"Tup": "exit"},
-        output_actions=[("SoftCode", 99)],
+        output_actions=[("SoftCode", sounds.sound_end_softcode)],
     )
 
     # EXECUTE trial
@@ -61,27 +63,12 @@ for trial_index in np.arange(201):
     if not delay == -1:
         delay_measurements.append({"trial": trial_index, "delay": delay[0]})
     else:
-        raise ValueError(f"Did not receive TTL on trial {trial_index}")
+        raise logging.error(f"Did not receive TTL on trial {trial_index}")
 
     print(f"Trial {trial_index}:", delay)
 
 
-delay_measurements_df = pd.DataFrame(delay_measurements)
-delays = delay_measurements_df["delay"] * 1000  # convert to msec
-print(
-    f"Delay sound trigger to soundcard TTL is "
-    f"MEAN={np.round(delays.mean(),3)}ms, "
-    f"MEDIAN={np.round(delays.median(),3)}ms, "
-    f"STD={np.round(delays.std(),3)}ms"
-)
-
-# Plot delays for inspection
-plt.plot(delays, "k*--")
-plt.title("Delays sound softcode to soundcard TTL received by Bpod.")
-plt.ylabel("Delay [ms]")
-plt.xlabel("Trial [#]")
-plt.show()
-
+save_sound_delay_data(measurements=delay_measurements)
 bpod.close()
 
 if __name__ == "__main__":
