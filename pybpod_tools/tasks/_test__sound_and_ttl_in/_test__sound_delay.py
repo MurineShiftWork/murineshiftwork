@@ -14,9 +14,7 @@ class TestSettings:
 
 
 test_settings = TestSettings()
-
 sounds = Sounds()
-
 bpod = Bpod()
 bpod.softcode_handler_function = sounds.soft_code_handler_function
 
@@ -51,7 +49,7 @@ for trial_index in np.arange(201):
 
     # EXECUTE trial
     dt = time.time()
-    bpod.send_state_machine(sma)  # Send state machine description to Bpod device
+    bpod.send_state_machine(sma)
 
     if not bpod.run_state_machine(sma):
         print("nothing returned")
