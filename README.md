@@ -27,6 +27,13 @@
         - ..
 
 
+- hardware
+    - [x] build new arena with 3 ports on 3 different walls
+    - [ ] use valve 2 and 4 for air puffs -> set up air valves that get triggered via BNC from port PCB board contacts
+    - [ ] set up all hardware on new ephys rig
+        - bpod, pulsepal, 2x air valves, camera hardware (RPi shelf + usb power supply bank), pc+monitor+peripherals, ! network for RPi
+        - power: bpod 12v, camera bank, pc, monitor, network switch, LED strip for daylight
+
 - test and maintenance modules
     - [ ] Water calibration -> copy from iblrig
     - [ ] sound/noise preparation funcitons -> check iblrig
