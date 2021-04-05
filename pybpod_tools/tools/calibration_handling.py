@@ -1,21 +1,49 @@
 import logging
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy.optimize import curve_fit
 
 from pybpod_tools.config_files import calibration_data_folder
 
+calibration_file_sound_delay = calibration_data_folder / "sound_delay.csv"
+calibration_file_sound_delay_fig = calibration_data_folder / "sound_delay.png"
+calibration_file_water_calibration = calibration_data_folder / "water_calibration.csv"
+
+VALVE_TIME_MIN = 10  # ms
+VALVE_TIME_MAX = 200  # ms
+VALVE_TIME_STEP = 20  # ms
+
+VALVE_TIMES_TO_TEST = np.linspace(
+    VALVE_TIME_MIN,
+    VALVE_TIME_MAX,
+    int(VALVE_TIME_MAX / VALVE_TIME_STEP),
+    endpoint=False,
+)
+
+VALVE_ITERATIONS = 200
+VALVE_INTER_PULSE_INTERVAL = 0.05
+
 
 def load_sound_delay_data():
-    return pd.read_csv(calibration_data_folder / "sound_delay.csv")
+    if Path(calibration_file_sound_delay).exists():
+        return pd.read_csv(calibration_file_sound_delay)
+    else:
+        return pd.DataFrame()
 
 
-def save_sound_delay_data(measurements=None, plot=True):
+def save_sound_delay_data(measurements=None, plot=True, overwrite=True):
     delay_measurements_df = pd.DataFrame(measurements)
     delays = delay_measurements_df["delay"] * 1000  # convert to msec
 
-    delay_measurements_df.to_csv(calibration_data_folder / "sound_delay.csv")
+    if Path(calibration_file_sound_delay).exists() and not overwrite:
+        raise FileExistsError(
+            f"Not allowed to overwrite existing calibration file: {calibration_file_sound_delay}"
+        )
+    else:
+        measurements.to_csv(calibration_file_sound_delay)
 
     if plot:
         save_sound_delay_figure(delay_data=delays)
@@ -33,12 +61,50 @@ def save_sound_delay_figure(delay_data=None):
     plt.title("Delays sound softcode to soundcard TTL received by Bpod.")
     plt.ylabel("Delay [ms]")
     plt.xlabel("Trial [#]")
-    f.savefig(calibration_data_folder / "sound_delay.png")
+    f.savefig(calibration_file_sound_delay_fig)
 
 
 def load_water_calibration():
-    return pd.read_csv(calibration_data_folder / "water_calibration.csv")
+    if Path(calibration_file_water_calibration).exists():
+        return pd.read_csv(calibration_file_water_calibration)
+    else:
+        return pd.DataFrame(
+            columns=["valve_time", "mean_weight", "n_drops", "mean_microliter"]
+        )
 
 
-def save_water_calibration(df=None):
-    df.to_csv(calibration_data_folder / "water_calibration.csv")
+def convert_gram_to_microliter(weight_g=None, n_drops=None):
+    return weight_g / n_drops * 1000  # covert to microliter
+
+
+def save_water_calibration(df=None, overwrite=True):
+    if Path(calibration_file_water_calibration).exists() and not overwrite:
+        raise FileExistsError(
+            f"Not allowed to overwrite existing calibration file: {calibration_file_water_calibration}"
+        )
+    else:
+        df.to_csv(calibration_file_water_calibration)
+
+
+def _exponential_function(x, a, b, c):
+    return a * np.exp(-b * x) + c
+
+
+def fit_water_calibration_exp(x_observed=None, y_observed=None):
+    # x = np.linspace(0, 4, 50)
+    # y = _exponential_function(x, 2.5, 1.3, 0.5)
+    # yn = y + 0.2 * np.random.normal(size=len(x))
+
+    popt, pcov = curve_fit(_exponential_function, x_observed, y_observed)
+    return popt, pcov
+
+
+def evaluate_water_calibration_curve_continuous(popt=None, min=0, max=10, step=0.1):
+    x_continuous = np.linspace(min, max, int(max / step), endpoint=True)
+    y_continuous = _exponential_function(x_continuous, *popt)
+    return x_continuous, y_continuous
+
+
+def evaluate_water_calibration_curve_y_to_x(x_continuous, y_continuous, y_target=None):
+    x_value = np.interp(y_target, x_continuous, y_continuous)
+    return x_value
