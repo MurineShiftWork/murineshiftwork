@@ -5,20 +5,22 @@ from pybpodapi.state_machine import StateMachine
 
 
 # Get user input or empty for defaults
-valve_opening_time = input("Valve opening time (seconds, default: 5): ")
-valve_numbers = input("Valve numbers (default: '1 2 3 4'): ")
-
-valve_opening_time = float(valve_opening_time) if valve_opening_time else 5
-valve_numbers = (
-    [nr for nr in valve_numbers.strip().split(" ") if nr]
-    if valve_numbers
-    else [1, 2, 3, 4]
-)
+# valve_opening_time = input("Valve opening time (seconds, default: 5): ")
+# valve_numbers = input("Valve numbers (default: '1 2 3 4'): ")
+#
+# valve_opening_time = float(valve_opening_time) if valve_opening_time else 5
+# valve_numbers = (
+#     [nr for nr in valve_numbers.strip().split(" ") if nr]
+#     if valve_numbers
+#     else [1, 2, 3, 4]
+# )
+valve_opening_time = 2
+valve_numbers = [1, 2, 3, 4]
 
 valves_to_open = []
 for valve in valve_numbers:
     # FIXME: check that codes 1,2,3,4 work and not requird to use 1,2,4,8
-    valves_to_open.append([(Bpod.OutputChannels.Valve, valve)])
+    valves_to_open.append((Bpod.OutputChannels.Valve, valve))
 
 
 # Flush valves

@@ -33,17 +33,17 @@ class Sounds(object):
     sound_go_params = {
         "frequency": 5000,
         "tone_duration": 0.1,
-        "amplitude": 0.05,
+        "amplitude": 0.2,
     }
     sound_stop_params = {
         "frequency": -1,  # -1=noise
         "tone_duration": 0.1,
-        "amplitude": 0.05,
+        "amplitude": 0.2,
     }
     sound_test_params = {
         "frequency": 5000,
-        "tone_duration": 0.05,
-        "amplitude": 0.05,
+        "tone_duration": 0.1,
+        "amplitude": 0.01,
     }
 
     def __init__(self, sound_device="XONAR SOUND CARD", ttl="L+TTL"):
@@ -153,7 +153,7 @@ class Sounds(object):
         tone = tone * win
         ttl = np.ones(len(tone)) * 0.99
         one_ms = (
-            round(sample_rate / 1000) * 10 * ttl_duration_msec
+            round(sample_rate / 1000) * ttl_duration_msec
         )  # LBR: original value was *10 for 1ms, but 5ms seems more stable for detection on bpod
         ttl[one_ms:] = 0
         null = np.zeros(len(tone))
