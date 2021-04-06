@@ -1,5 +1,6 @@
 import logging
 import random
+from datetime import datetime
 
 import numpy as np
 from pybpodapi.bpod import Bpod
@@ -7,11 +8,14 @@ from pybpodapi.state_machine import StateMachine
 from tqdm import tqdm
 
 from pybpod_tools.tools.calibration_handling import load_water_calibration
+from pybpod_tools.tools.calibration_handling import save_water_calibration
+from pybpod_tools.tools.gui import ask_water_calibration_ready
+from pybpod_tools.tools.gui import ask_water_calibration_weight
 
 calibration_data = load_water_calibration()
 
 VALVE_TIME_MIN = 10  # ms
-VALVE_TIME_MAX = 200  # ms
+VALVE_TIME_MAX = 100  # ms
 VALVE_TIME_STEP = 20  # ms
 
 VALVE_TIMES_TO_TEST = np.linspace(
@@ -22,7 +26,7 @@ VALVE_TIMES_TO_TEST = np.linspace(
 )
 
 VALVE_ITERATIONS = 200
-VALVE_INTER_PULSE_INTERVAL = 0.05
+VALVE_INTER_PULSE_INTERVAL = 0.1
 
 VALVES_TO_CALIBRATE = [1, 3]
 
@@ -34,6 +38,13 @@ def run_test_water_drops(
     inter_pulse_interval=VALVE_INTER_PULSE_INTERVAL,
     bpod=None,
 ):
+    if valve_open_time > 0.5:
+        corrected_valve_time = round(valve_open_time / 1000, 3)
+        logging.warn(
+            f"Valve times not converted to ms yet.. Valve time of {valve_open_time}s is {corrected_valve_time}ms"
+        )
+        valve_open_time = corrected_valve_time
+
     for _ in tqdm(np.arange(n_trials)):
         sma = StateMachine(bpod=bpod)
         sma.add_state(
@@ -58,53 +69,79 @@ def run_test_water_drops(
 def calibrate_point_for_valve(
     valve=1,
     valve_open_time=10,
-    n_trials=VALVE_ITERATIONS,
+    n_drops=VALVE_ITERATIONS,
     inter_pulse_interval=VALVE_INTER_PULSE_INTERVAL,
     bpod=None,
 ):
     calibration_data = load_water_calibration()
 
+    ask_water_calibration_ready(valve=valve)
+
     run_test_water_drops(
         valve=valve,
         valve_open_time=valve_open_time,
-        n_trials=n_trials,
+        n_trials=n_drops,
         inter_pulse_interval=inter_pulse_interval,
         bpod=bpod,
     )
 
-    print(
-        calibration_data
-    )  # fixme: check for weight of calibration drops -> add to calibration data
+    weight = ask_water_calibration_weight()
+    weight_per_drop = round(weight / n_drops, 3)
+
+    def add_calibration_data_measurement():
+        return {
+            "measurement_time": datetime.now(),
+            "valve": valve,
+            "valve_time": valve_open_time,
+            "n_drops": n_drops,
+            "inter_pulse_interval": inter_pulse_interval,
+            "weight": weight,
+            "weight_per_drop": weight_per_drop,
+            "microliters": weight_per_drop * 1000,
+        }
+
+    if calibration_data.empty:
+        import pandas as pd
+
+        calibration_data = pd.DataFrame([add_calibration_data_measurement()])
+    else:
+        calibration_data = calibration_data.append(
+            {
+                "measurement_time": datetime.now(),
+                "valve": valve,
+                "valve_time": valve_open_time,
+                "n_drops": n_drops,
+                "inter_pulse_interval": inter_pulse_interval,
+                "weight": weight,
+                "weight_per_drop": weight_per_drop,
+                "microliters": weight_per_drop * 1000,
+            },
+            ignore_index=True,
+        )
+
+    # fixme: removing manually weird columns
+    calibration_data = calibration_data[
+        calibration_data.columns.drop(list(calibration_data.filter(regex="Unnamed")))
+    ]
+    save_water_calibration(df=calibration_data)
 
 
 random_valve_times = VALVE_TIMES_TO_TEST.copy()
 random.shuffle(random_valve_times)
 
-for valve_time in random_valve_times:
-    print(valve_time)
 
-
-# figure: show calibration_data curve raw and normalised by drops
-# out data: dataframe of raw measurements. save to standard location
-# out data: fitted curve for measurements
-# -> save data at project level, but specify also board that was used and
-# opening time + n_drops
-#
-# for drop in n_drops:
-#     give drop
-#     iti
-#
-# REPEAT for enough measurements to fit exponential
-# TODO: IMPLEMENT
-# TODO: ask for valve time, repeats, and water weight on command line with "input" function, then use plotext to plot curve for inspection which values to use next for full calibration_data
-# TODO: implement line fit + save data + protocol needs to load calibration_data file and get correct value estimate from calibration_data curve
-# calibration_data data: load from config_files folder
-# while calibrating
-#   level 1 options:
-#       show calibration_data curve for 0-10uL -> plotext plot into cmd line for 0-10uL x and 0-?ms y
-#       add point -> ask for opening time, nr pulses -> run pulses, ask for weight -> result is uL amount datapoint, save
-#       remove point -> ask for opening time, then remove closest match, save
-
+bpod = Bpod()
+for valve in [1, 3]:
+    for valve_time in random_valve_times:
+        print(f"valve: {valve}, with valve time: {valve_time}")
+        calibrate_point_for_valve(
+            valve=valve,
+            valve_open_time=valve_time,
+            n_drops=VALVE_ITERATIONS,
+            inter_pulse_interval=VALVE_INTER_PULSE_INTERVAL,
+            bpod=bpod,
+        )
+bpod.close()
 
 if __name__ == "__main__":
     print("main")

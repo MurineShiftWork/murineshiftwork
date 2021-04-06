@@ -21,7 +21,7 @@ bpod.softcode_handler_function = sounds.soft_code_handler_function
 delay_measurements = []
 
 for trial_index in np.arange(201):
-    print(f"\ntrial {trial_index}")
+    logging.debug(f"\ntrial {trial_index}")
 
     sma = StateMachine(bpod=bpod)
 
@@ -54,7 +54,7 @@ for trial_index in np.arange(201):
     if not bpod.run_state_machine(sma):
         print("nothing returned")
 
-    print(f"Trial took {time.time()-dt}s")
+    logging.debug(f"Trial took {time.time()-dt}s")
 
     ev = bpod.session.current_trial.export()["Events timestamps"]
     delay = dict(ev).get("BNC1High", -1)
@@ -63,7 +63,7 @@ for trial_index in np.arange(201):
     else:
         raise logging.error(f"Did not receive TTL on trial {trial_index}")
 
-    print(f"Trial {trial_index}:", delay)
+    logging.info(f"Trial {trial_index}: Delay of {delay}s")
 
 
 save_sound_delay_data(measurements=delay_measurements)

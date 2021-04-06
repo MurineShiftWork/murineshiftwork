@@ -83,34 +83,34 @@ class Sounds(object):
         )
 
     def soft_code_handler_function(self, softcode=None):
-        print("Entering softcode handler.")
+        logging.debug("Entering softcode handler.")
         if softcode == self.sound_go_softcode:
-            print("playing sound: go")
+            logging.debug("playing sound: go")
             sd.play(
                 self.sound_go_array,
                 self.default_samplerate,
                 blocking=self.default_sound_blocking,
             )
         elif softcode == self.sound_stop_softcode:
-            print("playing sound: stop")
+            logging.debug("playing sound: stop")
             sd.play(
                 self.sound_stop_array,
                 self.default_samplerate,
                 blocking=self.default_sound_blocking,
             )
         elif softcode == self.sound_test_softcode:
-            print("playing sound: test")
+            logging.debug("playing sound: test")
             sd.play(
                 self.sound_test_array,
                 self.default_samplerate,
                 blocking=self.default_sound_blocking,
             )
         elif softcode == self.sound_end_softcode:
-            print("stopped sound")
+            logging.debug("stopped sound")
             sd.stop()
         else:
             pass
-        print("Exiting softcode handler.")
+        logging.debug("Exiting softcode handler.")
 
     def make_sound(
         self,

@@ -29,10 +29,11 @@ def save_sound_delay_data(measurements=None, plot=True, overwrite=True):
             f"Not allowed to overwrite existing calibration file: {calibration_file_sound_delay}"
         )
     else:
-        measurements.to_csv(calibration_file_sound_delay)
+        delay_measurements_df.to_csv(calibration_file_sound_delay)
 
     if plot:
         save_sound_delay_figure(delay_data=delays)
+
     logging.info(
         f"Delay sound trigger to soundcard TTL is\n"
         f"\tMEAN={np.round(delays.mean(), 3)}ms\n"
@@ -54,9 +55,7 @@ def load_water_calibration():
     if Path(calibration_file_water_calibration).exists():
         return pd.read_csv(calibration_file_water_calibration)
     else:
-        return pd.DataFrame(
-            columns=["valve_time", "mean_weight", "n_drops", "mean_microliter"]
-        )
+        return pd.DataFrame()
 
 
 def convert_gram_to_microliter(weight_g=None, n_drops=None):
