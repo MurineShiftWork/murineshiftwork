@@ -6,10 +6,10 @@
 
 - PS task
     - [x] Basic task structure for PS
-    - [ ] sound output plays with sounddevice package and TTL is received correctly by bpod BNC input channel
-    - [ ] task settings
-    - [ ] session params
-    - [ ] trial params
+    - [x] sound output plays with sounddevice package and TTL is received correctly by bpod BNC input channel
+    - [x] task settings
+    - [x] session params
+    - [x] trial params
     - [ ] online plots
     - [ ] main tasks: PS without stopping, PS and stopping
         - blocks of 10/50/90 with block switch deterministic 40-60 trials or with criterion on nr correct rolling mean
@@ -29,14 +29,14 @@
 
 - hardware
     - [x] build new arena with 3 ports on 3 different walls
-    - [ ] use valve 2 and 4 for air puffs -> set up air valves that get triggered via BNC from port PCB board contacts
+    - [x] use valve 2 and 4 for air puffs -> set up air valves that get triggered via BNC from port PCB board contacts
     - [ ] set up all hardware on new ephys rig
         - bpod, pulsepal, 2x air valves, camera hardware (RPi shelf + usb power supply bank), pc+monitor+peripherals, ! network for RPi
         - power: bpod 12v, camera bank, pc, monitor, network switch, LED strip for daylight
 
 - test and maintenance modules
-    - [ ] Water calibration -> copy from iblrig
-    - [ ] sound/noise preparation funcitons -> check iblrig
+    - [x] Water calibration -> quick procedure along lines of matlab bpod repo and iblrig
+    - [x] sound/noise preparation functions -> similar to iblrig. only taken main sound generator
 
 
 ## Features

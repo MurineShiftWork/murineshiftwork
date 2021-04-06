@@ -5,3 +5,5 @@
 *.pyc
 __pychache__
 sessions/
+#main_project/
+*.json
