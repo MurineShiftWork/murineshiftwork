@@ -1,4 +1,5 @@
 import logging
+import random
 
 import numpy as np
 from pybpodapi.bpod import Bpod
@@ -9,9 +10,29 @@ from pybpod_tools.tools.calibration_handling import load_water_calibration
 
 calibration_data = load_water_calibration()
 
+VALVE_TIME_MIN = 10  # ms
+VALVE_TIME_MAX = 200  # ms
+VALVE_TIME_STEP = 20  # ms
 
-def run_test_value(
-    valve=1, valve_open_time=10, n_trials=200, inter_pulse_interval=0.05, bpod=None
+VALVE_TIMES_TO_TEST = np.linspace(
+    VALVE_TIME_MIN,
+    VALVE_TIME_MAX,
+    int(VALVE_TIME_MAX / VALVE_TIME_STEP),
+    endpoint=False,
+)
+
+VALVE_ITERATIONS = 200
+VALVE_INTER_PULSE_INTERVAL = 0.05
+
+VALVES_TO_CALIBRATE = [1, 3]
+
+
+def run_test_water_drops(
+    valve=1,
+    valve_open_time=10,
+    n_trials=VALVE_ITERATIONS,
+    inter_pulse_interval=VALVE_INTER_PULSE_INTERVAL,
+    bpod=None,
 ):
     for _ in tqdm(np.arange(n_trials)):
         sma = StateMachine(bpod=bpod)
@@ -34,11 +55,34 @@ def run_test_value(
             break
 
 
-calibrating = True
-while calibrating:
-    # if data: fit + show
+def calibrate_point_for_valve(
+    valve=1,
+    valve_open_time=10,
+    n_trials=VALVE_ITERATIONS,
+    inter_pulse_interval=VALVE_INTER_PULSE_INTERVAL,
+    bpod=None,
+):
+    calibration_data = load_water_calibration()
 
-    pass
+    run_test_water_drops(
+        valve=valve,
+        valve_open_time=valve_open_time,
+        n_trials=n_trials,
+        inter_pulse_interval=inter_pulse_interval,
+        bpod=bpod,
+    )
+
+    print(
+        calibration_data
+    )  # fixme: check for weight of calibration drops -> add to calibration data
+
+
+random_valve_times = VALVE_TIMES_TO_TEST.copy()
+random.shuffle(random_valve_times)
+
+for valve_time in random_valve_times:
+    print(valve_time)
+
 
 # figure: show calibration_data curve raw and normalised by drops
 # out data: dataframe of raw measurements. save to standard location

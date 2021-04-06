@@ -12,20 +12,6 @@ calibration_file_sound_delay = calibration_data_folder / "sound_delay.csv"
 calibration_file_sound_delay_fig = calibration_data_folder / "sound_delay.png"
 calibration_file_water_calibration = calibration_data_folder / "water_calibration.csv"
 
-VALVE_TIME_MIN = 10  # ms
-VALVE_TIME_MAX = 200  # ms
-VALVE_TIME_STEP = 20  # ms
-
-VALVE_TIMES_TO_TEST = np.linspace(
-    VALVE_TIME_MIN,
-    VALVE_TIME_MAX,
-    int(VALVE_TIME_MAX / VALVE_TIME_STEP),
-    endpoint=False,
-)
-
-VALVE_ITERATIONS = 200
-VALVE_INTER_PULSE_INTERVAL = 0.05
-
 
 def load_sound_delay_data():
     if Path(calibration_file_sound_delay).exists():
