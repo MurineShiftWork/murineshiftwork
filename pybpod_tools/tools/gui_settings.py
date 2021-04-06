@@ -34,4 +34,8 @@ class SettingsGUI(BaseWidget):
 
 # Execute the application
 if __name__ == "__main__":
-    pyforms.start_app(SettingsGUI)
+    from pybpod_tools.tasks.probabilistic_switching import task_settings
+
+    app = pyforms.start_app(SettingsGUI, vars(task_settings))
+    print("here", app, task_settings)
+    print("done")

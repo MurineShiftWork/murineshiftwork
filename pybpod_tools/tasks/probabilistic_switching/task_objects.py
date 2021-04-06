@@ -1,3 +1,4 @@
+import itertools
 import logging
 import os
 
@@ -9,6 +10,8 @@ from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
 from pybpod_tools.tasks.probabilistic_switching import task_settings
+from pybpod_tools.tools.calibration_handling import load_sound_delay_data
+from pybpod_tools.tools.calibration_handling import load_water_calibration
 from pybpod_tools.tools.sounds import Sounds
 from pybpod_tools.tools.specific_state_machines import add_trial_onset_ttl
 
@@ -23,6 +26,40 @@ class TaskControl(object):
     }  # None # FIXME: load from calibration_data
     sound = None
 
+    block_number = 0
+    block_trial_number = 0
+    trial_number = 0
+    reward_number = 0
+    tau = 8
+    # block length range: 25 - 45
+    min_block_length = 25
+    min_trials_post_criterion = 10
+    mean_neutral_block_length = 35
+    criterion_contrast_blocks = 0.8
+    criterion_neutral_blocks = 0.6
+    criterion_tau = None  # fixme: implement decay fct
+    criterion_reached = False
+    block_hazard_rate = 1 / (mean_neutral_block_length - min_block_length)
+
+    # probabilities = [[k, k[::-1]] for k in itertools.combinations_with_replacement([10,50,90],2)]
+    # probabilities = [item for subl in probabilities for item in subl]
+    probabilities = [
+        # (10, 10),
+        # (10, 10),
+        (10, 50),
+        (50, 10),
+        (10, 90),
+        (90, 10),
+        # (50, 50),
+        (50, 50),
+        (50, 90),
+        (90, 50),
+        # (90, 90),
+        # (90, 90),
+    ]
+    probability_left = None
+    probability_right = None
+
     def __init__(self, bpod=None):
         super(TaskControl, self).__init__()
 
@@ -32,9 +69,16 @@ class TaskControl(object):
 
         self.sound = Sounds()
 
-    #     FIXME: load valve times from calibration_data file
+        # FIXME: use water and sound calibration data
+        water_calibration = load_water_calibration()
+        sound_calibration = load_sound_delay_data()
 
-    def draw_next_block(self):
+        print(water_calibration, sound_calibration)
+
+    def softcode_handler(self, softcode=None):
+        self.sound.soft_code_handler_function(softcode=softcode)
+
+    def switch_to_new_block(self):
         pass
 
     def draw_next_trial(self):
@@ -43,6 +87,11 @@ class TaskControl(object):
         # make SMA
         sma = self.make_state_machine()
         return sma
+
+    def evaluate_trial_outcome(self, task_data=None):
+        if not task_data:
+            raise ValueError("No task data, although trial ran !?")
+        pass
 
     def make_state_machine(self):
         output_actions__center_ready = [
@@ -158,14 +207,6 @@ class TaskControl(object):
 
         return sma
 
-    def softcode_handler(self, softcode=None):
-        self.sound.soft_code_handler_function(softcode=softcode)
-
-    def update_task_progress(self, task_data=None):
-        if not task_data:
-            raise ValueError("No task data, although trial ran !?")
-        pass
-
 
 class TaskData(object):
     data = []
@@ -205,10 +246,10 @@ class OnlinePlotting(object):
         self.figure, self.axes = plot.subplots(ncols=1, nrows=2)
 
     def update(self, task_data=None):
+        # FIXME: implement plots
         print("here plotting")
-        plt.plot(np.random.random(), np.random.random(), "k+")
-        plt.xlim(0, 1)
-        plt.ylim(0, 1)
+        self.axes[0].plot(np.random.random(), np.random.random(), "k+")
+        self.axes[0].format(xlim=(0, 1), ylim=(0, 1))
         self.figure.canvas.draw_idle()
         plt.pause(0.001)
 

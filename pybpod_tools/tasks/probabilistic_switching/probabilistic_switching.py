@@ -1,8 +1,8 @@
 import logging
+import time
 
 import numpy as np
 from pybpodapi.protocol import Bpod
-from pybpodapi.protocol import StateMachine
 
 from pybpod_tools.tasks.probabilistic_switching import task_settings
 from pybpod_tools.tasks.probabilistic_switching.task_objects import OnlinePlotting
@@ -31,7 +31,7 @@ online_plotting = OnlinePlotting(save_path=save_path_basename)
 bpod.loop_handler = online_plotting.bpod_loop_handler
 bpod.softcode_handler_function = task_control.softcode_handler
 
-for trial_index in np.arange(task_settings.N_MAX_TRIALS):  # Main loop
+for trial_index in np.arange(task_settings.N_MAX_TRIALS):
     print("Trial: ", trial_index + 1)
 
     if trial_index == 0 and not task_settings.TESTING:
@@ -42,9 +42,9 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):  # Main loop
         )
     else:
         sma = task_control.draw_next_trial()
-        pass
         # if not task_control.current_probabilities: make first block or if block_switch_criterion: make new block
-        # draw trial from block structure
+        #   draw trial from block structure
+        # TODO: control task: (a) next block?, (b) trial types?
         # TODO: need multiple SMA for simple training tasks and for air puff, light, stop signal white noise
 
     # EXECUTE trial
@@ -53,11 +53,14 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):  # Main loop
     if not bpod.run_state_machine(sma):
         logging.info(f"No data returned on trial #{trial_index}. Terminating protocol.")
 
+    dt = time.time()
     task_data.append(bpod.session.current_trial.export())
+    print("data added in", time.time() - dt)
+    dt = time.time()
     online_plotting.update(task_data=task_data)
+    print("updated plot in", time.time() - dt)
 
-    # TODO: control task: (a) next block?, (b) trial types?
-
+# Cleanup tasks
 task_data.save()
 online_plotting.save()
 bpod.close()  # Disconnect Bpod
