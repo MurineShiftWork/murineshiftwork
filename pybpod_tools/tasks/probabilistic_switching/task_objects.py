@@ -167,13 +167,14 @@ class TaskControl(object):
             return
 
         print(
-            f"Updating after trial #{self.trial_index} "
-            f"in block #{self.block_number} "
-            f"at block trial #{self.block_trial_number}\n"
-            f"  --  Last choice: {self.last_choice}. "
-            f"Preference: {np.round(self.moving_average(),2)}. "
-            f"Rewards: {self.reward_number}. "
-            f"Trial post crit: {self.trials_post_criterion}"
+            f"[Session time: {round(trial_data['Trial start timestamp']/60, 1): >4} min] "
+            f"Updating after trial #{self.trial_index: >4} "
+            f"in block #{self.block_number:>2} "
+            f"at block trial #{self.block_trial_number:>4} "
+            f"- Last choice: {self.last_choice:>2}. "
+            f"Preference: {np.round(self.moving_average(),2):>5}. "
+            f"Rewards: {self.reward_number:>4}. "
+            f"Trial post crit: {self.trials_post_criterion:>2}"
         )
 
         # Check for block criterion
