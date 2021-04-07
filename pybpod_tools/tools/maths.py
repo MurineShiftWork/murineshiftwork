@@ -19,7 +19,7 @@ class ExponentialMovingAverage:
         self.init_value = init_value
         self.reset()
 
-    def __repr__(self):
+    def __call__(self):
         return self.avg
 
     def reset(self, init_value=None):
@@ -28,5 +28,8 @@ class ExponentialMovingAverage:
         self.avg = self.init_value
 
     def update(self, latest_sample=None):
+        if np.isnan(latest_sample):
+            print("Cannot deal with nan value for moving average")
+            return
         """Average is weighted by decay of latest sample and all other decays(1-alpha) for previous samples."""
         self.avg = (self.avg * self.inv_alpha) + (latest_sample * self.alpha)

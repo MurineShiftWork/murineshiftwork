@@ -44,7 +44,9 @@ class TaskControl(object):
     criterion_block_switch_reached = False
     block_switch_hazard_rate = 1 / (mean_neutral_block_length - min_block_length)
 
-    moving_average = ExponentialMovingAverage(tau=criterion_tau, init_value=0.5)
+    moving_average = ExponentialMovingAverage(
+        tau=criterion_tau, init_value=0.0
+    )  # 0=sides coded as -1/1 for left/right
 
     probabilities = task_settings.PROBABILITIES
     block_probability_index = None
@@ -100,43 +102,62 @@ class TaskControl(object):
         if not self.block_probability_index:
             self.block_probability_index = 0
 
-        next_probs_allowed = set(np.arange(len(self.probabilities))) - {
-            self.block_probability_index
-        }
-        self.block_probability_index = random.randint(0, len(next_probs_allowed))
-        self.probability_left, self.probability_right = (
-            next_probs_allowed[self.block_probability_index] / 100
-        )  # fixme: convert to probability
+        next_probs_allowed = list(
+            set(np.arange(len(self.probabilities))) - {self.block_probability_index}
+        )
+        self.block_probability_index = random.randint(0, len(next_probs_allowed) - 1)
+        self.probability_left, self.probability_right = [
+            x / 100
+            for x in self.probabilities[
+                next_probs_allowed[self.block_probability_index]
+            ]
+        ]
+        # fixme: convert to probability beforehand, not by 100 division
 
         print(
-            f"New block #{self.block_number} after trial #{self.trial_index} with probabilities {next_probs_allowed[self.block_probability_index]}"
+            f"New block #{self.block_number} after trial #{self.trial_index} with probabilities {self.probability_left}/{self.probability_right}"
         )
 
         # TODO: block update rules fixed trials vs criterion
 
     def update(self, trial_index=None, trial_data=None):
-        if trial_index < 1:
-            self.switch_block()
-
-        last_choice = -1  # TODO: GET
-        rewarded = 1  # TODO: GET
-
-        print(f"Updating after trial #{trial_index}")
-        # trial_data is: bpod start ts, trial start ts, trial end ts, state and event ts
         self.trial_index = trial_index
+        # print(f"Updating after trial #{self.trial_index}")
+
+        # FIXME: STASH IMPORTANT TRIAL DATA INTO trial_data dict and add to data
+
+        if self.trial_index < 1:
+            self.switch_block()
+            return
+
+        times_left = trial_data["States timestamps"]["choice_left"][0]
+        times_right = trial_data["States timestamps"]["choice_right"][0]
+        if not np.isnan(np.array(times_left)).any():
+            self.last_choice = -1
+        elif not np.isnan(np.array(times_right)).any():
+            self.last_choice = 1
+        else:
+            self.last_choice = np.nan  # timeout / no response
+
+        # trial_data is: bpod start ts, trial start ts, trial end ts, state and event ts
         self.block_trial_number += 1
         self.trial_data.append(trial_data)
 
         # Update last choice
-        self.moving_average.update(latest_sample=last_choice)
+        self.moving_average.update(latest_sample=self.last_choice)
         # Update last outcome: reward/neutral/punish
-        if rewarded:
+        if self.next_trial_choice_outcome_left or self.next_trial_choice_outcome_right:
             self.reward_number += 1
+
+        print(
+            f"Updating after trial #{self.trial_index}\n"
+            f"  Last choice: {self.last_choice}. Preference: {np.round(self.moving_average(),2)}. Rewards: {self.reward_number}."
+        )
 
         # Check for block criterion
         neutral_block_bias = (
             (1 - self.criterion_neutral_blocks)
-            <= self.moving_average
+            <= self.moving_average()
             <= self.criterion_neutral_blocks
         )
 
@@ -146,19 +167,21 @@ class TaskControl(object):
             (self.probability_left == self.probability_right and neutral_block_bias)
             or (
                 self.probability_left > self.probability_right
-                and self.moving_average > self.criterion_contrast_blocks
+                and self.moving_average() < -self.criterion_contrast_blocks
             )
             or (
                 self.probability_right > self.probability_left
-                and self.moving_average < self.criterion_contrast_blocks
+                and self.moving_average() > self.criterion_contrast_blocks
             )
         ):
             self.criterion_block_switch_reached = True
 
         # # Check for block switch (trial based)
         if self.block_trial_number >= self.min_block_length and (
-            self.probability_left == self.probability_right
-            and withprob(self.block_switch_hazard_rate)
+            (
+                self.probability_left == self.probability_right
+                and withprob(self.block_switch_hazard_rate)
+            )
             or self.trials_post_criterion >= self.min_trials_post_criterion
         ):
             self.switch_block()
