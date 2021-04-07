@@ -171,7 +171,7 @@ class TaskControl(object):
             f"Updating after trial #{self.trial_index: >4} "
             f"in block #{self.block_number:>2} "
             f"at block trial #{self.block_trial_number:>4} "
-            f"- Last choice: {self.last_choice:>2}. "
+            f"- Last choice: {self.last_choice:>3}. "
             f"Preference: {np.round(self.moving_average(),2):>5}. "
             f"Rewards: {self.reward_number:>4}. "
             f"Trial post crit: {self.trials_post_criterion:>2}"
