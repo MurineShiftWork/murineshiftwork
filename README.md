@@ -4,6 +4,10 @@
 
 ## TODO
 
+- Architecture
+    - [ ] Make online plotting with pyqtgraph QApplication wrapper. Create/close bpod outside, then hand Application as input arg.
+
+
 - PS task
     - [x] Basic task structure for PS
     - [x] sound output plays with sounddevice package and TTL is received correctly by bpod BNC input channel

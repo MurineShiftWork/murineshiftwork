@@ -58,8 +58,8 @@ def load_water_calibration():
         return pd.DataFrame()
 
 
-def convert_gram_to_microliter(weight_g=None, n_drops=None):
-    return weight_g / n_drops * 1000  # covert to microliter
+# def convert_gram_to_microliter(weight_g=None, n_drops=None):
+#     return weight_g / n_drops * 1000  # covert to microliter
 
 
 def save_water_calibration(df=None, overwrite=True):
@@ -93,3 +93,24 @@ def evaluate_water_calibration_curve_continuous(popt=None, min=0, max=10, step=0
 def evaluate_water_calibration_curve_y_to_x(x_continuous, y_continuous, y_target=None):
     x_value = np.interp(y_target, x_continuous, y_continuous)
     return x_value
+
+
+def get_calibration_point_for_valve(valves=None, target_volume=None):
+    calibration_data = load_water_calibration().sort_values(by="valve_time")
+    calibration_targets = {}
+    for valve in valves:
+        cd = calibration_data.loc[calibration_data["valve"] == valve]
+        calibration_targets[valve] = np.interp(
+            target_volume, cd["microliters"], cd["valve_time"]
+        )
+    return calibration_targets
+
+
+def get_sound_delay_correction_value():
+    sound_calibration_data = load_sound_delay_data()
+    if not sound_calibration_data.empty:
+        correction_value = sound_calibration_data.delay.median().round(3)
+    else:
+        correction_value = np.nan
+
+    return correction_value
