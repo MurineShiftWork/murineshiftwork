@@ -28,7 +28,9 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):
     bpod.send_state_machine(sma)
 
     if not bpod.run_state_machine(sma):
-        logging.info(f"No data returned on trial #{trial_index}. Terminating protocol.")
+        logging.warning(
+            f"No data returned on trial #{trial_index}. Terminating protocol."
+        )
         break
 
     trial_data = bpod.session.current_trial.export()

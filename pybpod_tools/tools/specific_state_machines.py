@@ -1,3 +1,5 @@
+import logging
+
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 
@@ -15,6 +17,7 @@ def make_protocol_identifier_ttl_sequence(
 
     sma = StateMachine(bpod)
 
+    logging.info(f"Generating protocol identifier TTL sequence: {sequence}")
     for pidx, pulse in enumerate(sequence):
         # make next pulse
         if pulse.upper().startswith("L"):

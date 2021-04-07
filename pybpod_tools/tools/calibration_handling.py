@@ -95,13 +95,13 @@ def evaluate_water_calibration_curve_y_to_x(x_continuous, y_continuous, y_target
     return x_value
 
 
-def get_calibration_point_for_valve(valves=None, target_volume=None):
+def get_calibration_point_for_valve(valves=None, target_volume=None, s_to_ms=1000):
     calibration_data = load_water_calibration().sort_values(by="valve_time")
     calibration_targets = {}
     for valve in valves:
         cd = calibration_data.loc[calibration_data["valve"] == valve]
-        calibration_targets[valve] = np.interp(
-            target_volume, cd["microliters"], cd["valve_time"]
+        calibration_targets[valve] = (
+            np.interp(target_volume, cd["microliters"], cd["valve_time"]) / s_to_ms
         )
     return calibration_targets
 

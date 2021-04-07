@@ -1,6 +1,6 @@
 import logging
-import os
 import shutil
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -15,8 +15,6 @@ from pybpod_tools.tools.maths import withprob
 from pybpod_tools.tools.misc import get_session_file_basename
 from pybpod_tools.tools.sounds import Sounds
 from pybpod_tools.tools.specific_state_machines import add_trial_onset_ttl
-
-# import matplotlib.pyplot as plt
 
 
 class TaskControl(object):
@@ -56,8 +54,8 @@ class TaskControl(object):
         # (90, 90),
         # (90, 90),
     ]
-    probability_left = None
-    probability_right = None
+    probability_left = 0.9  # fixme: hardcoded
+    probability_right = 0.1  # fixme: hardcoded
 
     sound_delay_correction = 0
 
@@ -82,7 +80,10 @@ class TaskControl(object):
             target_volume=task_settings.REWARD_AMOUNT_UL,
         )
 
-        # TODO: copy task_settings to session folder
+        # copy task_settings to session folder
+        src = Path(task_settings.__file__)
+        dst = self.save_path_data.parent / src.name
+        shutil.copy(src=str(src), dst=str(dst))
 
         logging.debug("Task control class created.")
 
@@ -90,21 +91,15 @@ class TaskControl(object):
         self.sound.soft_code_handler_function(softcode=softcode)
 
     def update(self, trial_data=None):
-        pass
+        logging.debug("Updating after trial.", trial_data)
 
     def reset_block(self):
+        logging.debug("Resetting block.")
         pass  # switch to new block / reset relevant variables
 
     def draw_next_trial(self):
         if self.criterion_block_switch_reached or self.trial_number < 1:
             self.reset_block()
-
-        # draw next trial based on:
-        #     - probabilities
-        #     - stimulation
-        #     - stop cues
-
-        # check if block switch -> update probabilities
 
         # TODO: write basic SMA for PS task, including block update rules fixed trials vs criterion
         # TODO: write online plotting functions
@@ -112,9 +107,11 @@ class TaskControl(object):
 
         # make SMA
         sma = self.make_state_machine()
+        logging.debug("New trial drawn")
         return sma
 
     def make_state_machine(self):
+        logging.debug("Making new StateMachine.")
         # side probabilities ?
         current_choice_outcome_left = 1 if withprob(self.probability_left) else 0
         current_choice_outcome_right = 1 if withprob(self.probability_right) else 0
@@ -273,6 +270,7 @@ class TaskControl(object):
         return sma
 
     def save(self):
+        logging.debug("Saving task control data.")
         df = pd.DataFrame(self.trial_data)
         df.to_csv(self.save_path_data)
 
