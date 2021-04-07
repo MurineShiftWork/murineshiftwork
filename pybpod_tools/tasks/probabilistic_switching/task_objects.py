@@ -61,18 +61,27 @@ class TaskControl(object):
 
     trial_data = []
 
+    next_trial_choice_outcome_left = 0
+    next_trial_choice_outcome_right = 0
+    next_trial_give_stop_signal = 0
+
     def __init__(self, bpod=None, save_path_data=None):
         super(TaskControl, self).__init__()
 
         if not bpod:
-            raise ValueError("required input argument: bpod")
+            raise ValueError("Required input argument: bpod")
         self.bpod = bpod
 
         self.save_path_data = (
             get_session_file_basename(bpod) if not save_path_data else save_path_data
         )
 
-        self.sound = Sounds()
+        # todo: implement loading of presets for basic PS (no stop)
+        #  and stop signal PS (adaptive stops, probabilities all 1/0 for analysis simplicity)
+
+        self.sound = (
+            Sounds()
+        )  # fixme: use hardware params for go/stop signal generation
 
         self.sound_delay_correction = get_sound_delay_correction_value()
         self.valve_times_dict = get_calibration_point_for_valve(
@@ -92,18 +101,44 @@ class TaskControl(object):
 
     def update(self, trial_data=None):
         logging.debug("Updating after trial.", trial_data)
+        # TODO: write online plotting functions
 
     def reset_block(self):
         logging.debug("Resetting block.")
-        pass  # switch to new block / reset relevant variables
+        # todo: switch to new block / reset relevant variables
+        # TODO: block update rules fixed trials vs criterion
 
     def draw_next_trial(self):
         if self.criterion_block_switch_reached or self.trial_number < 1:
             self.reset_block()
 
-        # TODO: write basic SMA for PS task, including block update rules fixed trials vs criterion
-        # TODO: write online plotting functions
-        # TODO: write analysis module to save data preprocessed
+        # side probabilities ?
+        self.next_trial_choice_outcome_left = (
+            1 if withprob(self.probability_left) else 0
+        )
+        self.next_trial_choice_outcome_right = (
+            1 if withprob(self.probability_right) else 0
+        )
+        # is stop trial ?
+        self.next_trial_give_stop_signal = task_settings.USE_STOP_TRIALS and withprob(
+            task_settings.STOP_TRIAL_PROPORTION
+        )
+        if self.next_trial_give_stop_signal:
+            # if stop, also punish ?
+            self.next_trial_choice_outcome_left = (
+                -1
+                if task_settings.PUNISH_STOP_TRIALS
+                and withprob(task_settings.PUNISH_STOP_TRIALS_PROPORTION)
+                else 0
+            )
+            self.next_trial_choice_outcome_right = (
+                -1
+                if task_settings.PUNISH_STOP_TRIALS
+                and withprob(task_settings.PUNISH_STOP_TRIALS_PROPORTION)
+                else 0
+            )
+
+        # TODO: stop signal adaptive testing here: change of stop signal delay
 
         # make SMA
         sma = self.make_state_machine()
@@ -112,27 +147,6 @@ class TaskControl(object):
 
     def make_state_machine(self):
         logging.debug("Making new StateMachine.")
-        # side probabilities ?
-        current_choice_outcome_left = 1 if withprob(self.probability_left) else 0
-        current_choice_outcome_right = 1 if withprob(self.probability_right) else 0
-        # is stop trial ?
-        give_stop_signal = task_settings.USE_STOP_TRIALS and withprob(
-            task_settings.STOP_TRIAL_PROPORTION
-        )
-        if give_stop_signal:
-            # if stop, also punish ?
-            current_choice_outcome_left = (
-                -1
-                if task_settings.PUNISH_STOP_TRIALS
-                and withprob(task_settings.PUNISH_STOP_TRIALS_PROPORTION)
-                else 0
-            )
-            current_choice_outcome_right = (
-                -1
-                if task_settings.PUNISH_STOP_TRIALS
-                and withprob(task_settings.PUNISH_STOP_TRIALS_PROPORTION)
-                else 0
-            )
 
         # LIGHTS - if intensity - for chosen ports (center/side)
         output_actions__center_ready = []
@@ -189,8 +203,7 @@ class TaskControl(object):
             output_actions=output_actions__center_delay,
         )
         # TRAVEL to side -> wait for entry
-        if give_stop_signal:
-            # TODO:  give stop signal sound -> contingency will be no reward for the ports
+        if self.next_trial_give_stop_signal:
             # TODO: add state before side_ready to drop soft_code for sound
             sma.add_state(
                 state_name="side_ready",
@@ -215,11 +228,12 @@ class TaskControl(object):
             )
 
         # Outcomes: LEFT  --  Encoding:  0=unrewarded, 1=rewarded, -1=punish with air
-        if current_choice_outcome_left > 0:  # REWARD
+        # note: stop signal outcomes set to 0 in next-trial
+        if self.next_trial_choice_outcome_left > 0:  # REWARD
             left_valve = task_settings.HARDWARE_VALVES_FOR_WATER[0]
             output_action_left_valve = [(Bpod.OutputChannels.Valve, left_valve)]
             valve_left_outcome = self.valve_times_dict[left_valve]
-        elif current_choice_outcome_left < 0:  # PUNISH
+        elif self.next_trial_choice_outcome_left < 0:  # PUNISH
             output_action_left_valve = [
                 (Bpod.OutputChannels.Valve, task_settings.HARDWARE_VALVES_FOR_AIR[0])
             ]
@@ -229,11 +243,11 @@ class TaskControl(object):
             valve_left_outcome = 0
 
         # Outcomes: RIGHT  --  Encoding:  0=unrewarded, 1=rewarded, -1=punish with air
-        if current_choice_outcome_right > 0:  # REWARD
+        if self.next_trial_choice_outcome_right > 0:  # REWARD
             right_valve = task_settings.HARDWARE_VALVES_FOR_WATER[1]
             output_action_right_valve = [(Bpod.OutputChannels.Valve, right_valve)]
             valve_right_outcome = self.valve_times_dict[right_valve]
-        elif current_choice_outcome_right < 0:  # PUNISH
+        elif self.next_trial_choice_outcome_right < 0:  # PUNISH
             output_action_right_valve = [
                 (Bpod.OutputChannels.Valve, task_settings.HARDWARE_VALVES_FOR_AIR[1])
             ]
@@ -271,64 +285,6 @@ class TaskControl(object):
 
     def save(self):
         logging.debug("Saving task control data.")
+        # TODO: write analysis module to save data preprocessed
         df = pd.DataFrame(self.trial_data)
         df.to_csv(self.save_path_data)
-
-
-# class TaskData(object):
-#     data = []
-#     save_path = None
-#
-#     def __init__(self, save_path=None):
-#         super(TaskData, self).__init__()
-#
-#         if not save_path:
-#             raise ValueError("required input argument: save_path")
-#
-#         self.save_path = str(save_path)
-#
-#     def append(self, trial_data):
-#         self.data.append(
-#             trial_data
-#         )  # TODO: make list for output data, then save as csv
-#
-#     def save(self):
-#         data = pd.DataFrame(data=self.data)
-#         data.to_csv(self.save_path)
-#
-#
-# class OnlinePlotting(object):
-#     save_path = None
-#     save_fig_ext = ".eps"
-#     save_fig_param = {"dpi": 400}
-#
-#     figure = None
-#     axes = None
-#
-#     def __init__(self, save_path=None):
-#         super(OnlinePlotting, self).__init__()
-#
-#         self.save_path = os.path.splitext(save_path)[0]
-#
-#         self.figure = pg.plot(title="TEST pg")
-#         self.figure.plot([1], [1], pen=None)
-#         # self.axes = plot.subplots(ncols=1, nrows=2)
-#
-#     def update(self, task_data=None):
-#         # FIXME: implement plots
-#         x = np.random.normal(size=1000)
-#         y = np.random.normal(size=1000)
-#         self.figure.plot(x, y, pen=None, symbol="o")
-#         self.figure.show()
-#         # self.axes[0].plot(np.random.random(), np.random.random(), "k+")
-#         # self.axes[0].format(xlim=(0, 1), ylim=(0, 1))
-#         # self.figure.canvas.draw_idle()  # slow: takes .5 sec
-#         # plt.pause(0.001)
-#
-#     def save(self):
-#         pass
-#         # self.figure.savefig(self.save_path + self.save_fig_ext, **self.save_fig_param)
-#
-#     def bpod_loop_handler(self):
-#         pass
-#         # self.figure.canvas.flush_events()
