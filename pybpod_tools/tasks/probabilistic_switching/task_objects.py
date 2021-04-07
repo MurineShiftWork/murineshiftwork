@@ -103,7 +103,8 @@ class TaskControl(object):
             self.block_probability_index = 0
 
         next_probs_allowed = list(
-            set(np.arange(len(self.probabilities))) - {self.block_probability_index}
+            set(np.arange(len(self.probabilities)))
+            - {self.probabilities[self.block_probability_index]}
         )
         self.block_probability_index = random.randint(0, len(next_probs_allowed) - 1)
         self.probability_left, self.probability_right = [
@@ -122,14 +123,20 @@ class TaskControl(object):
 
     def update(self, trial_index=None, trial_data=None):
         self.trial_index = trial_index
-        # print(f"Updating after trial #{self.trial_index}")
+        # trial_data is: bpod start ts, trial start ts, trial end ts, state and event ts
 
-        # FIXME: STASH IMPORTANT TRIAL DATA INTO trial_data dict and add to data
-
-        if self.trial_index < 1:
+        first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
+        if self.trial_index < 1 and first_state_name.startswith(
+            "pulse"
+        ):  # IF TTL TRIAL
             self.switch_block()
+            self.trial_data.append(
+                trial_data.update({"trial_index": trial_index, "trial_type": "ttl"})
+            )
             return
 
+        # IF TASK TRIAL
+        self.block_trial_number += 1
         times_left = trial_data["States timestamps"]["choice_left"][0]
         times_right = trial_data["States timestamps"]["choice_right"][0]
         if not np.isnan(np.array(times_left)).any():
@@ -139,19 +146,34 @@ class TaskControl(object):
         else:
             self.last_choice = np.nan  # timeout / no response
 
-        # trial_data is: bpod start ts, trial start ts, trial end ts, state and event ts
-        self.block_trial_number += 1
-        self.trial_data.append(trial_data)
-
         # Update last choice
         self.moving_average.update(latest_sample=self.last_choice)
         # Update last outcome: reward/neutral/punish
         if self.next_trial_choice_outcome_left or self.next_trial_choice_outcome_right:
             self.reward_number += 1
 
+        trial_data["info"] = {
+            "trial_index": trial_index,
+            "block_trial_number": self.block_trial_number,
+            "block_number": self.block_number,
+            "moving_average": self.moving_average(),
+            "trials_post_criterion": self.trials_post_criterion,
+            "criterion_block_switch_reached": self.criterion_block_switch_reached,
+            "trial_type": "task",
+        }
+        self.trial_data.append(trial_data)
+
+        if self.trial_index < 1:
+            return
+
         print(
-            f"Updating after trial #{self.trial_index}\n"
-            f"  Last choice: {self.last_choice}. Preference: {np.round(self.moving_average(),2)}. Rewards: {self.reward_number}."
+            f"Updating after trial #{self.trial_index} "
+            f"in block #{self.block_number} "
+            f"at block trial #{self.block_trial_number}\n"
+            f"  --  Last choice: {self.last_choice}. "
+            f"Preference: {np.round(self.moving_average(),2)}. "
+            f"Rewards: {self.reward_number}. "
+            f"Trial post crit: {self.trials_post_criterion}"
         )
 
         # Check for block criterion
