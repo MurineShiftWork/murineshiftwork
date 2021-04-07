@@ -1,16 +1,17 @@
 import logging
+import random
 import shutil
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pyqtgraph as pg
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
 from pybpod_tools.tasks.probabilistic_switching import task_settings
 from pybpod_tools.tools.calibration_handling import get_calibration_point_for_valve
 from pybpod_tools.tools.calibration_handling import get_sound_delay_correction_value
+from pybpod_tools.tools.maths import ExponentialMovingAverage
 from pybpod_tools.tools.maths import withprob
 from pybpod_tools.tools.misc import get_session_file_basename
 from pybpod_tools.tools.sounds import Sounds
@@ -20,46 +21,35 @@ from pybpod_tools.tools.specific_state_machines import add_trial_onset_ttl
 class TaskControl(object):
     bpod = None
     sound = None
-
-    save_path_data = None
-
-    block_number = 0
-    block_trial_number = 0
-    trial_number = 0
-    reward_number = 0
-    tau = 8
-    # block length range: 25 - 45
-    min_block_length = 25
-    min_trials_post_criterion = 10
-    mean_neutral_block_length = 35
-    criterion_contrast_blocks = 0.8
-    criterion_neutral_blocks = 0.6
-    criterion_tau = None  # fixme: implement decay fct
-    criterion_block_switch_reached = False
-    block_hazard_rate = 1 / (mean_neutral_block_length - min_block_length)
-
-    # probabilities = [[k, k[::-1]] for k in itertools.combinations_with_replacement([10,50,90],2)]
-    # probabilities = [item for subl in probabilities for item in subl]
-    probabilities = [
-        # (10, 10),
-        # (10, 10),
-        (10, 50),
-        (50, 10),
-        (10, 90),
-        (90, 10),
-        # (50, 50),
-        (50, 50),
-        (50, 90),
-        (90, 50),
-        # (90, 90),
-        # (90, 90),
-    ]
-    probability_left = 0.9  # fixme: hardcoded
-    probability_right = 0.1  # fixme: hardcoded
-
     sound_delay_correction = 0
 
     trial_data = []
+    save_path_data = None
+
+    # Task progress
+    trial_index = 0
+    block_number = 0
+    block_trial_number = 0
+    reward_number = 0
+
+    # Block switches -- length range: 25 - 45
+    min_block_length = 15
+    mean_neutral_block_length = 25
+    min_trials_post_criterion = 10
+    trials_post_criterion = 0
+
+    criterion_contrast_blocks = 0.8
+    criterion_neutral_blocks = 0.6
+    criterion_tau = 8
+    criterion_block_switch_reached = False
+    block_switch_hazard_rate = 1 / (mean_neutral_block_length - min_block_length)
+
+    moving_average = ExponentialMovingAverage(tau=criterion_tau, init_value=0.5)
+
+    probabilities = task_settings.PROBABILITIES
+    block_probability_index = None
+    probability_left = 0
+    probability_right = 0
 
     next_trial_choice_outcome_left = 0
     next_trial_choice_outcome_right = 0
@@ -79,9 +69,8 @@ class TaskControl(object):
         # todo: implement loading of presets for basic PS (no stop)
         #  and stop signal PS (adaptive stops, probabilities all 1/0 for analysis simplicity)
 
-        self.sound = (
-            Sounds()
-        )  # fixme: use hardware params for go/stop signal generation
+        # fixme: use hardware params for go/stop signal generation
+        self.sound = Sounds()
 
         self.sound_delay_correction = get_sound_delay_correction_value()
         self.valve_times_dict = get_calibration_point_for_valve(
@@ -99,19 +88,84 @@ class TaskControl(object):
     def softcode_handler(self, softcode=None):
         self.sound.soft_code_handler_function(softcode=softcode)
 
-    def update(self, trial_data=None):
-        logging.debug("Updating after trial.", trial_data)
-        # TODO: write online plotting functions
-
-    def reset_block(self):
+    def switch_block(self):
         logging.debug("Resetting block.")
-        # todo: switch to new block / reset relevant variables
+        self.block_number += 1
+        self.block_trial_number = 0
+        self.trials_post_criterion = 0
+        self.criterion_block_switch_reached = False
+        self.moving_average.reset()
+
+        # probabilities
+        if not self.block_probability_index:
+            self.block_probability_index = 0
+
+        next_probs_allowed = set(np.arange(len(self.probabilities))) - {
+            self.block_probability_index
+        }
+        self.block_probability_index = random.randint(0, len(next_probs_allowed))
+        self.probability_left, self.probability_right = (
+            next_probs_allowed[self.block_probability_index] / 100
+        )  # fixme: convert to probability
+
+        print(
+            f"New block #{self.block_number} after trial #{self.trial_index} with probabilities {next_probs_allowed[self.block_probability_index]}"
+        )
+
         # TODO: block update rules fixed trials vs criterion
 
-    def draw_next_trial(self):
-        if self.criterion_block_switch_reached or self.trial_number < 1:
-            self.reset_block()
+    def update(self, trial_index=None, trial_data=None):
+        if trial_index < 1:
+            self.switch_block()
 
+        last_choice = -1  # TODO: GET
+        rewarded = 1  # TODO: GET
+
+        print(f"Updating after trial #{trial_index}")
+        # trial_data is: bpod start ts, trial start ts, trial end ts, state and event ts
+        self.trial_index = trial_index
+        self.block_trial_number += 1
+        self.trial_data.append(trial_data)
+
+        # Update last choice
+        self.moving_average.update(latest_sample=last_choice)
+        # Update last outcome: reward/neutral/punish
+        if rewarded:
+            self.reward_number += 1
+
+        # Check for block criterion
+        neutral_block_bias = (
+            (1 - self.criterion_neutral_blocks)
+            <= self.moving_average
+            <= self.criterion_neutral_blocks
+        )
+
+        if self.criterion_block_switch_reached:
+            self.trials_post_criterion += 1
+        elif (
+            (self.probability_left == self.probability_right and neutral_block_bias)
+            or (
+                self.probability_left > self.probability_right
+                and self.moving_average > self.criterion_contrast_blocks
+            )
+            or (
+                self.probability_right > self.probability_left
+                and self.moving_average < self.criterion_contrast_blocks
+            )
+        ):
+            self.criterion_block_switch_reached = True
+
+        # # Check for block switch (trial based)
+        if self.block_trial_number >= self.min_block_length and (
+            self.probability_left == self.probability_right
+            and withprob(self.block_switch_hazard_rate)
+            or self.trials_post_criterion >= self.min_trials_post_criterion
+        ):
+            self.switch_block()
+
+        # TODO: write online plotting functions: self.redraw_figure()
+
+    def draw_next_trial(self):
         # side probabilities ?
         self.next_trial_choice_outcome_left = (
             1 if withprob(self.probability_left) else 0
@@ -138,7 +192,15 @@ class TaskControl(object):
                 else 0
             )
 
-        # TODO: stop signal adaptive testing here: change of stop signal delay
+        # TODO: STOP signal adaptive testing here: change of stop signal delay ++ self.sound_delay_correction
+
+        # Stimulation
+        if task_settings.STIMULATION and withprob(
+            task_settings.STIMULATION_TRIAL_PROPORTION
+        ):
+            pass
+            # TODO: implement STIMULATION trials:
+            #  connect pulsepal, upload stim settings, add BNC event to output actions
 
         # make SMA
         sma = self.make_state_machine()
@@ -205,6 +267,7 @@ class TaskControl(object):
         # TRAVEL to side -> wait for entry
         if self.next_trial_give_stop_signal:
             # TODO: add state before side_ready to drop soft_code for sound
+
             sma.add_state(
                 state_name="side_ready",
                 state_timer=task_settings.DELAY_UNTIL_SIDE_TIMEOUT_FOR_STOPPING,

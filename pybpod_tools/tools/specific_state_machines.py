@@ -12,12 +12,14 @@ def make_protocol_identifier_ttl_sequence(
     inter_trial_interval=4,
     output_chanel_pulse=Bpod.OutputChannels.BNC2,
 ):
+    print(
+        f"Generating protocol identifier TTL sequence '{sequence}' on output channel {output_chanel_pulse}"
+    )
     if isinstance(sequence, str):
         sequence = [*sequence]
 
     sma = StateMachine(bpod)
 
-    logging.info(f"Generating protocol identifier TTL sequence: {sequence}")
     for pidx, pulse in enumerate(sequence):
         # make next pulse
         if pulse.upper().startswith("L"):
@@ -31,7 +33,7 @@ def make_protocol_identifier_ttl_sequence(
 
         # if is last pulse, add transition to inter-trial interval, otherwise to next pulse
         if pidx == len(sequence) - 1:
-            exit_state = "inter_trial_interval"
+            exit_state = "pulse_trial_post_interval"
         else:
             exit_state = f"pulse_{pidx+1}_on"
 
@@ -51,7 +53,7 @@ def make_protocol_identifier_ttl_sequence(
 
     # Inter-trial interval
     sma.add_state(
-        state_name="inter_trial_interval",
+        state_name="pulse_trial_post_interval",
         state_timer=inter_trial_interval,
         state_change_conditions={"Tup": "exit"},
         output_actions=[(output_chanel_pulse, 0)],

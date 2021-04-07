@@ -14,7 +14,7 @@ task_control = TaskControl(bpod=bpod)
 bpod.softcode_handler_function = task_control.softcode_handler
 
 for trial_index in np.arange(task_settings.N_MAX_TRIALS):
-    logging.info("Trial: ", trial_index + 1)
+    logging.info(f"Trial: {trial_index}")
 
     if trial_index == 0 and not task_settings.TESTING:
         sma = make_protocol_identifier_ttl_sequence(
@@ -34,7 +34,7 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):
         break
 
     trial_data = bpod.session.current_trial.export()
-    task_control.update(trial_data=trial_data)
+    task_control.update(trial_index=trial_index, trial_data=trial_data)
 
 task_control.save()
 bpod.close()

@@ -1,6 +1,21 @@
 TESTING = False
 
-PROBABILITIES = [0.10, 0.50, 0.90]
+# probabilities = [[k, k[::-1]] for k in itertools.combinations_with_replacement([10,50,90],2)]
+# probabilities = [item for subl in probabilities for item in subl]
+PROBABILITIES = [
+    # (10, 10),
+    # (10, 10),
+    (10, 50),
+    (50, 10),
+    (10, 90),
+    (90, 10),
+    # (50, 50),
+    (50, 50),
+    (50, 90),
+    (90, 50),
+    # (90, 90),
+    # (90, 90),
+]
 PERFORMANCE_TAU_MOVMEAN = 8  # HOW MANY TRIALS INTO PAST ARE CONSIDERED FOR CURRENT PERFORMANCE ESTIMATE, e.g. for block switches
 ALLOW_ONLY_ONE_SIDED_TRANSITIONS = (
     False  # ONLY ONE CHOICE CHANGES PROBABILITY ON A GIVEN BLOCK SWITCH

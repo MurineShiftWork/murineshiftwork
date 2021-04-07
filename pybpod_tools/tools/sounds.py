@@ -81,6 +81,7 @@ class Sounds(object):
             fade_duration=self.default_sound_fade,
             ttl_duration_msec=self.ttl_duration_msec,
         )
+        print("Sounds initialised.")
 
     def soft_code_handler_function(self, softcode=None):
         logging.debug("Entering softcode handler.")
