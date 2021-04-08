@@ -38,15 +38,15 @@ class TaskControl(object):
     min_trials_post_criterion = 10
     trials_post_criterion = 0
 
-    criterion_contrast_blocks = 0.8
+    criterion_contrast_blocks = 0.5
     criterion_neutral_blocks = 0.2
-    criterion_tau = 8
+    criterion_tau = 5
     criterion_block_switch_reached = False
     block_switch_hazard_rate = 1 / (mean_neutral_block_length - min_block_length)
 
     moving_average = ExponentialMovingAverage(
-        tau=criterion_tau, init_value=0.5
-    )  # 0=sides coded as -1/1 for left/right
+        tau=criterion_tau, init_value=0.0
+    )  # 0=sides coded as 1/0 for left/right
 
     probabilities = task_settings.PROBABILITIES
     block_probability_index = None
@@ -140,7 +140,7 @@ class TaskControl(object):
         times_left = trial_data["States timestamps"]["choice_left"][0]
         times_right = trial_data["States timestamps"]["choice_right"][0]
         if not np.isnan(np.array(times_left)).any():
-            self.last_choice = 0
+            self.last_choice = -1
         elif not np.isnan(np.array(times_right)).any():
             self.last_choice = 1
         else:
@@ -186,17 +186,15 @@ class TaskControl(object):
 
         if self.criterion_block_switch_reached:
             self.trials_post_criterion += 1
-        elif self.block_trial_number >= self.min_block_length and (
-            (
-                (self.probability_left == self.probability_right and neutral_block_bias)
-                or (
-                    self.probability_left > self.probability_right
-                    and self.moving_average() < -self.criterion_contrast_blocks
-                )
-                or (
-                    self.probability_right > self.probability_left
-                    and self.moving_average() > self.criterion_contrast_blocks
-                )
+        elif (
+            (self.probability_left == self.probability_right and neutral_block_bias)
+            or (
+                self.probability_left > self.probability_right
+                and self.moving_average() < -self.criterion_contrast_blocks
+            )
+            or (
+                self.probability_right > self.probability_left
+                and self.moving_average() > self.criterion_contrast_blocks
             )
         ):
             self.criterion_block_switch_reached = True
@@ -371,17 +369,39 @@ class TaskControl(object):
             output_action_right_valve = []
             valve_right_outcome = 0
 
+        outcome_codes = {-1: "punish", 0: "neutral", 1: "reward"}
+        outcome_doc_left = (
+            f"outcome_left_{outcome_codes[self.next_trial_choice_outcome_left]}"
+        )
+        outcome_doc_right = (
+            f"outcome_right_{outcome_codes[self.next_trial_choice_outcome_right]}"
+        )
+
         sma.add_state(
             state_name="choice_left",
             state_timer=valve_left_outcome,
-            state_change_conditions={Bpod.Events.Tup: "final"},
+            state_change_conditions={Bpod.Events.Tup: outcome_doc_left},
             output_actions=output_action_left_valve + [],
         )
         sma.add_state(
             state_name="choice_right",
             state_timer=valve_right_outcome,
-            state_change_conditions={Bpod.Events.Tup: "final"},
+            state_change_conditions={Bpod.Events.Tup: outcome_doc_right},
             output_actions=output_action_right_valve + [],
+        )
+
+        # Outcome documentation
+        sma.add_state(
+            state_name=outcome_doc_left,
+            state_timer=0,
+            state_change_conditions={Bpod.Events.Tup: "final"},
+            output_actions=[],
+        )
+        sma.add_state(
+            state_name=outcome_doc_right,
+            state_timer=0,
+            state_change_conditions={Bpod.Events.Tup: "final"},
+            output_actions=[],
         )
         # Cleanup
         sma.add_state(

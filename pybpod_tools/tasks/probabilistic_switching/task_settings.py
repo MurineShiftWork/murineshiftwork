@@ -16,7 +16,7 @@ PROBABILITIES = [
     # (90, 90),
     # (90, 90),
 ]
-PROBABILITIES = [(100, 0), (0, 100)]  # for training
+PROBABILITIES = [(0, 100), (100, 0)]  # for training
 # PROBABILITIES = [(100, 100), (100, 100)]  # for training
 
 PERFORMANCE_TAU_MOVMEAN = 8  # HOW MANY TRIALS INTO PAST ARE CONSIDERED FOR CURRENT PERFORMANCE ESTIMATE, e.g. for block switches
