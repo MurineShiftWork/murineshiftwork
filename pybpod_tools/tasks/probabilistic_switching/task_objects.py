@@ -38,8 +38,8 @@ class TaskControl(object):
     min_trials_post_criterion = 10
     trials_post_criterion = 0
 
-    criterion_contrast_blocks = 0.8
-    criterion_neutral_blocks = 0.6
+    criterion_contrast_blocks = 0.5
+    criterion_neutral_blocks = 0.2
     criterion_tau = 8
     criterion_block_switch_reached = False
     block_switch_hazard_rate = 1 / (mean_neutral_block_length - min_block_length)
@@ -149,7 +149,9 @@ class TaskControl(object):
         # Update last choice
         self.moving_average.update(latest_sample=self.last_choice)
         # Update last outcome: reward/neutral/punish
-        if self.next_trial_choice_outcome_left or self.next_trial_choice_outcome_right:
+        if (self.next_trial_choice_outcome_left and self.last_choice == -1) or (
+            self.next_trial_choice_outcome_right and self.last_choice == 1
+        ):
             self.reward_number += 1
 
         trial_data["info"] = {
@@ -179,9 +181,7 @@ class TaskControl(object):
 
         # Check for block criterion
         neutral_block_bias = (
-            (1 - self.criterion_neutral_blocks)
-            <= self.moving_average()
-            <= self.criterion_neutral_blocks
+            np.abs(self.moving_average()) <= self.criterion_neutral_blocks
         )
 
         if self.criterion_block_switch_reached:
@@ -254,9 +254,10 @@ class TaskControl(object):
         return sma
 
     def make_state_machine(self):
-        logging.debug("Making new StateMachine.")
-        print(
-            f"Outcomes are left={self.next_trial_choice_outcome_left}, right={self.next_trial_choice_outcome_right}"
+        logging.debug(
+            f"Making new StateMachine. Outcomes are "
+            f"left={self.next_trial_choice_outcome_left}, "
+            f"right={self.next_trial_choice_outcome_right}"
         )
 
         # LIGHTS - if intensity - for chosen ports (center/side)
