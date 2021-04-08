@@ -8,6 +8,7 @@ from pybpodgui_api.models.project import Project
 
 import pybpod_tools
 import pybpod_tools.tasks as module_tasks
+from pybpod_tools.config_files import install_settings
 from pybpod_tools.config_files import user_settings
 from pybpod_tools.tools.misc import list_submodules
 
@@ -110,6 +111,13 @@ def create_boards(name_port_tuples=None, overwrite=False):
 
 def create_subjects(subjects=None, overwrite=True):
     p = load_project()
+
+    # find additional subjects in config
+    if not isinstance(subjects, list) and isinstance(subjects, str):
+        subjects = [subjects]
+
+    subjects += install_settings.SUBJECTS
+
     for subject_name in subjects:
         if subject_name not in [s.name for s in p.subjects] or overwrite:
             logging.info(f"Adding subject: {subject_name}")
