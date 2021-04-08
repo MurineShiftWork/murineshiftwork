@@ -255,6 +255,9 @@ class TaskControl(object):
 
     def make_state_machine(self):
         logging.debug("Making new StateMachine.")
+        print(
+            f"Outcomes are left={self.next_trial_choice_outcome_left}, right={self.next_trial_choice_outcome_right}"
+        )
 
         # LIGHTS - if intensity - for chosen ports (center/side)
         output_actions__center_ready = []
@@ -396,4 +399,4 @@ class TaskControl(object):
         logging.debug("Saving task control data.")
         # TODO: write analysis module to save data preprocessed
         df = pd.DataFrame(self.trial_data)
-        df.to_csv(self.save_path_data)
+        df.to_pickle(str(self.save_path_data) + ".pkl")
