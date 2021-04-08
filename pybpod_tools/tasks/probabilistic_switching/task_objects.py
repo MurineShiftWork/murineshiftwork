@@ -38,7 +38,7 @@ class TaskControl(object):
     min_trials_post_criterion = 10
     trials_post_criterion = 0
 
-    criterion_contrast_blocks = 0.7
+    criterion_contrast_blocks = 0.8
     criterion_neutral_blocks = 0.2
     criterion_tau = 8
     criterion_block_switch_reached = False
@@ -186,20 +186,22 @@ class TaskControl(object):
 
         if self.criterion_block_switch_reached:
             self.trials_post_criterion += 1
-        elif (
-            (self.probability_left == self.probability_right and neutral_block_bias)
-            or (
-                self.probability_left > self.probability_right
-                and self.moving_average() < -self.criterion_contrast_blocks
-            )
-            or (
-                self.probability_right > self.probability_left
-                and self.moving_average() > self.criterion_contrast_blocks
+        elif self.block_trial_number >= self.min_block_length and (
+            (
+                (self.probability_left == self.probability_right and neutral_block_bias)
+                or (
+                    self.probability_left > self.probability_right
+                    and self.moving_average() < -self.criterion_contrast_blocks
+                )
+                or (
+                    self.probability_right > self.probability_left
+                    and self.moving_average() > self.criterion_contrast_blocks
+                )
             )
         ):
             self.criterion_block_switch_reached = True
 
-        # # Check for block switch (trial based)
+        # Check for block switch (trial based)
         if self.block_trial_number >= self.min_block_length and (
             (
                 self.probability_left == self.probability_right
