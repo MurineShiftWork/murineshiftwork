@@ -38,14 +38,14 @@ class TaskControl(object):
     min_trials_post_criterion = 10
     trials_post_criterion = 0
 
-    criterion_contrast_blocks = 0.5
+    criterion_contrast_blocks = 0.7
     criterion_neutral_blocks = 0.2
     criterion_tau = 8
     criterion_block_switch_reached = False
     block_switch_hazard_rate = 1 / (mean_neutral_block_length - min_block_length)
 
     moving_average = ExponentialMovingAverage(
-        tau=criterion_tau, init_value=0.0
+        tau=criterion_tau, init_value=0.5
     )  # 0=sides coded as -1/1 for left/right
 
     probabilities = task_settings.PROBABILITIES
@@ -140,7 +140,7 @@ class TaskControl(object):
         times_left = trial_data["States timestamps"]["choice_left"][0]
         times_right = trial_data["States timestamps"]["choice_right"][0]
         if not np.isnan(np.array(times_left)).any():
-            self.last_choice = -1
+            self.last_choice = 0
         elif not np.isnan(np.array(times_right)).any():
             self.last_choice = 1
         else:
