@@ -33,20 +33,20 @@ class TaskControl(object):
     reward_number = 0
 
     # Block switches -- length range: 25 - 45
-    min_block_length = 15
-    mean_neutral_block_length = 25
-    min_trials_post_criterion = 10
+    min_block_length = 10
+    mean_neutral_block_length = 20  # 10 trials difference to min block length
+    min_trials_post_criterion = 5
     trials_post_criterion = 0
 
-    criterion_contrast_blocks = 0.5
+    criterion_contrast_blocks = 0.8
     criterion_neutral_blocks = 0.2
-    criterion_tau = 5
+    criterion_tau = 8
     criterion_block_switch_reached = False
     block_switch_hazard_rate = 1 / (mean_neutral_block_length - min_block_length)
 
     moving_average = ExponentialMovingAverage(
         tau=criterion_tau, init_value=0.0
-    )  # 0=sides coded as 1/0 for left/right
+    )  # 0=sides coded as -1/1 for left/right, so init value has to be center == 0
 
     probabilities = task_settings.PROBABILITIES
     block_probability_index = None
@@ -102,17 +102,11 @@ class TaskControl(object):
         if not self.block_probability_index:
             self.block_probability_index = 0
 
-        next_probs_allowed = list(
-            set(np.arange(len(self.probabilities)))
-            - {self.probabilities[self.block_probability_index]}
-        )
+        range_for_prob = np.arange(self.probabilities.__len__())
+        next_probs_allowed = list(set(range_for_prob) - {self.block_probability_index})
         self.block_probability_index = random.randint(0, len(next_probs_allowed) - 1)
-        self.probability_left, self.probability_right = [
-            x / 100
-            for x in self.probabilities[
-                next_probs_allowed[self.block_probability_index]
-            ]
-        ]
+        new_prob = self.probabilities[next_probs_allowed[self.block_probability_index]]
+        self.probability_left, self.probability_right = [x / 100 for x in new_prob]
         # fixme: convert to probability beforehand, not by 100 division
 
         print(
@@ -186,7 +180,7 @@ class TaskControl(object):
 
         if self.criterion_block_switch_reached:
             self.trials_post_criterion += 1
-        elif (
+        elif self.block_trial_number >= self.min_block_length and (
             (self.probability_left == self.probability_right and neutral_block_bias)
             or (
                 self.probability_left > self.probability_right
