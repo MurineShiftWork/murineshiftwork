@@ -32,7 +32,7 @@ class TaskControl(object):
     block_trial_number = 0
     reward_number = 0
 
-    # Block switches -- length range: 25 - 45
+    # Block switches -- length range: 10 - 20+
     min_block_length = 10
     mean_neutral_block_length = 20  # 10 trials difference to min block length
     min_trials_post_criterion = 5
@@ -40,7 +40,7 @@ class TaskControl(object):
 
     criterion_contrast_blocks = 0.8
     criterion_neutral_blocks = 0.2
-    criterion_tau = 8
+    criterion_tau = 7
     criterion_block_switch_reached = False
     block_switch_hazard_rate = 1 / (mean_neutral_block_length - min_block_length)
 
@@ -99,13 +99,21 @@ class TaskControl(object):
         self.moving_average.reset()
 
         # probabilities
-        if not self.block_probability_index:
-            self.block_probability_index = 0
+        # if not self.block_probability_index:
+        #     self.block_probability_index = 0
 
         range_for_prob = np.arange(self.probabilities.__len__())
-        next_probs_allowed = list(set(range_for_prob) - {self.block_probability_index})
-        self.block_probability_index = random.randint(0, len(next_probs_allowed) - 1)
-        new_prob = self.probabilities[next_probs_allowed[self.block_probability_index]]
+        next_probs_allowed = list(
+            set(range_for_prob) - set([self.block_probability_index])
+        )
+        if len(next_probs_allowed) == 1:
+            self.block_probability_index = next_probs_allowed[0]
+        else:
+            self.block_probability_index = next_probs_allowed[
+                random.randint(0, len(next_probs_allowed) - 1)
+            ]
+
+        new_prob = self.probabilities[self.block_probability_index]
         self.probability_left, self.probability_right = [x / 100 for x in new_prob]
         # fixme: convert to probability beforehand, not by 100 division
 
@@ -206,6 +214,9 @@ class TaskControl(object):
         # TODO: write online plotting functions: self.redraw_figure()
 
     def draw_next_trial(self):
+        if self.block_probability_index is None:
+            self.switch_block()
+
         # side probabilities ?
         self.next_trial_choice_outcome_left = (
             1 if withprob(self.probability_left) else 0
