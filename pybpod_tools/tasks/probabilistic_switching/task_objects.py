@@ -38,7 +38,7 @@ class TaskControl(object):
     min_trials_post_criterion = 5
     trials_post_criterion = 0
 
-    criterion_contrast_blocks = 0.8
+    criterion_contrast_blocks = 0.7
     criterion_neutral_blocks = 0.2
     criterion_tau = 7
     criterion_block_switch_reached = False
@@ -67,6 +67,7 @@ class TaskControl(object):
         self.save_path_data = (
             get_session_file_basename(bpod) if not save_path_data else save_path_data
         )
+        print(f"Running session: {Path(self.save_path_data).name}")
 
         # todo: implement loading of presets for basic PS (no stop)
         #  and stop signal PS (adaptive stops, probabilities all 1/0 for analysis simplicity)
