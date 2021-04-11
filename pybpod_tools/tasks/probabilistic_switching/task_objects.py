@@ -171,14 +171,16 @@ class TaskControl(object):
         if self.trial_index < 1:
             return
 
+        item_end = "| "
         print(
-            f"[Session time: {round(trial_data['Trial start timestamp']/60, 1): >4} min] "
-            f"Updating after trial #{self.trial_index: >4} "
-            f"in block #{self.block_number:>2} "
-            f"at block trial #{self.block_trial_number:>4} "
-            f"- Last choice: {self.last_choice:>3}. "
-            f"Preference: {np.round(self.moving_average(),2):>5}. "
-            f"Rewards: {self.reward_number:>4}. "
+            f"[Session time: {round(trial_data['Trial start timestamp']/60, 1): >4} min] {item_end}"
+            f"Updating after trial #{self.trial_index: >4} {item_end}"
+            f"in block #{self.block_number:>2} {item_end}"
+            f"at block trial #{self.block_trial_number:>4} {item_end}"
+            f"- Last choice: {self.last_choice:>3}. {item_end}"
+            f"Preference: {np.round(self.moving_average(),2):>5}. {item_end}"
+            f"Rewards: {self.reward_number:>4} "
+            f"({int(task_settings.REWARD_AMOUNT_UL*self.reward_number):>4}uL). {item_end}"
             f"Trial post crit: {self.trials_post_criterion:>2}"
         )
 
