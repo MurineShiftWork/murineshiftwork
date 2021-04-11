@@ -61,7 +61,7 @@ for trial_index in np.arange(201):
     if not delay == -1:
         delay_measurements.append({"trial": trial_index, "delay": delay[0]})
     else:
-        raise logging.error(f"Did not receive TTL on trial {trial_index}")
+        logging.error(f"Did not receive TTL on trial {trial_index}")
 
     logging.info(f"Trial {trial_index}: Delay of {delay}s")
 
