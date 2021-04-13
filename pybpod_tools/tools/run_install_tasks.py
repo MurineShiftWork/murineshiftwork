@@ -4,6 +4,7 @@ import shutil
 import time
 from pathlib import Path
 
+import git
 from pybpodgui_api.models.project import Project
 
 import pybpod_tools
@@ -31,6 +32,7 @@ def get_default_project_path():
 
 
 def copy_user_settings(overwrite=True):
+    # FIXME: why are user settings not copied on new setups ???
     target = str(Path(os.path.expanduser("~")) / "user_settings.py")
     default_project_name = get_default_project_path()
 
@@ -126,19 +128,30 @@ def create_subjects(subjects=None, overwrite=True):
             save_project(p=p)
 
 
-def run_check_install(overwrite=False):
+def update_git_repo():
+    git_repo_path = str(Path(pybpod_tools.__file__).parent.parent)
+    print(f"Updating git repo at: {git_repo_path}")
+    g = git.cmd.Git(git_repo_path)
+    g.pull()
+    print("Code up-to-date.")
+
+
+def run_check_install(overwrite_settings=True, overwrite_project_items=False):
     this_time = time.time()
-    copy_user_settings(overwrite=overwrite)
+    update_git_repo()
+    copy_user_settings(overwrite=overwrite_settings)
     create_project()
-    create_tasks(overwrite=overwrite)
+    create_tasks(overwrite=overwrite_project_items)
     create_users(users=["_tests", "lbr"])
-    create_boards(name_port_tuples=[("bpod_1", "/dev/ttyACM1")], overwrite=overwrite)
-    create_subjects(subjects=["_test_subject"], overwrite=overwrite)
+    create_boards(
+        name_port_tuples=[("bpod_1", "/dev/ttyACM1")], overwrite=overwrite_project_items
+    )
+    create_subjects(subjects=["_test_subject"], overwrite=overwrite_project_items)
 
     # Adding basic experiments
     p = load_project()
     exp_name = "TEST_experiment"
-    if exp_name not in [e.name for e in p.experiments] or overwrite:
+    if exp_name not in [e.name for e in p.experiments] or overwrite_project_items:
         logging.info(f"Creating: {exp_name}")
         exp = p.create_experiment()
         exp.name = exp_name
@@ -153,7 +166,7 @@ def run_check_install(overwrite=False):
         logging.info(f"Done: {exp_name} added")
 
     exp_name = "MAIN_experiment"
-    if exp_name not in [e.name for e in p.experiments] or overwrite:
+    if exp_name not in [e.name for e in p.experiments] or overwrite_project_items:
         logging.info(f"Creating: {exp_name}")
         exp = p.create_experiment()
         exp.name = exp_name
