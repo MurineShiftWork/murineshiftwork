@@ -13,8 +13,14 @@ from pybpod_tools.config_files import install_settings
 from pybpod_tools.config_files import user_settings
 from pybpod_tools.tools.misc import list_submodules
 
+
+def get_package_dir():
+    """First parent is code folder, second is enclosing .git repo."""
+    return Path(pybpod_tools.__file__).parent.parent
+
+
 PROJECT_NAME = "main_project"
-PROJECT_PATH = Path(__file__).parent.parent.parent / PROJECT_NAME
+PROJECT_PATH = get_package_dir() / PROJECT_NAME
 
 
 def load_project():
@@ -27,14 +33,9 @@ def save_project(p=None):
     p.save(project_path=PROJECT_PATH)
 
 
-def get_default_project_path():
-    return Path(pybpod_tools.__file__).parent.parent / PROJECT_NAME
-
-
 def copy_user_settings(overwrite=True):
     # FIXME: why are user settings not copied on new setups ???
     target = str(Path(os.path.expanduser("~")) / "user_settings.py")
-    default_project_name = get_default_project_path()
 
     if Path(target).exists() and not overwrite:
         logging.info(f"User settings file exists at {target} and overwrite={overwrite}")
@@ -45,7 +46,7 @@ def copy_user_settings(overwrite=True):
 
         # Patch user settings with additional parameters
         with open(target, "a") as f:
-            f.write(f"\nDEFAULT_PROJECT_PATH = '{str(default_project_name)}'\n")
+            f.write(f"\nDEFAULT_PROJECT_PATH = '{str(PROJECT_PATH)}'\n")
 
         logging.info(f"Copied user_settings.py to {target}")
 
@@ -129,11 +130,12 @@ def create_subjects(subjects=None, overwrite=True):
 
 
 def update_git_repo():
-    git_repo_path = str(Path(pybpod_tools.__file__).parent.parent)
-    print(f"Updating git repo at: {git_repo_path}")
-    g = git.cmd.Git(git_repo_path)
-    g.pull()
-    print("Code up-to-date.")
+    repo = git.Repo(path=get_package_dir(), search_parent_directories=True)
+    print(f"Updating git repo at {repo.git_dir}")
+    repo.remotes.origin.pull()
+
+    short_sha = repo.git.rev_parse(repo.head.object.hexsha, short=True)
+    print(f"Code up-to-date at {short_sha} on active branch {repo.active_branch.path}")
 
 
 def run_check_install(overwrite_settings=True, overwrite_project_items=False):
