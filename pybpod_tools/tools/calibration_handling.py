@@ -1,3 +1,4 @@
+import datetime
 import logging
 from pathlib import Path
 
@@ -51,9 +52,24 @@ def save_sound_delay_figure(delay_data=None):
     f.savefig(calibration_file_sound_delay_fig)
 
 
-def load_water_calibration():
+def load_water_calibration(allowable_offset_days=30):
     if Path(calibration_file_water_calibration).exists():
-        return pd.read_csv(calibration_file_water_calibration)
+        calibration_data = pd.read_csv(calibration_file_water_calibration)
+
+        # Check when calibration data was acquired.
+        calibration_dates = pd.Series(
+            [pd.Timestamp(v) for v in calibration_data.measurement_time]
+        )
+        if (
+            calibration_dates
+            > pd.Timestamp(datetime.datetime.today())
+            - pd.DateOffset(days=allowable_offset_days)
+        ).any():
+            info_str = f"WARNING: calibration data is older than {allowable_offset_days} days. Consider re-calibration."
+            logging.info(info_str)
+            print(info_str)
+
+        return calibration_data
     else:
         return pd.DataFrame()
 

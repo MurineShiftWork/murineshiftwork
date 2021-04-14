@@ -4,6 +4,7 @@ import shutil
 import time
 from pathlib import Path
 
+import git
 from pybpodgui_api.models.project import Project
 
 import pybpod_tools
@@ -12,8 +13,14 @@ from pybpod_tools.config_files import install_settings
 from pybpod_tools.config_files import user_settings
 from pybpod_tools.tools.misc import list_submodules
 
+
+def get_package_dir():
+    """First parent is code folder, second is enclosing .git repo."""
+    return Path(pybpod_tools.__file__).parent.parent
+
+
 PROJECT_NAME = "main_project"
-PROJECT_PATH = Path(__file__).parent.parent.parent / PROJECT_NAME
+PROJECT_PATH = get_package_dir() / PROJECT_NAME
 
 
 def load_project():
@@ -26,13 +33,9 @@ def save_project(p=None):
     p.save(project_path=PROJECT_PATH)
 
 
-def get_default_project_path():
-    return Path(pybpod_tools.__file__).parent.parent / PROJECT_NAME
-
-
 def copy_user_settings(overwrite=True):
+    # FIXME: why are user settings not copied on new setups ???
     target = str(Path(os.path.expanduser("~")) / "user_settings.py")
-    default_project_name = get_default_project_path()
 
     if Path(target).exists() and not overwrite:
         logging.info(f"User settings file exists at {target} and overwrite={overwrite}")
@@ -43,7 +46,7 @@ def copy_user_settings(overwrite=True):
 
         # Patch user settings with additional parameters
         with open(target, "a") as f:
-            f.write(f"\nDEFAULT_PROJECT_PATH = '{str(default_project_name)}'\n")
+            f.write(f"\nDEFAULT_PROJECT_PATH = '{str(PROJECT_PATH)}'\n")
 
         logging.info(f"Copied user_settings.py to {target}")
 
@@ -126,19 +129,31 @@ def create_subjects(subjects=None, overwrite=True):
             save_project(p=p)
 
 
-def run_check_install(overwrite=False):
+def update_git_repo():
+    repo = git.Repo(path=get_package_dir(), search_parent_directories=True)
+    print(f"Updating git repo at {repo.git_dir}")
+    repo.remotes.origin.pull()
+
+    short_sha = repo.git.rev_parse(repo.head.object.hexsha, short=True)
+    print(f"Code up-to-date at {short_sha} on active branch {repo.active_branch.path}")
+
+
+def run_check_install(overwrite_settings=True, overwrite_project_items=False):
     this_time = time.time()
-    copy_user_settings(overwrite=overwrite)
+    update_git_repo()
+    copy_user_settings(overwrite=overwrite_settings)
     create_project()
-    create_tasks(overwrite=overwrite)
+    create_tasks(overwrite=overwrite_project_items)
     create_users(users=["_tests", "lbr"])
-    create_boards(name_port_tuples=[("bpod_1", "/dev/ttyACM1")], overwrite=overwrite)
-    create_subjects(subjects=["_test_subject"], overwrite=overwrite)
+    create_boards(
+        name_port_tuples=[("bpod_1", "/dev/ttyACM1")], overwrite=overwrite_project_items
+    )
+    create_subjects(subjects=["_test_subject"], overwrite=overwrite_project_items)
 
     # Adding basic experiments
     p = load_project()
     exp_name = "TEST_experiment"
-    if exp_name not in [e.name for e in p.experiments] or overwrite:
+    if exp_name not in [e.name for e in p.experiments] or overwrite_project_items:
         logging.info(f"Creating: {exp_name}")
         exp = p.create_experiment()
         exp.name = exp_name
@@ -153,7 +168,7 @@ def run_check_install(overwrite=False):
         logging.info(f"Done: {exp_name} added")
 
     exp_name = "MAIN_experiment"
-    if exp_name not in [e.name for e in p.experiments] or overwrite:
+    if exp_name not in [e.name for e in p.experiments] or overwrite_project_items:
         logging.info(f"Creating: {exp_name}")
         exp = p.create_experiment()
         exp.name = exp_name
