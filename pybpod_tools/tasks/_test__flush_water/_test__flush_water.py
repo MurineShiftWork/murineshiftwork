@@ -14,7 +14,7 @@ from pybpodapi.state_machine import StateMachine
 #     if valve_numbers
 #     else [1, 2, 3, 4]
 # )
-valve_opening_time = 0.25
+valve_opening_time = 0.1
 valve_numbers = [1, 2, 3, 4]
 
 valves_to_open = []

@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 
 
-session_name = "20210411-103143"
-
-f = f"/home/lbr/code/pybpod_lbr/main_project/experiments/MAIN_experiment/setups/MAIN_setup/sessions/{session_name}/{session_name}.csv"
+session_name = "20210417-155526"
+setup_name = "MAIN"
+f = f"/home/lbr/code/pybpod_lbr/main_project/experiments/{setup_name}_experiment/setups/{setup_name}_setup/sessions/{session_name}/{session_name}.csv"
 data = pd.read_csv(str(f), header=6, delimiter=";")
 
 filt1 = data.loc[data["+INFO"].notnull()]
@@ -28,10 +28,14 @@ for ir1, ir2 in zip(filt2[:-1].iterrows(), filt2[1:].iterrows()):
             outbound_travel.append(travel_time)
         print(ir1[-1]["+INFO"], "-->", ir2[-1]["+INFO"], "DIFF:", travel_time)
 
-r = [0, 2]
-bins = 50
+r = [0.1, 0.5]
+bins = int((r[1] - r[0]) / 0.005)
+print(f"using {bins} bins.")
 xticks = 10
 plt.hist(outbound_travel, bins=bins, range=r)
 plt.xticks(np.linspace(*r, xticks - 1, endpoint=True))
 plt.xlim(*r)
+plt.title(
+    f"Session {session_name}. Center->Side travel. {len(outbound_travel)} trials < 2s."
+)
 plt.show()

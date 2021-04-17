@@ -33,14 +33,14 @@ class TaskControl(object):
     reward_number = 0
 
     # Block switches -- length range: 10 - 20+
-    min_block_length = 10
-    mean_neutral_block_length = 20  # 10 trials difference to min block length
+    min_block_length = 5
+    mean_neutral_block_length = 15  # 10 trials difference to min block length
     min_trials_post_criterion = 5
     trials_post_criterion = 0
 
-    criterion_contrast_blocks = 0.7
+    criterion_contrast_blocks = 0.4
     criterion_neutral_blocks = 0.2
-    criterion_tau = 7
+    criterion_tau = 5
     criterion_block_switch_reached = False
     block_switch_hazard_rate = 1 / (mean_neutral_block_length - min_block_length)
 
