@@ -180,7 +180,7 @@ class TaskControl(object):
             f"Last choice: {self.last_choice:>3}. {item_end}"
             f"Preference: {np.round(self.moving_average(),2):>5}. {item_end}"
             f"Rewards: {self.reward_number:>4} "
-            f"({int(task_settings.REWARD_AMOUNT_UL*self.reward_number):>4}uL). {item_end}"
+            f"({round(task_settings.REWARD_AMOUNT_UL*self.reward_number, 2):>4}uL). {item_end}"
             f"Post criterion: {self.trials_post_criterion:>2}"
         )
 
