@@ -5,6 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from rich.console import Console
 from scipy.optimize import curve_fit
 
 from pybpod_tools.config_files import calibration_data_folder
@@ -67,7 +68,14 @@ def load_water_calibration(allowable_offset_days=30):
         ).any():
             info_str = f"WARNING: calibration data is older than {allowable_offset_days} days. Consider re-calibration."
             logging.info(info_str)
-            print(info_str)
+
+            c = Console()
+            style = "bold red"
+            c.print("# " * 40, style=style)
+            c.print("# ", style=style)
+            c.print(f"#  {info_str}", style=style)
+            c.print("# ", style=style)
+            c.print("# " * 40, style=style)
 
         return calibration_data
     else:
