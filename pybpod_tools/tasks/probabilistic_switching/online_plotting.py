@@ -150,9 +150,10 @@ class OnlinePlottingForPS(Process):
 
         # # Add plots
         lw = 5  # todo: move up
+        plot_to_color = mt.grey
         self.plot_trial_outcomes = pg.ScatterPlotItem()
         self.plot_moving_average = pg.PlotDataItem()
-        self.plot_moving_average.setPen(color=mt.grey, width=lw)
+        self.plot_moving_average.setPen(color=plot_to_color, width=lw)
         self.plot_to.addItem(self.plot_trial_outcomes)
         self.plot_to.addItem(self.plot_moving_average)
 
@@ -180,8 +181,34 @@ class OnlinePlottingForPS(Process):
         self.plot_block.addItem(self.line_probability_left)
         self.plot_block.addItem(self.line_probability_right)
 
-        self.line_probability_left.setPen(color=mt.yellow, width=lw)
-        self.line_probability_right.setPen(color=mt.teal, width=lw)
+        pleft_color, pright_color = mt.yellow, mt.teal
+        self.line_probability_left.setPen(color=pleft_color, width=lw)
+        self.line_probability_right.setPen(color=pright_color, width=lw)
+
+        # Legend: bottom plot
+        xpos = self.trial_index
+        self.text_block_side_left = pg.TextItem("Left", color=pleft_color)
+        self.plot_block.addItem(self.text_block_side_left)
+        self.text_block_side_left.setPos(xpos, 0.9)
+
+        self.text_block_side_right = pg.TextItem("Right", color=pright_color)
+        self.plot_block.addItem(self.text_block_side_right)
+        self.text_block_side_right.setPos(xpos, 0.8)
+
+        # Legend: top plot
+        xpos = self.trial_index  # -self.values_to_show - 1
+        anchor = (-0.2, 0.5)
+        self.text_choice_side_left = pg.TextItem(
+            "Left", color=plot_to_color, anchor=anchor
+        )
+        self.plot_to.addItem(self.text_choice_side_left)
+        self.text_choice_side_left.setPos(xpos, -1)
+
+        self.text_choice_side_right = pg.TextItem(
+            "Right", color=plot_to_color, anchor=anchor
+        )
+        self.plot_to.addItem(self.text_choice_side_right)
+        self.text_choice_side_right.setPos(xpos, 1)
 
         # reference lines
         xdata = np.arange(0, self.max_trials)
@@ -296,6 +323,14 @@ class OnlinePlottingForPS(Process):
         )
         self.line_probability_left.setData(self.data.probability_left)
         self.line_probability_right.setData(self.data.probability_right)
+
+        # Legend
+        xpos = self.trial_index  # - self.values_to_show - 1
+        self.text_block_side_left.setPos(xpos, 0.9)
+        self.text_block_side_right.setPos(xpos, 0.8)
+        self.text_choice_side_left.setPos(xpos, -1)
+        self.text_choice_side_right.setPos(xpos, 1)
+
         self.app.processEvents()
 
     def update_simulation(self):
