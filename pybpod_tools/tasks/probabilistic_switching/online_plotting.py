@@ -61,7 +61,7 @@ class QueueMonitor(QtCore.QThread):
     def run(self) -> None:
 
         while True:
-
+            time.sleep(0.1)
             if not self.kill_queue.empty():
                 self.exit_signal.emit(True)
                 break
@@ -121,9 +121,9 @@ class OnlinePlottingForPS(Process):
         self.data = Data(vector_length=self.max_trials)
 
     def run(self) -> None:
-        QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
-        QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
-        pg.setConfigOptions(antialias=True)  # Enable antialiasing for prettier plots
+        # QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+        # QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
+        # pg.setConfigOptions(antialias=True)  # Enable antialiasing for prettier plots
 
         self.app = pg.mkQApp(self.name)
         self.win = pg.GraphicsLayoutWidget(show=True, title=self.name)
@@ -249,6 +249,7 @@ class OnlinePlottingForPS(Process):
         :param dict_for_update:
         :return:
         """
+        dt = time.time()
         self.trial_index = dict_for_update["trial_index"]
         self.data.moving_average[self.trial_index] = dict_for_update["moving_average"]
 
@@ -268,12 +269,18 @@ class OnlinePlottingForPS(Process):
             print("unknown option")
             return
 
-        self.data.probability_left = dict_for_update["block_probability_left"]
-        self.data.probability_right = dict_for_update["block_probability_right"]
+        self.data.probability_left[self.trial_index] = dict_for_update[
+            "block_probability_left"
+        ]
+        self.data.probability_right[self.trial_index] = dict_for_update[
+            "block_probability_right"
+        ]
 
+        print("data update", round(time.time() - dt, 3))
         self.update_plots()
 
     def update_plots(self):
+        dt = time.time()
         pt = make_new_point(
             x=self.trial_index,
             y=self.data.current_trial_outcome_point["y"],
@@ -290,8 +297,11 @@ class OnlinePlottingForPS(Process):
             ],
             yRange=[-1.5, 1.5],  # todo: move up as param
         )
+        print("data plot1", round(time.time() - dt, 3))
         self.line_probability_left.setData(self.data.probability_left)
         self.line_probability_right.setData(self.data.probability_right)
+        print("data plot2", round(time.time() - dt, 3))
+        self.app.processEvents()
 
     def update_simulation(self):
         # Top row: trial outcomes points and moving average

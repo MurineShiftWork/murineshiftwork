@@ -57,10 +57,10 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):
         data_queue.put(
             {
                 "trial_index": task_control.trial_index,
-                "moving_average": task_control.moving_average,
+                "moving_average": task_control.moving_average.avg,
                 "block_probability_left": task_control.probability_left,
                 "block_probability_right": task_control.probability_right,
-                "choice": 0,  # fixme: requires debugging on setup
+                "choice": -1,  # fixme: requires debugging on setup
                 "rewarded": 1,  # fixme: requires debugging on setup
             }
         )
