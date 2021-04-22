@@ -38,7 +38,7 @@ class TaskControl(object):
     min_trials_post_criterion = 5
     trials_post_criterion = 0
 
-    criterion_contrast_blocks = 0.4
+    criterion_contrast_blocks = 0.5
     criterion_neutral_blocks = 0.2
     criterion_tau = 5
     criterion_block_switch_reached = False
@@ -56,6 +56,9 @@ class TaskControl(object):
     next_trial_choice_outcome_left = 0
     next_trial_choice_outcome_right = 0
     next_trial_give_stop_signal = 0
+
+    last_choice = 0
+    last_rewarded = -1
 
     def __init__(self, bpod=None, save_path_data=None):
         super(TaskControl, self).__init__()
@@ -156,6 +159,9 @@ class TaskControl(object):
             self.next_trial_choice_outcome_right and self.last_choice == 1
         ):
             self.reward_number += 1
+            self.last_rewarded = 1
+        else:
+            self.last_rewarded = 0
 
         trial_data["info"] = {
             "trial_index": trial_index,
@@ -213,8 +219,6 @@ class TaskControl(object):
             or self.trials_post_criterion >= self.min_trials_post_criterion
         ):
             self.switch_block()
-
-        # TODO: write online plotting functions: self.redraw_figure()
 
     def draw_next_trial(self):
         if self.block_probability_index is None:
