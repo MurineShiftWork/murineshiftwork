@@ -34,7 +34,7 @@ class TaskControl(object):
 
     # Block switches -- length range: 10 - 20+
     min_block_length = 5
-    mean_neutral_block_length = 15  # 10 trials difference to min block length
+    mean_neutral_block_length = 20  # 10 trials difference to min block length
     min_trials_post_criterion = 5
     trials_post_criterion = 0
 
