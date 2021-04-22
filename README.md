@@ -5,30 +5,28 @@
 ## TODO
 
 - Architecture
-    - [ ] Make online plotting with pyqtgraph QApplication wrapper. Create/close bpod outside, then hand Application as input arg.
+    - [x] Make online plotting with pyqtgraph QApplication wrapper. Create/close bpod outside, then hand Application as input arg.
 
 
-- PS task
+- Tasks & settings
     - [x] Basic task structure for PS
     - [x] sound output plays with sounddevice package and TTL is received correctly by bpod BNC input channel
     - [x] task settings
     - [x] session params
     - [x] trial params
-    - [ ] online plots
-    - [ ] main tasks: PS without stopping, PS and stopping
-        - blocks of 10/50/90 with block switch deterministic 40-60 trials or with criterion on nr correct rolling mean
+    - [x] general online plot for PS
+    - Main tasks: PS without stopping, PS and stopping
+        - [x] blocks of 10/50/90 with block switch ~~deterministic 40-60 trials or~~ with criterion on nr correct rolling mean
         - stop signal: auditory cue after center init and pulled out
         - punish: stop signal ingnored and side in -> air puff
         - opto stim: init, move2side, choice, ?
-    - [ ] Other paradigms
-        - Open field: ttl sequence + regular synch timestamps. maybe useful in future
-        - Optotagging: excitatory, inhibitory -> several presets for standard opsins
-    - [ ] training paradigms
-        - habituation: center init, side light, reward either side
-        - training 'lenient': center init, side light, one side rewarded, but no timeout on wrong side chosen first
-        - training 'strict' == task deterministic: center inint, side light, one side rewarded and only first choice rewarded
-    - [ ] Additional parameters and task considerations
-        - ..
+    - Other paradigms
+        - [ ] Open field: ttl sequence + regular synch timestamps. maybe useful in future
+        - [ ] Optotagging: excitatory, inhibitory -> several presets for standard opsins
+    - ~~training paradigms~~
+        - ~~habituation: center init, side light, reward either side~~
+        - ~~training 'lenient': center init, side light, one side rewarded, but no timeout on wrong side chosen first~~
+        - ~~training 'strict' == task deterministic: center inint, side light, one side rewarded and only first choice rewarded~~
 
 
 - hardware
@@ -41,7 +39,7 @@
 - test and maintenance modules
     - [x] Water calibration -> quick procedure along lines of matlab bpod repo and iblrig
     - [x] sound/noise preparation functions -> similar to iblrig. only taken main sound generator
-
+    - [ ] parameter GUI with pyqtgraph parameter tree from dict/list style object -> make converter from configobj to parametertree and back
 
 ## Features
 - Behavioural protocols
@@ -71,7 +69,7 @@ conda activate py36
 ```
 pip install -e .
 ```
-3) Add users, boards, experiments, etc. to the main project from the PyBpod GUI.
+3) Add users, boards, experiments, etc. to the main project and update git repo: both done via install task.
 
 ## Usage
 Run the script `start_this_pybpod.py` to open the GUI and trigger the automatic update script
