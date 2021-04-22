@@ -249,7 +249,6 @@ class OnlinePlottingForPS(Process):
         :param dict_for_update:
         :return:
         """
-        dt = time.time()
         self.trial_index = dict_for_update["trial_index"]
         self.data.moving_average[self.trial_index] = dict_for_update["moving_average"]
 
@@ -276,11 +275,9 @@ class OnlinePlottingForPS(Process):
             "block_probability_right"
         ]
 
-        print("data update", round(time.time() - dt, 3))
         self.update_plots()
 
     def update_plots(self):
-        dt = time.time()
         pt = make_new_point(
             x=self.trial_index,
             y=self.data.current_trial_outcome_point["y"],
@@ -297,10 +294,8 @@ class OnlinePlottingForPS(Process):
             ],
             yRange=[-1.5, 1.5],  # todo: move up as param
         )
-        print("data plot1", round(time.time() - dt, 3))
         self.line_probability_left.setData(self.data.probability_left)
         self.line_probability_right.setData(self.data.probability_right)
-        print("data plot2", round(time.time() - dt, 3))
         self.app.processEvents()
 
     def update_simulation(self):

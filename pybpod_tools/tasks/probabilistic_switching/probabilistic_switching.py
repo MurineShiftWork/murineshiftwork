@@ -26,7 +26,6 @@ else:
     data_queue = None
     kill_queue = None
 
-
 bpod = Bpod()
 task_control = TaskControl(bpod=bpod)
 bpod.softcode_handler_function = task_control.softcode_handler
@@ -53,15 +52,15 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):
 
     trial_data = bpod.session.current_trial.export()
     task_control.update(trial_index=trial_index, trial_data=trial_data)
-    if show_plots:
+    if show_plots and trial_index > 0:
         data_queue.put(
             {
                 "trial_index": task_control.trial_index,
                 "moving_average": task_control.moving_average.avg,
                 "block_probability_left": task_control.probability_left,
                 "block_probability_right": task_control.probability_right,
-                "choice": -1,  # fixme: requires debugging on setup
-                "rewarded": 1,  # fixme: requires debugging on setup
+                "choice": task_control.last_choice,
+                "rewarded": task_control.last_rewarded,
             }
         )
 
