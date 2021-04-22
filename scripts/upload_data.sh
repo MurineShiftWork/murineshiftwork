@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # 1) mkdir /mnt/winstor
 # 2) mkdir /home/$USER/credentials
