@@ -13,6 +13,7 @@ setup(
     install_requires=[
         "opencv-python",
         "PyQtWebEngine",
+        "pyqtgraph",
         "numpy",
         "scipy",
         "pandas",
@@ -24,5 +25,6 @@ setup(
         "tqdm",
         "gitpython",
         "rich",
+        "myterial",
     ],
 )

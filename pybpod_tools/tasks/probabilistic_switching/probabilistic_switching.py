@@ -1,13 +1,31 @@
 import logging
+from multiprocessing import Queue
 
 import numpy as np
 from pybpodapi.protocol import Bpod
 
 from pybpod_tools.tasks.probabilistic_switching import task_settings
+from pybpod_tools.tasks.probabilistic_switching.online_plotting import (
+    OnlinePlottingForPS,
+)
 from pybpod_tools.tasks.probabilistic_switching.task_objects import TaskControl
 from pybpod_tools.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
+
+show_plots = True
+if show_plots:
+    data_queue = Queue()
+    kill_queue = Queue()
+
+    plotting_process = OnlinePlottingForPS(
+        is_simulation=False, data_queue=data_queue, kill_queue=kill_queue
+    )
+    plotting_process.start()
+else:
+    data_queue = None
+    kill_queue = None
+
 
 bpod = Bpod()
 task_control = TaskControl(bpod=bpod)
@@ -35,9 +53,23 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):
 
     trial_data = bpod.session.current_trial.export()
     task_control.update(trial_index=trial_index, trial_data=trial_data)
+    if show_plots:
+        data_queue.put(
+            {
+                "trial_index": task_control.trial_index,
+                "moving_average": task_control.moving_average,
+                "block_probability_left": task_control.probability_left,
+                "block_probability_right": task_control.probability_right,
+                "choice": 0,  # fixme: requires debugging on setup
+                "rewarded": 1,  # fixme: requires debugging on setup
+            }
+        )
 
 task_control.save()
 bpod.close()
+
+if show_plots:
+    kill_queue.put(True)
 
 if __name__ == "__main__":
     print("main")
