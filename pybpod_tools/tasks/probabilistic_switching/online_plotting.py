@@ -261,8 +261,8 @@ class OnlinePlottingForPS(Process):
         self.win.move(pos)
         self.win.resize(new_w, new_h)
         self.win.setWindowTitle(window_title)
-        self.win.setFixedWidth(self.win.width())
-        self.win.setFixedHeight(self.win.height())
+        # self.win.setFixedWidth(self.win.width())
+        # self.win.setFixedHeight(self.win.height())
 
     def update_data(self, dict_for_update=None):
         """Expected data fields in dict:

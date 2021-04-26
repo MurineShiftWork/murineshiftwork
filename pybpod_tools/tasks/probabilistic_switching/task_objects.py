@@ -168,6 +168,10 @@ class TaskControl(object):
             "block_trial_number": self.block_trial_number,
             "block_number": self.block_number,
             "moving_average": self.moving_average(),
+            "choice": self.last_choice,
+            "rewarded": self.last_rewarded,  # fixme: this only works as long as no punishments introduced
+            "reward_available_left": self.next_trial_choice_outcome_left,  # fixme: same: only for non-punish/non-stop task
+            "reward_available_right": self.next_trial_choice_outcome_right,  # fixme: same
             "trials_post_criterion": self.trials_post_criterion,
             "criterion_block_switch_reached": self.criterion_block_switch_reached,
             "trial_type": "task",
