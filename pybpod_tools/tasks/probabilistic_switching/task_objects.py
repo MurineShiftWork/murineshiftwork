@@ -136,15 +136,16 @@ class TaskControl(object):
             "pulse"
         ):  # IF TTL TRIAL
             self.switch_block()
-            self.trial_data.append(
-                trial_data.update({"trial_index": trial_index, "trial_type": "ttl"})
-            )
-            return
+            trial_data["info"] = {"trial_index": trial_index, "trial_type": "ttl"}
+            return self.trial_data.append(trial_data)
 
         # IF TASK TRIAL
         self.block_trial_number += 1
+
         times_left = trial_data["States timestamps"]["choice_left"][0]
+
         times_right = trial_data["States timestamps"]["choice_right"][0]
+
         if not np.isnan(np.array(times_left)).any():
             self.last_choice = -1
         elif not np.isnan(np.array(times_right)).any():
@@ -224,7 +225,92 @@ class TaskControl(object):
         ):
             self.switch_block()
 
+    def make_forced_exploration_sma(self, next_choice_option=None):
+        if next_choice_option < 0:  # LEFT
+            left_valve = task_settings.HARDWARE_VALVES_FOR_WATER[0]
+            output_action_only_valve = [(Bpod.OutputChannels.Valve, left_valve)]
+            valve_outcome = self.valve_times_dict[left_valve]
+            port_nr = left_valve
+            side_name = "left"
+        else:
+            right_valve = task_settings.HARDWARE_VALVES_FOR_WATER[1]
+            output_action_only_valve = [(Bpod.OutputChannels.Valve, right_valve)]
+            valve_outcome = self.valve_times_dict[right_valve]
+            port_nr = right_valve
+            side_name = "right"
+
+        output_actions__side_ready = [
+            (
+                eval(f"Bpod.OutputChannels.PWM{port_nr}"),
+                task_settings.HARDWARE_PORT_LIGHT_INTENSITY,
+            ),
+        ]
+        state_name_choice = f"choice_{side_name}"
+        state_change_condition = {
+            eval(f"Bpod.Events.Port{port_nr}In"): state_name_choice
+        }
+
+        logging.warning(
+            f"{self.trial_index} -- Making forced choice to side: {next_choice_option}"
+        )
+        sma = StateMachine(self.bpod)
+        # TTL
+        sma = add_trial_onset_ttl(
+            sma=sma,
+            ttl_pulse_duration=task_settings.TTL_PULSE_DURATION,
+            bnc_channel=eval(
+                f"Bpod.OutputChannels.BNC{task_settings.HARDWARE_BNC_TRIAL_START}"
+            ),
+            next_state="side_ready",
+        )
+        # WAITING
+        sma.add_state(
+            state_name="side_ready",
+            state_timer=20,
+            state_change_conditions={**state_change_condition, Bpod.Events.Tup: "exit"},
+            output_actions=output_actions__side_ready + [],
+        )
+        sma.add_state(
+            state_name="choice_left",
+            state_timer=valve_outcome,
+            state_change_conditions={Bpod.Events.Tup: "final"},
+            output_actions=output_action_only_valve + [],
+        )
+        sma.add_state(
+            state_name="choice_right",
+            state_timer=valve_outcome,
+            state_change_conditions={Bpod.Events.Tup: "final"},
+            output_actions=output_action_only_valve + [],
+        )
+
+        sma.add_state(
+            state_name="final",
+            state_timer=task_settings.STATE_DURATION_FINAL,
+            state_change_conditions={
+                Bpod.Events.Port1Out: "exit",
+                Bpod.Events.Port2Out: "exit",
+                Bpod.Events.Port3Out: "exit",
+                Bpod.Events.Tup: "exit",
+            },
+            output_actions=[],
+        )
+
+        return sma
+
     def draw_next_trial(self):
+        if self.block_trial_number >= 20:
+            key = "choice"
+            n_back_crit = 20
+            td_info = [td["info"] for td in self.trial_data if td and key in td["info"]]
+            choice_vector = [c[key] for c in td_info if key in c.keys()]
+            unique_choices = np.unique(choice_vector[-n_back_crit:])
+            unique_choices_n_back = unique_choices.__len__()
+
+            if unique_choices_n_back == 1:
+                return self.make_forced_exploration_sma(
+                    next_choice_option=-1 * unique_choices[-1]
+                )
+
         if self.block_probability_index is None:
             self.switch_block()
 
