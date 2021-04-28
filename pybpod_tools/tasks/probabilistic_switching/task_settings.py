@@ -35,7 +35,11 @@ BLOCK_SWITCH_TO_DIFFERENT = True  # ALWAYS SWITCH TO ANOTHER TYPE OF BLOCK. NO R
 
 N_MAX_TRIALS = 1500
 
-DELAY_UNTIL_CENTER_INIT = 0.100  # SECONDS
+DELAY_UNTIL_CENTER_INIT = [
+    0.140,
+    0.180,
+    0.05,
+]  # SECONDS, can be float->fixed or list(float, float, float[optional])->range[low,high,step]
 DELAY_UNTIL_SIDE_TIMEOUT = 10  # SECONDS
 DELAY_UNTIL_SIDE_TIMEOUT_FOR_STOPPING = 1  # side timeout in case it's a stop trial
 STATE_DURATION_FINAL = 1  # DELAY TO ALLOW POKE OUT

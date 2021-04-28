@@ -387,6 +387,26 @@ class TaskControl(object):
                     ),
                 ]
 
+        initiation_hold_time = task_settings.DELAY_UNTIL_CENTER_INIT
+        if isinstance(initiation_hold_time, list):
+            initiation_hold_time = np.asarray(initiation_hold_time)
+            if len(initiation_hold_time) > 2:
+                step = initiation_hold_time[2]
+            else:
+                step = 1
+
+            hold_time_range = np.abs(np.diff(initiation_hold_time[:2]))
+            available_hold_times = np.linspace(
+                initiation_hold_time[0],
+                initiation_hold_time[1],
+                np.round(hold_time_range / step) + 1,
+                endpoint=True,
+            )
+            initiation_hold_time = available_hold_times[
+                np.random.randint(0, len(available_hold_times))
+            ]
+            print(f"-- Drawn new initiation hold time of {initiation_hold_time}s.")
+
         # SMA
         sma = StateMachine(bpod=self.bpod)
 
@@ -409,7 +429,7 @@ class TaskControl(object):
         # INIT long enough -> proceed. pulled out too early -> back to center_ready
         sma.add_state(
             state_name="center_initiating",
-            state_timer=task_settings.DELAY_UNTIL_CENTER_INIT,
+            state_timer=initiation_hold_time,
             state_change_conditions={
                 Bpod.Events.Port2Out: "center_ready",  # ABORTED
                 Bpod.Events.Tup: "side_ready",
