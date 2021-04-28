@@ -136,7 +136,7 @@ class TaskControl(object):
             "pulse"
         ):  # IF TTL TRIAL
             self.switch_block()
-            trial_data["info"] = {"trial_index": trial_index, "trial_type": "ttl"}
+            trial_data["info"] = {"trial_type": "ttl", "trial_index": self.trial_index}
             return self.trial_data.append(trial_data)
 
         # IF TASK TRIAL
@@ -165,9 +165,12 @@ class TaskControl(object):
             self.last_rewarded = 0
 
         trial_data["info"] = {
+            "trial_type": "task",
             "trial_index": trial_index,
             "block_trial_number": self.block_trial_number,
             "block_number": self.block_number,
+            "block_type_index": self.block_probability_index,
+            "block_type_values": self.probabilities[self.block_probability_index],
             "moving_average": self.moving_average(),
             "choice": self.last_choice,
             "rewarded": self.last_rewarded,  # fixme: this only works as long as no punishments introduced
@@ -175,8 +178,11 @@ class TaskControl(object):
             "reward_available_right": self.next_trial_choice_outcome_right,  # fixme: same
             "trials_post_criterion": self.trials_post_criterion,
             "criterion_block_switch_reached": self.criterion_block_switch_reached,
-            "trial_type": "task",
         }
+        trial_data["analysis"] = {}
+        # TODO: add analysis variables: init hold time, time from init to withdrawal, travel time outbound,
+        #  travel time inbound from last trial, nr failed init attempts
+
         self.trial_data.append(trial_data)
 
         if self.trial_index < 1:
