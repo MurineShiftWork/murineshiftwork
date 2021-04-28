@@ -1,5 +1,6 @@
 import logging
 from multiprocessing import Queue
+from pathlib import Path
 
 import numpy as np
 from pybpodapi.protocol import Bpod
@@ -13,20 +14,25 @@ from pybpod_tools.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
 
+
+bpod = Bpod()
+
 show_plots = True
 if show_plots:
     data_queue = Queue()
     kill_queue = Queue()
 
     plotting_process = OnlinePlottingForPS(
-        is_simulation=False, data_queue=data_queue, kill_queue=kill_queue
+        session_name=bpod.session._path,
+        is_simulation=False,
+        data_queue=data_queue,
+        kill_queue=kill_queue,
     )
     plotting_process.start()
 else:
     data_queue = None
     kill_queue = None
 
-bpod = Bpod()
 task_control = TaskControl(bpod=bpod)
 bpod.softcode_handler_function = task_control.softcode_handler
 

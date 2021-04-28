@@ -85,6 +85,7 @@ class Data:
 class OnlinePlottingForPS(Process):
     # daemon = True
 
+    session_name = "unnamed session"
     is_simulation = False
     data_queue = None
     kill_queue = None
@@ -100,6 +101,7 @@ class OnlinePlottingForPS(Process):
 
     def __init__(
         self,
+        session_name=None,
         is_simulation=False,
         data_queue=None,
         kill_queue=None,
@@ -113,6 +115,7 @@ class OnlinePlottingForPS(Process):
         if not is_simulation and not data_queue:
             raise ValueError("Choose either simulation or provide data_queue")
 
+        self.session_name = session_name if session_name else self.session_name
         self.is_simulation = is_simulation
         self.data_queue = data_queue
         self.kill_queue = kill_queue
@@ -127,7 +130,7 @@ class OnlinePlottingForPS(Process):
 
         self.app = pg.mkQApp(self.name)
         self.win = pg.GraphicsLayoutWidget(show=True, title=self.name)
-        self.update_window_properties()
+        self.update_window_properties(window_title=self.session_name)
 
         # Top row: trial outcomes
         self.plot_to = self.win.addPlot(name="top_row")
