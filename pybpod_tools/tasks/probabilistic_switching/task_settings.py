@@ -38,7 +38,7 @@ N_MAX_TRIALS = 1500
 DELAY_UNTIL_CENTER_INIT = [
     0.140,
     0.180,
-    0.05,
+    0.005,  # 5ms steps
 ]  # SECONDS, can be float->fixed or list(float, float, float[optional])->range[low,high,step]
 DELAY_UNTIL_SIDE_TIMEOUT = 10  # SECONDS
 DELAY_UNTIL_SIDE_TIMEOUT_FOR_STOPPING = 1  # side timeout in case it's a stop trial

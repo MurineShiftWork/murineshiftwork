@@ -397,17 +397,20 @@ class TaskControl(object):
         if isinstance(initiation_hold_time, list):
             initiation_hold_time = np.asarray(initiation_hold_time)
             if len(initiation_hold_time) > 2:
-                step = initiation_hold_time[2]
+                step = initiation_hold_time[2] * 1000  # sec to msec
             else:
                 step = 1
 
-            hold_time_range = np.abs(np.diff(initiation_hold_time[:2]))
+            hold_time_range = (
+                np.abs(np.diff(initiation_hold_time[:2])) * 1000
+            )  # sec to msec
             available_hold_times = np.linspace(
                 initiation_hold_time[0],
                 initiation_hold_time[1],
-                np.round(hold_time_range / step) + 1,
+                int(np.round(hold_time_range / step)) + 1,
                 endpoint=True,
             )
+            available_hold_times = np.round(available_hold_times, 3)  # ms rounding
             initiation_hold_time = available_hold_times[
                 np.random.randint(0, len(available_hold_times))
             ]
