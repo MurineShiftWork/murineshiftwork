@@ -11,4 +11,9 @@ SUBJECTS = [
     "LBR__c344856_m1113616__R",
     "LBR__c344856_m1113617__LR",
     "LBR__c344856_m1113618__RR",
+    # Wild type cohort for STOP signal task DEBUGGING
+    "LBR__c344883_m1097113__no__stop",
+    "LBR__c344883_m1097114__L__stop",
+    "LBR__c344883_m1097115__R__stop",
+    "LBR__c344883_m1097116__LR__stop",
 ]
