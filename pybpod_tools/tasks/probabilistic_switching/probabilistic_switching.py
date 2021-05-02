@@ -22,8 +22,10 @@ if show_plots:
     data_queue = Queue()
     kill_queue = Queue()
 
+    from confapp import conf as confsett
+
     plotting_process = OnlinePlottingForPS(
-        session_name=bpod.session._path,
+        session_name=f"{eval(confsett.PYBPOD_SUBJECTS[0])[0]} @ {confsett.PYBPOD_SESSION}",
         is_simulation=False,
         data_queue=data_queue,
         kill_queue=kill_queue,
