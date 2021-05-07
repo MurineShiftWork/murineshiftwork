@@ -190,15 +190,15 @@ class TaskControl(object):
 
         item_end = "| "
         print(
-            f"[Session time: {round(trial_data['Trial start timestamp']/60, 1): >4} min] {item_end}"
-            f"Post trial #{self.trial_index: >4} {item_end}"
-            f"Block #{self.block_number:>2} {item_end}"
-            f"Block trial #{self.block_trial_number:>4} {item_end}"
-            f"Last choice: {self.last_choice:>3}. {item_end}"
-            f"Preference: {np.round(self.moving_average(),2):>5}. {item_end}"
-            f"Rewards: {self.reward_number:>4} "
+            f"[T={round(trial_data['Trial start timestamp']/60, 1): >4} min] {item_end}"
+            f"Trial#{self.trial_index: >4} {item_end}"
+            f"Block#{self.block_number:>2} {item_end}"
+            f"BlockTrial#{self.block_trial_number:>4} {item_end}"
+            f"Choice: {self.last_choice:>3}. {item_end}"
+            f"Pref: {np.round(self.moving_average(),2):>5}. {item_end}"
+            f"Reward: {self.reward_number:>4} "
             f"({round(task_settings.REWARD_AMOUNT_UL*self.reward_number, 2):>4}uL). {item_end}"
-            f"Post criterion: {self.trials_post_criterion:>2}"
+            f"Crit: {self.trials_post_criterion:>2}"
         )
 
         # Check for block criterion
