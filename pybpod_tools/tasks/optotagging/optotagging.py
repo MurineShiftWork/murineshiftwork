@@ -19,6 +19,8 @@ stimulation = Stimulation(
 )
 
 for trial_index in np.arange(task_settings.N_MAX_TRIALS):
+    print(f"Executing trial {trial_index}")
+
     if trial_index == 0:
         sma = make_protocol_identifier_ttl_sequence(
             bpod=bpod,
@@ -31,7 +33,7 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):
         sma = add_trial_onset_ttl(
             sma=sma,
             ttl_pulse_duration=0.001,
-            bnc_channel=Bpod.OutputChannels.BNC2,
+            bnc_channel=[Bpod.OutputChannels.BNC1, Bpod.OutputChannels.BNC2],
             next_state="iti",
         )
 

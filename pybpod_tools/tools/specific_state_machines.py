@@ -68,17 +68,24 @@ def add_trial_onset_ttl(
     bnc_channel=Bpod.OutputChannels.BNC2,
     next_state=None,
 ):
+    if isinstance(bnc_channel, str):
+        bnc_channel = [bnc_channel]
+    elif isinstance(bnc_channel, list) or isinstance(bnc_channel, tuple):
+        pass  # this is accepted
+    else:
+        raise ValueError("bnc_channel variable can only be list, tuple or str.")
+
     sma.add_state(
         state_name="ttl_on",
         state_timer=ttl_pulse_duration,
         state_change_conditions={Bpod.Events.Tup: "ttl_off"},
-        output_actions=[(bnc_channel, 1)],
+        output_actions=[(ch, 1) for ch in bnc_channel],
     )
     sma.add_state(
         state_name="ttl_off",
         state_timer=0,
         state_change_conditions={Bpod.Events.Tup: next_state},
-        output_actions=[(bnc_channel, 0)],
+        output_actions=[(ch, 0) for ch in bnc_channel],
     )
     return sma
 
