@@ -13,7 +13,7 @@
     - [x] sound output plays with sounddevice package and TTL is received correctly by bpod BNC input channel
     - [x] task settings
     - [x] session params
-    - [x] trial params
+    - [ ] trial params FROM SETTINGS TO PARADIGM are used from common variable set. At the moment, not all variables are set in settings, but some in task objects!
     - [x] general online plot for PS
     - Main tasks: PS without stopping, PS and stopping
         - [x] blocks of 10/50/90 with block switch ~~deterministic 40-60 trials or~~ with criterion on nr correct rolling mean
