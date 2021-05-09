@@ -3,7 +3,7 @@ from pathlib import Path
 from pkgutil import iter_modules
 
 
-def unpack_input_dict(default_dict, overwrite_dict):
+def unpack_input_dict(overwrite_dict, default_dict):
     for k, v in overwrite_dict.items():
         default_dict[k] = v
     return default_dict

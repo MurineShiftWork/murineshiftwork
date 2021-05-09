@@ -64,6 +64,7 @@ def make_protocol_identifier_ttl_sequence(
 
 def add_trial_onset_ttl(
     sma=None,
+    state_name_tuple=("ttl_on", "ttl_off"),
     ttl_pulse_duration=None,
     bnc_channel=Bpod.OutputChannels.BNC2,
     next_state=None,
@@ -76,13 +77,13 @@ def add_trial_onset_ttl(
         raise ValueError("bnc_channel variable can only be list, tuple or str.")
 
     sma.add_state(
-        state_name="ttl_on",
+        state_name=state_name_tuple[0],
         state_timer=ttl_pulse_duration,
-        state_change_conditions={Bpod.Events.Tup: "ttl_off"},
+        state_change_conditions={Bpod.Events.Tup: state_name_tuple[1]},
         output_actions=[(ch, 1) for ch in bnc_channel],
     )
     sma.add_state(
-        state_name="ttl_off",
+        state_name=state_name_tuple[1],
         state_timer=0,
         state_change_conditions={Bpod.Events.Tup: next_state},
         output_actions=[(ch, 0) for ch in bnc_channel],
