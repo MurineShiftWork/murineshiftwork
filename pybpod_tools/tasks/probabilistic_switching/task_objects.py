@@ -554,3 +554,9 @@ class TaskControl(object):
         # TODO: write analysis module to save data preprocessed
         df = pd.DataFrame(self.trial_data)
         df.to_pickle(str(self.save_path_data) + ".pkl")
+
+    def __del__(self):
+        self.save()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.save()
