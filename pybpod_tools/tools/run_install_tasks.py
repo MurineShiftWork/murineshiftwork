@@ -172,7 +172,7 @@ def run_check_install(overwrite_settings=True, overwrite_project_items=False):
         logging.info(f"Creating: {exp_name}")
         exp = p.create_experiment()
         exp.name = exp_name
-        exp.task = [t for t in p.tasks if "training" in t.name][0]
+        exp.task = [t for t in p.tasks if "flush" in t.name][0]
         setup = exp.create_setup()
         setup.name = "MAIN_setup"
         setup.board = p.boards[0]
