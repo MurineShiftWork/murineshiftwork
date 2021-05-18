@@ -65,11 +65,32 @@
 conda create -n py36 python=3.6 numpy pandas matplotlib scipy
 conda activate py36
 ```
-2) Go to repository and run:
+
+2) Setup up additional packages and sound
+    a) Packages for bpod and pybpod gui to work
+   ```bash
+    # https://sites.google.com/site/bpoddocumentation/installing-bpod/ubuntu14
+    sudo apt-get install linux-lowlatency
+
+    #https://stackoverflow.com/questions/49333582/portaudio-library-not-found-by-sounddevice
+    sudo apt-get install libportaudio2
+
+    #https://stackoverflow.com/questions/60042568/this-application-failed-to-start-because-no-qt-platform-plugin-could-be-initiali
+    sudo apt-get install qt5-default
+   ```
+
+    b) Sound settings
+   Open `alsamixer` in the terminal and select sound device with `F6`, then set all outputs, particularly the gain to maximum values
+
+
+3) Install this package with:
 ```
 pip install -e .
 ```
+
+
 3) Add users, boards, experiments, etc. to the main project and update git repo: both done via install task.
+```NOTE: this is done via install_tasks script now.```
 
 ## Usage
 Run the script `start_this_pybpod.py` to open the GUI and trigger the automatic update script
