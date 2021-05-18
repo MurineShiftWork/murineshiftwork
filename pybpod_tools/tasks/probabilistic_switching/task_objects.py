@@ -33,12 +33,12 @@ class TaskControl(object):
     reward_number = 0
 
     # Block switches -- length range: 10 - 20+
-    min_block_length = 5
-    mean_neutral_block_length = 20  # 10 trials difference to min block length
+    min_block_length = 10
+    mean_neutral_block_length = 25  # 10 trials difference to min block length
     min_trials_post_criterion = 5
     trials_post_criterion = 0
 
-    criterion_contrast_blocks = 0.5
+    criterion_contrast_blocks = 0.6
     criterion_neutral_blocks = 0.2
     criterion_tau = 5
     criterion_block_switch_reached = False
@@ -190,15 +190,15 @@ class TaskControl(object):
 
         item_end = "| "
         print(
-            f"[Session time: {round(trial_data['Trial start timestamp']/60, 1): >4} min] {item_end}"
-            f"Post trial #{self.trial_index: >4} {item_end}"
-            f"Block #{self.block_number:>2} {item_end}"
-            f"Block trial #{self.block_trial_number:>4} {item_end}"
-            f"Last choice: {self.last_choice:>3}. {item_end}"
-            f"Preference: {np.round(self.moving_average(),2):>5}. {item_end}"
-            f"Rewards: {self.reward_number:>4} "
+            f"[T={round(trial_data['Trial start timestamp']/60, 1): >4} min] {item_end}"
+            f"Trial#{self.trial_index: >4} {item_end}"
+            f"Block#{self.block_number:>2} {item_end}"
+            f"BlockTrial#{self.block_trial_number:>4} {item_end}"
+            f"Choice: {self.last_choice:>3}. {item_end}"
+            f"Pref: {np.round(self.moving_average(),2):>5}. {item_end}"
+            f"Reward: {self.reward_number:>4} "
             f"({round(task_settings.REWARD_AMOUNT_UL*self.reward_number, 2):>4}uL). {item_end}"
-            f"Post criterion: {self.trials_post_criterion:>2}"
+            f"Crit: {self.trials_post_criterion:>2}"
         )
 
         # Check for block criterion
@@ -554,3 +554,9 @@ class TaskControl(object):
         # TODO: write analysis module to save data preprocessed
         df = pd.DataFrame(self.trial_data)
         df.to_pickle(str(self.save_path_data) + ".pkl")
+
+    def __del__(self):
+        self.save()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.save()

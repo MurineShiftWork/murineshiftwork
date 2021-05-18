@@ -2,30 +2,32 @@ import logging
 
 import numpy as np
 from pybpodapi.protocol import Bpod
-from pybpodapi.state_machine import StateMachine
+from pybpodapi.protocol import StateMachine
 
 from pybpod_tools.stimulation import Stimulation
+from pybpod_tools.tasks.optotagging import task_settings
 from pybpod_tools.tools.specific_state_machines import add_trial_onset_ttl
 from pybpod_tools.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
 
 
-N_MAX_TRIALS = 1500
-TTL_IDENTIFIER_SEQUENCE = None  # FIXME
-TRIGGER_ITI = 5  # seconds
-
 bpod = Bpod()
 stimulation = Stimulation(
-    port=""
-)  # TODO: port + program to send pulse train of specified make an duration -> adjust ITI
+    port=task_settings.PORT,
+    in_dict=task_settings.selected_preset,
+)
+stimulation.connect()
+pulse_train_duration = task_settings.selected_preset["pulse_train_duration"]
 
-for trial_index in np.arange(N_MAX_TRIALS):
+for trial_index in np.arange(task_settings.N_MAX_TRIALS):
+    print(f"Executing trial {trial_index}")
+
     if trial_index == 0:
         sma = make_protocol_identifier_ttl_sequence(
             bpod=bpod,
-            sequence=TTL_IDENTIFIER_SEQUENCE,
-            output_chanel_pulse=Bpod.OutputChannels.BNC2,
+            sequence=task_settings.TTL_IDENTIFIER_SEQUENCE,
+            output_chanel_pulse=Bpod.OutputChannels.BNC1,
         )
     else:
         sma = StateMachine(bpod=bpod)
@@ -33,13 +35,21 @@ for trial_index in np.arange(N_MAX_TRIALS):
         sma = add_trial_onset_ttl(
             sma=sma,
             ttl_pulse_duration=0.001,
+            bnc_channel=Bpod.OutputChannels.BNC1,
+            next_state="pulses",
+        )
+
+        sma = add_trial_onset_ttl(
+            sma=sma,
+            state_name_tuple=("pulses", "pulse_off"),
+            ttl_pulse_duration=pulse_train_duration,  # 0.001,
             bnc_channel=Bpod.OutputChannels.BNC2,
             next_state="iti",
         )
 
         sma.add_state(
             state_name="iti",
-            state_timer=TRIGGER_ITI,
+            state_timer=task_settings.TRIGGER_ITI,  # + pulse_train_duration,
             state_change_conditions={Bpod.Events.Tup: "exit"},
             output_actions=[],
         )

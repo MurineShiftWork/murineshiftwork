@@ -7,6 +7,14 @@ from pybpod_tools.external.PulsePal3 import PulsePalObject  # Import PulsePalObj
 from pybpod_tools.tools.misc import unpack_input_dict
 
 
+# See: https://sites.google.com/site/pulsepalwiki/user-guide---c-api/c-methods/settriggermode
+allowed_trigger_modes = {
+    "normal": 0,
+    "toggle": 1,
+    "gated": 2,
+}
+
+
 class Stimulation:
     pulsePal = None
     port = ""
@@ -51,14 +59,14 @@ class Stimulation:
         self.port = port
 
         if in_dict:
-            self.in_dict = unpack_input_dict(self.in_dict, in_dict)
+            self.in_dict = unpack_input_dict(in_dict, default_dict=self.in_dict)
 
         # STIMULATION parameters
         for channel in self.in_dict["channels_stimulation"]:
             self._set_channel_params(
                 channel=int(channel),
                 phase1Duration=round(float(self.in_dict["pulse_duration"]), 3),
-                interPulseInterval=round(float(self.in_dict["pulse_frequency"]), 3),
+                pulse_frequency=round(float(self.in_dict["pulse_frequency"]), 3),
                 pulseTrainDuration=float(self.in_dict["pulse_train_duration"]),
                 pulseTrainDelay=round(float(self.in_dict["pulse_train_delay"]), 3),
             )
@@ -70,20 +78,12 @@ class Stimulation:
             self._set_channel_params(
                 channel=int(channel),
                 phase1Duration=0.005,
-                interPulseInterval=1,
+                pulse_frequency=1,
                 pulseTrainDuration=0.005,
                 pulseTrainDelay=0,
             )
 
             self.channels_clock_trigger[int(channel)] = 1
-
-        # SET LINK: TRIGGER -> STIMULATION (no equivalent for clock trigger as is determined by software)
-        # for channel in self.in_dict["trigger_channels_for_stimulation"]:
-        #     exec(
-        #         "self.pulsePal.linkTriggerChannel"
-        #         + str(int(channel))
-        #         + " = self.channels_stimulation"
-        #     )
 
     def _set_channel_params(
         self,
@@ -92,7 +92,7 @@ class Stimulation:
         phase1Voltage=5,
         restingVoltage=0,
         phase1Duration=0.005,
-        interPulseInterval=0.05,
+        pulse_frequency=0.05,
         pulseTrainDuration=3000.0,
         pulseTrainDelay=0.0,
     ):
@@ -106,9 +106,8 @@ class Stimulation:
         # phase1Duration: # pulse width of 5ms
         self.pulsePal.phase1Duration[channel] = round(float(phase1Duration), 3)
         # inter-pulse interval = 0.05s ~ 20 Hz
-        self.pulsePal.interPulseInterval[channel] = round(
-            1 / float(interPulseInterval), 3
-        )
+        ipi = 1 / float(pulse_frequency)
+        self.pulsePal.interPulseInterval[channel] = round(ipi - phase1Duration, 3)
         # total tone_duration of pulses = 3000 sec
         self.pulsePal.pulseTrainDuration[channel] = float(pulseTrainDuration)
         # delay until pulse train starts
@@ -116,23 +115,45 @@ class Stimulation:
 
     def connect(self):
         self.pulsePal.connect(self.port)
+        self.off()
 
-        self.pulsePal.setContinuousLoop(
-            1, 1
-        )  # (channel, mode): channel 1 to continuous / param=0 for non-continuous
+        # (channel, mode): channel 1 to continuous / param=0 for non-continuous
+        for channel in self.in_dict["channels_stimulation"]:
+            self.pulsePal.setContinuousLoop(
+                channel, 1 if self.in_dict["continuous"] else 0
+            )
 
         self.pulsePal.syncAllParams()
-        self.pulsePal.abortPulseTrains()
+        self.off()
+
+        # SET TRIGGER CHANNEL LINKS AND MODES
+        for channel in self.in_dict["trigger_channels_for_stimulation"]:
+            if channel > 0 and channel < 3:
+                link_cmd = f"self.pulsePal.linkTriggerChannel{int(channel)} = {self.channels_stimulation[0]}"
+                print(f"Linking trigger channels: {link_cmd}")
+                exec(link_cmd)
+                if (
+                    "trigger_mode" in self.in_dict
+                    and self.in_dict["trigger_mode"] in allowed_trigger_modes
+                ):
+                    self.pulsePal.triggerMode[channel] = allowed_trigger_modes[
+                        self.in_dict["trigger_mode"]
+                    ]
 
     def on(self):
         if not self.emergency_off_bool:
             self.pulsePal.triggerOutputChannels(*self.channels_stimulation[1:])
             self.channels_currently_active = self.channels_stimulation
             self.time_of_last_activation = time.time()
+        else:
+            raise NotImplementedError(
+                "Module has been turned off with emergency switch."
+            )
 
     def off(self):
-        self.pulsePal.abortPulseTrains()
-        self.channels_currently_active = self.channels_inactive
+        if self.pulsePal is not None:
+            self.pulsePal.abortPulseTrains()
+            self.channels_currently_active = self.channels_inactive
 
     def _check_channels_active_reset(self):
         if (
@@ -152,7 +173,7 @@ class Stimulation:
         self.pulsePal.abortPulseTrains()
 
     def disconnect(self):
-        if self.pulsePal:
+        if self.pulsePal is not None:
             self.pulsePal.abortPulseTrains()
             self.pulsePal.disconnect()
             self.pulsePal = []
@@ -162,7 +183,19 @@ class Stimulation:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.off()
         self.pulsePal.disconnect()
+        print("disconnected")
+
+    def __del__(self):
+        self.off()
+        self.pulsePal.disconnect()
+        print("disconnected")
 
     def emergency_off(self):
         self.off()
         self.emergency_off_bool = True
+
+    def is_open(self):
+        try:
+            return self.pulsePal.serialObject.is_open
+        except BaseException:
+            return False
