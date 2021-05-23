@@ -7,16 +7,16 @@ from pathlib import Path
 import git
 from pybpodgui_api.models.project import Project
 
-import pybpod_tools
-import pybpod_tools.tasks as module_tasks
-from pybpod_tools.config_files import install_settings
-from pybpod_tools.config_files import user_settings
-from pybpod_tools.tools.misc import list_submodules
+import shift_work
+import shift_work.tasks as module_tasks
+from shift_work.config_files import install_settings
+from shift_work.config_files import user_settings
+from shift_work.tools.misc import list_submodules
 
 
 def get_package_dir():
     """First parent is code folder, second is enclosing .git repo."""
-    return Path(pybpod_tools.__file__).parent.parent
+    return Path(shift_work.__file__).parent.parent
 
 
 PROJECT_NAME = "main_project"

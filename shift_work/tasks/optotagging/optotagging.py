@@ -4,10 +4,10 @@ import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
-from pybpod_tools.stimulation import Stimulation
-from pybpod_tools.tasks.optotagging import task_settings
-from pybpod_tools.tools.specific_state_machines import add_trial_onset_ttl
-from pybpod_tools.tools.specific_state_machines import (
+from shift_work.stimulation import Stimulation
+from shift_work.tasks.optotagging import task_settings
+from shift_work.tools.specific_state_machines import add_trial_onset_ttl
+from shift_work.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
 

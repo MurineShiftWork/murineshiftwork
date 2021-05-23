@@ -3,8 +3,8 @@ import time
 
 from numpy import zeros
 
-from pybpod_tools.external.PulsePal3 import PulsePalObject  # Import PulsePalObject
-from pybpod_tools.tools.misc import unpack_input_dict
+from shift_work.external.PulsePal3 import PulsePalObject  # Import PulsePalObject
+from shift_work.tools.misc import unpack_input_dict
 
 
 # See: https://sites.google.com/site/pulsepalwiki/user-guide---c-api/c-methods/settriggermode

@@ -7,10 +7,10 @@ from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 from tqdm import tqdm
 
-from pybpod_tools.tools.calibration_handling import load_water_calibration
-from pybpod_tools.tools.calibration_handling import save_water_calibration
-from pybpod_tools.tools.gui import ask_water_calibration_ready
-from pybpod_tools.tools.gui import ask_water_calibration_weight
+from shift_work.tools.calibration_handling import load_water_calibration
+from shift_work.tools.calibration_handling import save_water_calibration
+from shift_work.tools.gui import ask_water_calibration_ready
+from shift_work.tools.gui import ask_water_calibration_weight
 
 calibration_data = load_water_calibration()
 

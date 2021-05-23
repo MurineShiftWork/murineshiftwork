@@ -102,7 +102,7 @@ class SettingsGUI(object):
 
 
 if __name__ == "__main__":
-    from pybpod_tools.tasks.probabilistic_switching import task_settings
+    from shift_work.tasks.probabilistic_switching import task_settings
 
     s = SettingsGUI(settings=task_settings)
     values = s.show()

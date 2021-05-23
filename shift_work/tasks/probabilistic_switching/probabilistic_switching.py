@@ -1,21 +1,26 @@
 import logging
 from multiprocessing import Queue
-from pathlib import Path
 
 import numpy as np
 from pybpodapi.protocol import Bpod
 
-from pybpod_tools.tasks.probabilistic_switching import task_settings
-from pybpod_tools.tasks.probabilistic_switching.online_plotting import (
+from shift_work.tasks.probabilistic_switching import task_settings
+from shift_work.tasks.probabilistic_switching.online_plotting import (
     OnlinePlottingForPS,
 )
-from pybpod_tools.tasks.probabilistic_switching.task_objects import TaskControl
-from pybpod_tools.tools.specific_state_machines import (
+from shift_work.tasks.probabilistic_switching.task_objects import TaskControl
+from shift_work.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
 
 
 bpod = Bpod()
+
+if task_settings.RECORD_VIDEO:
+    try:
+        from rpi_camera_colony.control.conductor import AcquisitionConductor
+    except ImportError:
+        raise ImportError("")
 
 show_plots = True
 if show_plots:

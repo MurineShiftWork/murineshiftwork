@@ -2,7 +2,7 @@ import logging
 
 from pybpodapi.bpod import Bpod
 
-from pybpod_tools.tools.specific_state_machines import (
+from shift_work.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
 

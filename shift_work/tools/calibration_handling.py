@@ -8,7 +8,7 @@ import pandas as pd
 from rich.console import Console
 from scipy.optimize import curve_fit
 
-from pybpod_tools.config_files import calibration_data_folder
+from shift_work.config_files import calibration_data_folder
 
 calibration_file_sound_delay = calibration_data_folder / "sound_delay.csv"
 calibration_file_sound_delay_fig = calibration_data_folder / "sound_delay.png"
