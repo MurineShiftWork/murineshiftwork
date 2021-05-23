@@ -4,12 +4,12 @@ import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
-from murine_shift_work.stimulation import Stimulation
 from murine_shift_work.tasks.optotagging import task_settings
 from murine_shift_work.tools.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
+from murine_shift_work.tools.stimulation import Stimulation
 
 
 bpod = Bpod()
