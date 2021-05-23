@@ -3,8 +3,8 @@ import time
 
 from numpy import zeros
 
-from shift_work.external.PulsePal3 import PulsePalObject  # Import PulsePalObject
-from shift_work.tools.misc import unpack_input_dict
+from murine_shift_work.external.PulsePal3 import PulsePalObject  # Import PulsePalObject
+from murine_shift_work.tools.misc import unpack_input_dict
 
 
 # See: https://sites.google.com/site/pulsepalwiki/user-guide---c-api/c-methods/settriggermode

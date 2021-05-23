@@ -8,14 +8,16 @@ import pandas as pd
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
-from shift_work.tasks.probabilistic_switching import task_settings
-from shift_work.tools.calibration_handling import get_calibration_point_for_valve
-from shift_work.tools.calibration_handling import get_sound_delay_correction_value
-from shift_work.tools.maths import ExponentialMovingAverage
-from shift_work.tools.maths import withprob
-from shift_work.tools.misc import get_session_file_basename
-from shift_work.tools.sounds import Sounds
-from shift_work.tools.specific_state_machines import add_trial_onset_ttl
+from murine_shift_work.tasks.probabilistic_switching import task_settings
+from murine_shift_work.tools.calibration_handling import get_calibration_point_for_valve
+from murine_shift_work.tools.calibration_handling import (
+    get_sound_delay_correction_value,
+)
+from murine_shift_work.tools.maths import ExponentialMovingAverage
+from murine_shift_work.tools.maths import withprob
+from murine_shift_work.tools.misc import get_session_file_basename
+from murine_shift_work.tools.sounds import Sounds
+from murine_shift_work.tools.specific_state_machines import add_trial_onset_ttl
 
 
 class TaskControl(object):

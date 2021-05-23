@@ -4,8 +4,8 @@ import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 
-from shift_work.tools.specific_state_machines import add_trial_onset_ttl
-from shift_work.tools.specific_state_machines import (
+from murine_shift_work.tools.specific_state_machines import add_trial_onset_ttl
+from murine_shift_work.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
 

@@ -102,7 +102,7 @@ class SettingsGUI(object):
 
 
 if __name__ == "__main__":
-    from shift_work.tasks.probabilistic_switching import task_settings
+    from murine_shift_work.tasks.probabilistic_switching import task_settings
 
     s = SettingsGUI(settings=task_settings)
     values = s.show()

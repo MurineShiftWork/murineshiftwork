@@ -4,12 +4,12 @@ from multiprocessing import Queue
 import numpy as np
 from pybpodapi.protocol import Bpod
 
-from shift_work.tasks.probabilistic_switching import task_settings
-from shift_work.tasks.probabilistic_switching.online_plotting import (
+from murine_shift_work.tasks.probabilistic_switching import task_settings
+from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
     OnlinePlottingForPS,
 )
-from shift_work.tasks.probabilistic_switching.task_objects import TaskControl
-from shift_work.tools.specific_state_machines import (
+from murine_shift_work.tasks.probabilistic_switching.task_objects import TaskControl
+from murine_shift_work.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
 
@@ -20,7 +20,9 @@ if task_settings.RECORD_VIDEO:
     try:
         from rpi_camera_colony.control.conductor import AcquisitionConductor
     except ImportError:
-        raise ImportError("")
+        raise ImportError(
+            "Requested video recording, but could not import 'rpi_camera_colony' package."
+        )
 
 show_plots = True
 if show_plots:
