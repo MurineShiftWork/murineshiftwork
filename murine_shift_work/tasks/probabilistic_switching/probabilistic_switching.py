@@ -16,7 +16,8 @@ from murine_shift_work.tools.specific_state_machines import (
 
 bpod = Bpod()
 
-if task_settings.RECORD_VIDEO:
+record_video = task_settings.RECORD_VIDEO
+if record_video:
     try:
         from rpi_camera_colony.control.conductor import AcquisitionConductor
     except ImportError:
@@ -24,7 +25,12 @@ if task_settings.RECORD_VIDEO:
             "Requested video recording, but could not import 'rpi_camera_colony' package."
         )
 
-show_plots = True
+    video_conductor = AcquisitionConductor(
+        settings_file=None, acquisition_name=None
+    )  # FIXME: add arguments
+    video_conductor.start_acquisition()
+
+show_plots = task_settings.SHOW_ONLINE_PLOTTING
 if show_plots:
     data_queue = Queue()
     kill_queue = Queue()
