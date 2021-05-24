@@ -11,6 +11,7 @@ repos:
     rev: v2.3.0
     hooks:
     - id: end-of-file-fixer
+      exclude: 'setup.cfg'
     - id: trailing-whitespace
     - id: check-case-conflict
     - id: check-merge-conflict
