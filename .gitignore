@@ -1,5 +1,6 @@
 # Ignored file types
 .DS_Store
+main_project/
 
 # Custom config files
 *.conf.custom
