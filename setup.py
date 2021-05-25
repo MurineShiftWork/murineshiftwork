@@ -13,7 +13,7 @@ with open(path.join(this_directory, "LICENSE"), encoding="utf-8") as f:
 
 setup(
     name="murine_shift_work",
-    version="0.0.1",
+    version="0.0.2-dev0",
     description="Murine Shift Work: Behaviour protocols via pybpod",
     long_description=long_description,
     long_description_content_type="text/markdown",
