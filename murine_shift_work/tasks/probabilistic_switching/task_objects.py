@@ -58,6 +58,8 @@ class TaskControl(object):
     next_trial_choice_outcome_left = 0
     next_trial_choice_outcome_right = 0
     next_trial_give_stop_signal = 0
+    stop_signal_delay = None
+    stop_trial_success = None
 
     last_choice = 0
     last_rewarded = -1
@@ -166,6 +168,9 @@ class TaskControl(object):
         else:
             self.last_rewarded = 0
 
+        if self.next_trial_give_stop_signal:
+            self.stop_trial_success = None  # TODO: no outcome or center port -> success, otherwise failed and punished
+
         trial_data["info"] = {
             "trial_type": "task",
             "trial_index": trial_index,
@@ -180,6 +185,9 @@ class TaskControl(object):
             "reward_available_right": self.next_trial_choice_outcome_right,  # fixme: same
             "trials_post_criterion": self.trials_post_criterion,
             "criterion_block_switch_reached": self.criterion_block_switch_reached,
+            "stop_trial": self.next_trial_give_stop_signal,
+            "stop_signal_delay": self.stop_signal_delay,
+            "stop_trial_success": self.stop_trial_success,
         }
         trial_data["analysis"] = {}
         # TODO: add analysis variables: init hold time, time from init to withdrawal, travel time outbound,
@@ -348,7 +356,10 @@ class TaskControl(object):
                 else 0
             )
 
-        # TODO: STOP signal adaptive testing here: change of stop signal delay ++ self.sound_delay_correction
+            if self.stop_signal_delay is None:
+                self.stop_signal_delay = task_settings.STOP_TRIAL_DELAY_INITIAL
+
+            # TODO: STOP signal adaptive testing here: change of stop signal delay ++ self.sound_delay_correction
 
         # Stimulation
         if task_settings.STIMULATION and withprob(
@@ -447,21 +458,51 @@ class TaskControl(object):
             },  # CONTINUE
             output_actions=output_actions__center_delay,
         )
+
         # TRAVEL to side -> wait for entry
         if self.next_trial_give_stop_signal:
-            # TODO: add state before side_ready to drop soft_code for sound
+            delay_until_stop_signal = (
+                self.stop_signal_delay - self.sound_delay_correction
+            )
+            delay_until_side_timeout = (
+                task_settings.DELAY_UNTIL_SIDE_TIMEOUT_FOR_STOPPING
+                - delay_until_stop_signal
+            )
+            # STOP signal:
+            #       mouse moving
+            #       side ready + wait for delay
+            #       side ready + trigger sound
+            #           side in -> AIR
+            #           no entry -> next trial
+            #
+            # SWITCH signal:
+            #       mouse moving
+            #       side ready + wait for delay
+            #       side ready + trigger sound
+            #           side in -> AIR
+            #           center light -> center in -> reward
 
             sma.add_state(
                 state_name="side_ready",
-                state_timer=task_settings.DELAY_UNTIL_SIDE_TIMEOUT_FOR_STOPPING,
+                state_timer=delay_until_stop_signal,
+                state_change_conditions={
+                    Bpod.Events.Port1In: "choice_left",
+                    Bpod.Events.Port3In: "choice_right",
+                    Bpod.Events.Tup: "side_ready_post_stop",
+                },
+                output_actions=output_actions__side_ready,
+            )
+            sma.add_state(
+                state_name="side_ready_post_stop",
+                state_timer=delay_until_side_timeout,
                 state_change_conditions={
                     Bpod.Events.Port1In: "choice_left",
                     Bpod.Events.Port3In: "choice_right",
                     Bpod.Events.Tup: "exit",
                 },
-                output_actions=output_actions__side_ready,
+                output_actions=output_actions__side_ready,  # todo: add softcode AFTER delay
             )
-        else:
+        else:  # REGULAR TRIAL
             sma.add_state(
                 state_name="side_ready",
                 state_timer=task_settings.DELAY_UNTIL_SIDE_TIMEOUT,
@@ -473,7 +514,7 @@ class TaskControl(object):
                 output_actions=output_actions__side_ready,
             )
 
-        # Outcomes: LEFT  --  Encoding:  0=unrewarded, 1=rewarded, -1=punish with air
+        # OUTCOMES: LEFT  --  Encoding:  0=unrewarded, 1=rewarded, -1=punish with air
         # note: stop signal outcomes set to 0 in next-trial
         if self.next_trial_choice_outcome_left > 0:  # REWARD
             left_valve = task_settings.HARDWARE_VALVES_FOR_WATER[0]
@@ -488,7 +529,7 @@ class TaskControl(object):
             output_action_left_valve = []
             valve_left_outcome = 0
 
-        # Outcomes: RIGHT  --  Encoding:  0=unrewarded, 1=rewarded, -1=punish with air
+        # OUTCOMES: RIGHT  --  Encoding:  0=unrewarded, 1=rewarded, -1=punish with air
         if self.next_trial_choice_outcome_right > 0:  # REWARD
             right_valve = task_settings.HARDWARE_VALVES_FOR_WATER[1]
             output_action_right_valve = [(Bpod.OutputChannels.Valve, right_valve)]
