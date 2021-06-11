@@ -2,6 +2,11 @@
 
 ---
 
+## Common problems
+
+#### Pycharm debugger throws error `ControlList has no horizontal_headers attribute`, when starting GUI
+Install pycharm version `2020.1.5`. Problems started after that and continue into the 2021 versions.
+
 ## TODO
 
 - Architecture

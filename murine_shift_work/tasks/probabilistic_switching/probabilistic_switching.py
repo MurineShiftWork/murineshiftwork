@@ -1,7 +1,10 @@
 import logging
+import time
 from multiprocessing import Queue
+from pathlib import Path
 
 import numpy as np
+from confapp import conf as confsett
 from pybpodapi.protocol import Bpod
 
 from murine_shift_work.tasks.probabilistic_switching import task_settings
@@ -14,40 +17,61 @@ from murine_shift_work.tools.specific_state_machines import (
 )
 
 
+# GENERAL
 bpod = Bpod()
+subject_name = eval(confsett.PYBPOD_SUBJECTS[0])[0]
+session_name = f"{subject_name}__{Path(confsett.PYBPOD_SESSION).name}"
+print(session_name)
+kill_queue = Queue()
 
+# VIDEO
 record_video = task_settings.RECORD_VIDEO
-if record_video:
+if False:  # record_video:
     try:
-        from rpi_camera_colony.control.conductor import AcquisitionConductor
+        from rpi_camera_colony.control.conductor import Conductor
     except ImportError:
         raise ImportError(
             "Requested video recording, but could not import 'rpi_camera_colony' package."
         )
 
-    video_conductor = AcquisitionConductor(
-        settings_file=None, acquisition_name=None
-    )  # FIXME: add arguments
-    video_conductor.start_acquisition()
+    from murine_shift_work import calibration_data
+    from pathlib import Path
+    from murine_shift_work.tools.misc import get_session_file_basename
 
+    camera_config_file = Path(calibration_data.__file__).parent / "camera.config"
+    acquisition_name = get_session_file_basename(bpod=bpod)
+
+    from rpi_camera_colony.control.process_sandbox import ConductorAsProcess
+
+    conductor_args = {
+        "config_file": str(camera_config_file),
+        "acquisition_name": session_name,
+    }
+    video_process = ConductorAsProcess(
+        controller_args=conductor_args, interrupt_queue=kill_queue
+    )
+    video_process.start()
+else:
+    video_conductor = None
+    logging.info("NO VIDEO RECORDING.")
+
+# PLOTS
 show_plots = task_settings.SHOW_ONLINE_PLOTTING
 if show_plots:
     data_queue = Queue()
-    kill_queue = Queue()
-
-    from confapp import conf as confsett
 
     plotting_process = OnlinePlottingForPS(
-        session_name=f"{eval(confsett.PYBPOD_SUBJECTS[0])[0]} @ {confsett.PYBPOD_SESSION}",
+        session_name=session_name,
         is_simulation=False,
         data_queue=data_queue,
         kill_queue=kill_queue,
     )
     plotting_process.start()
 else:
+    logging.info("NO ONLINE PLOTTING")
     data_queue = None
-    kill_queue = None
 
+# TASK
 task_control = TaskControl(bpod=bpod)
 bpod.softcode_handler_function = task_control.softcode_handler
 
@@ -88,8 +112,13 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):
 task_control.save()
 bpod.close()
 
-if show_plots:
+if show_plots or record_video:
     kill_queue.put(True)
+    if record_video:
+        video_process.join(0)
+
+print("THE END.")
+
 
 if __name__ == "__main__":
     print("main")

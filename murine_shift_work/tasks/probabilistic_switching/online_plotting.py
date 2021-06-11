@@ -83,7 +83,7 @@ class Data:
 
 
 class OnlinePlottingForPS(Process):
-    # daemon = True
+    daemon = True
 
     session_name = "unnamed session"
     is_simulation = False

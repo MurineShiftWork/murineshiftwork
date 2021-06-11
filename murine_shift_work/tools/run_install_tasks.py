@@ -67,9 +67,12 @@ def create_project():
 
 
 def write_task_file(task_name=None):
+    # Import repo in case of renaming
+    import murine_shift_work
+
     s = (
         f'if __name__ == "__main__":\n'
-        f"    from pybpod_tools.tasks.{task_name} import {task_name}\n"
+        f"    from {murine_shift_work.__name__}.tasks.{task_name} import {task_name}\n"
     )
     return s
 
@@ -138,7 +141,7 @@ def update_git_repo():
     print(f"Code up-to-date at {short_sha} on active branch {repo.active_branch.path}")
 
 
-def run_check_install(overwrite_settings=True, overwrite_project_items=False):
+def run_check_install(overwrite_settings=True, overwrite_project_items=True):
     this_time = time.time()
     update_git_repo()
     copy_user_settings(overwrite=overwrite_settings)

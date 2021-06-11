@@ -486,8 +486,8 @@ class TaskControl(object):
                 state_name="side_ready",
                 state_timer=delay_until_stop_signal,
                 state_change_conditions={
-                    Bpod.Events.Port1In: "choice_left",
-                    Bpod.Events.Port3In: "choice_right",
+                    # Bpod.Events.Port1In: "choice_left",
+                    # Bpod.Events.Port3In: "choice_right",
                     Bpod.Events.Tup: "side_ready_post_stop",
                 },
                 output_actions=output_actions__side_ready,
@@ -497,10 +497,14 @@ class TaskControl(object):
                 state_timer=delay_until_side_timeout,
                 state_change_conditions={
                     Bpod.Events.Port1In: "choice_left",
+                    Bpod.Events.Port2In: "exit",
                     Bpod.Events.Port3In: "choice_right",
                     Bpod.Events.Tup: "exit",
                 },
-                output_actions=output_actions__side_ready,  # todo: add softcode AFTER delay
+                output_actions=output_actions__side_ready
+                + [
+                    ("SoftCode", self.sound.sound_stop_softcode)
+                ],  # todo: add softcode AFTER delay
             )
         else:  # REGULAR TRIAL
             sma.add_state(
@@ -524,7 +528,7 @@ class TaskControl(object):
             output_action_left_valve = [
                 (Bpod.OutputChannels.Valve, task_settings.HARDWARE_VALVES_FOR_AIR[0])
             ]
-            valve_left_outcome = task_settings.PUNISH_AIR_DURATION_MS
+            valve_left_outcome = task_settings.PUNISH_AIR_DURATION_SEC
         else:  # == 0
             output_action_left_valve = []
             valve_left_outcome = 0
@@ -538,7 +542,7 @@ class TaskControl(object):
             output_action_right_valve = [
                 (Bpod.OutputChannels.Valve, task_settings.HARDWARE_VALVES_FOR_AIR[1])
             ]
-            valve_right_outcome = task_settings.PUNISH_AIR_DURATION_MS
+            valve_right_outcome = task_settings.PUNISH_AIR_DURATION_SEC
         else:  # == 0
             output_action_right_valve = []
             valve_right_outcome = 0
