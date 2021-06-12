@@ -42,8 +42,8 @@ class Sounds(object):
     }
     sound_stop_params = {
         "frequency": -1,  # -1=noise
-        "tone_duration": 0.1,
-        "amplitude": 0.2,
+        "tone_duration": 0.25,
+        "amplitude": 0.5,
     }
     sound_test_params = {
         "frequency": 5000,

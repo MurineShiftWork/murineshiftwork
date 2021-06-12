@@ -106,6 +106,8 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):
                 "block_probability_right": task_control.probability_right,
                 "choice": task_control.last_choice,
                 "rewarded": task_control.last_rewarded,
+                "was_stop": task_control.last_stop,
+                "punished": task_control.last_punish,
             }
         )
 

@@ -62,7 +62,9 @@ class TaskControl(object):
     stop_trial_success = None
 
     last_choice = 0
-    last_rewarded = -1
+    last_rewarded = 0
+    last_punish = 0
+    last_stop = 0
 
     def __init__(self, bpod=None, save_path_data=None):
         super(TaskControl, self).__init__()
@@ -146,9 +148,30 @@ class TaskControl(object):
         # IF TASK TRIAL
         self.block_trial_number += 1
 
-        times_left = trial_data["States timestamps"]["choice_left"][0]
+        st = trial_data["States timestamps"]
+        times_left = st["choice_left"][0]
+        times_right = st["choice_right"][0]
 
-        times_right = trial_data["States timestamps"]["choice_right"][0]
+        outcome_left_reward = (
+            st["outcome_left_reward"][0]
+            if "outcome_left_reward" in st.keys()
+            else [np.nan]
+        )
+        outcome_right_reward = (
+            st["outcome_right_reward"][0]
+            if "outcome_right_reward" in st.keys()
+            else [np.nan]
+        )
+        outcome_left_punish = (
+            st["outcome_left_punish"][0]
+            if "outcome_left_punish" in st.keys()
+            else [np.nan]
+        )
+        outcome_right_punish = (
+            st["outcome_right_punish"][0]
+            if "outcome_right_punish" in st.keys()
+            else [np.nan]
+        )
 
         if not np.isnan(np.array(times_left)).any():
             self.last_choice = -1
@@ -165,8 +188,18 @@ class TaskControl(object):
         ):
             self.reward_number += 1
             self.last_rewarded = 1
+            self.last_punish = 0
         else:
             self.last_rewarded = 0
+            if (self.next_trial_choice_outcome_left < 0 and self.last_choice == -1) or (
+                self.next_trial_choice_outcome_right < 0 and self.last_choice == 1
+            ):
+                print("PUNISHED")
+                self.last_punish = 1
+            else:
+                self.last_punish = 0
+
+        self.last_stop = self.next_trial_give_stop_signal
 
         if self.next_trial_give_stop_signal:
             self.stop_trial_success = None  # TODO: no outcome or center port -> success, otherwise failed and punished
@@ -372,6 +405,9 @@ class TaskControl(object):
         # make SMA
         sma = self.make_state_machine()
         logging.debug("New trial drawn")
+
+        # from importlib import reload
+        # task_settings = reload(task_settings)
         return sma
 
     def make_state_machine(self):
@@ -468,6 +504,12 @@ class TaskControl(object):
                 task_settings.DELAY_UNTIL_SIDE_TIMEOUT_FOR_STOPPING
                 - delay_until_stop_signal
             )
+
+            print(
+                f"-- STOP trial with delay={round(delay_until_stop_signal,2)}s "
+                f"({self.stop_signal_delay}-{self.sound_delay_correction}) "
+                f"and timeout after {delay_until_side_timeout}s"
+            )
             # STOP signal:
             #       mouse moving
             #       side ready + wait for delay
@@ -502,9 +544,7 @@ class TaskControl(object):
                     Bpod.Events.Tup: "exit",
                 },
                 output_actions=output_actions__side_ready
-                + [
-                    ("SoftCode", self.sound.sound_stop_softcode)
-                ],  # todo: add softcode AFTER delay
+                + [("SoftCode", self.sound.sound_stop_softcode)],
             )
         else:  # REGULAR TRIAL
             sma.add_state(

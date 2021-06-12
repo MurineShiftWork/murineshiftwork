@@ -6,18 +6,23 @@ from sys import exit
 import myterial as mt
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QApplication
 from pyqtgraph.Qt import QtCore
 from pyqtgraph.Qt import QtGui
 
-color_rewarded = mt.green_dark
-color_unrewarded = mt.red_dark
+color_rewarded = mt.blue_dark
+color_unrewarded = mt.grey
+color_punished = mt.red_dark
+color_stop = mt.red_light
 
 trial_outcomes = {
     0: {"name": "left-rew", "y": -1, "color": color_rewarded},
     1: {"name": "left-unr", "y": -1, "color": color_unrewarded},
     2: {"name": "right-rew", "y": 1, "color": color_rewarded},
     3: {"name": "right-unr", "y": 1, "color": color_unrewarded},
+    4: {"name": "left-pun", "y": -1, "color": color_punished},
+    5: {"name": "right-pun", "y": 1, "color": color_punished},
+    6: {"name": "left-stop", "y": -1, "color": color_stop},
+    7: {"name": "right-stop", "y": 1, "color": color_stop},
 }
 
 
@@ -249,7 +254,7 @@ class OnlinePlottingForPS(Process):
         self.kill_queue.put(True)
 
     def update_window_properties(
-        self, window_title="this_process", frame_margins=0.01, window_height=0.4
+        self, window_title="this_process", frame_margins=0.01, window_height=0.25
     ):
         cursor = self.app.desktop().cursor().pos()
         screen = self.app.desktop().screenNumber(cursor)
@@ -274,7 +279,10 @@ class OnlinePlottingForPS(Process):
              "block_probability_left": float,
              "block_probability_right": float,
              "choice": int,
-             "rewarded": int}
+             "rewarded": int,
+             "stop": bool,
+             "punished": bool,
+             }
 
         :param dict_for_update:
         :return:
@@ -284,14 +292,27 @@ class OnlinePlottingForPS(Process):
 
         choice = dict_for_update["choice"]
         rewarded = dict_for_update["rewarded"]
+        punished = dict_for_update["punished"]
+        was_stop = dict_for_update["was_stop"]
+        print(choice, rewarded, punished, was_stop)
         if choice == -1:
             if rewarded:
                 self.data.current_trial_outcome_point = trial_outcomes[0]
+            elif was_stop:  # or punished:
+                if not punished:
+                    self.data.current_trial_outcome_point = trial_outcomes[6]
+                else:
+                    self.data.current_trial_outcome_point = trial_outcomes[4]
             else:
                 self.data.current_trial_outcome_point = trial_outcomes[1]
         elif choice == 1:
             if rewarded:
                 self.data.current_trial_outcome_point = trial_outcomes[2]
+            elif was_stop or punished:
+                if not punished:
+                    self.data.current_trial_outcome_point = trial_outcomes[7]
+                else:
+                    self.data.current_trial_outcome_point = trial_outcomes[5]
             else:
                 self.data.current_trial_outcome_point = trial_outcomes[3]
         else:
