@@ -539,7 +539,7 @@ class TaskControl(object):
                 state_timer=delay_until_side_timeout,
                 state_change_conditions={
                     Bpod.Events.Port1In: "choice_left",
-                    Bpod.Events.Port2In: "exit",
+                    # Bpod.Events.Port2In: "exit",
                     Bpod.Events.Port3In: "choice_right",
                     Bpod.Events.Tup: "exit",
                 },
