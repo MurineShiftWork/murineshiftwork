@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import numpy as np
 from pybpodapi.protocol import Bpod
@@ -8,12 +9,17 @@ from murine_shift_work.tools.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
+from murine_shift_work.tools.paths import make_session_paths
 
 N_MAX_TRIALS = 1500
 TTL_IDENTIFIER_SEQUENCE = None  # FIXME
 TRIGGER_ITI = 5  # seconds
 
-bpod = Bpod()
+session_paths = make_session_paths(protocol=Path(__file__).parent.name)
+bpod = Bpod(
+    workspace_path=session_paths["session_data_folder"],
+    session_name=session_paths["session_basename"],
+)
 
 for trial_index in np.arange(N_MAX_TRIALS):
     if trial_index == 0:

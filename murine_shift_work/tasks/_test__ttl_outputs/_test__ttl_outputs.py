@@ -1,14 +1,19 @@
 import logging
-
+from pathlib import Path
 from pybpodapi.bpod import Bpod
 
 from murine_shift_work.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
+from murine_shift_work.tools.paths import make_session_paths
 
 test_sequence = "LLssLLss"
 
-bpod = Bpod()
+session_paths = make_session_paths(protocol=Path(__file__).parent.name)
+bpod = Bpod(
+    workspace_path=session_paths["session_data_folder"],
+    session_name=session_paths["session_basename"],
+)
 
 for bnc_channel in [1, 2]:
     logging.info(

@@ -1,7 +1,7 @@
 import logging
 import random
 from datetime import datetime
-
+from pathlib import Path
 import numpy as np
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
@@ -11,6 +11,7 @@ from murine_shift_work.tools.calibration_handling import load_water_calibration
 from murine_shift_work.tools.calibration_handling import save_water_calibration
 from murine_shift_work.tools.gui import ask_water_calibration_ready
 from murine_shift_work.tools.gui import ask_water_calibration_weight
+from murine_shift_work.tools.paths import make_session_paths
 
 calibration_data = load_water_calibration()
 
@@ -130,7 +131,11 @@ random_valve_times = VALVE_TIMES_TO_TEST.copy()
 random.shuffle(random_valve_times)
 
 
-bpod = Bpod()
+session_paths = make_session_paths(protocol=Path(__file__).parent.name)
+bpod = Bpod(
+    workspace_path=session_paths["session_data_folder"],
+    session_name=session_paths["session_basename"],
+)
 for valve in [1, 3]:
     for valve_time in random_valve_times:
         print(f"valve: {valve}, with valve time: {valve_time}")
