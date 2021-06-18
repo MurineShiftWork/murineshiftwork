@@ -12,8 +12,8 @@ sudo apt-get install qt5-default
 
 # https://askubuntu.com/questions/359856/share-wireless-internet-connection-through-ethernet
 
-# - PIP install package
-conda activate bpod
-
-pip uninstall pybpod_tools
-pip install -e .
+## - PIP install package
+#conda activate bpod
+#
+#pip uninstall pybpod_tools
+#pip install -e .

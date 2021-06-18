@@ -1,10 +1,8 @@
 import logging
-import time
 from multiprocessing import Queue
 from pathlib import Path
 
 import numpy as np
-from confapp import conf as confsett
 from pybpodapi.protocol import Bpod
 
 from murine_shift_work.tasks.probabilistic_switching import task_settings
@@ -12,48 +10,50 @@ from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
     OnlinePlottingForPS,
 )
 from murine_shift_work.tasks.probabilistic_switching.task_objects import TaskControl
+from murine_shift_work.tools.paths import make_session_paths
 from murine_shift_work.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
 
-
 # GENERAL
-bpod = Bpod()
-subject_name = eval(confsett.PYBPOD_SUBJECTS[0])[0]
-session_name = f"{subject_name}__{Path(confsett.PYBPOD_SESSION).name}"
-print(session_name)
+session_paths = make_session_paths(protocol=Path(__file__).parent.name)
+
+bpod = Bpod(
+    workspace_path=session_paths["session_data_folder"],
+    session_name=session_paths["session_basename"],
+)
 kill_queue = Queue()
 
 # VIDEO
-record_video = task_settings.RECORD_VIDEO
-if False:  # record_video:
-    try:
-        from rpi_camera_colony.control.conductor import Conductor
-    except ImportError:
-        raise ImportError(
-            "Requested video recording, but could not import 'rpi_camera_colony' package."
-        )
-
-    from murine_shift_work import calibration_data
-    from pathlib import Path
-    from murine_shift_work.tools.misc import get_session_file_basename
-
-    camera_config_file = Path(calibration_data.__file__).parent / "camera.config"
-    acquisition_name = get_session_file_basename(bpod=bpod)
-
-    from rpi_camera_colony.control.process_sandbox import ConductorAsProcess
-
-    conductor_args = {
-        "config_file": str(camera_config_file),
-        "acquisition_name": session_name,
-    }
-    video_process = ConductorAsProcess(
-        controller_args=conductor_args, interrupt_queue=kill_queue
-    )
-    video_process.start()
-else:
-    video_conductor = None
-    logging.info("NO VIDEO RECORDING.")
+# record_video = task_settings.RECORD_VIDEO
+# if False:  # record_video:
+#     try:
+#         from rpi_camera_colony.control.conductor import Conductor
+#     except ImportError:
+#         raise ImportError(
+#             "Requested video recording, but could not import 'rpi_camera_colony' package."
+#         )
+#
+#     from murine_shift_work import calibration_data
+#     from pathlib import Path
+#     from murine_shift_work.tools.misc import get_session_file_basename
+#
+#     camera_config_file = Path(calibration_data.__file__).parent / "camera.config"
+#     acquisition_name = get_session_file_basename(bpod=bpod)
+#
+#     from rpi_camera_colony.control.process_sandbox import ConductorAsProcess
+#
+#     conductor_args = {
+#         "config_file": str(camera_config_file),
+#         "acquisition_name": session_name,
+#     }
+#     video_process = ConductorAsProcess(
+#         controller_args=conductor_args, interrupt_queue=kill_queue
+#     )
+#     video_process.start()
+# else:
+#     video_conductor = None
+#     logging.info("NO VIDEO RECORDING.")
 
 # PLOTS
 show_plots = task_settings.SHOW_ONLINE_PLOTTING
@@ -61,7 +61,7 @@ if show_plots:
     data_queue = Queue()
 
     plotting_process = OnlinePlottingForPS(
-        session_name=session_name,
+        session_name=session_paths["session_basename"],
         is_simulation=False,
         data_queue=data_queue,
         kill_queue=kill_queue,
@@ -72,7 +72,9 @@ else:
     data_queue = None
 
 # TASK
-task_control = TaskControl(bpod=bpod)
+task_control = TaskControl(
+    bpod=bpod, save_path_data=session_paths["session_behaviour_basename"]
+)
 bpod.softcode_handler_function = task_control.softcode_handler
 
 for trial_index in np.arange(task_settings.N_MAX_TRIALS):
@@ -114,10 +116,10 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):
 task_control.save()
 bpod.close()
 
-if show_plots or record_video:
-    kill_queue.put(True)
-    if record_video:
-        video_process.join(0)
+# if show_plots or record_video:
+#     kill_queue.put(True)
+#     if record_video:
+#         video_process.join(0)
 
 print("THE END.")
 
