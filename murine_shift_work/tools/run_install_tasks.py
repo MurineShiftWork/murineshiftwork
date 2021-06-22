@@ -22,7 +22,7 @@ def get_package_dir():
 PROJECT_NAME = "main_project"
 PROJECT_PATH = get_package_dir() / PROJECT_NAME
 
-DATA_PATH = "~/data"
+DATA_PATH = "~/data/behaviour"
 
 
 def get_default_data_path():
