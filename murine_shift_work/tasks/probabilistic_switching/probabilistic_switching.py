@@ -84,7 +84,7 @@ for trial_index in np.arange(task_settings.N_MAX_TRIALS):
         sma = make_protocol_identifier_ttl_sequence(
             bpod=bpod,
             sequence=task_settings.TTL_IDENTIFIER_SEQUENCE,
-            output_chanel_pulse=Bpod.OutputChannels.BNC2,
+            output_chanel_pulse=eval(f"Bpod.OutputChannels.BNC{task_settings.HARDWARE_BNC_TRIAL_START}"),
         )
     else:
         sma = task_control.draw_next_trial()

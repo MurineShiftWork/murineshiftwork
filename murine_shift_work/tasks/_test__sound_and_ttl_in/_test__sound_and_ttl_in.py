@@ -12,7 +12,7 @@ from murine_shift_work.tools.sounds import Sounds
 
 
 class TestSettings:
-    bnc_channel = Bpod.OutputChannels.BNC2
+    bnc_channel = Bpod.OutputChannels.BNC1
 
 
 test_settings = TestSettings()
