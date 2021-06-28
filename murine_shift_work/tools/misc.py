@@ -1,5 +1,3 @@
-import os
-from pathlib import Path
 from pkgutil import iter_modules
 
 
@@ -7,10 +5,6 @@ def unpack_input_dict(overwrite_dict, default_dict):
     for k, v in overwrite_dict.items():
         default_dict[k] = v
     return default_dict
-
-
-def get_session_file_basename(bpod=None):
-    return Path(os.path.splitext(bpod.session._path)[0])
 
 
 def list_submodules(module):

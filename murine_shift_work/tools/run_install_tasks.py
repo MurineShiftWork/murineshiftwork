@@ -22,6 +22,12 @@ def get_package_dir():
 PROJECT_NAME = "main_project"
 PROJECT_PATH = get_package_dir() / PROJECT_NAME
 
+DATA_PATH = "~/data/behaviour"
+
+
+def get_default_data_path():
+    return Path(os.path.expanduser(DATA_PATH))
+
 
 def load_project():
     p = Project()
@@ -184,5 +190,9 @@ def run_check_install(overwrite_settings=True, overwrite_project_items=True):
         setup.task = exp.task
         save_project(p=p)
         logging.info(f"Done: {exp_name} added")
+
+    # Create data dir
+    get_default_data_path().mkdir(exist_ok=True, parents=True)
+    print(f"Data will be saved to: {str(get_default_data_path())}")
 
     logging.info(f"Finished all install tasks. Took {time.time()-this_time}s.")

@@ -1,6 +1,7 @@
 import time
 from multiprocessing import Process
 from multiprocessing import Queue
+from pathlib import Path
 from sys import exit
 
 import myterial as mt
@@ -135,7 +136,7 @@ class OnlinePlottingForPS(Process):
 
         self.app = pg.mkQApp(self.name)
         self.win = pg.GraphicsLayoutWidget(show=True, title=self.name)
-        self.update_window_properties(window_title=self.session_name)
+        self.update_window_properties(window_title=Path(self.session_name).name)
 
         # Top row: trial outcomes
         self.plot_to = self.win.addPlot(name="top_row")

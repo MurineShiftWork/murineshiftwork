@@ -1,21 +1,27 @@
 import logging
 import time
+from pathlib import Path
 
 import numpy as np
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 
 from murine_shift_work.tools.calibration_handling import save_sound_delay_data
+from murine_shift_work.tools.paths import make_session_paths
 from murine_shift_work.tools.sounds import Sounds
 
 
 class TestSettings:
-    bnc_channel = Bpod.OutputChannels.BNC2
+    bnc_channel = Bpod.OutputChannels.BNC1
 
 
 test_settings = TestSettings()
 sounds = Sounds()
-bpod = Bpod()
+session_paths = make_session_paths(protocol=Path(__file__).parent.name)
+bpod = Bpod(
+    workspace_path=session_paths["session_data_folder"],
+    session_name=session_paths["session_basename"],
+)
 bpod.softcode_handler_function = sounds.soft_code_handler_function
 
 delay_measurements = []

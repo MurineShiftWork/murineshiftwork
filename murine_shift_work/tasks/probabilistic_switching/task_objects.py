@@ -15,7 +15,7 @@ from murine_shift_work.tools.calibration_handling import (
 )
 from murine_shift_work.tools.maths import ExponentialMovingAverage
 from murine_shift_work.tools.maths import withprob
-from murine_shift_work.tools.misc import get_session_file_basename
+from murine_shift_work.tools.paths import make_session_paths
 from murine_shift_work.tools.sounds import Sounds
 from murine_shift_work.tools.specific_state_machines import add_trial_onset_ttl
 
@@ -74,7 +74,9 @@ class TaskControl(object):
         self.bpod = bpod
 
         self.save_path_data = (
-            get_session_file_basename(bpod) if not save_path_data else save_path_data
+            make_session_paths(Path(__file__).parent.name)
+            if not save_path_data
+            else save_path_data
         )
         print(f"Running session: {Path(self.save_path_data).name}")
 
@@ -92,7 +94,7 @@ class TaskControl(object):
 
         # copy task_settings to session folder
         src = Path(task_settings.__file__)
-        dst = self.save_path_data.parent / src.name
+        dst = Path(self.save_path_data).parent / src.name
         shutil.copy(src=str(src), dst=str(dst))
 
         logging.debug("Task control class created.")
@@ -152,26 +154,27 @@ class TaskControl(object):
         times_left = st["choice_left"][0]
         times_right = st["choice_right"][0]
 
-        outcome_left_reward = (
-            st["outcome_left_reward"][0]
-            if "outcome_left_reward" in st.keys()
-            else [np.nan]
-        )
-        outcome_right_reward = (
-            st["outcome_right_reward"][0]
-            if "outcome_right_reward" in st.keys()
-            else [np.nan]
-        )
-        outcome_left_punish = (
-            st["outcome_left_punish"][0]
-            if "outcome_left_punish" in st.keys()
-            else [np.nan]
-        )
-        outcome_right_punish = (
-            st["outcome_right_punish"][0]
-            if "outcome_right_punish" in st.keys()
-            else [np.nan]
-        )
+        # TODO: USE THESE VARIABLES FOR OUTCOME EVALUATION FOR ANALYSIS DATA MATRIX
+        # outcome_left_reward = (
+        #     st["outcome_left_reward"][0]
+        #     if "outcome_left_reward" in st.keys()
+        #     else [np.nan]
+        # )
+        # outcome_right_reward = (
+        #     st["outcome_right_reward"][0]
+        #     if "outcome_right_reward" in st.keys()
+        #     else [np.nan]
+        # )
+        # outcome_left_punish = (
+        #     st["outcome_left_punish"][0]
+        #     if "outcome_left_punish" in st.keys()
+        #     else [np.nan]
+        # )
+        # outcome_right_punish = (
+        #     st["outcome_right_punish"][0]
+        #     if "outcome_right_punish" in st.keys()
+        #     else [np.nan]
+        # )
 
         if not np.isnan(np.array(times_left)).any():
             self.last_choice = -1

@@ -1,10 +1,12 @@
 import logging
+from pathlib import Path
 
 import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
 from murine_shift_work.tasks.optotagging import task_settings
+from murine_shift_work.tools.paths import make_session_paths
 from murine_shift_work.tools.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.tools.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
@@ -12,7 +14,11 @@ from murine_shift_work.tools.specific_state_machines import (
 from murine_shift_work.tools.stimulation import Stimulation
 
 
-bpod = Bpod()
+session_paths = make_session_paths(protocol=Path(__file__).parent.name)
+bpod = Bpod(
+    workspace_path=session_paths["session_data_folder"],
+    session_name=session_paths["session_basename"],
+)
 stimulation = Stimulation(
     port=task_settings.PORT,
     in_dict=task_settings.selected_preset,
