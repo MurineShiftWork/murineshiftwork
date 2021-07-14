@@ -16,4 +16,8 @@ SUBJECTS = [
     "LBR__c344883_m1097114__L__stop",
     "LBR__c344883_m1097115__R__stop",
     "LBR__c344883_m1097116__LR__stop",
+    # LHb sleep deprivation with Wei.
+    "sleep_lhb__c344986_m1097354",
+    "sleep_lhb__c344987_m1097355",
+    "sleep_lhb__c345002_m1097356",
 ]
