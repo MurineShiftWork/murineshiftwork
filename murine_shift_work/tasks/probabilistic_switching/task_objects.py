@@ -94,7 +94,7 @@ class TaskControl(object):
 
         # copy task_settings to session folder
         src = Path(task_settings.__file__)
-        dst = Path(self.save_path_data).parent / src.name
+        dst = Path(self.save_path_data).parent / (".".join([Path(self.save_path_data).name, src.name]))
         shutil.copy(src=str(src), dst=str(dst))
 
         logging.debug("Task control class created.")
