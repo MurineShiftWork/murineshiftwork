@@ -1,11 +1,12 @@
 #!/bin/sh
 
 
-find ~/data/behaviour -type f -name "*.pyc" -delete
-find ~/data/behaviour -type d -name "__pycache__" -exec rm -rfv {} +
+find ~/data/ -type f -name "*.pyc" -delete
+find ~/data/ -type d -name "__pycache__" -exec rm -rfv {} +
 
 rsync -a \
 	--info=progress2 \
-	~/data/behaviour \
+	~/data/* \
 	larsr@ssh.swc.ucl.ac.uk:/nfs/winstor/sjones/users/lars/ACQUISITION/setup_npx/ \
-	--exclude="_test_subject"
+	--exclude="_test_subject" \
+	--exclude="default_acq_name*"
