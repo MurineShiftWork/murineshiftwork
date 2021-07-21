@@ -7,4 +7,4 @@ find ~/data/ -type d -name "__pycache__" -exec rm -rfv {} +
 # remove test_subject from upload
 # remove unnamed acquisitions from video source
 # remvoe test protocols like _test__flush_water
-rsync -a --info=progress2 ~/data/* larsr@ssh.swc.ucl.ac.uk:/nfs/winstor/sjones/users/lars/ACQUISITION/setup_npx/ --exclude="_test_subject" --exclude="default_acq_name*" --exclude="*_test__*"
+rsync -a --info=progress2 ~/data/* larsr@ssh.swc.ucl.ac.uk:/nfs/winstor/sjones/users/lars/ACQUISITION/setup_npx/ --exclude="_test_subject" --exclude="default_acq_name*" --exclude="*___test__*"
