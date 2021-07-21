@@ -7,7 +7,11 @@ target_dir="/home/lbr/data"
 for setup in setup1router setup2 setup3 setup4 setup5
 do
 	echo "\n - Loading from $setup : $source_dir -> $target_dir"
-	rsync -a --info=progress2 "$setup:$source_dir" $target_dir
+	rsync -a --info=progress2 \
+		"$setup:$source_dir" \
+		$target_dir \
+		--exclude="_test_subject*" \	# exclude test_subject sessions without removing them locally
+		--exclude="*_test__*"		# exclude protocols that contain test like _test__flush_water
 done
 
 find $source_dir -type f -name "*.pyc" -delete
