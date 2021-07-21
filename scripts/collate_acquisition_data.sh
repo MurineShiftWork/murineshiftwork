@@ -10,6 +10,9 @@ do
 	rsync -a --info=progress2 "$setup:$source_dir" $target_dir
 done
 
+find $source_dir -type f -name "*.pyc" -delete
+find $target_dir -type d -name "__pycache__" -exec rm -rfv {} +
+
 #rsync -a --info=progress2 "setup1router:$data_dir" $data_dir
 #rsync -a --info=progress2 "setup2:$data_dir" $data_dir
 #rsync -a --info=progress2 "setup3:$data_dir" $data_dir
