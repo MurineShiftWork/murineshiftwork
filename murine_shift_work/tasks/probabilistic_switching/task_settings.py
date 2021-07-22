@@ -1,4 +1,5 @@
 TESTING = False
+USE_LAST_SESSION_PARAMS = False
 
 # probabilities = [[k, k[::-1]] for k in itertools.combinations_with_replacement([10,50,90],2)]
 # probabilities = [item for subl in probabilities for item in subl]
