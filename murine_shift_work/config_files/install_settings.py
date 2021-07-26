@@ -20,7 +20,7 @@ SUBJECTS = [
     "sleep_lhb__c344986_m1097354__exp",
     "sleep_lhb__c344987_m1097355__ctl",
     "sleep_lhb__c345002_m1097356__ctl",
-    "sleep_lhb__cXXXXXX_m1097342__exp",  # FIXME: ADD CAGE NAME
+    "sleep_lhb__c345014_m1097342__exp",
     "sleep_lhb__c345016_m1097344__exp",
     "sleep_lhb__c345017_m1097357__exp",
 ]
