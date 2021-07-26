@@ -17,7 +17,7 @@ PROBABILITIES = [
     # (90, 90),
     # (90, 90),
 ]
-# PROBABILITIES = [(90, 10), (10, 90)]  # for training
+PROBABILITIES = [(80, 00), (00, 80)]  # for training
 # PROBABILITIES = [(100, 100), (100, 100)]  # for training
 # PROBABILITIES = [(100, 0), (0, 100)]  # for training
 # PROBABILITIES = [(100, 99), (99, 100)]  # for training
@@ -41,12 +41,12 @@ DELAY_UNTIL_CENTER_INIT = [
     0.200,
     0.005,  # 5ms steps
 ]  # SECONDS, can be float->fixed or list(float, float, float[optional])->range[low,high,step]
-# DELAY_UNTIL_CENTER_INIT = .07
+DELAY_UNTIL_CENTER_INIT = [0.125, 0.150, 0.005]
 
 DELAY_UNTIL_SIDE_TIMEOUT = 10  # SECONDS
 DELAY_UNTIL_SIDE_TIMEOUT_FOR_STOPPING = 1.5  # side timeout in case it's a stop trial
 STATE_DURATION_FINAL = 1  # DELAY TO ALLOW POKE OUT
-REWARD_AMOUNT_UL = 2
+REWARD_AMOUNT_UL = 2.5
 REWARD_DELAY = 0  # SECONDS
 
 USE_STOP_TRIALS = False  # TRIALS THAT SHOULD GET ABORTED ON STOP CUE
@@ -92,5 +92,24 @@ HARDWARE_VALVES_FOR_AIR = [2, 4]
 TTL_IDENTIFIER_SEQUENCE = "sssLss"
 TTL_PULSE_DURATION = 0.01
 
-RECORD_VIDEO = True
+RECORD_VIDEO = False
 SHOW_ONLINE_PLOTTING = True
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # FINAL
+PROBABILITIES = [(80, 0), (0, 80)]
+# PROBABILITIES = [(90, 0), (0, 90)]
+# PROBABILITIES = [(100, 0), (0, 100)]
+# PROBABILITIES = [(100, 99), (99, 100)]
+
+DELAY_UNTIL_CENTER_INIT = [0.125, 0.150, 0.005]
+REWARD_AMOUNT_UL = 2.5
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # TRAINING
+# PROBABILITIES = [(80, 0), (0, 80)]
+# PROBABILITIES = [(90, 0), (0, 90)]
+# PROBABILITIES = [(100, 0), (0, 100)]
+PROBABILITIES = [(100, 99), (99, 100)]
+
+DELAY_UNTIL_CENTER_INIT = [0.50, 0.60, 0.005]
+REWARD_AMOUNT_UL = 8
