@@ -94,7 +94,9 @@ class TaskControl(object):
 
         # copy task_settings to session folder
         src = Path(task_settings.__file__)
-        dst = Path(self.save_path_data).parent / (".".join([Path(self.save_path_data).name, src.name]))
+        dst = Path(self.save_path_data).parent / (
+            ".".join([Path(self.save_path_data).name, src.name])
+        )
         shutil.copy(src=str(src), dst=str(dst))
 
         logging.debug("Task control class created.")
@@ -396,6 +398,19 @@ class TaskControl(object):
                 self.stop_signal_delay = task_settings.STOP_TRIAL_DELAY_INITIAL
 
             # TODO: STOP signal adaptive testing here: change of stop signal delay ++ self.sound_delay_correction
+
+        # If is last trial in block, make sure it's rewarded
+        if self.trials_post_criterion >= self.min_trials_post_criterion - 1:
+            if self.probability_left:
+                self.next_trial_choice_outcome_left = 1
+            if self.probability_right:
+                self.next_trial_choice_outcome_right = 1
+            logmsg = (
+                f"LAST TRIAL in block: forcing reward on non-zero reward choices. "
+                f"Left={self.next_trial_choice_outcome_left}. "
+                f"Right={self.next_trial_choice_outcome_right}"
+            )
+            logging.debug(logmsg)
 
         # Stimulation
         if task_settings.STIMULATION and withprob(
