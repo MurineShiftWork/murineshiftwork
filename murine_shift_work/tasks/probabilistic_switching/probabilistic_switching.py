@@ -5,6 +5,12 @@ from pathlib import Path
 import numpy as np
 from pybpodapi.protocol import Bpod
 
+# try:
+#     from pybpodgui_api.models.board import Board
+#     Board.enabled_behaviorports()
+# except ImportError:
+#     pass
+
 from murine_shift_work.tasks.probabilistic_switching import task_settings
 from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
     OnlinePlottingForPS,
