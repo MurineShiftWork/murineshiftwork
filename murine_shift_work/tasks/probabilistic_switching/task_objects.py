@@ -61,6 +61,9 @@ class TaskControl(object):
     stop_signal_delay = None
     stop_trial_success = None
 
+    initiation_hold_time = None
+    is_forced_exploration_trial = False
+
     last_choice = 0
     last_rewarded = 0
     last_punish = 0
@@ -226,6 +229,8 @@ class TaskControl(object):
             "stop_trial": self.next_trial_give_stop_signal,
             "stop_signal_delay": self.stop_signal_delay,
             "stop_trial_success": self.stop_trial_success,
+            "initiation_delay_actual": self.initiation_hold_time,
+            "forced_exploration_trial": self.is_forced_exploration_trial,
         }
         trial_data["analysis"] = {}
         # TODO: add analysis variables: init hold time, time from init to withdrawal, travel time outbound,
@@ -361,9 +366,12 @@ class TaskControl(object):
             unique_choices_n_back = unique_choices.__len__()
 
             if unique_choices_n_back == 1:
+                self.is_forced_exploration_trial = True
                 return self.make_forced_exploration_sma(
                     next_choice_option=-1 * unique_choices[-1]
                 )
+            else:
+                self.is_forced_exploration_trial = True
 
         if self.block_probability_index is None:
             self.switch_block()
@@ -482,6 +490,7 @@ class TaskControl(object):
                 np.random.randint(0, len(available_hold_times))
             ]
             print(f"-- Drawn new initiation hold time of {initiation_hold_time}s.")
+            self.initiation_hold_time = initiation_hold_time
 
         # SMA
         sma = StateMachine(bpod=self.bpod)
