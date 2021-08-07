@@ -4,7 +4,7 @@ eval source_dir="~/data/behaviour"
 eval target_dir="~/data"
 
 # Collate data from all setups
-for setup in setup1router setup2 setup3 setup4 setup5
+for setup in setup1router setup2 setup3 setup4 setup5 # npxb
 do
 	echo "\n - Loading from $setup : $source_dir -> $target_dir"
 	rsync -a --info=progress2 \
@@ -23,6 +23,7 @@ ssh setup2 rm -rf "${source_dir}/*/*"
 ssh setup3 rm -rf "${source_dir}/*/*"
 ssh setup4 rm -rf "${source_dir}/*/*"
 ssh setup5 rm -rf "${source_dir}/*/*"
+#ssh npxb rm -rf "${source_dir}/*/*"
 
 # find $target_dir -type f -name "*.pyc" -delete
 # find $target_dir -type d -name "__pycache__" -exec rm -rfv {} +
