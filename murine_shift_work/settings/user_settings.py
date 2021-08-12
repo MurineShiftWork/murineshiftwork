@@ -2,7 +2,7 @@ import logging
 
 SETTINGS_PRIORITY = 0
 # THESE SETTINGS ARE NEEDED FOR PYSETTINGS
-APP_LOG_FILENAME = "murine_shift_work.log"
+APP_LOG_FILENAME = "/tmp/murine_shift_work.log"
 APP_LOG_HANDLER_CONSOLE_LEVEL = logging.INFO
 APP_LOG_HANDLER_FILE_LEVEL = logging.INFO
 
