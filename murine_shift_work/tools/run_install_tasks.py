@@ -9,8 +9,8 @@ from pybpodgui_api.models.project import Project
 
 import murine_shift_work
 import murine_shift_work.tasks as module_tasks
-from murine_shift_work.config_files import install_settings
-from murine_shift_work.config_files import user_settings
+from murine_shift_work.settings import install_settings
+from murine_shift_work.settings import user_settings
 from murine_shift_work.tools.misc import list_submodules
 
 
@@ -19,7 +19,7 @@ def get_package_dir():
     return Path(murine_shift_work.__file__).parent.parent
 
 
-PROJECT_NAME = "main_project"
+PROJECT_NAME = "msw_project"
 PROJECT_PATH = get_package_dir() / PROJECT_NAME
 
 DATA_PATH = "~/data/behaviour"
@@ -78,7 +78,8 @@ def write_task_file(task_name=None):
 
     s = (
         f'if __name__ == "__main__":\n'
-        f"    from {murine_shift_work.__name__}.tasks.{task_name} import {task_name}\n"
+        f"    from {murine_shift_work.__name__}.tasks.{task_name}.{task_name} import run_task\n"
+        f"    run_task()\n"
     )
     return s
 
@@ -147,15 +148,18 @@ def update_git_repo():
     print(f"Code up-to-date at {short_sha} on active branch {repo.active_branch.path}")
 
 
-def run_check_install(overwrite_settings=True, overwrite_project_items=True):
+def run_check_install(
+    overwrite_settings=True, overwrite_project_items=True, do_auto_git_pull=False
+):
     this_time = time.time()
-    update_git_repo()
+    if do_auto_git_pull:
+        update_git_repo()
     copy_user_settings(overwrite=overwrite_settings)
     create_project()
     create_tasks(overwrite=overwrite_project_items)
     create_users(users=["_tests", "lbr"])
     create_boards(
-        name_port_tuples=[("bpod_1", "/dev/ttyACM1")], overwrite=overwrite_project_items
+        name_port_tuples=[("bpod_1", "/dev/ttyACM0")], overwrite=overwrite_project_items
     )
     create_subjects(subjects=["_test_subject"], overwrite=overwrite_project_items)
 
