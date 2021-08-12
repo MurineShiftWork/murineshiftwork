@@ -9,7 +9,7 @@ except ImportError:
     )
 
 
-from murine_shift_work import calibration_data
+from murine_shift_work import settings
 from pathlib import Path
 
 # from murine_shift_work.tools.misc import get_session_file_basename
@@ -17,7 +17,7 @@ from rpi_camera_colony.control.process_sandbox import ConductorAsProcess
 
 kill_queue = Queue()
 
-camera_config_file = Path(calibration_data.__file__).parent / "camera.config"
+camera_config_file = Path(settings.__file__).parent / "camera.config"
 acquisition_name = Path("testtesttest")  # get_session_file_basename(bpod=bpod)
 
 # acquisition_name = get_session_file_basename(bpod=bpod)

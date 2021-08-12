@@ -1,0 +1,41 @@
+[c000111_m222333]
+name = "test"
+group = "testgroup"
+
+# [general]
+#
+# [project]
+#
+#     [[experiment]]
+#         [[[subject]]]
+#             [[[[protocol]]]]
+#
+#
+#     [LHb_sleep]
+#
+#
+# [c111222_m333444]
+#     project = "LHb_sleep"
+#
+#     [[task]]
+#         experiment
+#         cohort
+#
+#
+#
+# [c111222_m333444]
+#     project = "LHb_sleep"
+#
+#     [[probabilistic_switching]]
+#         experiment
+#         cohort
+#
+#
+# [c111222_m333444]
+#     project = "LHb_sleep"
+#
+#     [[probabilistic_switching]]
+#         experiment
+#         cohort
+#
+#         protocol = "ps_level_2"  # then look up in default protocols what params level 2 has -> automate or at least allow standard training stages

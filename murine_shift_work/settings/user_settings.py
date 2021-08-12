@@ -2,7 +2,7 @@ import logging
 
 SETTINGS_PRIORITY = 0
 # THESE SETTINGS ARE NEEDED FOR PYSETTINGS
-APP_LOG_FILENAME = "app.log"
+APP_LOG_FILENAME = "murine_shift_work.log"
 APP_LOG_HANDLER_CONSOLE_LEVEL = logging.INFO
 APP_LOG_HANDLER_FILE_LEVEL = logging.INFO
 
@@ -20,7 +20,7 @@ PYBOARD_COMMUNICATION_PROCESS_REFRESH_TIME = 1
 # wait before killing process (seconds)
 PYBOARD_COMMUNICATION_PROCESS_TIME_2_LIVE = 0
 
-USE_MULTIPROCESSING = True
+USE_MULTIPROCESSING = True  # FIXME: does this allow the spawning of a camera process ??
 
 PYFORMS_MAINWINDOW_MARGIN = 0
 PYFORMS_STYLESHEET = ""
@@ -36,9 +36,9 @@ GENERIC_EDITOR_TITLE = "Murine Shift Work"
 GENERIC_EDITOR_PLUGINS_PATH = None
 GENERIC_EDITOR_PLUGINS_LIST = [
     "pybpodgui_plugin",
-    "pybpodgui_plugin_timeline",
-    "pybpodgui_plugin_trial_timeline",
-    "pybpodgui_plugin_session_history",
+    # "pybpodgui_plugin_timeline",
+    # "pybpodgui_plugin_trial_timeline",
+    # "pybpodgui_plugin_session_history",
     # "pybpod_rotaryencoder_module",
     # "pybpod_alyx_module",
     "pybpod_gui_plugin_emulator",
@@ -47,4 +47,6 @@ GENERIC_EDITOR_PLUGINS_LIST = [
 PYFORMS_SILENT_PLUGINS_FINDER = True
 
 PYBPODGUI_API_AUTO_SAVE_PROJECT_ON_RUN = True
-PYBPOD_EXTRA_INFO = {"Users", "Subjects"}
+# PYBPOD_EXTRA_INFO = {"Users", "Subjects"}
+
+PYBPOD_NET_PORT = 10101

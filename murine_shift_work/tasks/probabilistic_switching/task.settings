@@ -1,0 +1,12 @@
+testing = True
+
+[general]
+    testing = True
+
+[structure]
+
+[time]
+
+[stimulation]
+
+[hardware]

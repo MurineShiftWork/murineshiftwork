@@ -7,6 +7,13 @@
 #### Pycharm debugger throws error `ControlList has no horizontal_headers attribute`, when starting GUI
 Install pycharm version `2020.1.5`. Problems started after that and continue into the 2021 versions.
 
+Temporary fix: add the following user env variables to the pycharm debugging configuration as suggested here
+https://stackoverflow.com/questions/62040805/pycharm-debugger-getting-error-when-break-point-is-kept
+```
+PYDEVD_USE_CYTHON=NO
+PYDEVD_USE_FRAME_EVAL=NO
+```
+
 ## TODO
 
 - Architecture

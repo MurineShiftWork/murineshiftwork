@@ -40,4 +40,3 @@ if __name__ == "__main__":
     app = pyforms.start_app(SettingsGUI)
     print("here", app)
     print("done")
-
