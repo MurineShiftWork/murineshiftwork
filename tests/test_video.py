@@ -12,7 +12,7 @@ except ImportError:
 from murine_shift_work import settings
 from pathlib import Path
 
-# from murine_shift_work.tools.misc import get_session_file_basename
+# from murine_shift_work.logic.misc import get_session_file_basename
 from rpi_camera_colony.control.process_sandbox import ConductorAsProcess
 
 kill_queue = Queue()

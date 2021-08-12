@@ -6,9 +6,9 @@ import numpy as np
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 
-from murine_shift_work.tools.calibration_handling import save_sound_delay_data
-from murine_shift_work.tools.paths import make_session_paths
-from murine_shift_work.tools.sounds import Sounds
+from murine_shift_work.logic.calibration import save_sound_delay_data
+from murine_shift_work.logic.paths import make_session_paths
+from murine_shift_work.logic.sounds import Sounds
 
 
 class TestSettings:

@@ -31,6 +31,7 @@ setup(
         "gitpython",
         "rich",
         "myterial",
+        "PySimpleGUI",
         # "rpi_camera_colony @ git+https://llrrr@bitbucket.org/lbrcoding/rpi_camera_colony.git#egg=rpi_camera_colony",
     ],
     extras_require={

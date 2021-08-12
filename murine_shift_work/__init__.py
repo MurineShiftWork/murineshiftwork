@@ -24,7 +24,7 @@ __author__ = "Lars B. Rollik"
 
 
 def start_gui():
-    from murine_shift_work.tools.run_install_tasks import run_check_install
+    from murine_shift_work.logic.run_install_tasks import run_check_install
     from pybpodgui_plugin.__main__ import start
 
     run_check_install()

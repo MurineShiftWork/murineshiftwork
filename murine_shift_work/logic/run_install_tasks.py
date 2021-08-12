@@ -9,9 +9,9 @@ from pybpodgui_api.models.project import Project
 
 import murine_shift_work
 import murine_shift_work.tasks as module_tasks
+from murine_shift_work.logic.misc import list_submodules
 from murine_shift_work.settings import install_settings
 from murine_shift_work.settings import user_settings
-from murine_shift_work.tools.misc import list_submodules
 
 
 def get_package_dir():
@@ -170,7 +170,7 @@ def run_check_install(
         logging.info(f"Creating: {exp_name}")
         exp = p.create_experiment()
         exp.name = exp_name
-        exp.task = [t for t in p.tasks if "_test__flush_water" in t.name][0]
+        exp.task = [t for t in p.tasks if "_test_flush_water" in t.name][0]
         setup = exp.create_setup()
         setup.name = "TEST_setup"
         setup.board = p.boards[0]

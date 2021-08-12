@@ -4,9 +4,9 @@ import time
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
-from murine_shift_work.tools.task_process import parse_task_args
-from murine_shift_work.tools.task_process import TaskProcess
-from murine_shift_work.tools.task_process import TaskRunner
+from murine_shift_work.logic.task_process import parse_task_args
+from murine_shift_work.logic.task_process import TaskProcess
+from murine_shift_work.logic.task_process import TaskRunner
 
 
 class Task(TaskRunner):
@@ -50,7 +50,7 @@ def run_task():
     # -> Set called_from_command to False if is called from GUI
     # args_dict.update({"called_from_command": False})
     # -> get_subject_from_pybpod_conf
-    # from murine_shift_work.tools.paths import get_subject_from_pybpod_conf
+    # from murine_shift_work.logic.paths import get_subject_from_pybpod_conf
     # subject = get_subject_from_pybpod_conf()
     args_dict.update({"task": "minimal"})
 

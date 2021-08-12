@@ -8,11 +8,11 @@ from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 from tqdm import tqdm
 
-from murine_shift_work.tools.calibration_handling import load_water_calibration
-from murine_shift_work.tools.calibration_handling import save_water_calibration
-from murine_shift_work.tools.gui import ask_water_calibration_ready
-from murine_shift_work.tools.gui import ask_water_calibration_weight
-from murine_shift_work.tools.paths import make_session_paths
+from murine_shift_work.logic.calibration import load_water_calibration
+from murine_shift_work.logic.calibration import save_water_calibration
+from murine_shift_work.logic.gui import ask_water_calibration_ready
+from murine_shift_work.logic.gui import ask_water_calibration_weight
+from murine_shift_work.logic.paths import make_session_paths
 
 calibration_data = load_water_calibration()
 

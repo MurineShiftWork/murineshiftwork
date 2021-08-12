@@ -3,8 +3,8 @@ from pathlib import Path
 
 from pybpodapi.bpod import Bpod
 
-from murine_shift_work.tools.paths import make_session_paths
-from murine_shift_work.tools.specific_state_machines import (
+from murine_shift_work.logic.paths import make_session_paths
+from murine_shift_work.logic.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
 
