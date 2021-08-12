@@ -47,10 +47,15 @@ setup(
     },
     python_requires=">=3.6",
     packages=find_packages(),
-    entry_points={"console_script": []},
+    entry_points={
+        "console_scripts": [
+            "msw_gui = murine_shift_work.__init__:start_gui",
+        ],
+    },
     url="URL-URL-URL",
     author="Lars B. Rollik",
     author_email="L.B.Rollik@protonmail.com",
     license=license_text,
     zip_safe=True,
+    include_package_data=True,
 )

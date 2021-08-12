@@ -21,3 +21,11 @@ logger.addHandler(stream_handler)
 
 __version__ = "0.0.2.dev0"
 __author__ = "Lars B. Rollik"
+
+
+def start_gui():
+    from murine_shift_work.tools.run_install_tasks import run_check_install
+    from pybpodgui_plugin.__main__ import start
+
+    run_check_install()
+    start()
