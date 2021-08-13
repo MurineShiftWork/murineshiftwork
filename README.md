@@ -17,12 +17,12 @@ PYDEVD_USE_FRAME_EVAL=NO
 ## TODO
 
 - Refactoring for commandline access
-    - [ ] finish main task_process class
-    - [ ] dry minimal_task example
-    - [ ] update installation for task call via GUI
+    - [x] finish main task_process class
+    - [x] dry minimal_task example
+    - **[No!]** update installation for task call via GUI  -->> USE SEPARATE VERSIONS UNTIL GUI NOT REQUIRED BY USERS. waste of time to debug GUI+net_port issue
+    - [x] fix PS for CLI
+    - [x] FIXME: instead of parsing from command line, find task settings.config in task dicts -->> this is a task specific requirement ? -> implemented as standard argparse
     - [ ] extend commandline/GUI split architecture to all task protocols
-    - [ ]
-        // FIXME: instead of parsing from command line, find task settings.config in task dicts -->> this is a task specific requirement ?
 
 
 - Architecture

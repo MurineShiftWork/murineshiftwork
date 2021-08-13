@@ -17,7 +17,7 @@ from rpi_camera_colony.control.process_sandbox import ConductorAsProcess
 
 kill_queue = Queue()
 
-camera_config_file = Path(settings.__file__).parent / "camera.config"
+camera_config_file = Path(settings.__file__).parent / "camera.rcc.config"
 acquisition_name = Path("testtesttest")  # get_session_file_basename(bpod=bpod)
 
 # acquisition_name = get_session_file_basename(bpod=bpod)

@@ -19,14 +19,10 @@ from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
 
 
 class Task(TaskRunner):
-    def prepare(self):
-        print("HEREHRE")
-
     def run(self):
         trial_index = 0
         max_trials = 4
         while self.continue_task and trial_index < max_trials:
-
             print(f"Trial {trial_index}")
 
             sma = StateMachine(bpod=self.bpod)
@@ -46,7 +42,7 @@ class Task(TaskRunner):
 
             if not self.bpod.run_state_machine(sma):
                 logging.warning("No data returned.")
-                # self.kill_queue.put(True)
+                self.input_kwargs["objects"]["kill_queue"]
                 break
 
             self.input_kwargs["objects"]["data_queue"].put(
@@ -64,14 +60,12 @@ class Task(TaskRunner):
 
             trial_index += 1
 
-        # self.kill_queue.put(True)
-        # self.video_process.join(1)
+        self.kill_queue.put(True)
         logging.debug("Exiting Task.")
 
 
-def run_task():
-    args_dict = parse_task_args()
-
+def run_task(is_cli_call=True, testing=False):
+    args_dict = parse_task_args(is_cli_call=is_cli_call, testing=testing)
     args_dict.update({"task": "video"})
     dq = Queue()
     kq = Queue()
@@ -87,7 +81,7 @@ def run_task():
 
     args_dict.update({"auto_start": False})
     with TaskProcess(**args_dict) as tp:
-        camera_config_file = Path(settings.__file__).parent / "camera.config"
+        camera_config_file = Path(settings.__file__).parent / "camera.rcc.config"
         conductor_args = {
             "config_file": str(camera_config_file),
             "acquisition_name": tp.session_paths["session_basename"],
@@ -118,5 +112,5 @@ def run_task():
 
 
 if __name__ == "__main__":
-    run_task()
+    run_task(testing=True)
     print("main")

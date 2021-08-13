@@ -25,7 +25,7 @@ PROJECT_PATH = get_package_dir() / PROJECT_NAME
 DATA_PATH = "~/data/behaviour"
 
 
-def get_default_data_path():
+def get_default_basepath():
     return Path(os.path.expanduser(DATA_PATH))
 
 
@@ -79,7 +79,7 @@ def write_task_file(task_name=None):
     s = (
         f'if __name__ == "__main__":\n'
         f"    from {murine_shift_work.__name__}.tasks.{task_name}.{task_name} import run_task\n"
-        f"    run_task()\n"
+        f"    run_task(is_cli_call=False)\n"
     )
     return s
 
@@ -196,7 +196,7 @@ def run_check_install(
         logging.info(f"Done: {exp_name} added")
 
     # Create data dir
-    get_default_data_path().mkdir(exist_ok=True, parents=True)
-    print(f"Data will be saved to: {str(get_default_data_path())}")
+    get_default_basepath().mkdir(exist_ok=True, parents=True)
+    print(f"Data will be saved to: {str(get_default_basepath())}")
 
     logging.info(f"Finished all install tasks. Took {time.time()-this_time}s.")

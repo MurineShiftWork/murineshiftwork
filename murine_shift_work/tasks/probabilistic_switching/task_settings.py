@@ -1,5 +1,4 @@
 TESTING = False
-USE_LAST_SESSION_PARAMS = False
 
 # probabilities = [[k, k[::-1]] for k in itertools.combinations_with_replacement([10,50,90],2)]
 # probabilities = [item for subl in probabilities for item in subl]
@@ -92,7 +91,7 @@ HARDWARE_VALVES_FOR_AIR = [2, 4]
 TTL_IDENTIFIER_SEQUENCE = "sssLss"
 TTL_PULSE_DURATION = 0.01
 
-RECORD_VIDEO = False
+RECORD_VIDEO = True
 SHOW_ONLINE_PLOTTING = True
 
 

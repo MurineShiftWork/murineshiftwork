@@ -11,18 +11,19 @@ from pybpodapi.protocol import StateMachine
 from PyQt5.QtCore import QThread
 
 import murine_shift_work.settings as msws
+from murine_shift_work.logic.config import read_config
 from murine_shift_work.logic.misc import find_task_by_name
 from murine_shift_work.logic.misc import test_port_accessible
 from murine_shift_work.logic.paths import build_data_paths
 from murine_shift_work.logic.paths import test_path_is_writable
-from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
-    OnlinePlottingForPS,
-)
+from murine_shift_work.logic.pybpod_helpers import get_subject_from_pybpod_conf
+from murine_shift_work.logic.run_install_tasks import get_default_basepath
 
 user_dir = Path(os.path.expanduser("~"))
+config_file_dir = str(msws.__path__[0])
 
 
-def parse_task_args():
+def parse_task_args(is_cli_call=True, testing=False, task=None):
     parser = argparse.ArgumentParser(
         description="Input arguments",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -45,7 +46,7 @@ def parse_task_args():
         "--subject",
         "-s",
         type=str,
-        default="default_subject_parser",
+        default="_test_subject",
         help="Subject name",
     )
     parser.add_argument(
@@ -59,31 +60,82 @@ def parse_task_args():
         "--config-file-dir",
         "-cd",
         type=str,
-        default=str(msws.__path__[0]),
+        default=config_file_dir,
         help="Directory that contains config files",
     )
     parser.add_argument(
         "--config-file-rcc",
         "-cr",
         type=str,
-        default="",
+        default=str(Path(config_file_dir) / "camera.rcc.config"),
         help="Specific config file for video recordings wtih RPi Camera Colony pacakge.",
     )
-    parser.add_argument(
-        "--called-from-command",
-        "-cfc",
-        action="store_true",
-        dest="called_from_command",
-        default=True,
-    )
     arg_dict = parser.parse_args().__dict__
+    arg_dict["is_cli_call"] = is_cli_call
+    if not is_cli_call:
+        arg_dict["subject"] = get_subject_from_pybpod_conf()
+        arg_dict["basepath"] = get_default_basepath()
+
+    if testing:
+        arg_dict["task"] = "minimal"
+
     # Checks
-    if not arg_dict["task"]:
+    if not arg_dict["task"] and not task and not is_cli_call:
         raise ValueError(
             "No Task to run specified. No default, has to be specified explicitly."
         )
+    if not arg_dict["task"]:
+        arg_dict["task"] = task
 
     arg_dict["basepath"] = os.path.expanduser(arg_dict["basepath"])
+
+    # Settings
+    arg_dict["task.settings.default"] = {}
+    arg_dict["task.settings.patched"] = {}
+    arg_dict["subject.settings.all"] = {}
+    arg_dict["subject.settings.this"] = {}
+
+    task_name = find_task_by_name(task_name=arg_dict["task"])
+    arg_dict["task_name"] = task_name
+    exec(f"from murine_shift_work.tasks import {task_name} as tn", globals())
+    exec("task_folder = Path(tn.__file__).parent", globals())
+    if "task_folder" not in locals():
+        task_folder = None
+    task_files = os.listdir(task_folder)
+    task_settings_file = [
+        Path(task_folder) / t for t in task_files if "task.settings" in t
+    ]
+    if len(task_settings_file) == 1:
+        arg_dict["task.settings.default"] = read_config(file=task_settings_file[0])
+        arg_dict["task.settings.patched"] = arg_dict["task.settings.default"]
+
+    config_file_dir_from_args = arg_dict["config_file_dir"]
+    subject_settings_file = [
+        Path(config_file_dir_from_args) / t
+        for t in os.listdir(config_file_dir_from_args)
+        if "subject.settings" in t
+    ]
+    if len(subject_settings_file) == 1:
+        arg_dict["subject.settings.all"] = read_config(file=subject_settings_file[0])
+
+    # PATCH: default settings with subject settings
+    subject_settings_this = arg_dict["subject.settings.all"].get(
+        arg_dict["subject"], None
+    )
+    if subject_settings_this:
+        task_settings_patch = subject_settings_this.get(arg_dict["task_name"], None)
+        if task_settings_patch:
+            arg_dict["subject.settings.this"] = task_settings_patch
+            for k, v in task_settings_patch.items():
+                # if k in arg_dict["task.settings.patched"]
+                arg_dict["task.settings.patched"][k] = v
+
+    # RCC settings
+    if not Path(arg_dict["config_file_rcc"]).exists():
+        arg_dict["config_file_rcc"] = str(config_file_dir / "camera.rcc.config")
+        if not Path(arg_dict["config_file_rcc"]).exists():
+            logging.debug(f"No RCC config file at: {arg_dict['config_file_rcc']}")
+
     return arg_dict
 
 
@@ -268,17 +320,9 @@ class TaskProcess(object):
                 logging.debug("Task stopped.")
 
 
-def example_run_task():
-    args_dict = parse_task_args()
-
-    # Update variables here for GUI call:
-    # -> Set called_from_command to False if is called from GUI
-    # args_dict.update({"called_from_command": False})
-    # -> get_subject_from_pybpod_conf
-    # from murine_shift_work.logic.paths import get_subject_from_pybpod_conf
-    # subject = get_subject_from_pybpod_conf()
-    # -> get data path from GUI user_settings
-    # from murine_shift_work.logic.run_install_tasks import get_default_data_path
+def example_run_task(is_cli_call=True):
+    args_dict = parse_task_args(is_cli_call=is_cli_call)
+    # Which task to run if not given in input:
     args_dict.update({"task": "minimal"})
 
     with TaskProcess(**args_dict) as tp:

@@ -39,17 +39,8 @@ class Task(TaskRunner):
             trial_index += 1
 
 
-def run_task():
-    args_dict = parse_task_args()
-
-    # Update variables here for GUI call:
-    # -> Set called_from_command to False if is called from GUI
-    # args_dict.update({"called_from_command": False})
-    # -> get_subject_from_pybpod_conf
-    # from murine_shift_work.logic.paths import get_subject_from_pybpod_conf
-    # subject = get_subject_from_pybpod_conf()
-    # -> get data path from GUI user_settings
-    # from murine_shift_work.logic.run_install_tasks import get_default_data_path
+def run_task(is_cli_call=True):
+    args_dict = parse_task_args(is_cli_call=is_cli_call)
     args_dict.update({"task": "minimal"})
 
     with TaskProcess(**args_dict) as tp:

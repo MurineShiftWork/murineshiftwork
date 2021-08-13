@@ -1,6 +1,8 @@
+import json
 import logging
 import random
 import shutil
+import time
 from pathlib import Path
 
 import numpy as np
@@ -8,16 +10,15 @@ import pandas as pd
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
-from murine_shift_work.tasks.probabilistic_switching import task_settings
-from murine_shift_work.tools.calibration_handling import get_calibration_point_for_valve
-from murine_shift_work.tools.calibration_handling import (
+from murine_shift_work.logic.calibration import get_calibration_point_for_valve
+from murine_shift_work.logic.calibration import (
     get_sound_delay_correction_value,
 )
-from murine_shift_work.tools.maths import ExponentialMovingAverage
-from murine_shift_work.tools.maths import withprob
-from murine_shift_work.tools.paths import make_session_paths
-from murine_shift_work.tools.sounds import Sounds
-from murine_shift_work.tools.specific_state_machines import add_trial_onset_ttl
+from murine_shift_work.logic.maths import ExponentialMovingAverage
+from murine_shift_work.logic.maths import withprob
+from murine_shift_work.logic.paths import build_data_paths
+from murine_shift_work.logic.sounds import Sounds
+from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 
 
 class TaskControl(object):
@@ -25,6 +26,7 @@ class TaskControl(object):
     sound = None
     sound_delay_correction = 0
 
+    task_settings = {}
     trial_data = []
     save_path_data = None
 
@@ -40,7 +42,7 @@ class TaskControl(object):
     min_trials_post_criterion = 5
     trials_post_criterion = 0
 
-    criterion_contrast_blocks = task_settings.CRITERION_CONTRAST_BLOCKS  # 0.6
+    criterion_contrast_blocks = 0.5  # task_settings.CRITERION_CONTRAST_BLOCKS  # 0.6
     criterion_neutral_blocks = 0.2
     criterion_tau = 5
     criterion_block_switch_reached = False
@@ -50,7 +52,7 @@ class TaskControl(object):
         tau=criterion_tau, init_value=0.0
     )  # 0=sides coded as -1/1 for left/right, so init value has to be center == 0
 
-    probabilities = task_settings.PROBABILITIES
+    probabilities = [(80, 0), (0, 80)]  # task_settings.PROBABILITIES
     block_probability_index = None
     probability_left = 0
     probability_right = 0
@@ -69,7 +71,7 @@ class TaskControl(object):
     last_punish = 0
     last_stop = 0
 
-    def __init__(self, bpod=None, save_path_data=None):
+    def __init__(self, bpod=None, save_path_data=None, task_settings=None):
         super(TaskControl, self).__init__()
 
         if not bpod:
@@ -77,31 +79,34 @@ class TaskControl(object):
         self.bpod = bpod
 
         self.save_path_data = (
-            make_session_paths(Path(__file__).parent.name)
+            Path(self.bpod.workspace_path) / self.bpod.session_name
             if not save_path_data
             else save_path_data
         )
         print(f"Running session: {Path(self.save_path_data).name}")
 
-        # todo: implement loading of presets for basic PS (no stop)
+        self.task_settings = task_settings
+        self.probabilities = self.task_settings["probabilities"]
+        self.criterion_contrast_blocks = self.task_settings["criterion_contrast_blocks"]
+
+        # fixme 1: implement loading of presets for basic PS (no stop)
         #  and stop signal PS (adaptive stops, probabilities all 1/0 for analysis simplicity)
-
-        # fixme: use hardware params for go/stop signal generation
+        # fixme 2: use hardware params for go/stop signal generation
         self.sound = Sounds()
-
         self.sound_delay_correction = get_sound_delay_correction_value()
         self.valve_times_dict = get_calibration_point_for_valve(
-            valves=task_settings.HARDWARE_VALVES_FOR_WATER,
-            target_volume=task_settings.REWARD_AMOUNT_UL,
+            valves=self.task_settings["HARDWARE_VALVES_FOR_WATER"],
+            target_volume=self.task_settings["reward_amount_ul"],
         )
 
         # copy task_settings to session folder
-        src = Path(task_settings.__file__)
-        dst = Path(self.save_path_data).parent / (
-            ".".join([Path(self.save_path_data).name, src.name])
-        )
-        shutil.copy(src=str(src), dst=str(dst))
-
+        with open(str(self.save_path_data) + ".settings", "w") as f:
+            json.dump(self.task_settings, f, indent=4, sort_keys=True)
+        # src = Path(task_settings.__file__)
+        # dst = Path(self.save_path_data).parent / (
+        #     ".".join([Path(self.save_path_data).name, src.name])
+        # )
+        # shutil.copy(src=str(src), dst=str(dst))
         logging.debug("Task control class created.")
 
     def softcode_handler(self, softcode=None):
@@ -250,7 +255,7 @@ class TaskControl(object):
             f"Choice: {self.last_choice:>3}. {item_end}"
             f"Pref: {np.round(self.moving_average(),2):>5}. {item_end}"
             f"Reward: {self.reward_number:>4} "
-            f"({round(task_settings.REWARD_AMOUNT_UL*self.reward_number, 2):>4}uL). {item_end}"
+            f"({round(self.task_settings['reward_amount_ul']*self.reward_number, 2):>4}uL). {item_end}"
             f"Crit: {self.trials_post_criterion:>2}"
         )
 
@@ -284,15 +289,17 @@ class TaskControl(object):
         ):
             self.switch_block()
 
+        self.save()
+
     def make_forced_exploration_sma(self, next_choice_option=None):
         if next_choice_option < 0:  # LEFT
-            left_valve = task_settings.HARDWARE_VALVES_FOR_WATER[0]
+            left_valve = self.task_settings["HARDWARE_VALVES_FOR_WATER"][0]
             output_action_only_valve = [(Bpod.OutputChannels.Valve, left_valve)]
             valve_outcome = self.valve_times_dict[left_valve]
             port_nr = left_valve
             side_name = "left"
         else:
-            right_valve = task_settings.HARDWARE_VALVES_FOR_WATER[1]
+            right_valve = self.task_settings["HARDWARE_VALVES_FOR_WATER"][1]
             output_action_only_valve = [(Bpod.OutputChannels.Valve, right_valve)]
             valve_outcome = self.valve_times_dict[right_valve]
             port_nr = right_valve
@@ -301,7 +308,7 @@ class TaskControl(object):
         output_actions__side_ready = [
             (
                 eval(f"Bpod.OutputChannels.PWM{port_nr}"),
-                task_settings.HARDWARE_PORT_LIGHT_INTENSITY,
+                self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"],
             ),
         ]
         state_name_choice = f"choice_{side_name}"
@@ -316,9 +323,9 @@ class TaskControl(object):
         # TTL
         sma = add_trial_onset_ttl(
             sma=sma,
-            ttl_pulse_duration=task_settings.TTL_PULSE_DURATION,
+            ttl_pulse_duration=self.task_settings["ttl_pulse_duration"],
             bnc_channel=eval(
-                f"Bpod.OutputChannels.BNC{task_settings.HARDWARE_BNC_TRIAL_START}"
+                f"Bpod.OutputChannels.BNC{self.task_settings['HARDWARE_BNC_TRIAL_START']}"
             ),
             next_state="side_ready",
         )
@@ -344,7 +351,7 @@ class TaskControl(object):
 
         sma.add_state(
             state_name="final",
-            state_timer=task_settings.STATE_DURATION_FINAL,
+            state_timer=self.task_settings["state_duration_final"],
             state_change_conditions={
                 Bpod.Events.Port1Out: "exit",
                 Bpod.Events.Port2Out: "exit",
@@ -384,26 +391,26 @@ class TaskControl(object):
             1 if withprob(self.probability_right) else 0
         )
         # is stop trial ?
-        self.next_trial_give_stop_signal = task_settings.USE_STOP_TRIALS and withprob(
-            task_settings.STOP_TRIAL_PROPORTION
-        )
+        self.next_trial_give_stop_signal = self.task_settings[
+            "use_stop_trials"
+        ] and withprob(self.task_settings["stop_trial_proportion"])
         if self.next_trial_give_stop_signal:
             # if stop, also punish ?
             self.next_trial_choice_outcome_left = (
                 -1
-                if task_settings.PUNISH_STOP_TRIALS
-                and withprob(task_settings.PUNISH_STOP_TRIALS_PROPORTION)
+                if self.task_settings["punish_stop_trials"]
+                and withprob(self.task_settings["punish_stop_trials_proportion"])
                 else 0
             )
             self.next_trial_choice_outcome_right = (
                 -1
-                if task_settings.PUNISH_STOP_TRIALS
-                and withprob(task_settings.PUNISH_STOP_TRIALS_PROPORTION)
+                if self.task_settings["punish_stop_trials"]
+                and withprob(self.task_settings["punish_stop_trials_proportion"])
                 else 0
             )
 
             if self.stop_signal_delay is None:
-                self.stop_signal_delay = task_settings.STOP_TRIAL_DELAY_INITIAL
+                self.stop_signal_delay = self.task_settings["stop_trial_delay_initial"]
 
             # TODO: STOP signal adaptive testing here: change of stop signal delay ++ self.sound_delay_correction
 
@@ -421,8 +428,8 @@ class TaskControl(object):
             logging.debug(logmsg)
 
         # Stimulation
-        if task_settings.STIMULATION and withprob(
-            task_settings.STIMULATION_TRIAL_PROPORTION
+        if self.task_settings["use_stimulation"] and withprob(
+            self.task_settings["stimulation_trial_proportion"]
         ):
             pass
             # TODO: implement STIMULATION trials:
@@ -447,28 +454,28 @@ class TaskControl(object):
         output_actions__center_ready = []
         output_actions__center_delay = []
         output_actions__side_ready = []
-        if task_settings.HARDWARE_PORT_LIGHT_INTENSITY:
-            if "center" in task_settings.HARDWARE_PORT_LIGHT_PORTS:
+        if self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"]:
+            if "center" in self.task_settings["HARDWARE_PORT_LIGHT_PORTS"]:
                 output_actions__center_ready = [
                     (
                         Bpod.OutputChannels.PWM2,
-                        task_settings.HARDWARE_PORT_LIGHT_INTENSITY,
+                        self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"],
                     )
                 ]
                 output_actions__center_delay = output_actions__center_ready
-            if "side" in task_settings.HARDWARE_PORT_LIGHT_PORTS:
+            if "side" in self.task_settings["HARDWARE_PORT_LIGHT_PORTS"]:
                 output_actions__side_ready = [
                     (
                         Bpod.OutputChannels.PWM1,
-                        task_settings.HARDWARE_PORT_LIGHT_INTENSITY,
+                        self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"],
                     ),
                     (
                         Bpod.OutputChannels.PWM3,
-                        task_settings.HARDWARE_PORT_LIGHT_INTENSITY,
+                        self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"],
                     ),
                 ]
 
-        initiation_hold_time = task_settings.DELAY_UNTIL_CENTER_INIT
+        initiation_hold_time = self.task_settings["delay_until_center_init"]
         if isinstance(initiation_hold_time, list):
             initiation_hold_time = np.asarray(initiation_hold_time)
             if len(initiation_hold_time) > 2:
@@ -497,9 +504,9 @@ class TaskControl(object):
 
         sma = add_trial_onset_ttl(
             sma=sma,
-            ttl_pulse_duration=task_settings.TTL_PULSE_DURATION,
+            ttl_pulse_duration=self.task_settings["ttl_pulse_duration"],
             bnc_channel=eval(
-                f"Bpod.OutputChannels.BNC{task_settings.HARDWARE_BNC_TRIAL_START}"
+                f"Bpod.OutputChannels.BNC{self.task_settings['HARDWARE_BNC_TRIAL_START']}"
             ),
             next_state="center_ready",
         )
@@ -508,7 +515,9 @@ class TaskControl(object):
         sma.add_state(
             state_name="center_ready",
             state_timer=30,
-            state_change_conditions={Bpod.Events.Port2In: "center_initiating"},
+            state_change_conditions={
+                Bpod.Events.Port2In: "center_initiating"
+            },  # , Bpod.Events.Tup: "exit"},
             output_actions=output_actions__center_ready,
         )
         # INIT long enough -> proceed. pulled out too early -> back to center_ready
@@ -528,7 +537,7 @@ class TaskControl(object):
                 self.stop_signal_delay - self.sound_delay_correction
             )
             delay_until_side_timeout = (
-                task_settings.DELAY_UNTIL_SIDE_TIMEOUT_FOR_STOPPING
+                self.task_settings["side_timeout_for_stopping"]
                 - delay_until_stop_signal
             )
 
@@ -576,7 +585,7 @@ class TaskControl(object):
         else:  # REGULAR TRIAL
             sma.add_state(
                 state_name="side_ready",
-                state_timer=task_settings.DELAY_UNTIL_SIDE_TIMEOUT,
+                state_timer=self.task_settings["delay_until_side_timeout"],
                 state_change_conditions={
                     Bpod.Events.Port1In: "choice_left",
                     Bpod.Events.Port3In: "choice_right",
@@ -588,28 +597,34 @@ class TaskControl(object):
         # OUTCOMES: LEFT  --  Encoding:  0=unrewarded, 1=rewarded, -1=punish with air
         # note: stop signal outcomes set to 0 in next-trial
         if self.next_trial_choice_outcome_left > 0:  # REWARD
-            left_valve = task_settings.HARDWARE_VALVES_FOR_WATER[0]
+            left_valve = self.task_settings["HARDWARE_VALVES_FOR_WATER"][0]
             output_action_left_valve = [(Bpod.OutputChannels.Valve, left_valve)]
             valve_left_outcome = self.valve_times_dict[left_valve]
         elif self.next_trial_choice_outcome_left < 0:  # PUNISH
             output_action_left_valve = [
-                (Bpod.OutputChannels.Valve, task_settings.HARDWARE_VALVES_FOR_AIR[0])
+                (
+                    Bpod.OutputChannels.Valve,
+                    self.task_settings["HARDWARE_VALVES_FOR_AIR"][0],
+                )
             ]
-            valve_left_outcome = task_settings.PUNISH_AIR_DURATION_SEC
+            valve_left_outcome = self.task_settings["punish_air_duration"]
         else:  # == 0
             output_action_left_valve = []
             valve_left_outcome = 0
 
         # OUTCOMES: RIGHT  --  Encoding:  0=unrewarded, 1=rewarded, -1=punish with air
         if self.next_trial_choice_outcome_right > 0:  # REWARD
-            right_valve = task_settings.HARDWARE_VALVES_FOR_WATER[1]
+            right_valve = self.task_settings["HARDWARE_VALVES_FOR_WATER"][1]
             output_action_right_valve = [(Bpod.OutputChannels.Valve, right_valve)]
             valve_right_outcome = self.valve_times_dict[right_valve]
         elif self.next_trial_choice_outcome_right < 0:  # PUNISH
             output_action_right_valve = [
-                (Bpod.OutputChannels.Valve, task_settings.HARDWARE_VALVES_FOR_AIR[1])
+                (
+                    Bpod.OutputChannels.Valve,
+                    self.task_settings["HARDWARE_VALVES_FOR_AIR"][1],
+                )
             ]
-            valve_right_outcome = task_settings.PUNISH_AIR_DURATION_SEC
+            valve_right_outcome = self.task_settings["punish_air_duration"]
         else:  # == 0
             output_action_right_valve = []
             valve_right_outcome = 0
@@ -651,7 +666,7 @@ class TaskControl(object):
         # Cleanup
         sma.add_state(
             state_name="final",
-            state_timer=task_settings.STATE_DURATION_FINAL,
+            state_timer=self.task_settings["state_duration_final"],
             state_change_conditions={
                 Bpod.Events.Port1Out: "exit",
                 Bpod.Events.Port2Out: "exit",
@@ -664,10 +679,11 @@ class TaskControl(object):
         return sma
 
     def save(self):
-        logging.debug("Saving task control data.")
-        # TODO: write analysis module to save data preprocessed
+        logging.debug("Saving task control data..")
+        dt = time.time()
         df = pd.DataFrame(self.trial_data)
         df.to_pickle(str(self.save_path_data) + ".pkl")
+        logging.debug(f"Saved data in {np.round(time.time()-dt,2)}s.")
 
     def __del__(self):
         self.save()

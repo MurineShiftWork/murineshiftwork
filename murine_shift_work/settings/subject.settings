@@ -1,41 +1,16 @@
-[c000111_m222333]
-name = "test"
-group = "testgroup"
+[_test_subject]
+    project = "test_project"
+    experiment = "test_experiment"
 
-# [general]
-#
-# [project]
-#
-#     [[experiment]]
-#         [[[subject]]]
-#             [[[[protocol]]]]
-#
-#
-#     [LHb_sleep]
-#
-#
-# [c111222_m333444]
-#     project = "LHb_sleep"
-#
-#     [[task]]
-#         experiment
-#         cohort
-#
-#
-#
-# [c111222_m333444]
-#     project = "LHb_sleep"
-#
-#     [[probabilistic_switching]]
-#         experiment
-#         cohort
-#
-#
-# [c111222_m333444]
-#     project = "LHb_sleep"
-#
-#     [[probabilistic_switching]]
-#         experiment
-#         cohort
-#
-#         protocol = "ps_level_2"  # then look up in default protocols what params level 2 has -> automate or at least allow standard training stages
+    [[_test_minimal_task]]
+        test_argument = "minimal"
+
+    [[_test_video]]
+        test_argument = "vid"
+
+    [[probabilistic_switching]]
+        # ALTERNATIVELY: level = 2 -> automate
+        probabilities = [(80, 0), (0, 80)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 5
+        criterion_contrast_blocks = .75
