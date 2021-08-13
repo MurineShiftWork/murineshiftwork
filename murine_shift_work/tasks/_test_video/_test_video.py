@@ -3,30 +3,24 @@ import time
 from multiprocessing import Queue
 from pathlib import Path
 
+import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
+from rpi_camera_colony.control.conductor import Conductor
 from rpi_camera_colony.control.process_sandbox import ConductorAsProcess
 
 from murine_shift_work import settings
 from murine_shift_work.logic.task_process import parse_task_args
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
+from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
+    OnlinePlottingForPS,
+)
 
 
 class Task(TaskRunner):
     def prepare(self):
-        self.kill_queue = Queue()
-        self.camera_config_file = Path(settings.__file__).parent / "camera.config"
-        self.conductor_args = {
-            "config_file": str(self.camera_config_file),
-            "acquisition_name": self.bpod.session_name,
-        }
-        self.video_process = ConductorAsProcess(
-            conductor_args=self.conductor_args, kill_queue=self.kill_queue
-        )
-        time.sleep(1)
-        self.video_process.start()
-        time.sleep(8)
+        print("HEREHRE")
 
     def run(self):
         trial_index = 0
@@ -52,36 +46,77 @@ class Task(TaskRunner):
 
             if not self.bpod.run_state_machine(sma):
                 logging.warning("No data returned.")
-                self.kill_queue.put(True)
+                # self.kill_queue.put(True)
                 break
+
+            self.input_kwargs["objects"]["data_queue"].put(
+                {
+                    "trial_index": trial_index,
+                    "moving_average": np.random.randint(0, 1),
+                    "block_probability_left": 1,
+                    "block_probability_right": 0.35,
+                    "choice": np.random.randint(-1, 1),
+                    "rewarded": 0,
+                    "was_stop": 0,
+                    "punished": 0,
+                }
+            )
 
             trial_index += 1
 
-        self.kill_queue.put(True)
-        self.video_process.join(1)
+        # self.kill_queue.put(True)
+        # self.video_process.join(1)
+        logging.debug("Exiting Task.")
 
 
 def run_task():
-    # FIXME: instead of parsing from command line, find task settings.config in task dicts
     args_dict = parse_task_args()
 
-    # Update variables here for GUI call:
-    # -> Set called_from_command to False if is called from GUI
-    # args_dict.update({"called_from_command": False})
-    # -> get_subject_from_pybpod_conf
-    # from murine_shift_work.logic.paths import get_subject_from_pybpod_conf
-    # subject = get_subject_from_pybpod_conf()
     args_dict.update({"task": "video"})
+    dq = Queue()
+    kq = Queue()
 
+    args_dict.update(
+        {
+            "objects": {
+                "data_queue": dq,
+                "kill_queue": kq,
+            },
+        },
+    )
+
+    args_dict.update({"auto_start": False})
     with TaskProcess(**args_dict) as tp:
+        camera_config_file = Path(settings.__file__).parent / "camera.config"
+        conductor_args = {
+            "config_file": str(camera_config_file),
+            "acquisition_name": tp.session_paths["session_basename"],
+        }
+        c = Conductor(**conductor_args)
+        c.start_acquisition()
+
+        plotting_process = OnlinePlottingForPS(
+            session_name="x",
+            is_simulation=False,
+            data_queue=dq,
+            kill_queue=kq,
+        )
+        plotting_process.start()
+
+        time.sleep(5)
+        tp.run_task()
         while tp.is_running():
             try:
                 time.sleep(1)
             except KeyboardInterrupt:
                 tp.stop_task()
 
+        kq.put(True)
+        c.stop_acquisition()
+        c.cleanup()
+        time.sleep(1)
 
-run_task()
 
 if __name__ == "__main__":
+    run_task()
     print("main")

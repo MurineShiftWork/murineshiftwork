@@ -10,14 +10,10 @@ from murine_shift_work.logic.task_process import TaskRunner
 
 
 class Task(TaskRunner):
-    def prepare(self):
-        pass
-
     def run(self):
         trial_index = 0
         max_trials = 4
         while self.continue_task and trial_index < max_trials:
-
             print(f"Trial {trial_index}")
 
             sma = StateMachine(bpod=self.bpod)
@@ -37,13 +33,13 @@ class Task(TaskRunner):
 
             if not self.bpod.run_state_machine(sma):
                 logging.warning("No data returned.")
+                self.continue_task = False
                 break
 
             trial_index += 1
 
 
 def run_task():
-    # FIXME: instead of parsing from command line, find task settings.config in task dicts
     args_dict = parse_task_args()
 
     # Update variables here for GUI call:
@@ -52,6 +48,8 @@ def run_task():
     # -> get_subject_from_pybpod_conf
     # from murine_shift_work.logic.paths import get_subject_from_pybpod_conf
     # subject = get_subject_from_pybpod_conf()
+    # -> get data path from GUI user_settings
+    # from murine_shift_work.logic.run_install_tasks import get_default_data_path
     args_dict.update({"task": "minimal"})
 
     with TaskProcess(**args_dict) as tp:
@@ -60,6 +58,9 @@ def run_task():
                 time.sleep(1)
             except KeyboardInterrupt:
                 tp.stop_task()
+
+        print("Exiting WITH")
+    print("THE END")
 
 
 if __name__ == "__main__":

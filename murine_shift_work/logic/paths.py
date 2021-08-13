@@ -34,6 +34,7 @@ def build_data_paths(
         "basepath": basepath,
         # Main vars for usage
         "session_basename": session_basename,
+        "session_basename_behav": session_basename + ".msw",
         "session_folder": str(session_data_folder),
         "session_file_path": str(session_behaviour_basename),
     }

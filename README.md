@@ -16,6 +16,15 @@ PYDEVD_USE_FRAME_EVAL=NO
 
 ## TODO
 
+- Refactoring for commandline access
+    - [ ] finish main task_process class
+    - [ ] dry minimal_task example
+    - [ ] update installation for task call via GUI
+    - [ ] extend commandline/GUI split architecture to all task protocols
+    - [ ]
+        // FIXME: instead of parsing from command line, find task settings.config in task dicts -->> this is a task specific requirement ?
+
+
 - Architecture
     - [x] Make online plotting with pyqtgraph QApplication wrapper. Create/close bpod outside, then hand Application as input arg.
 

@@ -2,6 +2,8 @@ import argparse
 import logging
 import os
 import time
+from multiprocessing import Process
+from multiprocessing import Queue
 from pathlib import Path
 
 from pybpodapi.protocol import Bpod
@@ -13,12 +15,18 @@ from murine_shift_work.logic.misc import find_task_by_name
 from murine_shift_work.logic.misc import test_port_accessible
 from murine_shift_work.logic.paths import build_data_paths
 from murine_shift_work.logic.paths import test_path_is_writable
+from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
+    OnlinePlottingForPS,
+)
 
 user_dir = Path(os.path.expanduser("~"))
 
 
 def parse_task_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Input arguments",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         "--serial-port",
         "-p",
@@ -30,7 +38,7 @@ def parse_task_args():
         "--basepath",
         "-f",
         type=str,
-        default=str(user_dir / "data/behaviour"),
+        default=str(user_dir / "data"),
         help="Basepath for task data. Default: ~/data/",
     )
     parser.add_argument(
@@ -44,7 +52,7 @@ def parse_task_args():
         "--task",
         "-t",
         type=str,
-        default="test_minimal",  # FIXME: remove default here. has to be chosen explicitly
+        default="",
         help="Task name or part name, e.g. 'optotagging' or 'opto' for task 'optotagging'",
     )
     parser.add_argument(
@@ -68,8 +76,15 @@ def parse_task_args():
         dest="called_from_command",
         default=True,
     )
+    arg_dict = parser.parse_args().__dict__
+    # Checks
+    if not arg_dict["task"]:
+        raise ValueError(
+            "No Task to run specified. No default, has to be specified explicitly."
+        )
 
-    return parser.parse_args().__dict__
+    arg_dict["basepath"] = os.path.expanduser(arg_dict["basepath"])
+    return arg_dict
 
 
 class TaskRunner(QThread):
@@ -85,15 +100,14 @@ class TaskRunner(QThread):
 
     def prepare(self):
         """Use input kwargs to e.g. start video, load task settings, make task objects, GUI, etc."""
-        raise NotImplementedError(
-            "This function has to get re-implemented in child classes."
-        )
+        logging.debug("No 'TaskRunner.prepare()' implementation.")
 
     def run(self) -> None:
         raise NotImplementedError(
             "This function has to get re-implemented in child classes."
         )
 
+        # Make task objects
         # Run main task
         trial_index = 0
         max_trials = 1500
@@ -107,14 +121,10 @@ class TaskRunner(QThread):
 
 
 class ExampleTask(TaskRunner):
-    def prepare(self):
-        pass
-
     def run(self):
         trial_index = 0
         max_trials = 1500
         while self.continue_task and trial_index < max_trials:
-
             print(f"Trial {trial_index}")
 
             sma = StateMachine(bpod=self.bpod)
@@ -169,7 +179,7 @@ class TaskProcess(object):
 
         self.serial_port = serial_port
         self.basepath = Path(basepath)
-        self.subject = subject  # FIXME: move path making into here, so only require task, subject, basepath
+        self.subject = subject
         self.task_in = task
         self.input_kwargs = kwargs
 
@@ -214,23 +224,25 @@ class TaskProcess(object):
 
     def exit_safely(self):
         self.exiting = True
-        if self.serial_is_open:
+        if self.serial_is_open and not self.exiting:
             self.bpod.stop_trial()  # same method as in pybpod GUI. see bpod_base class.
             self.bpod.close()
             self.serial_is_open = False
 
     def connect_bpod(self):
+        """Connect device on serial port."""
         if not self.serial_is_open and not self.exiting:
             logging.debug(f"Connecting bpod on serial port: {self.serial_port}")
             self.bpod = Bpod(
                 serial_port=self.serial_port,
                 workspace_path=self.session_paths["session_folder"],
-                session_name=self.session_paths["session_basename"],
+                session_name=self.session_paths["session_basename_behav"],
             )
             self.bpod.open()
             self.serial_is_open = True
 
     def init_task(self):
+        """Import specific Task and make self.task_runner Thread."""
         try:
             exec(
                 f"from murine_shift_work.tasks.{self.task_name}.{self.task_name} import Task as ThisTask",
@@ -241,8 +253,9 @@ class TaskProcess(object):
             raise ImportError(f"Cannot import 'Task' from task '{self.task_name}'")
 
     def run_task(self):
+        """Run the Task thread."""
         self.task_runner.start()
-        time.sleep(1)
+        time.sleep(0.1)
 
     def is_running(self):
         return self.task_runner.isRunning()
@@ -255,7 +268,7 @@ class TaskProcess(object):
                 logging.debug("Task stopped.")
 
 
-def run_task():
+def example_run_task():
     args_dict = parse_task_args()
 
     # Update variables here for GUI call:
@@ -280,4 +293,4 @@ def run_task():
 
 
 if __name__ == "__main__":
-    run_task()
+    print("main")
