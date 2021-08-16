@@ -4,7 +4,7 @@ from pathlib import Path
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 
-from murine_shift_work.logic.paths import make_session_paths
+from murine_shift_work.logic.paths import build_data_paths
 
 # Get user input or empty for defaults
 # valve_opening_time = input("Valve opening time (seconds, default: 5): ")
@@ -26,7 +26,7 @@ for valve in valve_numbers:
 
 
 # Flush valves
-session_paths = make_session_paths(protocol=Path(__file__).parent.name)
+session_paths = build_data_paths(protocol=Path(__file__).parent.name)
 bpod = Bpod(
     workspace_path=session_paths["session_data_folder"],
     session_name=session_paths["session_basename"],

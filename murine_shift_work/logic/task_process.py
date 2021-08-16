@@ -2,8 +2,6 @@ import argparse
 import logging
 import os
 import time
-from multiprocessing import Process
-from multiprocessing import Queue
 from pathlib import Path
 
 from pybpodapi.protocol import Bpod
@@ -72,6 +70,9 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
     )
     arg_dict = parser.parse_args().__dict__
     arg_dict["is_cli_call"] = is_cli_call
+    arg_dict["testing"] = testing
+
+    # Checks
     if not is_cli_call:
         arg_dict["subject"] = get_subject_from_pybpod_conf()
         arg_dict["basepath"] = get_default_basepath()
@@ -79,24 +80,26 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
     if testing:
         arg_dict["task"] = "minimal"
 
-    # Checks
-    if not arg_dict["task"] and not task and not is_cli_call:
+    if not arg_dict["task"] and task is None and not is_cli_call:
         raise ValueError(
             "No Task to run specified. No default, has to be specified explicitly."
         )
     if not arg_dict["task"]:
         arg_dict["task"] = task
 
+    # Prepare arguments
     arg_dict["basepath"] = os.path.expanduser(arg_dict["basepath"])
+    task_name = find_task_by_name(task_name=arg_dict["task"])
+    arg_dict["task_name"] = task_name
+    config_file_dir_from_args = arg_dict["config_file_dir"]
 
-    # Settings
+    # Load settings for task and overwrite with subject-specific settings if available
     arg_dict["task.settings.default"] = {}
     arg_dict["task.settings.patched"] = {}
     arg_dict["subject.settings.all"] = {}
     arg_dict["subject.settings.this"] = {}
 
-    task_name = find_task_by_name(task_name=arg_dict["task"])
-    arg_dict["task_name"] = task_name
+    # Load: task settings
     exec(f"from murine_shift_work.tasks import {task_name} as tn", globals())
     exec("task_folder = Path(tn.__file__).parent", globals())
     if "task_folder" not in locals():
@@ -109,7 +112,7 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
         arg_dict["task.settings.default"] = read_config(file=task_settings_file[0])
         arg_dict["task.settings.patched"] = arg_dict["task.settings.default"]
 
-    config_file_dir_from_args = arg_dict["config_file_dir"]
+    # Load: subject settings
     subject_settings_file = [
         Path(config_file_dir_from_args) / t
         for t in os.listdir(config_file_dir_from_args)
@@ -118,7 +121,7 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
     if len(subject_settings_file) == 1:
         arg_dict["subject.settings.all"] = read_config(file=subject_settings_file[0])
 
-    # PATCH: default settings with subject settings
+    # Patch: default settings with subject settings
     subject_settings_this = arg_dict["subject.settings.all"].get(
         arg_dict["subject"], None
     )
@@ -130,9 +133,9 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
                 # if k in arg_dict["task.settings.patched"]
                 arg_dict["task.settings.patched"][k] = v
 
-    # RCC settings
+    # Find file of RCC settings
     if not Path(arg_dict["config_file_rcc"]).exists():
-        arg_dict["config_file_rcc"] = str(config_file_dir / "camera.rcc.config")
+        arg_dict["config_file_rcc"] = str(Path(config_file_dir) / "camera.rcc.config")
         if not Path(arg_dict["config_file_rcc"]).exists():
             logging.debug(f"No RCC config file at: {arg_dict['config_file_rcc']}")
 
@@ -155,18 +158,21 @@ class TaskRunner(QThread):
         logging.debug("No 'TaskRunner.prepare()' implementation.")
 
     def run(self) -> None:
-        raise NotImplementedError(
-            "This function has to get re-implemented in child classes."
-        )
+        """Run the main task logic:
 
-        # Make task objects
-        # Run main task
+        (1) Make task objects here or in `prepare()`
+        (2) Run task (while loop contingent on `self.continue_task` and any task-specific conditions)
+        (3) Shutdown / clean up
+
         trial_index = 0
         max_trials = 1500
         while self.continue_task and trial_index < max_trials:
             time.sleep(2)
 
-        # Do shutdown tasks here: Remove task objects.
+        """
+        raise NotImplementedError(
+            "This function has to get re-implemented in child classes."
+        )
 
     def stop(self):
         self.continue_task = False
@@ -320,20 +326,17 @@ class TaskProcess(object):
                 logging.debug("Task stopped.")
 
 
-def example_run_task(is_cli_call=True):
-    args_dict = parse_task_args(is_cli_call=is_cli_call)
-    # Which task to run if not given in input:
-    args_dict.update({"task": "minimal"})
+def run_msw_cli(testing=False):
+    args_dict = parse_task_args(is_cli_call=True, testing=testing)
 
-    with TaskProcess(**args_dict) as tp:
-        while tp.is_running():
-            try:
-                time.sleep(1)
-            except KeyboardInterrupt:
-                tp.stop_task()
+    task_name = args_dict["task_name"]
+    exec(
+        f"from murine_shift_work.tasks.{task_name}.{task_name} import run_task",
+        globals(),
+    )
+    exec("run_task(**args_dict)")
 
-        print("Exiting WITH")
-    print("THE END")
+    logging.debug("EXITING CLI.")
 
 
 if __name__ == "__main__":

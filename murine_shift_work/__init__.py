@@ -23,7 +23,7 @@ __version__ = "0.0.2.dev0"
 __author__ = "Lars B. Rollik"
 
 
-def start_gui():
+def run_msw_gui():
     from murine_shift_work.logic.run_install_tasks import run_check_install
     from pybpodgui_plugin.__main__ import start
 

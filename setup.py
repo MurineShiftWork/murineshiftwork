@@ -32,7 +32,7 @@ setup(
         "rich",
         "myterial",
         "PySimpleGUI",
-        # "rpi_camera_colony @ git+https://llrrr@bitbucket.org/lbrcoding/rpi_camera_colony.git#egg=rpi_camera_colony",
+        "rpi_camera_colony @ git+https://llrrr@bitbucket.org/lbrcoding/rpi_camera_colony_dev.git#egg=rpi_camera_colony",
     ],
     extras_require={
         "dev": [
@@ -50,8 +50,8 @@ setup(
     packages=find_packages(),
     entry_points={
         "console_scripts": [
-            "msw_gui = murine_shift_work.__init__:start_gui",
-            "msw_cli = murine_shift_work.logic.task_process:run_task",
+            "msw_gui = murine_shift_work.__init__:run_msw_gui",
+            "msw_cli = murine_shift_work.logic.task_process:run_msw_cli",
         ],
     },
     url="URL-URL-URL",

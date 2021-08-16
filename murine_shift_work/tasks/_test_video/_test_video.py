@@ -7,7 +7,6 @@ import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 from rpi_camera_colony.control.conductor import Conductor
-from rpi_camera_colony.control.process_sandbox import ConductorAsProcess
 
 from murine_shift_work import settings
 from murine_shift_work.logic.task_process import parse_task_args

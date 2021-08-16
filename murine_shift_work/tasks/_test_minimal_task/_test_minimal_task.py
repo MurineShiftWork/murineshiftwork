@@ -39,11 +39,8 @@ class Task(TaskRunner):
             trial_index += 1
 
 
-def run_task(is_cli_call=True):
-    args_dict = parse_task_args(is_cli_call=is_cli_call)
-    args_dict.update({"task": "minimal"})
-
-    with TaskProcess(**args_dict) as tp:
+def run_task(**kwargs):
+    with TaskProcess(**kwargs) as tp:
         while tp.is_running():
             try:
                 time.sleep(1)
