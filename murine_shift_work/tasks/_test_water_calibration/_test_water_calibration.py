@@ -1,7 +1,7 @@
 import logging
 import random
+import time
 from datetime import datetime
-from pathlib import Path
 
 import numpy as np
 from pybpodapi.bpod import Bpod
@@ -12,32 +12,15 @@ from murine_shift_work.logic.calibration import load_water_calibration
 from murine_shift_work.logic.calibration import save_water_calibration
 from murine_shift_work.logic.gui import ask_water_calibration_ready
 from murine_shift_work.logic.gui import ask_water_calibration_weight
-from murine_shift_work.logic.paths import make_session_paths
-
-calibration_data = load_water_calibration()
-
-VALVE_TIME_MIN = 10  # ms
-VALVE_TIME_MAX = 100  # ms
-VALVE_TIME_STEP = 20  # ms
-
-VALVE_TIMES_TO_TEST = np.linspace(
-    VALVE_TIME_MIN,
-    VALVE_TIME_MAX,
-    int(VALVE_TIME_MAX / VALVE_TIME_STEP),
-    endpoint=False,
-)
-
-VALVE_ITERATIONS = 200
-VALVE_INTER_PULSE_INTERVAL = 0.1
-
-VALVES_TO_CALIBRATE = [1, 3]
+from murine_shift_work.logic.task_process import TaskProcess
+from murine_shift_work.logic.task_process import TaskRunner
 
 
 def run_test_water_drops(
     valve=1,
     valve_open_time=10,
-    n_trials=VALVE_ITERATIONS,
-    inter_pulse_interval=VALVE_INTER_PULSE_INTERVAL,
+    n_trials=200,
+    inter_pulse_interval=0.1,
     bpod=None,
 ):
     if valve_open_time > 0.5:
@@ -71,8 +54,8 @@ def run_test_water_drops(
 def calibrate_point_for_valve(
     valve=1,
     valve_open_time=10,
-    n_drops=VALVE_ITERATIONS,
-    inter_pulse_interval=VALVE_INTER_PULSE_INTERVAL,
+    n_drops=200,
+    inter_pulse_interval=0.1,
     bpod=None,
 ):
     calibration_data = load_water_calibration()
@@ -128,26 +111,49 @@ def calibrate_point_for_valve(
     save_water_calibration(df=calibration_data)
 
 
-random_valve_times = VALVE_TIMES_TO_TEST.copy()
-random.shuffle(random_valve_times)
+class Task(TaskRunner):
+    def run(self) -> None:
+        VALVE_TIME_MIN = 10  # ms
+        VALVE_TIME_MAX = 100  # ms
+        VALVE_TIME_STEP = 20  # ms
 
-
-session_paths = make_session_paths(protocol=Path(__file__).parent.name)
-bpod = Bpod(
-    workspace_path=session_paths["session_data_folder"],
-    session_name=session_paths["session_basename"],
-)
-for valve in [1, 3]:
-    for valve_time in random_valve_times:
-        print(f"valve: {valve}, with valve time: {valve_time}")
-        calibrate_point_for_valve(
-            valve=valve,
-            valve_open_time=valve_time,
-            n_drops=VALVE_ITERATIONS,
-            inter_pulse_interval=VALVE_INTER_PULSE_INTERVAL,
-            bpod=bpod,
+        VALVE_TIMES_TO_TEST = np.linspace(
+            VALVE_TIME_MIN,
+            VALVE_TIME_MAX,
+            int(VALVE_TIME_MAX / VALVE_TIME_STEP),
+            endpoint=False,
         )
-bpod.close()
+
+        VALVE_ITERATIONS = 200
+        VALVE_INTER_PULSE_INTERVAL = 0.1
+        VALVES_TO_CALIBRATE = [1, 3]
+
+        random_valve_times = VALVE_TIMES_TO_TEST.copy()
+        random.shuffle(random_valve_times)
+
+        for valve in VALVES_TO_CALIBRATE:
+            for valve_time in random_valve_times:
+                print(f"valve: {valve}, with valve time: {valve_time}ms.")
+                calibrate_point_for_valve(
+                    valve=valve,
+                    valve_open_time=valve_time,
+                    n_drops=VALVE_ITERATIONS,
+                    inter_pulse_interval=VALVE_INTER_PULSE_INTERVAL,
+                    bpod=self.bpod,
+                )
+
+
+def run_task(**kwargs):
+    with TaskProcess(**kwargs) as tp:
+        while tp.is_running():
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                tp.stop_task()
+
+        print("Exiting TaskProcess WITH")
+    print("THE END run_task")
+
 
 if __name__ == "__main__":
     print("main")

@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import os
 import time
@@ -78,7 +79,7 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
         arg_dict["basepath"] = get_default_basepath()
 
     if testing:
-        arg_dict["task"] = "minimal"
+        arg_dict["task"] = "prob"
 
     if not arg_dict["task"] and task is None and not is_cli_call:
         raise ValueError(
@@ -102,8 +103,11 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
     # Load: task settings
     exec(f"from murine_shift_work.tasks import {task_name} as tn", globals())
     exec("task_folder = Path(tn.__file__).parent", globals())
-    if "task_folder" not in locals():
+    if "task_folder" not in globals():
         task_folder = None
+    else:
+        task_folder = globals()["task_folder"]
+    # global task_folder
     task_files = os.listdir(task_folder)
     task_settings_file = [
         Path(task_folder) / t for t in task_files if "task.settings" in t
@@ -139,6 +143,7 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
         if not Path(arg_dict["config_file_rcc"]).exists():
             logging.debug(f"No RCC config file at: {arg_dict['config_file_rcc']}")
 
+    logging.debug(json.dumps(arg_dict, indent=4, sort_keys=True))
     return arg_dict
 
 

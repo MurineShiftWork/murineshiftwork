@@ -40,7 +40,6 @@ def save_project(p=None):
 
 
 def copy_user_settings(overwrite=True):
-    # FIXME: why are user settings not copied on new setups ???
     target = str(Path(os.path.expanduser("~")) / "user_settings.py")
 
     if Path(target).exists() and not overwrite:
@@ -73,11 +72,14 @@ def create_project():
 
 
 def write_task_file(task_name=None):
-    # FIXME: import parse_args for CLI -> feed into run_task of selected task: will update for GUI settings in argparse
+    """Parse args for GUI call and call task function.""" ""
     s = (
         f'if __name__ == "__main__":\n'
+        f"    from murine_shift_work.logic.task_process import parse_task_args"
         f"    from murine_shift_work.tasks.{task_name}.{task_name} import run_task\n"
-        f"    run_task(is_cli_call=False)\n"
+        f'    args_dict = parse_task_args(is_cli_call=True, testing=False, task="{task_name}")'
+        f'    args_dict["is_cli_call"] = False'
+        f"    run_task(**args_dict)\n"
     )
     return s
 

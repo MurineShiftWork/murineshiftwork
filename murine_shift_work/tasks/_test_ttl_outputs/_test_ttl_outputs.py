@@ -1,37 +1,45 @@
 import logging
-from pathlib import Path
+import time
 
 from pybpodapi.bpod import Bpod
 
-from murine_shift_work.logic.paths import make_session_paths
 from murine_shift_work.logic.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
+from murine_shift_work.logic.task_process import TaskProcess
+from murine_shift_work.logic.task_process import TaskRunner
 
-test_sequence = "LLssLLss"
 
-session_paths = make_session_paths(protocol=Path(__file__).parent.name)
-bpod = Bpod(
-    workspace_path=session_paths["session_data_folder"],
-    session_name=session_paths["session_basename"],
-)
+class Task(TaskRunner):
+    def run(self) -> None:
+        test_sequence = "LLssLLss"
 
-for bnc_channel in [1, 2]:
-    logging.info(
-        f"Testing BNC outputs with TTL sequence {test_sequence} on BNC channel {bnc_channel}"
-    )
-    sma = make_protocol_identifier_ttl_sequence(
-        bpod=bpod,
-        sequence=test_sequence,
-        output_chanel_pulse=eval(f"Bpod.OutputChannels.BNC{bnc_channel}"),
-    )
+        for bnc_channel in [1, 2]:
+            logging.info(
+                f"Testing BNC outputs with TTL sequence {test_sequence} on BNC channel {bnc_channel}"
+            )
+            sma = make_protocol_identifier_ttl_sequence(
+                bpod=self.bpod,
+                sequence=test_sequence,
+                output_chanel_pulse=eval(f"Bpod.OutputChannels.BNC{bnc_channel}"),
+            )
 
-    bpod.send_state_machine(sma)  # Send state machine description to Bpod device
+            self.bpod.send_state_machine(sma)
 
-    if not bpod.run_state_machine(sma):
-        print("nothing returned")
+            if not self.bpod.run_state_machine(sma):
+                print("nothing returned")
 
-bpod.close()
+
+def run_task(**kwargs):
+    with TaskProcess(**kwargs) as tp:
+        while tp.is_running():
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                tp.stop_task()
+
+        print("Exiting TaskProcess WITH")
+    print("THE END run_task")
 
 
 if __name__ == "__main__":

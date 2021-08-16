@@ -10,7 +10,6 @@ from rpi_camera_colony.control.conductor import Conductor
 from murine_shift_work.logic.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
-from murine_shift_work.logic.task_process import parse_task_args
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
 from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
@@ -73,10 +72,9 @@ class Task(TaskRunner):
         logging.debug("Exiting Task.")
 
 
-def run_task(is_cli_call=True, testing=False):
-    args_dict = parse_task_args(
-        is_cli_call=is_cli_call, testing=testing, task="probabilistic_switching"
-    )
+def run_task(**args_dict):
+    """Task: PS."""
+    # Make objects
     dq = Queue()
     kq = Queue()
     args_dict.update(
@@ -87,27 +85,33 @@ def run_task(is_cli_call=True, testing=False):
             },
         },
     )
+
+    # Do not auto start, so that camera can start first
     args_dict.update({"auto_start": False})
 
+    # Enter behaviour context
     with TaskProcess(**args_dict) as tp:
-        session_basename = tp.session_paths["session_basename"]
+        # Video
         conductor_args = {
-            "config_file": str(args_dict["config_file_rcc"]),
-            "acquisition_name": session_basename,
+            "config_file": args_dict["config_file_rcc"],
+            "acquisition_name": tp.session_paths["session_basename"],
         }
-        if is_cli_call:
-            c = Conductor(**conductor_args)
-            c.start_acquisition()
+        c = Conductor(**conductor_args)
+        c.start_acquisition()
 
+        # Online plotting
         plotting_process = OnlinePlottingForPS(
-            session_name=session_basename,
+            session_name="x",
             is_simulation=False,
             data_queue=dq,
             kill_queue=kq,
         )
         plotting_process.start()
 
+        # Delay for video to start
         time.sleep(5)
+
+        # Start task
         tp.run_task()
         while tp.is_running():
             try:
@@ -115,13 +119,16 @@ def run_task(is_cli_call=True, testing=False):
             except KeyboardInterrupt:
                 tp.stop_task()
 
+        # Stop online plotting
         kq.put(True)
-        if is_cli_call:
-            c.stop_acquisition()
-            c.cleanup()
+
+        # Stop video
+        c.stop_acquisition()
+        c.cleanup()
+
         time.sleep(1)
 
 
 if __name__ == "__main__":
-    run_task(is_cli_call=False)
+    run_task()
     print("main")

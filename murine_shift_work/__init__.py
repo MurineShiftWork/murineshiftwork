@@ -14,11 +14,11 @@ logger = logging.getLogger()
 logger.setLevel(getattr(logging, level))
 
 formatter = logging.Formatter(
-    "%(asctime)s - %(levelname)s"
+    "%(asctime)s.%(msecs)03d - %(levelname)s"
     " - %(processName)s %(filename)s:%(lineno)s"
     " - %(message)s"
 )
-formatter.datefmt = "%Y-%m-%d %H:%M:%S %p"
+formatter.datefmt = "%Y-%m-%d %H:%M:%S"
 
 stream_handler = logging.StreamHandler()
 stream_handler.setLevel(getattr(logging, level))

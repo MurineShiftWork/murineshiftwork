@@ -61,6 +61,7 @@ class Task(TaskRunner):
 
 
 def run_task(**args_dict):
+    """Task: test video."""
     # Make objects
     dq = Queue()
     kq = Queue()

@@ -24,6 +24,10 @@ def load_sound_delay_data():
 
 def save_sound_delay_data(measurements=None, plot=True, overwrite=True):
     delay_measurements_df = pd.DataFrame(measurements)
+    if delay_measurements_df.empty:
+        logging.debug("\n\n\n\t\tNo delay measurements to save!\n\n")
+        return False
+
     delays = delay_measurements_df["delay"] * 1000  # convert to msec
 
     if Path(calibration_file_sound_delay).exists() and not overwrite:

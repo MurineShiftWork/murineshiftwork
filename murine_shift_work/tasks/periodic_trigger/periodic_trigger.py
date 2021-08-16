@@ -1,59 +1,74 @@
 import logging
-from pathlib import Path
+import time
 
 import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 
-from murine_shift_work.logic.paths import make_session_paths
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.logic.specific_state_machines import (
     make_protocol_identifier_ttl_sequence,
 )
+from murine_shift_work.logic.task_process import TaskProcess
+from murine_shift_work.logic.task_process import TaskRunner
 
-N_MAX_TRIALS = 1500
-TTL_IDENTIFIER_SEQUENCE = None  # FIXME
-TRIGGER_ITI = 5  # seconds
 
-session_paths = make_session_paths(protocol=Path(__file__).parent.name)
-bpod = Bpod(
-    workspace_path=session_paths["session_data_folder"],
-    session_name=session_paths["session_basename"],
-)
+class Task(TaskRunner):
+    _bnc_channel_trial_onset = Bpod.OutputChannels.BNC1
 
-for trial_index in np.arange(N_MAX_TRIALS):
-    if trial_index == 0:
-        sma = make_protocol_identifier_ttl_sequence(
-            bpod=bpod,
-            sequence=TTL_IDENTIFIER_SEQUENCE,
-            output_chanel_pulse=Bpod.OutputChannels.BNC2,
-        )
-    else:
-        sma = StateMachine(bpod=bpod)
+    def run(self) -> None:
 
-        sma = add_trial_onset_ttl(
-            sma=sma,
-            ttl_pulse_duration=0.001,
-            bnc_channel=Bpod.OutputChannels.BNC2,
-            next_state="iti",
-        )
+        TTL_IDENTIFIER_SEQUENCE = "ssssss"
+        TRIGGER_ITI = 5  # seconds
 
-        sma.add_state(
-            state_name="iti",
-            state_timer=TRIGGER_ITI,
-            state_change_conditions={Bpod.Events.Tup: "exit"},
-            output_actions=[],
-        )
+        trial_index = 0
+        n_max_trials = 1500
+        while self.continue_task and trial_index <= n_max_trials:
+            print(f"Executing trial {trial_index}")
 
-    bpod.send_state_machine(sma)
+            if trial_index == 0:
+                sma = make_protocol_identifier_ttl_sequence(
+                    bpod=self.bpod,
+                    sequence=TTL_IDENTIFIER_SEQUENCE,
+                    output_chanel_pulse=self._bnc_channel_trial_onset,
+                )
+            else:
+                sma = StateMachine(bpod=self.bpod)
+                # Trial onset == main event of this convenience task
+                sma = add_trial_onset_ttl(
+                    sma=sma,
+                    ttl_pulse_duration=0.001,
+                    bnc_channel=self._bnc_channel_trial_onset,
+                    next_state="iti",
+                )
 
-    if not bpod.run_state_machine(sma):
-        logging.warning(
-            f"No data returned on trial #{trial_index}. Terminating protocol."
-        )
-        break
+                sma.add_state(
+                    state_name="iti",
+                    state_timer=TRIGGER_ITI,
+                    state_change_conditions={Bpod.Events.Tup: "exit"},
+                    output_actions=[],
+                )
 
-bpod.close()
+            self.bpod.send_state_machine(sma)
+
+            if not self.bpod.run_state_machine(sma):
+                logging.warning(
+                    f"No data returned on trial #{trial_index}. Terminating protocol."
+                )
+                break
+
+
+def run_task(**kwargs):
+    with TaskProcess(**kwargs) as tp:
+        while tp.is_running():
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                tp.stop_task()
+
+        print("Exiting TaskProcess WITH")
+    print("THE END run_task")
+
 
 if __name__ == "__main__":
     print("main")
