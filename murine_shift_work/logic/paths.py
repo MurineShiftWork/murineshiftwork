@@ -20,6 +20,7 @@ def build_data_paths(
     default_subject="_test_subject",
     printout=True,
 ):
+    basepath = Path(basepath)
     subject = default_subject if str(task).startswith("_test__") else subject
     dt = datetime.now().strftime("%Y%m%d_%H%M%S")
     session_basename = "__".join([subject, dt, task])

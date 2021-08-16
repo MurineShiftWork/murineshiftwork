@@ -99,6 +99,9 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
     arg_dict["task.settings.patched"] = {}
     arg_dict["subject.settings.all"] = {}
     arg_dict["subject.settings.this"] = {}
+    task_settings_default = {}
+    subject_settings_all = {}
+    arg_dict["subject.metadata"] = {}
 
     # Load: task settings
     exec(f"from murine_shift_work.tasks import {task_name} as tn", globals())
@@ -113,8 +116,8 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
         Path(task_folder) / t for t in task_files if "task.settings" in t
     ]
     if len(task_settings_file) == 1:
-        arg_dict["task.settings.default"] = read_config(file=task_settings_file[0])
-        arg_dict["task.settings.patched"] = arg_dict["task.settings.default"]
+        task_settings_default = read_config(file=task_settings_file[0])
+        arg_dict["task.settings.patched"] = task_settings_default
 
     # Load: subject settings
     subject_settings_file = [
@@ -123,12 +126,10 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
         if "subject.settings" in t
     ]
     if len(subject_settings_file) == 1:
-        arg_dict["subject.settings.all"] = read_config(file=subject_settings_file[0])
+        subject_settings_all = read_config(file=subject_settings_file[0])
 
     # Patch: default settings with subject settings
-    subject_settings_this = arg_dict["subject.settings.all"].get(
-        arg_dict["subject"], None
-    )
+    subject_settings_this = subject_settings_all.get(arg_dict["subject"], None)
     if subject_settings_this:
         task_settings_patch = subject_settings_this.get(arg_dict["task_name"], None)
         if task_settings_patch:
@@ -137,6 +138,10 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
                 # if k in arg_dict["task.settings.patched"]
                 arg_dict["task.settings.patched"][k] = v
 
+            for k, v in subject_settings_this.items():
+                if not k == arg_dict["task_name"] and not isinstance(v, dict):
+                    arg_dict["subject.metadata"][k] = v
+
     # Find file of RCC settings
     if not Path(arg_dict["config_file_rcc"]).exists():
         arg_dict["config_file_rcc"] = str(Path(config_file_dir) / "camera.rcc.config")
@@ -144,6 +149,11 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
             logging.debug(f"No RCC config file at: {arg_dict['config_file_rcc']}")
 
     logging.debug(json.dumps(arg_dict, indent=4, sort_keys=True))
+
+    if testing:
+        arg_dict["task.settings.default"] = task_settings_default
+        arg_dict["subject.settings.all"] = subject_settings_all
+
     return arg_dict
 
 
@@ -240,10 +250,10 @@ class TaskProcess(object):
     ):
         super(TaskProcess, self).__init__()
 
-        self.serial_port = serial_port
-        self.basepath = Path(basepath)
-        self.subject = subject
-        self.task_in = task
+        self.serial_port = str(serial_port)
+        self.basepath = str(basepath)
+        self.subject = str(subject)
+        self.task_in = str(task)
         self.input_kwargs = kwargs
 
         # Make vars
@@ -270,6 +280,7 @@ class TaskProcess(object):
 
         # Execute
         self.connect_bpod()
+        self.persist_settings()
 
         if auto_init:
             self.init_task()
@@ -303,6 +314,20 @@ class TaskProcess(object):
             )
             self.bpod.open()
             self.serial_is_open = True
+
+    def persist_settings(self):
+        settings = vars(self)
+        with open(
+            self.session_paths["session_file_path"] + ".msw.settings.json", "w"
+        ) as f:
+            txt = json.dumps(
+                settings,
+                skipkeys=True,
+                sort_keys=True,
+                indent=4,
+                default=lambda x: f"<NoJSON:{type(x)}>",
+            )
+            f.write(txt)
 
     def init_task(self):
         """Import specific Task and make self.task_runner Thread."""
