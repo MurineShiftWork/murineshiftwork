@@ -51,7 +51,7 @@ setup(
     entry_points={
         "console_scripts": [
             "msw_gui = murine_shift_work.__init__:run_msw_gui",
-            "msw_cli = murine_shift_work.logic.task_process:run_msw_cli",
+            "msw_cli = murine_shift_work.__init__:run_msw_cli",
         ],
     },
     url="URL-URL-URL",

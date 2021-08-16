@@ -4,7 +4,6 @@ import time
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
-from murine_shift_work.logic.task_process import parse_task_args
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
 
@@ -47,8 +46,8 @@ def run_task(**kwargs):
             except KeyboardInterrupt:
                 tp.stop_task()
 
-        print("Exiting WITH")
-    print("THE END")
+        print("Exiting TaskProcess WITH")
+    print("THE END run_task")
 
 
 if __name__ == "__main__":
