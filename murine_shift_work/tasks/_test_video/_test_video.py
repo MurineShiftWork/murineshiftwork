@@ -1,7 +1,6 @@
 import logging
 import time
 from multiprocessing import Queue
-from pathlib import Path
 
 import numpy as np
 from pybpodapi.protocol import Bpod
@@ -39,7 +38,7 @@ class Task(TaskRunner):
 
             if not self.bpod.run_state_machine(sma):
                 logging.warning("No data returned.")
-                self.input_kwargs["objects"]["kill_queue"]
+                self.input_kwargs["objects"]["kill_queue"].put(True)
                 break
 
             self.input_kwargs["objects"]["data_queue"].put(
@@ -57,7 +56,7 @@ class Task(TaskRunner):
 
             trial_index += 1
 
-        self.kill_queue.put(True)
+        self.input_kwargs["objects"]["kill_queue"].put(True)
         logging.debug("Exiting Task.")
 
 

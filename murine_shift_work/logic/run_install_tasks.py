@@ -22,7 +22,7 @@ def get_package_dir():
 PROJECT_NAME = "msw_project"
 PROJECT_PATH = get_package_dir() / PROJECT_NAME
 
-DATA_PATH = "~/data/behaviour"
+DATA_PATH = "~/data"
 
 
 def get_default_basepath():
@@ -73,12 +73,10 @@ def create_project():
 
 
 def write_task_file(task_name=None):
-    # Import repo in case of renaming
-    import murine_shift_work
-
+    # FIXME: import parse_args for CLI -> feed into run_task of selected task: will update for GUI settings in argparse
     s = (
         f'if __name__ == "__main__":\n'
-        f"    from {murine_shift_work.__name__}.tasks.{task_name}.{task_name} import run_task\n"
+        f"    from murine_shift_work.tasks.{task_name}.{task_name} import run_task\n"
         f"    run_task(is_cli_call=False)\n"
     )
     return s
