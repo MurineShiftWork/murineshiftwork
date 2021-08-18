@@ -8,7 +8,7 @@ from murine_shift_work.logic.pybpod_helpers import patch_user_settings
 from murine_shift_work.logic.task_process import run_msw_cli
 
 # Metadata
-__version__ = "0.0.2.dev0"
+__version__ = "0.1.0.dev0"
 __author__ = "Lars B. Rollik"
 
 # General logger
