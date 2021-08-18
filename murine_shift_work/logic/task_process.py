@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import time
+from glob import glob
 from pathlib import Path
 
 from pybpodapi.protocol import Bpod
@@ -20,6 +21,18 @@ from murine_shift_work.logic.run_install_tasks import get_default_basepath
 
 user_dir = Path(os.path.expanduser("~"))
 config_file_dir = str(msws.__path__[0])
+
+
+def get_rcc_config_files():
+    default_config = str(Path(config_file_dir) / "camera.rcc.config")
+    specific_config = glob(str(Path(config_file_dir) / "*.rcc.*"))
+    if specific_config:
+        specific_config = [s for s in specific_config if "setup" in Path(s).name]
+        if specific_config:
+            specific_config = specific_config[0]
+        else:
+            specific_config = None
+    return specific_config or default_config
 
 
 def parse_task_args(is_cli_call=True, testing=False, task=None):
@@ -66,7 +79,7 @@ def parse_task_args(is_cli_call=True, testing=False, task=None):
         "--config-file-rcc",
         "-cr",
         type=str,
-        default=str(Path(config_file_dir) / "camera.rcc.config"),
+        default=get_rcc_config_files(),
         help="Specific config file for video recordings wtih RPi Camera Colony pacakge.",
     )
     arg_dict = parser.parse_args().__dict__
