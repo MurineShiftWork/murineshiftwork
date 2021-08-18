@@ -9,7 +9,7 @@ def patch_user_settings():
 
 
 def patch_logging_levels(target_level="WARNING"):
-    for m in ["pybpodapi", "pybpodgui_api", "pybpodgui_plugin"]:
+    for m in ["pybpodapi", "pybpodgui_api", "pybpodgui_plugin", "matplotlib"]:
         logger = logging.getLogger(m)
         logger.setLevel(target_level)
 

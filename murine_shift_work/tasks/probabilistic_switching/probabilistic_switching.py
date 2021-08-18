@@ -92,8 +92,10 @@ def run_task(**args_dict):
     # Enter behaviour context
     with TaskProcess(**args_dict) as tp:
         # Video
+        group = tp.session_paths["session_basename"].split("__")[0]
         conductor_args = {
             "config_file": args_dict["config_file_rcc"],
+            "acquisition_group": group,
             "acquisition_name": tp.session_paths["session_basename"],
         }
         c = Conductor(**conductor_args)
