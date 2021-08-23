@@ -25,7 +25,6 @@ def add_args_for_general_use(parser=None):
         "--task",
         type=str,
         default="",
-        required=True,
         help="Task name or unique part of task name",
     )
     general_args.add_argument(
@@ -140,6 +139,25 @@ Available tasks:
     )
     add_args_for_general_use(parser_for_register)
     add_args_for_flow_control(parser_for_register)
+
+    reg_group = parser_for_register.add_argument_group("Registration options")
+    reg_group.add_argument(
+        "-n",
+        "--new-alias",
+        dest="new_alias",
+        type=str,
+        default="",
+        help="New alias for subject, if subcommand options are 'register move'",
+    )
+    reg_group.add_argument(
+        "-m",
+        "--move-data",
+        dest="move_data",
+        default=True,
+        action="store_true",
+        help="If subcommand is 'move', then tries to move existing acquisitions to new subject name",
+    )
+
     parser_for_register.set_defaults(func=run_register)
 
 

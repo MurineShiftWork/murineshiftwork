@@ -33,11 +33,12 @@ def run_cli(*args):
 def _test_register():
     a = sys.argv + [
         "register",
-        "add",
+        "move",
         "-s",
-        "test_register",
-        "-t",
-        "prob",
+        "_test_register2",
+        "-m",
+        "-n",
+        "_super_secret_alias",
         "-d",
     ]  # "-s", "some_subject", "-t", "prob"]
     run_cli(*a)

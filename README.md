@@ -17,6 +17,11 @@ PYDEVD_USE_FRAME_EVAL=NO
 ## TODO
 
 - Refactoring for commandline access
+    - [ ] optotagging settings into json format
+    - [ ] CLI execute: register subcommands
+    - [ ] install task adjustment for GUI run
+    - [ ]
+
     - [x] finish main task_process class
     - [x] dry minimal_task example
     - **[No!]** update installation for task call via GUI  -->> USE SEPARATE VERSIONS UNTIL GUI NOT REQUIRED BY USERS. waste of time to debug GUI+net_port issue

@@ -69,8 +69,14 @@ def evaluate_args(args_dict=None):
     setup_logging(level=args_dict["log_level"])
 
     # Task name
-    args_dict["task"] = find_task_by_name(task_name=args_dict["task"])
-    args_dict["task_dir"] = get_task_dir(task=args_dict["task"])
+    if args_dict["task"]:
+        args_dict["task"] = find_task_by_name(task_name=args_dict["task"])
+        args_dict["task_dir"] = get_task_dir(task=args_dict["task"])
+    else:
+        if not args_dict["command"] == "register":
+            raise ValueError("Task name can only be left out if command is 'register'.")
+        else:
+            logging.debug("No task defined. Command is register.")
 
     # Config files
     config_dir = args_dict["config_dir"]
@@ -84,7 +90,7 @@ def evaluate_args(args_dict=None):
     )
     args_dict["config_file_task"] = validate_config_file_path(
         config_file=args_dict["config_file_task"],
-        default_dir=args_dict["task_dir"],
+        default_dir=args_dict.get("task_dir", ""),
     )
     args_dict["config_file_camera"] = validate_config_file_path(
         config_file=args_dict["config_file_camera"],
