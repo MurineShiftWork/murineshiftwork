@@ -19,7 +19,7 @@ class Task(TaskRunner):
         trial_index = 0
         max_trials = 4
         while self.continue_task and trial_index < max_trials:
-            print(f"Trial {trial_index}")
+            logging.info(f"Trial {trial_index}")
 
             sma = StateMachine(bpod=self.bpod)
             sma.add_state(
@@ -105,6 +105,7 @@ def run_task(**args_dict):
             try:
                 time.sleep(1)
             except KeyboardInterrupt:
+                kq.put(True)
                 tp.stop_task()
 
         # Stop online plotting

@@ -13,4 +13,3 @@ cd ~
 
 ~/miniconda3/envs/acq/bin/pip install -e ~/murine_shift_work -q
 ~/.conda/envs/acq/bin/pip install -e ~/murine_shift_work -q
-

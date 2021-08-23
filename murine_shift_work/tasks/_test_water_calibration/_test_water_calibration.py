@@ -133,7 +133,7 @@ class Task(TaskRunner):
 
         for valve in VALVES_TO_CALIBRATE:
             for valve_time in random_valve_times:
-                print(f"valve: {valve}, with valve time: {valve_time}ms.")
+                logging.info(f"valve: {valve}, with valve time: {valve_time}ms.")
                 calibrate_point_for_valve(
                     valve=valve,
                     valve_open_time=valve_time,
@@ -151,8 +151,8 @@ def run_task(**kwargs):
             except KeyboardInterrupt:
                 tp.stop_task()
 
-        print("Exiting TaskProcess WITH")
-    print("THE END run_task")
+        logging.info("Exiting TaskProcess WITH")
+    logging.info("THE END run_task")
 
 
 if __name__ == "__main__":

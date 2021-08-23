@@ -13,7 +13,7 @@ class Task(TaskRunner):
         trial_index = 0
         max_trials = 4
         while self.continue_task and trial_index < max_trials:
-            print(f"Trial {trial_index}")
+            logging.info(f"Trial {trial_index}")
 
             sma = StateMachine(bpod=self.bpod)
             sma.add_state(
@@ -45,9 +45,6 @@ def run_task(**kwargs):
                 time.sleep(1)
             except KeyboardInterrupt:
                 tp.stop_task()
-
-        print("Exiting TaskProcess WITH")
-    print("THE END run_task")
 
 
 if __name__ == "__main__":

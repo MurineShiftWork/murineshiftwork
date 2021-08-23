@@ -11,26 +11,6 @@ from murine_shift_work.logic.task_process import run_msw_cli
 __version__ = "0.1.0.dev0"
 __author__ = "Lars B. Rollik"
 
-# General logger
-level = "DEBUG"
-logger = logging.getLogger()
-
-if not logger.handlers:
-    logger.setLevel(getattr(logging, level))
-
-    formatter = logging.Formatter(
-        "%(asctime)s.%(msecs)03d - %(levelname)s"
-        " - %(processName)s %(filename)s:%(lineno)s"
-        " - %(message)s"
-    )
-    formatter.datefmt = "%Y-%m-%d %H:%M:%S"
-
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(getattr(logging, level))
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
-
-# Prepare pybpod package
 patch_user_settings()
 patch_logging_levels()
 

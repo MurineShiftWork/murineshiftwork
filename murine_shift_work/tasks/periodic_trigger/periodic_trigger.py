@@ -1,7 +1,6 @@
 import logging
 import time
 
-import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 
@@ -24,7 +23,7 @@ class Task(TaskRunner):
         trial_index = 0
         n_max_trials = 1500
         while self.continue_task and trial_index <= n_max_trials:
-            print(f"Executing trial {trial_index}")
+            logging.info(f"Executing trial {trial_index}")
 
             if trial_index == 0:
                 sma = make_protocol_identifier_ttl_sequence(
@@ -65,9 +64,6 @@ def run_task(**kwargs):
                 time.sleep(1)
             except KeyboardInterrupt:
                 tp.stop_task()
-
-        print("Exiting TaskProcess WITH")
-    print("THE END run_task")
 
 
 if __name__ == "__main__":

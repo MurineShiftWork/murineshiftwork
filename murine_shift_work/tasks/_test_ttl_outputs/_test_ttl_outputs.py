@@ -38,9 +38,6 @@ def run_task(**kwargs):
             except KeyboardInterrupt:
                 tp.stop_task()
 
-        print("Exiting TaskProcess WITH")
-    print("THE END run_task")
-
 
 if __name__ == "__main__":
     print("main")

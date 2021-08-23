@@ -27,7 +27,9 @@ def get_rcc_config_files():
     default_config = str(Path(config_file_dir) / "camera.rcc.config")
     specific_config = glob(str(Path(config_file_dir) / "*.rcc.*"))
     if specific_config:
-        specific_config = [s for s in specific_config if "setup" in Path(s).name]
+        specific_config = [
+            s for s in specific_config if not "camera.rcc.config" == Path(s).name
+        ]
         if specific_config:
             specific_config = specific_config[0]
         else:
@@ -383,4 +385,5 @@ def run_msw_cli(testing=False):
 
 
 if __name__ == "__main__":
+    run_msw_cli(testing=True)
     print("main")
