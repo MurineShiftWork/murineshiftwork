@@ -81,7 +81,7 @@ def run_task(**args_dict):
     with TaskProcess(**args_dict) as tp:
         # Video
         conductor_args = {
-            "config_file": args_dict["config_file_rcc"],
+            "config_file": args_dict["config_file_camera"],
             "acquisition_name": tp.session_paths["session_basename"],
         }
         c = Conductor(**conductor_args)

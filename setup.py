@@ -50,8 +50,8 @@ setup(
     packages=find_packages(),
     entry_points={
         "console_scripts": [
-            "msw_gui = murine_shift_work.__init__:run_msw_gui",
-            "msw_cli = murine_shift_work.__init__:run_msw_cli",
+            "msw_gui = murine_shift_work.__init__:run_gui",
+            "murineshiftwork = murine_shift_work.__init__:run_cli",
         ],
     },
     url="URL-URL-URL",

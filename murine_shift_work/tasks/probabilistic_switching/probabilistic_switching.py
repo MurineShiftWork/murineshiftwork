@@ -20,7 +20,7 @@ from murine_shift_work.tasks.probabilistic_switching.task_objects import TaskCon
 
 class Task(TaskRunner):
     def run(self):
-        task_settings = self.input_kwargs["task.settings.patched"]
+        task_settings = self.input_kwargs["settings.task.patched"]
         task_control = TaskControl(bpod=self.bpod, task_settings=task_settings)
         self.bpod.softcode_handler_function = task_control.softcode_handler
 
@@ -94,7 +94,7 @@ def run_task(**args_dict):
         # Video
         group = tp.session_paths["session_basename"].split("__")[0]
         conductor_args = {
-            "config_file": args_dict["config_file_rcc"],
+            "config_file": args_dict["config_file_camera"],
             "acquisition_group": group,
             "acquisition_name": tp.session_paths["session_basename"],
         }
