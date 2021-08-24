@@ -1,4 +1,5 @@
 """Code written by Lars B. Rollik 2021."""
+import logging
 import time
 
 from numpy import zeros
@@ -130,7 +131,7 @@ class Stimulation:
         for channel in self.in_dict["trigger_channels_for_stimulation"]:
             if channel > 0 and channel < 3:
                 link_cmd = f"self.pulsePal.linkTriggerChannel{int(channel)} = {self.channels_stimulation[0]}"
-                print(f"Linking trigger channels: {link_cmd}")
+                logging.info(f"PulsePal: Linking trigger channels: {link_cmd}.")
                 exec(link_cmd)
                 if (
                     "trigger_mode" in self.in_dict
@@ -183,12 +184,12 @@ class Stimulation:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.off()
         self.pulsePal.disconnect()
-        print("disconnected")
+        logging.info("PulsePal: disconnected.")
 
     def __del__(self):
         self.off()
         self.pulsePal.disconnect()
-        print("disconnected")
+        logging.info("PulsePal: disconnected.")
 
     def emergency_off(self):
         self.off()
@@ -198,4 +199,5 @@ class Stimulation:
         try:
             return self.pulsePal.serialObject.serial_is_open
         except BaseException:
+            logging.debug("Cannot check if PulsePal is connected.")
             return False

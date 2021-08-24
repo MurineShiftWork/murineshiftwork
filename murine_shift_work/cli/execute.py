@@ -7,7 +7,7 @@ from murine_shift_work.logic.misc import print_box
 
 
 def run_register(**args_dict):
-    """"""
+    """ """
     option = args_dict["subcommand"]
     subject = args_dict["subject"]
     subject_settings_all = args_dict["settings.subjects.all"]

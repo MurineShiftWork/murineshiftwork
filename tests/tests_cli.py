@@ -28,6 +28,4 @@ if __name__ == "__main__":
         sys.argv
         + "run -s _test_subject -t opto -b /dev/ttyACM1 -p /dev/ttyACM0".split(" ")
     )
-
-    patch_logging_levels()
     run_cli(*args)
