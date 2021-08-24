@@ -97,7 +97,7 @@ class TaskProcess(object):
     def __init__(
         self,
         serial_port=None,
-        basepath=None,
+        out_path=None,
         subject=None,
         task=None,
         auto_init=True,
@@ -107,7 +107,7 @@ class TaskProcess(object):
         super(TaskProcess, self).__init__()
 
         self.serial_port = str(serial_port)
-        self.basepath = str(basepath)
+        self.out_path = str(out_path)
         self.subject = str(subject)
         self.task_in = str(task)
         self.input_kwargs = kwargs
@@ -115,7 +115,7 @@ class TaskProcess(object):
         # Make vars
         self.task_name = find_task_by_name(task_name=self.task_in)
         self.session_paths = build_data_paths(
-            basepath=self.basepath, subject=self.subject, task=self.task_name
+            basepath=self.out_path, subject=self.subject, task=self.task_name
         )
 
         # Assertions

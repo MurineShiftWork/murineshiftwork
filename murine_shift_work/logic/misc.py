@@ -54,3 +54,18 @@ def find_task_by_name(task_name=None, ignore_error=True):
             return None
         else:
             raise ValueError(msg)
+
+
+def print_box(msg=None, indent=2):
+    """Print text box.
+    Similar to: https://stackoverflow.com/questions/39969064/how-to-print-a-message-box-in-python
+    """
+    lines = msg.split("\n")
+    width = max(map(len, lines))
+    space = " " * indent
+
+    top = f"+{'-' * (width + 2*indent)}+\n"
+    line_strings = [f"|{space}{line:<{width}}{space}|\n" for line in lines]
+    text_body = "".join(line_strings)
+
+    print(top + text_body + top)

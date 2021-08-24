@@ -118,6 +118,7 @@ def make_subparser_register(sub_parsers):
     msw register add _test_subject -t/--task probabilistic_switching
     msw register remove _test_subject
     msw register remove _test_subject --task probabilistic_switching
+    msw register rename
 
 Available tasks:
 {available_tasks}
@@ -134,8 +135,8 @@ Available tasks:
     parser_for_register.add_argument(
         "subcommand",
         type=str,
-        choices=["add", "remove", "move"],
-        help="Choose from: add, remove, move",
+        choices=["add", "remove", "rename"],
+        help="Choose from: add, remove, rename",
     )
     add_args_for_general_use(parser_for_register)
     add_args_for_flow_control(parser_for_register)

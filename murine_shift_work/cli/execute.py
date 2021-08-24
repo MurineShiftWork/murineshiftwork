@@ -1,22 +1,9 @@
+import json
 import logging
 from pathlib import Path
-from shutil import copyfile
 
-from configobj import ConfigObj
-
-
-def _update_config_file(in_dict=None, out_file=None, backup_extension="bak"):
-    new_config = ConfigObj(in_dict)
-    dst = ".".join([str(out_file), backup_extension])
-    copyfile(src=out_file, dst=dst)
-    if not Path(dst).exists():
-        raise FileNotFoundError("we made it, but doesn't exist!")
-
-    new_config.filename = out_file
-    new_config.write()
-
-    if not Path(new_config.filename).exists():
-        raise FileNotFoundError("")
+from murine_shift_work.logic.config import update_config_file
+from murine_shift_work.logic.misc import print_box
 
 
 def run_register(**args_dict):
@@ -33,32 +20,48 @@ def run_register(**args_dict):
             and Path(args_dict["config_file_subjects"]).exists()
         ):
             updated_settings = args_dict["settings.subjects.all"]
-            updated_settings[args_dict["subject"]] = {args_dict.get("task", ""): {}}
+            if args_dict.get("task", ""):
+                new_dict = {args_dict.get("task"): {}}
+            else:
+                new_dict = {}
 
-            _update_config_file(in_dict=updated_settings, out_file=config_file_subjects)
+            updated_settings[args_dict["subject"]] = new_dict
+            update_config_file(in_dict=updated_settings, out_file=config_file_subjects)
+            print_box(f"Added subject '{subject}' to subject.settings.")
         else:
-            pass  # FIXME: warn that exists
+            print_box(
+                f"Subject '{subject}' already exists with settings:\n"
+                f"{json.dumps(args_dict['settings.subjects.all'][subject], indent=4, sort_keys=True)}"
+            )
 
     elif "remove" in option:
         if subject in subject_settings_all:
             subject_settings_all.pop(subject)
 
-            _update_config_file(
+            update_config_file(
                 in_dict=subject_settings_all, out_file=config_file_subjects
             )
+            print_box(f"Removed subject '{subject}' from subject.settings.")
         else:
-            pass  # FIXME: inform if does not exist
+            print_box(f"Subject '{subject}' does NOT exist.")
 
-    elif "move" in option:
+    elif "rename" in option:
         if subject in subject_settings_all.keys():
 
             new_alias = args_dict["new_alias"]
             if new_alias in subject_settings_all.keys():
-                raise ValueError(
-                    f"New alias exists already: {new_alias}. Choose a different one."
+                print_box(
+                    f"New subject alias '{new_alias}' already exists. Cannot rename subject '{subject}'."
                 )
+                return
 
             subject_settings_all[new_alias] = subject_settings_all.pop(subject)
+            update_config_file(
+                in_dict=subject_settings_all, out_file=config_file_subjects
+            )
+            print_box(
+                f"Renamed subject '{subject}' to '{new_alias}' in subject.settings."
+            )
 
             if args_dict["move_data"]:
                 old = data_folder / subject
@@ -69,8 +72,12 @@ def run_register(**args_dict):
                         raise FileNotFoundError(
                             f"Cannot see new folder {str(new)}, but old one does {'' if old.exists() else 'NOT'} exists at {str(old)}"
                         )
+                    else:
+                        print_box(f"Moved subject '{subject}' data to {str(new)}.")
+                else:
+                    print_box(f"No data to move for subject '{subject}'.")
         else:
-            pass  # FIXME: warn that subject does not exists in the first place
+            print_box(f"Subject '{subject}' does NOT exist.")
 
     else:
         raise ValueError(f"Unknown option '{option}'")

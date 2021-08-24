@@ -20,38 +20,16 @@ def run_cli(*args):
     if len(args) <= 1:
         args = args + ["-h"]
 
-    print(args)
-
     args_dict = parse_args(args=args)
     args_dict = evaluate_args(args_dict=args_dict)
+
+    if "exit_flag" in args_dict.keys():
+        return
 
     # Call module
     args_dict["func"](**args_dict)
     logging.debug("EXITING CLI.")
 
 
-def _test_register():
-    a = sys.argv + [
-        "register",
-        "move",
-        "-s",
-        "_test_register2",
-        "-m",
-        "-n",
-        "_super_secret_alias",
-        "-d",
-    ]  # "-s", "some_subject", "-t", "prob"]
-    run_cli(*a)
-
-
-def _test_run():
-    a = sys.argv + ["run", "-t", "prob", "-s", "test_run_subject", "-d"]
-    run_cli(*a)
-
-
 if __name__ == "__main__":
-    testing = True
-    if testing:
-        _test_register()
-    else:
-        run_cli()
+    run_cli()

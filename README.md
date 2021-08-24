@@ -18,7 +18,7 @@ PYDEVD_USE_FRAME_EVAL=NO
 
 - Refactoring for commandline access
     - [ ] optotagging settings into json format
-    - [ ] CLI execute: register subcommands
+    - [x] CLI execute: register subcommands
     - [ ] install task adjustment for GUI run
     - [ ]
 

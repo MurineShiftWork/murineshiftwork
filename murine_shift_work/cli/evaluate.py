@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 from pathlib import Path
 
 from murine_shift_work import settings as msws
@@ -7,6 +8,7 @@ from murine_shift_work.logic.config import read_config
 from murine_shift_work.logic.config import setup_logging
 from murine_shift_work.logic.misc import find_task_by_name
 from murine_shift_work.logic.misc import list_available_tasks
+from murine_shift_work.logic.misc import print_box
 
 default_out_path = str(Path.home() / "data")
 default_config_dir = str(msws.__path__[0])
@@ -113,15 +115,11 @@ def evaluate_args(args_dict=None):
         if args_dict["config_file_camera"]
         else {}
     )
-    if args_dict["debug"]:
-        args_dict["settings.subjects.all"] = settings_subjects_all
-        args_dict["settings.task.default"] = settings_task_default
+    args_dict["settings.subjects.all"] = settings_subjects_all
+    args_dict["settings.task.default"] = settings_task_default
 
     if args_dict["command"] == "register":
-
-        pass  # TODO: add parser option for --move-data
-        # TODO: add check to execute.register for subcommands
-
+        pass  # fixme: Do anything ?
     elif args_dict["command"] == "run":
         # Subject has to EXIST via `register`
         if not args_dict["subject"] in settings_subjects_all.keys():
@@ -154,9 +152,16 @@ def evaluate_args(args_dict=None):
                         args_dict["subject.metadata"] = {}
                     args_dict["subject.metadata"][k] = v
 
-        txt = json.dumps(args_dict["settings.subjects.this"], indent=4, sort_keys=True)
-        logging.debug(
-            f"Settings overwrite for subject '{args_dict['subject']}':\n{txt}"
-        )
+            txt = json.dumps(task_settings_patch, indent=4, sort_keys=True)
+            logging.debug(
+                f"Settings overwrite for subject '{args_dict['subject']}':\n{txt}"
+            )
+        else:
+            if not args_dict["command"] == "register":
+                print_box(
+                    f"No subject settings found for '{args_dict['subject']}'.\n"
+                    f"Check that subject is registered"
+                )
+                args_dict["exit_flag"] = True
 
     return args_dict

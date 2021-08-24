@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 from pprint import pprint
+from shutil import copyfile
 
 from configobj import ConfigObj
 
@@ -32,3 +33,17 @@ def setup_logging(level=None):
         stream_handler.setLevel(getattr(logging, level))
         stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
+
+
+def update_config_file(in_dict=None, out_file=None, backup_extension="bak"):
+    new_config = ConfigObj(in_dict, unrepr=True, list_values=True)
+    dst = ".".join([str(out_file), backup_extension])
+    copyfile(src=out_file, dst=dst)
+    if not Path(dst).exists():
+        raise FileNotFoundError(f"Config backup not found at {dst}")
+
+    new_config.filename = out_file
+    new_config.write()
+
+    if not Path(new_config.filename).exists():
+        raise FileNotFoundError(f"Config file not found at {out_file}")
