@@ -2,8 +2,8 @@ import logging
 
 SETTINGS_PRIORITY = 0
 # THESE SETTINGS ARE NEEDED FOR PYSETTINGS
-APP_LOG_FILENAME = "/tmp/murine_shift_work.log"
-
+APP_LOG_FILENAME = "/tmp/pybpod_gui.log"
+PYBPOD_API_LOG_FILENMAE = "/tmp/pybpod_api.log"
 # Setting log levels here, but msw.__init__ log overwrite takes precedence
 APP_LOG_HANDLER_CONSOLE_LEVEL = logging.DEBUG
 APP_LOG_HANDLER_FILE_LEVEL = logging.DEBUG

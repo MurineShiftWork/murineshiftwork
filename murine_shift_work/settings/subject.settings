@@ -12,5 +12,3 @@
         criterion_contrast_blocks = 0.75
 [_auto_test_3]
     [[probabilistic_switching]]
-[_auto_test_2]
-    [[_test_minimal_task]]

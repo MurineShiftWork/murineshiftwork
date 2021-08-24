@@ -20,7 +20,11 @@ PYDEVD_USE_FRAME_EVAL=NO
     - [ ] optotagging settings into json format
     - [x] CLI execute: register subcommands
     - [ ] install task adjustment for GUI run
-    - [ ]
+    - [ ] patch updated settings nested
+            - https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+            - https://stackoverflow.com/questions/5946236/how-to-merge-multiple-dicts-with-same-key-or-different-key
+    - [ ] safe json serialisation with json.dumps(default=) - https://stackoverflow.com/questions/51674222/how-to-make-json-dumps-in-python-ignore-a-non-serializable-field
+    - [ ] argparse key-value pairs - https://stackoverflow.com/questions/27146262/create-variable-key-value-pairs-with-argparse-python
 
     - [x] finish main task_process class
     - [x] dry minimal_task example
