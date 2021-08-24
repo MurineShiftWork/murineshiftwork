@@ -117,6 +117,8 @@ class TaskProcess(object):
         self.session_paths = build_data_paths(
             basepath=self.out_path, subject=self.subject, task=self.task_name
         )
+        self.input_kwargs["task_name"] = self.task_name
+        self.input_kwargs["session_paths"] = self.session_paths
 
         # Assertions
         if not test_port_accessible(

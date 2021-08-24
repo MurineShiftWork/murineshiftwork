@@ -150,9 +150,8 @@ class TaskControl(object):
         # trial_data is: bpod start ts, trial start ts, trial end ts, state and event ts
 
         first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
-        if self.trial_index < 1 and first_state_name.startswith(
-            "pulse"
-        ):  # IF TTL TRIAL
+        if self.trial_index < 1 and first_state_name.startswith("pulse"):
+            # IF TTL TRIAL
             self.switch_block()
             trial_data["info"] = {"trial_type": "ttl", "trial_index": self.trial_index}
             return self.trial_data.append(trial_data)
