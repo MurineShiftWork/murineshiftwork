@@ -96,7 +96,7 @@ class TaskProcess(object):
 
     def __init__(
         self,
-        serial_port=None,
+        serial_port_bpod=None,
         out_path=None,
         subject=None,
         task=None,
@@ -106,7 +106,7 @@ class TaskProcess(object):
     ):
         super(TaskProcess, self).__init__()
 
-        self.serial_port = str(serial_port)
+        self.serial_port = str(serial_port_bpod)
         self.out_path = str(out_path)
         self.subject = str(subject)
         self.task_in = str(task)

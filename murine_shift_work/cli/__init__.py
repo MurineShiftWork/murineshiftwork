@@ -3,7 +3,7 @@ import sys
 
 from murine_shift_work.cli.evaluate import evaluate_args
 from murine_shift_work.cli.parser import parse_args
-from murine_shift_work.logic.config import setup_logging
+from murine_shift_work.logic.pybpod_helpers import patch_logging_levels
 
 
 def run_cli(*args):
@@ -32,4 +32,5 @@ def run_cli(*args):
 
 
 if __name__ == "__main__":
+    patch_logging_levels()
     run_cli()

@@ -1,7 +1,7 @@
 import sys
 
 from murine_shift_work.cli import run_cli
-
+from murine_shift_work.logic.pybpod_helpers import patch_logging_levels
 
 test_cases = {
     # "register_add_1": "register add -s _auto_test_1",
@@ -18,8 +18,16 @@ test_cases = {
 
 
 if __name__ == "__main__":
-    for test_name, test_args in test_cases.items():
-        args = sys.argv + test_args.split(" ")
-        print("TEST:", test_name, args)
+    # for test_name, test_args in test_cases.items():
+    #     args = sys.argv + test_args.split(" ")
+    #     print("TEST:", test_name, args)
+    #
+    #     run_cli(*args)
 
-        run_cli(*args)
+    args = (
+        sys.argv
+        + "run -s _test_subject -t opto -b /dev/ttyACM1 -p /dev/ttyACM0".split(" ")
+    )
+
+    patch_logging_levels()
+    run_cli(*args)

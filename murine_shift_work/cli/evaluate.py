@@ -69,6 +69,9 @@ def evaluate_args(args_dict=None):
         pass
 
     setup_logging(level=args_dict["log_level"])
+    from murine_shift_work.logic.pybpod_helpers import patch_logging_levels
+
+    patch_logging_levels()
 
     # Task name
     if args_dict["task"]:
@@ -156,12 +159,12 @@ def evaluate_args(args_dict=None):
             logging.debug(
                 f"Settings overwrite for subject '{args_dict['subject']}':\n{txt}"
             )
-        else:
-            if not args_dict["command"] == "register":
-                print_box(
-                    f"No subject settings found for '{args_dict['subject']}'.\n"
-                    f"Check that subject is registered"
-                )
-                args_dict["exit_flag"] = True
+    else:
+        if not args_dict["command"] == "register":
+            print_box(
+                f"No subject settings found for '{args_dict['subject']}'.\n"
+                f"Check that subject is registered"
+            )
+            args_dict["exit_flag"] = True
 
     return args_dict
