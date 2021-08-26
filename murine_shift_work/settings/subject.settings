@@ -91,35 +91,35 @@
 
 # ------------------------------------------------------------------
 # TAB for NPX
-[tab_npx_c345048_m1114795__No_chrOn]
+[tab_npx_c345048_m1114795_No_chrOn]
     [[probabilistic_switching]]
         probabilities = [(100,0), (0,100)]
         delay_until_center_init = [0.060, 0.080, 0.005]
         reward_amount_ul = 5
         criterion_contrast_blocks = .2
 
-[tab_npx_c345048_m1114796__L_chrOn]
+[tab_npx_c345048_m1114796_L_chrOn]
     [[probabilistic_switching]]
         probabilities = [(100,0), (0,100)]
         delay_until_center_init = [0.060, 0.080, 0.005]
         reward_amount_ul = 5
         criterion_contrast_blocks = .2
 
-[tab_npx_c345048_m1114797__R_chrOn]
+[tab_npx_c345048_m1114797_R_chrOn]
     [[probabilistic_switching]]
         probabilities = [(100,0), (0,100)]
         delay_until_center_init = [0.060, 0.080, 0.005]
         reward_amount_ul = 5
         criterion_contrast_blocks = .2
 
-[tab_npx_c345048_m1114798__LR_chrOn]
+[tab_npx_c345048_m1114798_LR_chrOn]
     [[probabilistic_switching]]
         probabilities = [(100,0), (0,100)]
         delay_until_center_init = [0.060, 0.080, 0.005]
         reward_amount_ul = 5
         criterion_contrast_blocks = .2
 
-[tab_npx_c345048_m1114799__LL_chrOn]
+[tab_npx_c345048_m1114799_LL_chrOn]
     [[probabilistic_switching]]
         probabilities = [(100,0), (0,100)]
         delay_until_center_init = [0.060, 0.080, 0.005]
