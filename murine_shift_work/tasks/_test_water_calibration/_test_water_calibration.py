@@ -58,7 +58,7 @@ def calibrate_point_for_valve(
     inter_pulse_interval=0.1,
     bpod=None,
 ):
-    calibration_data = load_water_calibration()
+    calibration_data = load_water_calibration(allow_default=False)
 
     ask_water_calibration_ready(valve=valve)
 

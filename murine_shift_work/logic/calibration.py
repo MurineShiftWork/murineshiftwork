@@ -11,11 +11,14 @@ from scipy.optimize import curve_fit
 from murine_shift_work.settings import calibration_data_folder
 
 calibration_file_sound_delay = calibration_data_folder / "sound_delay.csv"
+calibration_file_sound_delay_default = calibration_data_folder / "sound_delay.default.csv"
 calibration_file_sound_delay_fig = calibration_data_folder / "sound_delay.png"
 calibration_file_water_calibration = calibration_data_folder / "water_calibration.csv"
+calibration_file_water_calibration_default = calibration_data_folder / "water_calibration.default.csv"
 
 
 def load_sound_delay_data():
+    # FIXME: add default file as for water calibration Loading below
     if Path(calibration_file_sound_delay).exists():
         return pd.read_csv(calibration_file_sound_delay)
     else:
@@ -57,9 +60,25 @@ def save_sound_delay_figure(delay_data=None):
     f.savefig(calibration_file_sound_delay_fig)
 
 
-def load_water_calibration(allowable_offset_days=30):
-    if Path(calibration_file_water_calibration).exists():
-        calibration_data = pd.read_csv(calibration_file_water_calibration)
+def find_water_calibration_file():
+    """Returns (file path, is default bool)"""
+    if calibration_file_water_calibration.exists():
+        logging.debug(f"Reading water calibration file from setup file. {calibration_file_water_calibration}")
+        return calibration_file_water_calibration,
+    elif calibration_file_water_calibration_default.exists():
+        logging.debug(f"Reading water calibration file from DEFAULT file. {calibration_file_water_calibration_default}")
+        return calibration_file_water_calibration_default
+    else:
+        raise FileNotFoundError(f"Neither calibration files exists: "
+                                f"{calibration_file_water_calibration}, "
+                                f"{calibration_file_water_calibration_default}")
+
+
+def load_water_calibration(allowable_offset_days=30, allow_default=True):
+    calibration_file, is_default_file = find_water_calibration_file()
+
+    if not is_default_file or (is_default_file and allow_default):
+        calibration_data = pd.read_csv(calibration_file)
 
         # Check when calibration data was acquired.
         calibration_dates = pd.Series(

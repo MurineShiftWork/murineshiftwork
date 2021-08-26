@@ -1,14 +1,130 @@
 [_test_subject]
-    project = 'test_project'
-    experiment = 'test_experiment'
+    project = "test_project"
+    experiment = "test_experiment"
+
     [[_test_minimal_task]]
-        test_argument = 'minimal'
+        test_argument = "minimal"
+
     [[_test_video]]
-        test_argument = 'vid'
+        test_argument = "vid"
+
     [[probabilistic_switching]]
-        probabilities = [(80, 0), (0, 80)]
-        delay_until_center_init = [0.125, 0.15, 0.005]
+        probabilities = [(100,99), (99,100)]
+        delay_until_center_init = [0.050, 0.060, 0.005]
+        reward_amount_ul = 8
+        criterion_contrast_blocks = .1
+
+# ------------------------------------------------------------------
+# SLEEP LHb
+# - COHORT 1
+[sleep_lhb_c344986_m1097354_ctl]
+    [[probabilistic_switching]]
+        probabilities = [(75,0), (0,75)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+[sleep_lhb_c344987_m1097355_ctl]
+    [[probabilistic_switching]]
+        probabilities = [(75,0), (0,75)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+[sleep_lhb_c345002_m1097356_exp]
+    [[probabilistic_switching]]
+        probabilities = [(75,0), (0,75)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+# - COHORT 2
+[sleep_lhb_c345014_m1097342_exp]
+    [[probabilistic_switching]]
+        probabilities = [(75,0), (0,75)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+[sleep_lhb_c345016_m1097344_exp]
+    [[probabilistic_switching]]
+        probabilities = [(75,0), (0,75)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+[sleep_lhb_c345017_m1097357_exp]
+    [[probabilistic_switching]]
+        probabilities = [(75,0), (0,75)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+# - COHORT 3
+[sleep_lhb_c0345041_m49_exp]
+    [[probabilistic_switching]]
+        probabilities = [(100,0), (0,100)]
+        delay_until_center_init = [0.080, 0.100, 0.005]
+        reward_amount_ul = 3
+        criterion_contrast_blocks = .5
+
+[sleep_lhb_c0345042_m50_exp]
+    [[probabilistic_switching]]
+        probabilities = [(100,0), (0,100)]
+        delay_until_center_init = [0.080, 0.100, 0.005]
+        reward_amount_ul = 3
+        criterion_contrast_blocks = .5
+
+[sleep_lhb_c345044_m52_exp]
+    [[probabilistic_switching]]
+        probabilities = [(100,0), (0,100)]
+        delay_until_center_init = [0.080, 0.100, 0.005]
+        reward_amount_ul = 3
+        criterion_contrast_blocks = .5
+
+[sleep_lhb_c345043_51_exp]
+    [[probabilistic_switching]]
+        probabilities = [(100,0), (0,100)]
+        delay_until_center_init = [0.080, 0.100, 0.005]
+        reward_amount_ul = 3
+        criterion_contrast_blocks = .5
+
+# ------------------------------------------------------------------
+# TAB for NPX
+[tab_npx_c345048_m1114795__No_chrOn]
+    [[probabilistic_switching]]
+        probabilities = [(100,0), (0,100)]
+        delay_until_center_init = [0.060, 0.080, 0.005]
         reward_amount_ul = 5
-        criterion_contrast_blocks = 0.75
-[_auto_test_3]
+        criterion_contrast_blocks = .2
+
+[tab_npx_c345048_m1114796__L_chrOn]
     [[probabilistic_switching]]
+        probabilities = [(100,0), (0,100)]
+        delay_until_center_init = [0.060, 0.080, 0.005]
+        reward_amount_ul = 5
+        criterion_contrast_blocks = .2
+
+[tab_npx_c345048_m1114797__R_chrOn]
+    [[probabilistic_switching]]
+        probabilities = [(100,0), (0,100)]
+        delay_until_center_init = [0.060, 0.080, 0.005]
+        reward_amount_ul = 5
+        criterion_contrast_blocks = .2
+
+[tab_npx_c345048_m1114798__LR_chrOn]
+    [[probabilistic_switching]]
+        probabilities = [(100,0), (0,100)]
+        delay_until_center_init = [0.060, 0.080, 0.005]
+        reward_amount_ul = 5
+        criterion_contrast_blocks = .2
+
+[tab_npx_c345048_m1114799__LL_chrOn]
+    [[probabilistic_switching]]
+        probabilities = [(100,0), (0,100)]
+        delay_until_center_init = [0.060, 0.080, 0.005]
+        reward_amount_ul = 5
+        criterion_contrast_blocks = .2
+
+
+# ------------------------------------------------------------------
