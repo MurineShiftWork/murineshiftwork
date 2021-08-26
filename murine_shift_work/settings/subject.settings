@@ -19,21 +19,21 @@
 # - COHORT 1
 [sleep_lhb_c344986_m1097354_ctl]
     [[probabilistic_switching]]
-        probabilities = [(75,0), (0,75)]
+        probabilities = [(80,0), (0,80)]
         delay_until_center_init = [0.125, 0.150, 0.005]
         reward_amount_ul = 2
         criterion_contrast_blocks = .75
 
 [sleep_lhb_c344987_m1097355_ctl]
     [[probabilistic_switching]]
-        probabilities = [(75,0), (0,75)]
+        probabilities = [(80,0), (0,80)]
         delay_until_center_init = [0.125, 0.150, 0.005]
         reward_amount_ul = 2
         criterion_contrast_blocks = .75
 
 [sleep_lhb_c345002_m1097356_exp]
     [[probabilistic_switching]]
-        probabilities = [(75,0), (0,75)]
+        probabilities = [(80,0), (0,80)]
         delay_until_center_init = [0.125, 0.150, 0.005]
         reward_amount_ul = 2
         criterion_contrast_blocks = .75
@@ -41,21 +41,21 @@
 # - COHORT 2
 [sleep_lhb_c345014_m1097342_exp]
     [[probabilistic_switching]]
-        probabilities = [(75,0), (0,75)]
+        probabilities = [(80,0), (0,80)]
         delay_until_center_init = [0.125, 0.150, 0.005]
         reward_amount_ul = 2
         criterion_contrast_blocks = .75
 
 [sleep_lhb_c345016_m1097344_exp]
     [[probabilistic_switching]]
-        probabilities = [(75,0), (0,75)]
+        probabilities = [(80,0), (0,80)]
         delay_until_center_init = [0.125, 0.150, 0.005]
         reward_amount_ul = 2
         criterion_contrast_blocks = .75
 
 [sleep_lhb_c345017_m1097357_exp]
     [[probabilistic_switching]]
-        probabilities = [(75,0), (0,75)]
+        probabilities = [(80,0), (0,80)]
         delay_until_center_init = [0.125, 0.150, 0.005]
         reward_amount_ul = 2
         criterion_contrast_blocks = .75
