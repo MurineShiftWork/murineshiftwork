@@ -70,12 +70,12 @@ def find_water_calibration_file():
         logging.debug(
             f"Reading water calibration file from setup file. {calibration_file_water_calibration}"
         )
-        return (calibration_file_water_calibration,)
+        return calibration_file_water_calibration, False
     elif calibration_file_water_calibration_default.exists():
         logging.debug(
             f"Reading water calibration file from DEFAULT file. {calibration_file_water_calibration_default}"
         )
-        return calibration_file_water_calibration_default
+        return calibration_file_water_calibration_default, True
     else:
         raise FileNotFoundError(
             f"Neither calibration files exists: "
