@@ -24,8 +24,5 @@ if __name__ == "__main__":
     #
     #     run_cli(*args)
 
-    args = (
-        sys.argv
-        + "run -t video -d".split(" ")
-    )
+    args = sys.argv + "run -t video -d".split(" ")
     run_cli(*args)

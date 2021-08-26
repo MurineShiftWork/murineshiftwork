@@ -11,10 +11,14 @@ from scipy.optimize import curve_fit
 from murine_shift_work.settings import calibration_data_folder
 
 calibration_file_sound_delay = calibration_data_folder / "sound_delay.csv"
-calibration_file_sound_delay_default = calibration_data_folder / "sound_delay.default.csv"
+calibration_file_sound_delay_default = (
+    calibration_data_folder / "sound_delay.default.csv"
+)
 calibration_file_sound_delay_fig = calibration_data_folder / "sound_delay.png"
 calibration_file_water_calibration = calibration_data_folder / "water_calibration.csv"
-calibration_file_water_calibration_default = calibration_data_folder / "water_calibration.default.csv"
+calibration_file_water_calibration_default = (
+    calibration_data_folder / "water_calibration.default.csv"
+)
 
 
 def load_sound_delay_data():
@@ -63,15 +67,21 @@ def save_sound_delay_figure(delay_data=None):
 def find_water_calibration_file():
     """Returns (file path, is default bool)"""
     if calibration_file_water_calibration.exists():
-        logging.debug(f"Reading water calibration file from setup file. {calibration_file_water_calibration}")
-        return calibration_file_water_calibration,
+        logging.debug(
+            f"Reading water calibration file from setup file. {calibration_file_water_calibration}"
+        )
+        return (calibration_file_water_calibration,)
     elif calibration_file_water_calibration_default.exists():
-        logging.debug(f"Reading water calibration file from DEFAULT file. {calibration_file_water_calibration_default}")
+        logging.debug(
+            f"Reading water calibration file from DEFAULT file. {calibration_file_water_calibration_default}"
+        )
         return calibration_file_water_calibration_default
     else:
-        raise FileNotFoundError(f"Neither calibration files exists: "
-                                f"{calibration_file_water_calibration}, "
-                                f"{calibration_file_water_calibration_default}")
+        raise FileNotFoundError(
+            f"Neither calibration files exists: "
+            f"{calibration_file_water_calibration}, "
+            f"{calibration_file_water_calibration_default}"
+        )
 
 
 def load_water_calibration(allowable_offset_days=30, allow_default=True):
