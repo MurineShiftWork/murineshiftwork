@@ -16,7 +16,7 @@ def read_config(file=None, unrepr=True):
 
 def setup_logging(level=None):
     if level is None:
-        level = "DEBUG"
+        level = "INFO"
     logger = logging.getLogger()
 
     if not logger.handlers:

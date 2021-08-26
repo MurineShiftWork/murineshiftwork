@@ -70,7 +70,6 @@ def evaluate_args(args_dict=None):
         pass
 
     setup_logging(level=args_dict["log_level"])
-    patch_logging_levels()
 
     # Task name
     if args_dict["task"]:

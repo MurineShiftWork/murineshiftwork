@@ -26,6 +26,6 @@ if __name__ == "__main__":
 
     args = (
         sys.argv
-        + "run -s _test_subject -t opto -b /dev/ttyACM1 -p /dev/ttyACM0".split(" ")
+        + "run -t video -d".split(" ")
     )
     run_cli(*args)

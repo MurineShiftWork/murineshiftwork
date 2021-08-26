@@ -11,6 +11,7 @@ from murine_shift_work.logic.misc import find_task_by_name
 from murine_shift_work.logic.misc import test_port_accessible
 from murine_shift_work.logic.paths import build_data_paths
 from murine_shift_work.logic.paths import test_path_is_writable
+from murine_shift_work.logic.pybpod_helpers import patch_logging_levels
 
 
 class TaskRunner(QThread):
@@ -135,6 +136,9 @@ class TaskProcess(object):
         target_file = Path(self.session_paths["session_folder"]) / ".write_test"
         if not test_path_is_writable(target_file):
             raise PermissionError(f"Session files not writable at {str(target_file)}")
+
+        # Remove logging output for pybpod components
+        patch_logging_levels()
 
         # Execute
         self.connect_bpod()
