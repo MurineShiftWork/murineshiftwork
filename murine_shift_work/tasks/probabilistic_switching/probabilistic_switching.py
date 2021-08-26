@@ -103,7 +103,7 @@ def run_task(**args_dict):
 
         # Online plotting
         plotting_process = OnlinePlottingForPS(
-            session_name="x",
+            session_name=tp.session_paths["session_basename"],
             is_simulation=False,
             data_queue=dq,
             kill_queue=kq,
