@@ -61,14 +61,14 @@
         criterion_contrast_blocks = .75
 
 # - COHORT 3
-[sleep_lhb_c0345041_m49_exp]
+[sleep_lhb_c345041_m49_exp]
     [[probabilistic_switching]]
         probabilities = [(90,0), (0,90)]
         delay_until_center_init = [0.080, 0.100, 0.005]
         reward_amount_ul = 3
         criterion_contrast_blocks = .5
 
-[sleep_lhb_c0345042_m50_exp]
+[sleep_lhb_c345042_m50_exp]
     [[probabilistic_switching]]
         probabilities = [(90,0), (0,90)]
         delay_until_center_init = [0.080, 0.100, 0.005]
