@@ -16,7 +16,7 @@
 
 # ------------------------------------------------------------------
 # SLEEP LHb
-# ------------------------------------- COHORT 1
+# - COHORT 1
 [sleep_lhb_c344986_m1097354_ctl]
     [[probabilistic_switching]]
         probabilities = [(80,0), (0,80)]
@@ -38,7 +38,7 @@
         reward_amount_ul = 2
         criterion_contrast_blocks = .75
 
-# ------------------------------------- COHORT 2
+# - COHORT 2
 [sleep_lhb_c345014_m1097342_exp]
     [[probabilistic_switching]]
         probabilities = [(80,0), (0,80)]
@@ -60,7 +60,7 @@
         reward_amount_ul = 2
         criterion_contrast_blocks = .75
 
-# ------------------------------------- COHORT 3
+# - COHORT 3
 [sleep_lhb_c0345041_m49_exp]
     [[probabilistic_switching]]
         probabilities = [(90,0), (0,90)]
@@ -75,14 +75,14 @@
         reward_amount_ul = 3
         criterion_contrast_blocks = .5
 
-[sleep_lhb_c345044_m52_exp]
+[sleep_lhb_c345043_m51_exp]
     [[probabilistic_switching]]
         probabilities = [(90,0), (0,90)]
         delay_until_center_init = [0.080, 0.100, 0.005]
         reward_amount_ul = 3
         criterion_contrast_blocks = .5
 
-[sleep_lhb_c345043_51_exp]
+[sleep_lhb_c345044_m52_exp]
     [[probabilistic_switching]]
         probabilities = [(90,0), (0,90)]
         delay_until_center_init = [0.080, 0.100, 0.005]
@@ -91,35 +91,42 @@
 
 # ------------------------------------------------------------------
 # TAB for NPX
-[tab_npx_c345048_m1114795_No_chrOn]
+# ---- tab_npx 001 and 002
+[tab_npx_001_m1113182__LR__npx_chrimson_on]
+	comment = "first implant"
+[tab_npx_002_m]
+	comment = "pv/ai32 used for tagging trial"
+
+# ---- cage: c345048
+[tab_npx_003_m1114795_No_chrOn]
     [[probabilistic_switching]]
         probabilities = [(100,0), (0,100)]
         delay_until_center_init = [0.060, 0.080, 0.005]
         reward_amount_ul = 5
         criterion_contrast_blocks = .2
 
-[tab_npx_c345048_m1114796_L_chrOn]
+[tab_npx_004_m1114796_L_chrOn]
     [[probabilistic_switching]]
         probabilities = [(100,0), (0,100)]
         delay_until_center_init = [0.060, 0.080, 0.005]
         reward_amount_ul = 5
         criterion_contrast_blocks = .2
 
-[tab_npx_c345048_m1114797_R_chrOn]
+[tab_npx_005_m1114797_R_chrOn]
     [[probabilistic_switching]]
         probabilities = [(100,0), (0,100)]
         delay_until_center_init = [0.060, 0.080, 0.005]
         reward_amount_ul = 5
         criterion_contrast_blocks = .2
 
-[tab_npx_c345048_m1114798_LR_chrOn]
+[tab_npx_006_m1114798_LR_chrOn]
     [[probabilistic_switching]]
         probabilities = [(100,0), (0,100)]
         delay_until_center_init = [0.060, 0.080, 0.005]
         reward_amount_ul = 5
         criterion_contrast_blocks = .2
 
-[tab_npx_c345048_m1114799_LL_chrOn]
+[tab_npx_007_m1114799_LL_chrOn]
     [[probabilistic_switching]]
         probabilities = [(100,0), (0,100)]
         delay_until_center_init = [0.060, 0.080, 0.005]

@@ -1,5 +1,7 @@
 #!/bin/sh
 # Script: patch_rcc_on_rpi.sh. Update code on list of RPi
+cd ~/rpi_camera_colony_dev/
+git pull
 
 for rpi in rpi-40 rpi-41 rpi-43 rpi-50 rpi-51
 do
