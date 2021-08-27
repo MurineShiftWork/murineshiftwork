@@ -17,7 +17,10 @@ PYDEVD_USE_FRAME_EVAL=NO
 ## TODO
 
 - Refactoring for commandline access
-    - [ ] optotagging settings into json format
+    - [ ] Make refactoring notes
+        - remove references to pybpod GUI. setup.py already adjusted.
+
+    - [x] optotagging settings into json format
     - [x] CLI execute: register subcommands
     - [ ] install task adjustment for GUI run
     - [ ] patch updated settings nested

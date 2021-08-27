@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 
-conda activate btest
+conda activate acq
 pip uninstall murine_shift_work -y
-pip install -e /home/lbr/code/murine_shift_work[dev]
+pip install -e ~/murine_shift_work[dev]

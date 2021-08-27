@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 import time
 from pathlib import Path
 
@@ -8,6 +9,7 @@ from pybpodapi.protocol import StateMachine
 from PyQt5.QtCore import QThread
 
 from murine_shift_work.logic.misc import find_task_by_name
+from murine_shift_work.logic.misc import print_box
 from murine_shift_work.logic.misc import test_port_accessible
 from murine_shift_work.logic.paths import build_data_paths
 from murine_shift_work.logic.paths import test_path_is_writable
@@ -169,12 +171,19 @@ class TaskProcess(object):
         """Connect device on serial port."""
         if not self.serial_is_open and not self.exiting:
             logging.debug(f"Connecting bpod on serial port: {self.serial_port}")
-            self.bpod = Bpod(
-                serial_port=self.serial_port,
-                workspace_path=self.session_paths["session_folder"],
-                session_name=self.session_paths["session_basename_behav"],
-            )
-            self.bpod.open()
+            try:
+                self.bpod = Bpod(
+                    serial_port=self.serial_port,
+                    workspace_path=self.session_paths["session_folder"],
+                    session_name=self.session_paths["session_basename_behav"],
+                )
+                self.bpod.open()
+            except UnicodeDecodeError:
+                print_box(
+                    "\nCould not connect to Bpod due to 'UnicodeDecodeError'. "
+                    "Happens randomly. Just run same code again.\n"
+                )
+                sys.exit(1)
             self.serial_is_open = True
 
     def persist_settings(self):

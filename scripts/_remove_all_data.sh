@@ -11,4 +11,3 @@ do
 	printf "\n $rpi \n"
 	ssh $rpi sudo 'rm -rf ~/data/*'
 done
-
