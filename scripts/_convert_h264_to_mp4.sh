@@ -1,8 +1,9 @@
 #!/bin/bash
 
 fps=60
+target_path="/mnt/maindata/data/"
 
-find ~/data/ -type f -name "*.h264" -print0 |
+find $target_path -type f -name "*.h264" -print0 |
     while IFS= read -r -d '' file; do
 	converted_file=${file}.mp4
 

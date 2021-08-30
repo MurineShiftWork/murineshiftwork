@@ -1,6 +1,6 @@
 #!/bin/sh
 
-for setup in setup2 setup3 setup4 setup5
+for setup in setup1 setup2 setup3 setup4 setup5
 do
 	printf "\n $setup \n"
 	ssh $setup 'rm -rf ~/data/*'
