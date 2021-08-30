@@ -3,7 +3,7 @@
 echo "Removing noise events 'Port4' from MSW files..."
 
 ts=$(date +%Y%m%d_%H%M%S)
-eval target_dir="/mnt/maindata/data/"
+target_dir="/mnt/maindata/data/"
 
 counter_all=0
 counter_mod=0
