@@ -19,6 +19,7 @@ PYDEVD_USE_FRAME_EVAL=NO
 - Refactoring for commandline access
     - [ ] Make refactoring notes
         - remove references to pybpod GUI. setup.py already adjusted.
+    - [ ] Log file for MSW and sub-modules [rcc] -> write to log file
 
     - [x] optotagging settings into json format
     - [x] CLI execute: register subcommands

@@ -1,6 +1,8 @@
 import logging
 import sys
 
+from rich import get_console
+
 from murine_shift_work.cli.evaluate import evaluate_args
 from murine_shift_work.cli.parser import parse_args
 
@@ -28,6 +30,9 @@ def run_cli(*args):
     # Call module
     args_dict["func"](**args_dict)
     logging.debug("EXITING CLI.")
+    console = get_console()
+    console.save_text("/tmp/log.rich.txt")
+    console.save_html("/tmp/log.rich.html")
 
 
 if __name__ == "__main__":
