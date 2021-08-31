@@ -189,7 +189,7 @@ class TaskProcess(object):
     def persist_settings(self):
         settings = vars(self)
         with open(
-            self.session_paths["session_file_path"] + ".msw.settings.json", "w"
+            self.session_paths["session_file_path"] + ".msw.settings.process.json", "w"
         ) as f:
             txt = json.dumps(
                 settings,

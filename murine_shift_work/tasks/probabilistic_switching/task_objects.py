@@ -100,7 +100,7 @@ class TaskControl(object):
         )
 
         # copy task_settings to session folder
-        with open(str(self.save_path_data) + ".settings", "w") as f:
+        with open(str(self.save_path_data) + ".msw.settings.task.json", "w") as f:
             json.dump(self.task_settings, f, indent=4, sort_keys=True)
         # src = Path(task_settings.__file__)
         # dst = Path(self.save_path_data).parent / (
