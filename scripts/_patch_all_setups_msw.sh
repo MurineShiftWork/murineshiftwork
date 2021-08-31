@@ -17,10 +17,10 @@ git pull
 if stat -t ~/miniconda3/envs/acq/bin/pip >/dev/null 2>&1
 then
   ~/miniconda3/envs/acq/bin/pip uninstall murine_shift_work rpi_camera_colony -yq
-  ~/miniconda3/envs/acq/bin/pip install -e ~/murine_shift_work -q
+  ~/miniconda3/envs/acq/bin/pip install -e ~/murine_shift_work
 else
   ~/.conda/envs/acq/bin/pip uninstall murine_shift_work rpi_camera_colony -yq
-  ~/.conda/envs/acq/bin/pip install -e ~/murine_shift_work -q
+  ~/.conda/envs/acq/bin/pip install -e ~/murine_shift_work
 fi
 EOF
 done
