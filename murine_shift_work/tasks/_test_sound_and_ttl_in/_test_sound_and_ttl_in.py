@@ -4,7 +4,7 @@ import time
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 
-from murine_shift_work.logic.calibration import save_sound_delay_data
+from murine_shift_work.logic.calibration import CalibrationDataSound
 from murine_shift_work.logic.sounds import Sounds
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
@@ -15,6 +15,9 @@ class Task(TaskRunner):
 
     def run(self) -> None:
         sounds = Sounds()
+        calibration_sound = CalibrationDataSound(
+            file_path=self.input_kwargs["calibration_file_sound"]
+        )
 
         self.bpod.softcode_handler_function = sounds.soft_code_handler_function
 
@@ -68,7 +71,9 @@ class Task(TaskRunner):
             trial_index += 1
 
         # Save new calibration data for sound offset
-        save_sound_delay_data(measurements=delay_measurements)
+        calibration_sound += delay_measurements
+        calibration_sound.save()
+        calibration_sound.save_calibration_plot()
 
 
 def run_task(**kwargs):
