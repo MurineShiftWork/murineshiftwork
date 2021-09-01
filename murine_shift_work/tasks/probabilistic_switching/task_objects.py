@@ -1,7 +1,6 @@
 import json
 import logging
 import random
-import shutil
 import time
 from pathlib import Path
 
@@ -10,13 +9,10 @@ import pandas as pd
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
-from murine_shift_work.logic.calibration import get_calibration_point_for_valve
-from murine_shift_work.logic.calibration import (
-    get_sound_delay_correction_value,
-)
+from murine_shift_work.logic.calibration import CalibrationDataSound
+from murine_shift_work.logic.calibration import CalibrationDataWater
 from murine_shift_work.logic.maths import ExponentialMovingAverage
 from murine_shift_work.logic.maths import withprob
-from murine_shift_work.logic.paths import build_data_paths
 from murine_shift_work.logic.sounds import Sounds
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 
@@ -92,9 +88,18 @@ class TaskControl(object):
         # fixme 1: implement loading of presets for basic PS (no stop)
         #  and stop signal PS (adaptive stops, probabilities all 1/0 for analysis simplicity)
         # fixme 2: use hardware params for go/stop signal generation
+
+        self.calibration_sound = CalibrationDataSound(
+            file_path=self.task_settings["calibration_file_sound"]
+        )
         self.sound = Sounds()
-        self.sound_delay_correction = get_sound_delay_correction_value()
-        self.valve_times_dict = get_calibration_point_for_valve(
+        self.sound_delay_correction = (
+            self.calibration_sound.calculate_sound_delay_correction()
+        )
+        self.calibration_water = CalibrationDataWater(
+            file_path=self.task_settings["calibration_file_water"]
+        )
+        self.valve_times_dict = self.calibration_water.water_volume_to_valve_time(
             valves=self.task_settings["HARDWARE_VALVES_FOR_WATER"],
             target_volume=self.task_settings["reward_amount_ul"],
         )

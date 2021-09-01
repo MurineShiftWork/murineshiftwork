@@ -1,15 +1,13 @@
 import logging
 import random
 import time
-from datetime import datetime
 
 import numpy as np
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 from tqdm import tqdm
 
-from murine_shift_work.logic.calibration import load_water_calibration
-from murine_shift_work.logic.calibration import save_water_calibration
+from murine_shift_work.logic.calibration import CalibrationDataWater
 from murine_shift_work.logic.gui import ask_water_calibration_ready
 from murine_shift_work.logic.gui import ask_water_calibration_weight
 from murine_shift_work.logic.task_process import TaskProcess
@@ -51,66 +49,6 @@ def run_test_water_drops(
             break
 
 
-def calibrate_point_for_valve(
-    valve=1,
-    valve_open_time=10,
-    n_drops=200,
-    inter_pulse_interval=0.1,
-    bpod=None,
-):
-    calibration_data = load_water_calibration(allow_default=False)
-
-    ask_water_calibration_ready(valve=valve)
-
-    run_test_water_drops(
-        valve=valve,
-        valve_open_time=valve_open_time,
-        n_trials=n_drops,
-        inter_pulse_interval=inter_pulse_interval,
-        bpod=bpod,
-    )
-
-    weight = ask_water_calibration_weight()
-    weight_per_drop = round(weight / n_drops, 3)
-
-    def add_calibration_data_measurement():
-        return {
-            "measurement_time": datetime.now(),
-            "valve": valve,
-            "valve_time": valve_open_time,
-            "n_drops": n_drops,
-            "inter_pulse_interval": inter_pulse_interval,
-            "weight": weight,
-            "weight_per_drop": weight_per_drop,
-            "microliters": weight_per_drop * 1000,
-        }
-
-    if calibration_data.empty:
-        import pandas as pd
-
-        calibration_data = pd.DataFrame([add_calibration_data_measurement()])
-    else:
-        calibration_data = calibration_data.append(
-            {
-                "measurement_time": datetime.now(),
-                "valve": valve,
-                "valve_time": valve_open_time,
-                "n_drops": n_drops,
-                "inter_pulse_interval": inter_pulse_interval,
-                "weight": weight,
-                "weight_per_drop": weight_per_drop,
-                "microliters": weight_per_drop * 1000,
-            },
-            ignore_index=True,
-        )
-
-    # fixme: removing manually weird columns
-    calibration_data = calibration_data[
-        calibration_data.columns.drop(list(calibration_data.filter(regex="Unnamed")))
-    ]
-    save_water_calibration(df=calibration_data)
-
-
 class Task(TaskRunner):
     def run(self) -> None:
         VALVE_TIME_MIN = 10  # ms
@@ -124,23 +62,46 @@ class Task(TaskRunner):
             endpoint=False,
         )
 
-        VALVE_ITERATIONS = 200
-        VALVE_INTER_PULSE_INTERVAL = 0.1
+        N_DROPS = 200
+        INTER_PULSE_INTERVAL = 0.1
         VALVES_TO_CALIBRATE = [1, 3]
 
         random_valve_times = VALVE_TIMES_TO_TEST.copy()
         random.shuffle(random_valve_times)
 
-        for valve in VALVES_TO_CALIBRATE:
-            for valve_time in random_valve_times:
-                logging.info(f"valve: {valve}, with valve time: {valve_time}ms.")
-                calibrate_point_for_valve(
-                    valve=valve,
-                    valve_open_time=valve_time,
-                    n_drops=VALVE_ITERATIONS,
-                    inter_pulse_interval=VALVE_INTER_PULSE_INTERVAL,
+        calibration = CalibrationDataWater(
+            file_path=self.input_kwargs["calibration_file_water"]
+        )
+
+        for valve_id in VALVES_TO_CALIBRATE:
+            for valve_opening_time in random_valve_times:
+                logging.info(
+                    f"valve: {valve_id}, with valve time: {valve_opening_time}ms."
+                )
+
+                ask_water_calibration_ready(valve=valve_id)
+
+                run_test_water_drops(
+                    valve=valve_id,
+                    valve_open_time=valve_opening_time,
+                    n_trials=N_DROPS,
+                    inter_pulse_interval=INTER_PULSE_INTERVAL,
                     bpod=self.bpod,
                 )
+
+                water_weight_g = ask_water_calibration_weight()
+
+                calibration.add_calibration_point(
+                    valve_id=valve_id,
+                    valve_opening_time=valve_opening_time,
+                    n_drops=N_DROPS,
+                    inter_pulse_interval=INTER_PULSE_INTERVAL,
+                    water_weight_g=water_weight_g,
+                )
+
+        logging.debug(f"\n{str(calibration)}\n")
+        calibration.save()
+        calibration.save_calibration_plot()
 
 
 def run_task(**kwargs):

@@ -101,7 +101,7 @@ class CalibrationDataWater(CalibrationData):
                 "valve_opening_time": valve_opening_time,
                 "n_drops": n_drops,
                 "inter_pulse_interval": inter_pulse_interval,
-                "weight": water_weight_g,
+                "water_weight_g": water_weight_g,
             }
         )
 
