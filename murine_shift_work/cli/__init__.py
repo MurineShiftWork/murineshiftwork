@@ -31,7 +31,9 @@ def run_cli(*args):
     args_dict["func"](**args_dict)
     logging.debug("EXITING CLI.")
     console = get_console()
-    console.save_text("/tmp/log.rich.txt")
+    console.save_text(
+        "/tmp/log.rich.txt"
+    )  # FIXME: why not recording any logging output ??
     console.save_html("/tmp/log.rich.html")
 
 

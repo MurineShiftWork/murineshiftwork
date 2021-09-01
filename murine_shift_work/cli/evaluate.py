@@ -87,6 +87,7 @@ def evaluate_args(args_dict=None):
         args_dict["config_dir"] = ""
 
     # Validate paths
+    # - config files
     args_dict["config_file_subjects"] = validate_config_file_path(
         config_file=args_dict["config_file_subjects"],
         default_dir=args_dict["config_dir"],
@@ -97,6 +98,15 @@ def evaluate_args(args_dict=None):
     )
     args_dict["config_file_camera"] = validate_config_file_path(
         config_file=args_dict["config_file_camera"],
+        default_dir=args_dict["config_dir"],
+    )
+    # - calibration files
+    args_dict["calibration_file_water"] = validate_config_file_path(
+        config_file=args_dict["calibration_file_water"],
+        default_dir=args_dict["config_dir"],
+    )
+    args_dict["calibration_file_sound"] = validate_config_file_path(
+        config_file=args_dict["calibration_file_sound"],
         default_dir=args_dict["config_dir"],
     )
 

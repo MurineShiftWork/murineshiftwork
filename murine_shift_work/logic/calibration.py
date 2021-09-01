@@ -1,135 +1,223 @@
-import datetime
 import logging
+import os.path
+import shutil
+from datetime import datetime
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from rich.console import Console
+import seaborn as sns
 from scipy.optimize import curve_fit
 
-from murine_shift_work.settings import calibration_data_folder
 
-calibration_file_sound_delay = calibration_data_folder / "sound_delay.csv"
-calibration_file_sound_delay_default = (
-    calibration_data_folder / "sound_delay.default.csv"
-)
-calibration_file_sound_delay_fig = calibration_data_folder / "sound_delay.png"
-calibration_file_water_calibration = calibration_data_folder / "water_calibration.csv"
-calibration_file_water_calibration_default = (
-    calibration_data_folder / "water_calibration.default.csv"
-)
+class CalibrationData(object):
+    file_path = None
+    calibration_data = None
+    columns = []
+    columns_to_drop = ["Unnamed: 0"]
+
+    def __init__(self, file_path=None, **kwargs):
+        """"""
+        super(CalibrationData, self).__init__(**kwargs)
+        self.file_path = file_path or self.file_path
+
+        for k, v in kwargs.items():
+            if hasattr(self, k):
+                setattr(self, k, v)
+
+        self.load()
+
+    def __add__(self, other):
+        assert isinstance(other, dict)
+        other.update({"measurement_time": datetime.now()})
+        self.calibration_data = self.calibration_data.append(other, ignore_index=True)
+        return self
+
+    def __repr__(self):
+        return f"{type(self)} with {self.calibration_data.shape[0]} entries."
+
+    def __str__(self):
+        return str(self.calibration_data)
+
+    def load(self, file_path=None):
+        if file_path is not None:
+            self.file_path = file_path
+
+        if Path(self.file_path).exists():
+            self.calibration_data = pd.read_csv(self.file_path)
+            logging.debug(
+                f"Updated calibration data with {self.calibration_data.shape[0]} measurements."
+            )
+        else:
+            self.calibration_data = pd.DataFrame(columns=self.columns)
+
+        for target_column in self.columns_to_drop:
+            if target_column in self.calibration_data.columns:
+                self.calibration_data = self.calibration_data.drop(
+                    target_column, axis=1
+                )
+
+        return self.calibration_data
+
+    def save(self, file_path=None, overwrite=False):
+        if file_path is not None:
+            self.file_path = file_path
+
+        if self.calibration_data is not None and not self.calibration_data.empty:
+
+            if Path(self.file_path).exists() and not overwrite:
+                raise FileExistsError(
+                    f"File exists and not allowed to overwrite. {self.file_path}"
+                )
+
+            self.calibration_data.to_csv(self.file_path)
 
 
-def load_sound_delay_data():
-    # FIXME: add default file as for water calibration Loading below
-    if Path(calibration_file_sound_delay).exists():
-        return pd.read_csv(calibration_file_sound_delay)
-    else:
-        return pd.DataFrame()
+class CalibrationDataWater(CalibrationData):
+    allowable_offset_days = 30
+    columns = [
+        "measurement_time",
+        "valve",
+        "valve_opening_time",
+        "n_drops",
+        "inter_pulse_interval",
+        "weight",
+        "weight_per_drop",
+        "volume_ul",
+    ]
 
-
-def save_sound_delay_data(measurements=None, plot=True, overwrite=True):
-    delay_measurements_df = pd.DataFrame(measurements)
-    if delay_measurements_df.empty:
-        logging.debug("\n\n\n\t\tNo delay measurements to save!\n\n")
-        return False
-
-    delays = delay_measurements_df["delay"] * 1000  # convert to msec
-
-    if Path(calibration_file_sound_delay).exists() and not overwrite:
-        raise FileExistsError(
-            f"Not allowed to overwrite existing calibration file: {calibration_file_sound_delay}"
+    def add_calibration_point(
+        self,
+        valve_id=None,
+        valve_opening_time=None,
+        n_drops=None,
+        inter_pulse_interval=None,
+        water_weight_g=None,
+    ):
+        self.__add__(
+            {
+                "valve_id": valve_id,
+                "valve_opening_time": valve_opening_time,
+                "n_drops": n_drops,
+                "inter_pulse_interval": inter_pulse_interval,
+                "weight": water_weight_g,
+            }
         )
-    else:
-        delay_measurements_df.to_csv(calibration_file_sound_delay)
 
-    if plot:
-        save_sound_delay_figure(delay_data=delays)
+    def water_volume_to_valve_time(self, valves=None, target_volume=None, s_to_ms=1000):
+        if self.calibration_data is not None and not self.calibration_data.empty:
+            self.upgrade_calibration_file_field_names()
 
-    logging.info(
-        f"Delay sound trigger to soundcard TTL is\n"
-        f"\tMEAN={np.round(delays.mean(), 3)}ms\n"
-        f"\tMEDIAN={np.round(delays.median(), 3)}ms\n"
-        f"\tSTD={np.round(delays.std(), 3)}ms\n"
-    )
+            # Process calibration data
+            self.calibration_data["weight_per_drop"] = np.round(
+                self.calibration_data["water_weight_g"]
+                / self.calibration_data["n_drops"],
+                3,
+            )
+            self.calibration_data["volume_ul"] = np.round(
+                self.calibration_data["weight_per_drop"] * 1000, 3
+            )
+            self.calibration_data = self.calibration_data.sort_values(
+                by="valve_opening_time"
+            )
 
+            if not hasattr(valves, "__iter__"):
+                valves = [valves]
 
-def save_sound_delay_figure(delay_data=None):
-    f = plt.figure(dpi=450)
-    plt.plot(delay_data, "k*--")
-    plt.title("Delays sound softcode to soundcard TTL received by Bpod.")
-    plt.ylabel("Delay [ms]")
-    plt.xlabel("Trial [#]")
-    f.savefig(calibration_file_sound_delay_fig)
+            # Get target valve opening times for given volumes
+            calibration_targets = {}
+            for this_valve in valves:
+                data_for_valve = self.calibration_data.loc[
+                    self.calibration_data["valve_id"] == this_valve
+                ]
 
+                # FIXME: REPLACE INTERP WITH CURVE FIT. SEE FUNCTIONS BELOW
 
-def find_water_calibration_file():
-    """Returns (file path, is default bool)"""
-    if calibration_file_water_calibration.exists():
-        logging.debug(
-            f"Reading water calibration file from setup file. {calibration_file_water_calibration}"
-        )
-        return calibration_file_water_calibration, False
-    elif calibration_file_water_calibration_default.exists():
-        logging.debug(
-            f"Reading water calibration file from DEFAULT file. {calibration_file_water_calibration_default}"
-        )
-        return calibration_file_water_calibration_default, True
-    else:
-        raise FileNotFoundError(
-            f"Neither calibration files exists: "
-            f"{calibration_file_water_calibration}, "
-            f"{calibration_file_water_calibration_default}"
-        )
+                calibration_targets[this_valve] = (
+                    np.interp(
+                        target_volume,
+                        data_for_valve["volume_ul"],
+                        data_for_valve["valve_opening_time"],
+                    )
+                    / s_to_ms
+                )
+            return calibration_targets
 
-
-def load_water_calibration(allowable_offset_days=30, allow_default=True):
-    calibration_file, is_default_file = find_water_calibration_file()
-
-    if not is_default_file or (is_default_file and allow_default):
-        calibration_data = pd.read_csv(calibration_file)
-
-        # Check when calibration data was acquired.
-        calibration_dates = pd.Series(
-            [pd.Timestamp(v) for v in calibration_data.measurement_time]
-        )
+    def save_calibration_plot(self):
         if (
-            calibration_dates
-            > pd.Timestamp(datetime.datetime.today())
-            - pd.DateOffset(days=allowable_offset_days)
-        ).any():
-            info_str = f"WARNING: calibration data is older than {allowable_offset_days} days. Consider re-calibration."
-            logging.info(info_str)
+            self.file_path is not None
+            and self.calibration_data is not None
+            and not self.calibration_data.empty
+        ):
+            f = plt.figure(dpi=450)
+            sns.lineplot(
+                data=self.calibration_data,
+                x="valve_opening_time",
+                y="volume_ul",
+                hue="valve_id",
+            )
+            plt.title("Valve opening times to pass water volume [uL].")
+            plt.ylabel("Volume [uL]")
+            plt.xlabel("Valve opening time [ms]")
+            f.savefig(os.path.splitext(self.file_path)[0] + ".png")
 
-            c = Console()
-            style = "bold red"
-            c.print("# " * 40, style=style)
-            c.print("# ", style=style)
-            c.print(f"#  {info_str}", style=style)
-            c.print("# ", style=style)
-            c.print("# " * 40, style=style)
+    def upgrade_calibration_file_field_names(self):
+        """Ensure compatibility between old calibration data files and new columns format."""
+        if "microliters" in self.calibration_data.columns:
+            logging.debug(
+                "Water calibration file has old field names. Making backup copy and overwriting original.."
+            )
+            self.calibration_data = self.calibration_data.rename(
+                {
+                    "valve": "valve_id",
+                    "valve_time": "valve_opening_time",
+                    "weight": "water_weight_g",
+                    "microliters": "volume_ul",
+                }
+            )
+            backup_file = str(self.file_path) + ".bak"
+            shutil.copyfile(src=self.file_path, dst=backup_file)
+            if Path(backup_file).exists():
+                self.save()
+            else:
+                raise FileNotFoundError(
+                    f"backup file should have been made by copying {self.file_path} to {backup_file}."
+                )
 
-        return calibration_data
-    else:
-        return pd.DataFrame()
 
+class CalibrationDataSound(CalibrationData):
+    columns = ["measurement_time", "trial", "delay"]
 
-# def convert_gram_to_microliter(weight_g=None, n_drops=None):
-#     return weight_g / n_drops * 1000  # covert to microliter
-
-
-def save_water_calibration(df=None, overwrite=True):
-    if Path(calibration_file_water_calibration).exists() and not overwrite:
-        raise FileExistsError(
-            f"Not allowed to overwrite existing calibration file: {calibration_file_water_calibration}"
+    def add_calibration_point(self, trial=None, delay=None):
+        self.__add__(
+            {
+                "trial": trial,
+                "delay": delay,
+            }
         )
-    else:
-        df.to_csv(calibration_file_water_calibration)
+
+    def calculate_sound_delay_correction(self):
+        return np.round(self.calibration_data["delay"].median(), 3)
+
+    def save_calibration_plot(self):
+        if (
+            self.file_path is not None
+            and self.calibration_data is not None
+            and not self.calibration_data.empty
+        ):
+            f = plt.figure(dpi=450)
+            plt.plot(self.calibration_data["delay"] * 1000, "k*--")
+            plt.title(
+                "Delays from sound softcode to soundcard TTL received by Bpod BNC-in."
+            )
+            plt.ylabel("Delay [ms]")
+            plt.xlabel("Trial [#]")
+            f.savefig(os.path.splitext(self.file_path)[0] + ".png")
 
 
 def _exponential_function(x, a, b, c):
-    return a * np.exp(-b * x) + c
+    return a * np.exp(b * x) + c
 
 
 def fit_water_calibration_exp(x_observed=None, y_observed=None):
@@ -150,24 +238,3 @@ def evaluate_water_calibration_curve_continuous(popt=None, min=0, max=10, step=0
 def evaluate_water_calibration_curve_y_to_x(x_continuous, y_continuous, y_target=None):
     x_value = np.interp(y_target, x_continuous, y_continuous)
     return x_value
-
-
-def get_calibration_point_for_valve(valves=None, target_volume=None, s_to_ms=1000):
-    calibration_data = load_water_calibration().sort_values(by="valve_time")
-    calibration_targets = {}
-    for valve in valves:
-        cd = calibration_data.loc[calibration_data["valve"] == valve]
-        calibration_targets[valve] = (
-            np.interp(target_volume, cd["microliters"], cd["valve_time"]) / s_to_ms
-        )
-    return calibration_targets
-
-
-def get_sound_delay_correction_value():
-    sound_calibration_data = load_sound_delay_data()
-    if not sound_calibration_data.empty:
-        correction_value = sound_calibration_data.delay.median().round(3)
-    else:
-        correction_value = np.nan
-
-    return correction_value

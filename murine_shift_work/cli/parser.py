@@ -66,7 +66,7 @@ def add_args_for_general_use(parser=None):
     return general_args
 
 
-def add_args_for_hardware(parser=None):
+def add_args_for_hardware_and_calibration(parser=None):
     hardware_args = parser.add_argument_group("Hardware settings")
     hardware_args.add_argument(
         "-b",
@@ -82,7 +82,21 @@ def add_args_for_hardware(parser=None):
         default="/dev/ttyACM1",
         help="Serial port for pulsepal. Unix: /dev/ttyACM{no}. Windows: COM{no}.",
     )
-
+    calibration_arg_group = parser.add_argument_group("Calibration files")
+    calibration_arg_group.add_argument(
+        "-cwater",
+        "--calibration-file-water",
+        type=str,
+        default="calibration.water.default.csv",
+        help="Default water calibration file (Only relevant for `run`)",
+    )
+    calibration_arg_group.add_argument(
+        "-csound",
+        "--calibration-file-sound",
+        type=str,
+        default="calibration.sound.default.csv",
+        help="Default sound calibration file (Only relevant for `run`)",
+    )
     return hardware_args
 
 
@@ -183,7 +197,7 @@ Available tasks:
         formatter_class=ArgparseFormatter,
     )
     add_args_for_general_use(parser_for_run)
-    add_args_for_hardware(parser_for_run)
+    add_args_for_hardware_and_calibration(parser_for_run)
     add_args_for_flow_control(parser_for_run)
     parser_for_run.set_defaults(func=run_task)
 
