@@ -11,6 +11,9 @@ sample_rate_dict = {
 
 
 def get_sample_rate(target_device=None):
+    if not hasattr(target_device, "keys"):
+        return None
+
     if target_device in sample_rate_dict:
         return sample_rate_dict[target_device]
     else:
@@ -48,6 +51,7 @@ class StereoSound(object):
         sample_rate: int = None,
         ttl_channel: int = 1,
         ttl_duration: float = 0.001,
+        allow_sys_default_device=True,
         **kwargs,
     ):
         """"""
@@ -62,8 +66,19 @@ class StereoSound(object):
             target_device=self.default_sound_device
         )
 
+        if not self.sound_device:
+            if not allow_sys_default_device:
+                raise ValueError(
+                    f"No sound device found for input '{sound_device}' "
+                    f"or default '{self.default_sound_device}'"
+                )
+            else:
+                self.sound_device = "sysdefault"
+
         self.sample_rate = sample_rate or get_sample_rate(
-            target_device=self.sound_device
+            target_device=self.sound_device[1]["name"]
+            if not isinstance(self.sound_device, str)
+            else self.sound_device
         )
         if self.sample_rate is None:
             raise ValueError(
