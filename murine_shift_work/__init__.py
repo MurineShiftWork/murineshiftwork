@@ -11,5 +11,5 @@ from murine_shift_work.cli import run_cli
 from murine_shift_work.logic.log import patch_logging_levels
 from murine_shift_work.logic.pybpod_helpers import patch_user_settings
 
-patch_user_settings()
 patch_logging_levels()
+patch_user_settings()

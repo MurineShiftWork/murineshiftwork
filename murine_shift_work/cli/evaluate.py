@@ -1,9 +1,7 @@
 import json
 import logging
-import sys
 from pathlib import Path
 
-from murine_shift_work import patch_logging_levels
 from murine_shift_work import settings as msws
 from murine_shift_work.logic.config import read_config
 from murine_shift_work.logic.log import setup_logging
