@@ -11,7 +11,7 @@ sample_rate_dict = {
 
 
 def get_sample_rate(target_device=None):
-    if not hasattr(target_device, "keys"):
+    if not isinstance(target_device, str):
         return None
 
     if target_device in sample_rate_dict:
