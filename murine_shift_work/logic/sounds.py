@@ -59,7 +59,7 @@ class StereoSound(object):
             else None
         )
         self.sound_device = found_input_device or find_sound_device(
-            target_device=self.sound_device
+            target_device=self.default_sound_device
         )
 
         self.sample_rate = sample_rate or get_sample_rate(
