@@ -28,7 +28,9 @@ class TaskRunner(QThread):
         self.prepare()
 
     def prepare(self):
-        """Use input kwargs to e.g. start video, load task settings, make task objects, GUI, etc."""
+        """Do long loading / computation task here, before starting the task.
+        Use input kwargs to e.g. start video, load task settings, make task objects, GUI, etc.
+        """
         logging.debug("No 'TaskRunner.prepare()' implementation.")
 
     def run(self) -> None:
