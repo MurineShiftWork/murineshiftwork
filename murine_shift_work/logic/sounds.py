@@ -11,7 +11,7 @@ sample_rate_dict = {
 
 
 def get_sample_rate(target_device=None):
-    if target_device in sample_rate_dict.keys():
+    if target_device in sample_rate_dict:
         return sample_rate_dict[target_device]
     else:
         return None
