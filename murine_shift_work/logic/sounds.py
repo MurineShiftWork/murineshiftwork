@@ -10,14 +10,12 @@ sample_rate_dict = {
 }
 
 
-def get_sample_rate(target_device=None):
-    if not isinstance(target_device, str):
-        return None
+def get_sample_rate(target_device_name=None):
+    for k in sample_rate_dict.keys():
+        if k in str(target_device_name):
+            return sample_rate_dict[k]
 
-    if target_device in sample_rate_dict:
-        return sample_rate_dict[target_device]
-    else:
-        return None
+    return None
 
 
 def find_sound_device(target_device=None, return_first=True):
@@ -76,7 +74,7 @@ class StereoSound(object):
                 self.sound_device = "sysdefault"
 
         self.sample_rate = sample_rate or get_sample_rate(
-            target_device=self.sound_device[1]["name"]
+            target_device_name=self.sound_device[1]["name"]
             if not isinstance(self.sound_device, str)
             else self.sound_device
         )
@@ -194,3 +192,7 @@ class StereoSound(object):
             sd.stop()
         else:
             raise ValueError(f"No such sound index: {sound_code}")
+
+
+if __name__ == '__main__':
+    print(" ")
