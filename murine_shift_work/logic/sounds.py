@@ -165,7 +165,7 @@ class StereoSound(object):
         frequency=None,
         duration=None,
         amplitude=None,
-        fade_duration=None,
+        fade_duration=0.01,
         play_blocking=True,
         **kwargs,
     ):
