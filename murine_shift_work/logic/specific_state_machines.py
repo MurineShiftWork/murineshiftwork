@@ -71,7 +71,7 @@ def add_trial_onset_ttl(
     bnc_channel=Bpod.OutputChannels.BNC2,
     next_state=None,
 ):
-    if not hasattr(bnc_channel, "__iter__"):
+    if not isinstance(bnc_channel, list) or not isinstance(bnc_channel, tuple):
         bnc_channel = [bnc_channel]
 
     if not isinstance(bnc_channel[0], str):
