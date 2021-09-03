@@ -25,7 +25,6 @@ class Task(TaskRunner):
 
         self.bpod.softcode_handler_function = self.sound.execute_sound_handler
 
-        delay_measurements = []
         trial_index = 0
         n_max_trials = 201
         while self.continue_task and trial_index <= n_max_trials:
@@ -66,7 +65,7 @@ class Task(TaskRunner):
             ev = self.bpod.session.current_trial.export()["Events timestamps"]
             delay = dict(ev).get("BNC1High", -1)
             if not delay == -1:
-                delay_measurements.append({"trial": trial_index, "delay": delay[0]})
+                calibration_sound += {"trial": trial_index, "delay": delay[0]}
             else:
                 logging.error(f"Did not receive TTL on trial {trial_index}")
 
@@ -75,7 +74,6 @@ class Task(TaskRunner):
             trial_index += 1
 
         # Save new calibration data for sound offset
-        calibration_sound += delay_measurements
         calibration_sound.save()
         calibration_sound.save_calibration_plot()
 
