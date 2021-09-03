@@ -1,6 +1,6 @@
 from pathlib import Path
 from shutil import copyfile
-
+from rich import get_console
 from configobj import ConfigObj
 
 

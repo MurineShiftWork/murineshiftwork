@@ -1,14 +1,14 @@
 import logging
 import sys
 
-from rich import get_console
-
 from murine_shift_work.cli.evaluate import evaluate_args
 from murine_shift_work.cli.parser import parse_args
 
 
 def run_cli(*args):
     """Command line interface for Murine Shift Work."""
+    global _console
+    _console = Console(record=True)
     if not args:
         args = sys.argv[1:]
 
@@ -31,12 +31,6 @@ def run_cli(*args):
     args_dict["func"](**args_dict)
 
     logging.debug("EXITING CLI.")
-
-    console = get_console()
-    console.save_text(
-        "/tmp/log.rich.txt"
-    )  # FIXME: why not recording any logging output ??
-    console.save_html("/tmp/log.rich.html")
 
 
 if __name__ == "__main__":

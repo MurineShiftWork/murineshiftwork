@@ -17,16 +17,25 @@ parallel -j 10 rsync -av --info=progress2 '{1}:~/data/' $target_path \
 	setup1 setup2 setup3 setup4 setup5 #\
 #	rpi-40 rpi-41 rpi-43 rpi-50 rpi-51
 
-for rpi in rpi-40 rpi-41 rpi-43 rpi-50 rpi-51
-do
-	printf "\n\n \t ${rpi} \n"
-	rsync -av --info=progress2 $rpi':~/data/' $target_path \
-        --exclude=".git" \
+parallel --line-buffer -j 10 rsync -av --info=progress2 '{1}:~/data/' $target_path \
+        --exclude=".git"  \
         --exclude="__pycache__" \
         --exclude=".idea" \
         --exclude="tests" \
-        --exclude="*.egg-info"
-done
+        --exclude="*.egg-info" \
+	::: \
+	rpi-40 rpi-41 rpi-43 rpi-50 rpi-51
+
+#for rpi in rpi-40 rpi-41 rpi-43 rpi-50 rpi-51
+#do
+#	printf "\n\n \t ${rpi} \n"
+#	rsync -av --info=progress2 $rpi':~/data/' $target_path \
+#        --exclude=".git" \
+#        --exclude="__pycache__" \
+#        --exclude=".idea" \
+#        --exclude="tests" \
+#        --exclude="*.egg-info"
+#done
 
 #exit 0
 #for rpi in rpi-40 rpi-41 rpi-43 rpi-50 rpi-51
