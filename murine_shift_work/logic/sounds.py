@@ -1,45 +1,81 @@
 import logging
-import sys
 
 import numpy as np
 import sounddevice as sd
 
 
-def _get_samplerate(
-    chosen_device=None,
-):  # fixme: document where functionality has been taken from IBL here
-    chosen_device = chosen_device.lower()
-    if "xonar" in chosen_device:
-        return 192000
-    elif "sysdefault" in chosen_device:
-        return 44100
+sample_rate_dict = {
+    "sysdefault": 44100,
+    "XONAR SOUND CARD": 192000,
+}
+
+
+def get_sample_rate(target_device=None):
+    if target_device in sample_rate_dict.keys():
+        return sample_rate_dict[target_device]
     else:
-        logging.error(f"Sound device not recognised: {chosen_device}")
+        return None
 
 
-class NewSound(object):
+def find_sound_device(target_device=None, return_first=True):
+    devices = sd.query_devices()
+
+    found_device = [(i, d) for i, d in enumerate(devices) if target_device in d["name"]]
+    if len(found_device) > 0 and return_first:
+        found_device = found_device[0]
+    return found_device
+
+
+class StereoSound(object):
     _sounds = {}
 
-    def __init__(self):
-        super(NewSound, self).__init__()
-        # receive params for sound device + TTL
+    default_sound_device = "XONAR SOUND CARD"
+    default_ttl_channel = 1  # choices: 0 or 1 -> idx of position on
+    default_ttl_duration = 0.001  # 1 ms
+    default_sound_channels = 2  # stereo
+    default_sound_latency = "low"
 
-    def setup_sound_device(self):
-        pass  # set up sound device (channels, i.e. for TTL)
+    sound_device = None
+    sample_rate = None
+    ttl_channel = None
+    ttl_duration = None
 
-    def register_new_sound(self, **kwargs):
-        # input: like old make_sound:
-        # def make_sound(
-        #     self,
-        #     sample_rate=44100,
-        #     frequency=5000,
-        #     tone_duration=0.1,
-        #     amplitude=1,
-        #     fade_duration=0.01,
-        #     chans="L+TTL",  # fixme: move this to the constructor as all sounds will have TTL
-        #     ttl_duration_msec=1,
-        # )
-        return 1  # adds new array to sound dict (make getter and setter method), returns key to sound
+    sound_stop_code = 99
+
+    def __init__(
+        self,
+        sound_device: str = None,
+        sample_rate: int = None,
+        ttl_channel: int = 1,
+        ttl_duration: float = 0.001,
+        **kwargs,
+    ):
+        """"""
+        super(StereoSound, self).__init__()
+        self.sound_device = find_sound_device(
+            target_device=sound_device
+        ) or find_sound_device(target_device=self.sound_device)
+
+        self.sample_rate = sample_rate or get_sample_rate(
+            target_device=self.sound_device
+        )
+        if self.sample_rate is None:
+            raise ValueError(
+                f"Could not find sample rate for device '{self.sound_device}'. "
+                f"Change device or provide sample rate in input."
+            )
+
+        self.ttl_channel = ttl_channel or self.default_ttl_channel
+        if self.ttl_channel != 0 and self.ttl_channel != 1:
+            raise ValueError(
+                f"'ttl_channel' has to be 0 or 1 for stereo output, but '{self.ttl_channel}' given"
+            )
+
+        self.ttl_duration = ttl_duration or self.default_ttl_duration
+
+        for k, v in kwargs.items():
+            if hasattr(self, k):
+                setattr(self, k, v)
 
     @property
     def sounds(self):
@@ -49,141 +85,28 @@ class NewSound(object):
     def sounds(self, new_sounds: dict):
         self._sounds = new_sounds
 
+    def setup_sound_device(self):
+        """Set required overwrites for sound device."""
+        sd.default.device = self.sound_device
+        sd.default.latency = self.default_sound_latency
+        sd.default.channels = self.default_sound_channels
+        sd.default.samplerate = self.sample_rate
 
-class Sounds(object):
-    ttl = "L+TTL"
-    ttl_duration_msec = 1
-
-    default_device = "XONAR SOUND CARD"
-    default_latency = "low"
-    default_channels = 2
-    default_samplerate = 192000
-    default_sound_blocking = True
-    default_sound_fade = 0.01
-
-    sound_go_array = None
-    sound_stop_array = None
-    sound_test_array = None
-
-    sound_go_softcode = 1
-    sound_stop_softcode = 2
-    sound_test_softcode = 3
-    sound_end_softcode = 99
-
-    sound_go_params = {
-        "frequency": 5000,
-        "tone_duration": 0.1,
-        "amplitude": 0.2,
-    }
-    sound_stop_params = {
-        "frequency": -1,  # -1=noise
-        "tone_duration": 0.4,
-        "amplitude": 0.5,
-    }
-    sound_test_params = {
-        "frequency": 5000,
-        "tone_duration": 0.1,
-        "amplitude": 0.01,
-    }
-
-    def __init__(self, sound_device="XONAR SOUND CARD", ttl="L+TTL"):
-        super(Sounds, self).__init__()
-
-        self.ttl = ttl
-
-        self.setup_sound_output(
-            sound_device=sound_device if sound_device else self.default_device
-        )
-
-        self.sound_go_array = self.make_sound(  # fixme: move these default tones outside. strip back to simple object
-            **self.sound_go_params,
-            sample_rate=self.default_samplerate,
-            chans=ttl,
-            fade_duration=self.default_sound_fade,
-            ttl_duration_msec=self.ttl_duration_msec,
-        )
-        self.sound_stop_array = self.make_sound(
-            **self.sound_stop_params,
-            sample_rate=self.default_samplerate,
-            chans=ttl,
-            fade_duration=self.default_sound_fade,
-            ttl_duration_msec=self.ttl_duration_msec,
-        )
-        self.sound_test_array = self.make_sound(
-            **self.sound_test_params,
-            sample_rate=self.default_samplerate,
-            chans=ttl,
-            fade_duration=self.default_sound_fade,
-            ttl_duration_msec=self.ttl_duration_msec,
-        )
-        print("Sounds initialised.")
-
-    def soft_code_handler_function(self, softcode=None):
-        logging.debug("Entering softcode handler.")
-        if softcode == self.sound_go_softcode:
-            logging.debug("playing sound: go")
-            sd.play(
-                self.sound_go_array,
-                self.default_samplerate,
-                blocking=self.default_sound_blocking,
-            )
-        elif softcode == self.sound_stop_softcode:
-            logging.debug("playing sound: stop")
-            sd.play(
-                self.sound_stop_array,
-                self.default_samplerate,
-                blocking=self.default_sound_blocking,
-            )
-        elif softcode == self.sound_test_softcode:
-            logging.debug("playing sound: test")
-            sd.play(
-                self.sound_test_array,
-                self.default_samplerate,
-                blocking=self.default_sound_blocking,
-            )
-        elif softcode == self.sound_end_softcode:
-            logging.debug("stopped sound")
-            sd.stop()
-        else:
-            pass
-        logging.debug("Exiting softcode handler.")
-
-    def make_sound(
+    def _make_sound(
         self,
-        sample_rate=44100,
-        frequency=5000,
-        tone_duration=0.1,
-        amplitude=1,
-        fade_duration=0.01,
-        chans="L+TTL",
-        ttl_duration_msec=1,
+        frequency=None,
+        duration=None,
+        amplitude=None,
+        fade_duration=None,
     ):
-        """Make sound function taken from IBLRIG package.
-
-        Build sounds and save bin file for upload to soundcard or play via
-        sounddevice lib.
-        :param sample_rate: sample rate of the soundcard use 96000 for Bpod,
-                        defaults to 44100 for soundcard
-        :type sample_rate: int, optional
-        :param frequency: (Hz) of the tone, if -1 will create uniform random white
-                        noise, defaults to 10000
-        :type frequency: int, optional
-        :param tone_duration: (s) of sound, defaults to 0.1
-        :type tone_duration: float, optional
-        :param amplitude: E[0, 1] of the sound 1=max 0=min, defaults to 1
-        :type amplitude: intor float, optional
-        :param fade_duration: (s) time of fading window rise and decay, defaults to 0.01
-        :type fade_duration: float, optional
-        :param chans: ['mono', 'L', 'R', 'stereo', 'L+TTL', 'TTL+R'] number of
-                       sound channels and type of output, defaults to 'L+TTL'
-        :type chans: str, optional
-        :return: stereo sound from mono definitions
-        :rtype: np.ndarray with shape (Nsamples, 2)
+        """Original code similar to
+        https://github.com/int-brain-lab/iblrig/blob/0ee17a14633f0dc7b87f268f433a027e73fd6d57/iblrig/sound.py#L47
+        Refactored as was always only for stereo output with mono sound + optional TTL.
         """
-        tvec = np.linspace(0, tone_duration, int(tone_duration * sample_rate))
+        tvec = np.linspace(0, duration, int(duration * self.sample_rate))
         tone = amplitude * np.sin(2 * np.pi * frequency * tvec)  # tone vec
 
-        len_fade = int(fade_duration * sample_rate)
+        len_fade = int(fade_duration * self.sample_rate)
         fade_io = np.hanning(len_fade * 2)
         fadein = fade_io[:len_fade]
         fadeout = fade_io[len_fade:]
@@ -194,7 +117,7 @@ class Sounds(object):
         tone = tone * win
         ttl = np.ones(len(tone)) * 0.99
         one_ms = (
-            round(sample_rate / 1000) * ttl_duration_msec
+            round(self.sample_rate / 1000) * self.ttl_duration
         )  # LBR: original value was *10 for 1ms, but 5ms seems more stable for detection on bpod
         ttl[one_ms:] = 0
         null = np.zeros(len(tone))
@@ -202,41 +125,53 @@ class Sounds(object):
         if frequency == -1:
             tone = amplitude * np.random.rand(tone.size)
 
-        if chans == "mono":
-            sound = np.array(tone)
-        elif chans == "L":
-            sound = np.array([tone, null]).T
-        elif chans == "R":
-            sound = np.array([null, tone]).T
-        elif chans == "stereo":
-            sound = np.array([tone, tone]).T
-        elif chans == "L+TTL":
-            sound = np.array([tone, ttl]).T
-        elif chans == "TTL+R":
-            sound = np.array([ttl, tone]).T
+        if self.ttl_channel is not None:
+            if self.ttl_channel == 0:
+                sound = np.array([tone, null]).T
+            elif self.ttl_channel == 1:
+                sound = np.array([null, tone]).T
+            else:
+                raise ValueError(
+                    f"'ttl_channel' has to be 0 or 1 for stereo output, but '{self.ttl_channel}' given"
+                )
         else:
-            raise ValueError(f"Cannot interpret chans param: {chans}")
+            return np.array(tone)
 
         return sound
 
-    def setup_sound_output(self, sound_device=None):
-        devices = sd.query_devices()
+    def register_new_sound(
+        self,
+        frequency=None,
+        duration=None,
+        amplitude=None,
+        fade_duration=None,
+        play_blocking=True,
+        **kwargs,
+    ):
+        """"""
+        new_sound_dict = kwargs
+        new_sound_dict["play_blocking"] = play_blocking
+        new_sound_dict["sound"] = self._make_sound(
+            frequency=frequency,
+            duration=duration,
+            amplitude=amplitude,
+            fade_duration=fade_duration,
+        )
 
-        chosen_device = [
-            (i, d) for i, d in enumerate(devices) if sound_device in d["name"]
-        ]
-        if len(chosen_device) > 1:
-            sd.default.device = chosen_device[0][0]
-            chosen_device = chosen_device[0][1]["name"]
-        elif len(chosen_device) < 1 and sys.platform == "linux":
-            sd.default.device = "sysdefault"
-            chosen_device = "sysdefault"
+        new_sound_key = len(self._sounds)
+        self._sounds[new_sound_key] = new_sound_dict
+        return new_sound_key
+
+    def execute_sound_handler(self, sound_code=None):
+        if sound_code in self.sounds.keys():
+            logging.debug(f"Playing sound # {sound_code}.")
+            sd.play(
+                self.sounds[sound_code]["sound"],
+                self.sample_rate,
+                blocking=self.sounds[sound_code]["play_blocking"],
+            )
+        elif sound_code == self.sound_stop_code:
+            logging.debug("Stopped current sound.")
+            sd.stop()
         else:
-            raise OSError(f"Could not find device '{sound_device}'")
-
-        sd.default.latency = self.default_latency
-        sd.default.channels = self.default_channels
-
-        self.default_samplerate = _get_samplerate(chosen_device=chosen_device)
-        logging.info(f"Sound sample sample_rate set to {self.default_samplerate}")
-        sd.default.samplerate = self.default_samplerate
+            raise ValueError(f"No such sound index: {sound_code}")

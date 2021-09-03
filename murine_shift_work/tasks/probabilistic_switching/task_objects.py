@@ -13,7 +13,7 @@ from murine_shift_work.logic.calibration import CalibrationDataSound
 from murine_shift_work.logic.calibration import CalibrationDataWater
 from murine_shift_work.logic.maths import ExponentialMovingAverage
 from murine_shift_work.logic.maths import withprob
-from murine_shift_work.logic.sounds import Sounds
+from murine_shift_work.logic.sounds import StereoSound
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 
 
@@ -92,7 +92,12 @@ class TaskControl(object):
         self.calibration_sound = CalibrationDataSound(
             file_path=self.task_settings["calibration_file_sound"]
         )
-        self.sound = Sounds()
+        self.sound = StereoSound(sound_device=StereoSound.default_sound_device)
+        # self.sound_go = self.sound.register_new_sound(frequency=5000, duration=.1, amplitude=.2)
+        self.sound_stop = self.sound.register_new_sound(
+            frequency=-1, duration=0.4, amplitude=0.5
+        )
+
         self.sound_delay_correction = (
             self.calibration_sound.calculate_sound_delay_correction()
         )
@@ -111,7 +116,7 @@ class TaskControl(object):
         logging.debug("Task control class created.")
 
     def softcode_handler(self, softcode=None):
-        self.sound.soft_code_handler_function(softcode=softcode)
+        self.sound.execute_sound_handler(sound_code=softcode)
 
     def switch_block(self):
         logging.debug("Resetting block.")
@@ -580,7 +585,7 @@ class TaskControl(object):
                     Bpod.Events.Tup: "exit",
                 },
                 output_actions=output_actions__side_ready
-                + [("SoftCode", self.sound.sound_stop_softcode)],
+                + [("SoftCode", self.sound_stop)],
             )
         else:  # REGULAR TRIAL
             sma.add_state(

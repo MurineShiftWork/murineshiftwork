@@ -5,7 +5,7 @@ from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 
 from murine_shift_work.logic.calibration import CalibrationDataSound
-from murine_shift_work.logic.sounds import Sounds
+from murine_shift_work.logic.sounds import StereoSound
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
 
@@ -14,12 +14,16 @@ class Task(TaskRunner):
     _test_bnc_in_channel = Bpod.OutputChannels.BNC1
 
     def run(self) -> None:
-        sounds = Sounds()
+        self.sound = StereoSound(sound_device=StereoSound.default_sound_device)
+        self.sound_test = self.sound.register_new_sound(
+            frequency=5000, duration=0.1, amplitude=0.01
+        )
+
         calibration_sound = CalibrationDataSound(
             file_path=self.input_kwargs["calibration_file_sound"]
         )
 
-        self.bpod.softcode_handler_function = sounds.soft_code_handler_function
+        self.bpod.softcode_handler_function = self.sound.execute_sound_handler
 
         delay_measurements = []
         trial_index = 0
@@ -33,7 +37,7 @@ class Task(TaskRunner):
                 state_timer=0.005,
                 state_change_conditions={"Tup": "bnc_off"},
                 output_actions=[
-                    ("SoftCode", sounds.sound_test_softcode),
+                    ("SoftCode", self.sound_test),
                     (self._test_bnc_in_channel, 1),
                 ],
             )
@@ -47,7 +51,7 @@ class Task(TaskRunner):
                 state_name="leave",
                 state_timer=0,
                 state_change_conditions={"Tup": "exit"},
-                output_actions=[("SoftCode", sounds.sound_end_softcode)],
+                output_actions=[("SoftCode", self.sound.sound_stop_code)],
             )
 
             # EXECUTE trial
