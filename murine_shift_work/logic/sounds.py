@@ -52,9 +52,15 @@ class StereoSound(object):
     ):
         """"""
         super(StereoSound, self).__init__()
-        self.sound_device = find_sound_device(
-            target_device=sound_device
-        ) or find_sound_device(target_device=self.sound_device)
+        # Check args
+        found_input_device = (
+            find_sound_device(target_device=sound_device)
+            if sound_device is not None
+            else None
+        )
+        self.sound_device = found_input_device or find_sound_device(
+            target_device=self.sound_device
+        )
 
         self.sample_rate = sample_rate or get_sample_rate(
             target_device=self.sound_device
