@@ -118,7 +118,7 @@ class StereoSound(object):
         frequency=None,
         duration=None,
         amplitude=None,
-        fade_duration=None,
+        fade_duration=0.01,
     ):
         """Original code similar to
         https://github.com/int-brain-lab/iblrig/blob/0ee17a14633f0dc7b87f268f433a027e73fd6d57/iblrig/sound.py#L47
