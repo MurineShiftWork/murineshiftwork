@@ -22,6 +22,9 @@ class Task(TaskRunner):
         task_settings["calibration_file_sound"] = self.input_kwargs[
             "calibration_file_sound"
         ]  # fixme: improve handing down args
+        task_settings["calibration_file_water"] = self.input_kwargs[
+            "calibration_file_water"
+        ]  # fixme: improve handing down args
         task_control = TaskControl(bpod=self.bpod, task_settings=task_settings)
         self.bpod.softcode_handler_function = task_control.softcode_handler
 
