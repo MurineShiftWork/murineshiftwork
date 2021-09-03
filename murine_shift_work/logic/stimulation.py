@@ -198,6 +198,6 @@ class Stimulation:
     def is_open(self):
         try:
             return self.pulsePal.serialObject.serial_is_open
-        except BaseException:
+        except BaseException:  # fixme: too broad
             logging.debug("Cannot check if PulsePal is connected.")
             return False

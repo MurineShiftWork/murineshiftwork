@@ -1,7 +1,7 @@
 import sys
 
+from murine_shift_work import patch_logging_levels
 from murine_shift_work.cli import run_cli
-from murine_shift_work.logic.pybpod_helpers import patch_logging_levels
 
 test_cases = {
     # "register_add_1": "register add -s _auto_test_1",

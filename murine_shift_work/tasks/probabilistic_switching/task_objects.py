@@ -104,14 +104,10 @@ class TaskControl(object):
             target_volume=self.task_settings["reward_amount_ul"],
         )
 
-        # copy task_settings to session folder
+        # Persist task settings -> todo: refactor to method
         with open(str(self.save_path_data) + ".msw.settings.task.json", "w") as f:
             json.dump(self.task_settings, f, indent=4, sort_keys=True)
-        # src = Path(task_settings.__file__)
-        # dst = Path(self.save_path_data).parent / (
-        #     ".".join([Path(self.save_path_data).name, src.name])
-        # )
-        # shutil.copy(src=str(src), dst=str(dst))
+
         logging.debug("Task control class created.")
 
     def softcode_handler(self, softcode=None):

@@ -29,7 +29,9 @@ def run_cli(*args):
 
     # Call module
     args_dict["func"](**args_dict)
+
     logging.debug("EXITING CLI.")
+
     console = get_console()
     console.save_text(
         "/tmp/log.rich.txt"

@@ -130,7 +130,7 @@ class OnlinePlottingForPS(Process):
         self.data = Data(vector_length=self.max_trials)
 
     def run(self) -> None:
-        # QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+        # QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)  # fixme: why is this commented out?
         # QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
         # pg.setConfigOptions(antialias=True)  # Enable antialiasing for prettier plots
 

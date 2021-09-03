@@ -3,50 +3,14 @@ import random
 import time
 
 import numpy as np
-from pybpodapi.bpod import Bpod
-from pybpodapi.state_machine import StateMachine
 from tqdm import tqdm
 
 from murine_shift_work.logic.calibration import CalibrationDataWater
 from murine_shift_work.logic.gui import ask_water_calibration_ready
 from murine_shift_work.logic.gui import ask_water_calibration_weight
+from murine_shift_work.logic.specific_state_machines import make_sma_for_drop_of_water
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
-
-
-def run_test_water_drops(
-    valve=1,
-    valve_open_time=10,
-    n_trials=200,
-    inter_pulse_interval=0.1,
-    bpod=None,
-):
-    if valve_open_time > 0.5:
-        corrected_valve_time = round(valve_open_time / 1000, 3)
-        logging.warn(
-            f"Valve times not converted to ms yet.. Valve time of {valve_open_time}s is {corrected_valve_time}ms"
-        )
-        valve_open_time = corrected_valve_time
-
-    for _ in tqdm(np.arange(n_trials)):
-        sma = StateMachine(bpod=bpod)
-        sma.add_state(
-            state_name="valve_open",
-            state_timer=valve_open_time,
-            state_change_conditions={"Tup": "iti"},
-            output_actions=[(Bpod.OutputChannels.Valve, valve)],
-        )
-
-        sma.add_state(
-            state_name="iti",
-            state_timer=inter_pulse_interval,
-            state_change_conditions={"Tup": "exit"},
-            output_actions=[],
-        )
-
-        bpod.send_state_machine(sma)
-        if not bpod.run_state_machine(sma):
-            break
 
 
 class Task(TaskRunner):
@@ -73,7 +37,7 @@ class Task(TaskRunner):
             file_path=self.input_kwargs["calibration_file_water"]
         )
 
-        for valve_id in VALVES_TO_CALIBRATE:
+        for valve_id in VALVES_TO_CALIBRATE:  # fixme: parallelise calibration
             for valve_opening_time in random_valve_times:
                 logging.info(
                     f"valve: {valve_id}, with valve time: {valve_opening_time}ms."
@@ -81,13 +45,24 @@ class Task(TaskRunner):
 
                 ask_water_calibration_ready(valve=valve_id)
 
-                run_test_water_drops(
-                    valve=valve_id,
-                    valve_open_time=valve_opening_time,
-                    n_trials=N_DROPS,
-                    inter_pulse_interval=INTER_PULSE_INTERVAL,
-                    bpod=self.bpod,
-                )
+                if valve_opening_time > 0.5:
+                    corrected_valve_time = np.round(valve_opening_time / 1000, 3)
+                    logging.warn(
+                        f"Valve times not converted to ms yet.. Valve time of {valve_opening_time}s is {corrected_valve_time}ms"
+                    )
+                    valve_opening_time = corrected_valve_time
+
+                for _ in tqdm(np.arange(N_DROPS)):
+                    sma = make_sma_for_drop_of_water(
+                        bpod=self.bpod,
+                        valve_opening_time=valve_opening_time,
+                        valve_ids=valve_id,
+                        inter_drop_interval=INTER_PULSE_INTERVAL,
+                    )
+
+                    self.bpod.send_state_machine(sma)
+                    if not self.bpod.run_state_machine(sma):
+                        break
 
                 water_weight_g = ask_water_calibration_weight()
 

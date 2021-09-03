@@ -18,6 +18,8 @@ def make_protocol_identifier_ttl_sequence(
     if isinstance(sequence, str):
         sequence = [*sequence]
 
+    logging.info(f"Sending protocol TTL identifier: {sequence}")
+
     sma = StateMachine(bpod)
 
     for pidx, pulse in enumerate(sequence):
@@ -69,12 +71,13 @@ def add_trial_onset_ttl(
     bnc_channel=Bpod.OutputChannels.BNC2,
     next_state=None,
 ):
-    if isinstance(bnc_channel, str):
+    if not hasattr(bnc_channel, "__iter__"):
         bnc_channel = [bnc_channel]
-    elif isinstance(bnc_channel, list) or isinstance(bnc_channel, tuple):
-        pass  # this is accepted
-    else:
+
+    if not isinstance(bnc_channel[0], str):
         raise ValueError("bnc_channel variable can only be list, tuple or str.")
+
+    logging.debug(f"Sending trial onset TTL: {ttl_pulse_duration}s on {bnc_channel}")
 
     sma.add_state(
         state_name=state_name_tuple[0],
@@ -91,12 +94,34 @@ def add_trial_onset_ttl(
     return sma
 
 
-def make_sma_for_drop_of_water(bpod=None, valve_on_time=0, valve_code=1):
+def make_sma_for_drop_of_water(
+    bpod=None,
+    valve_opening_time=0,
+    valve_ids=1,
+    inter_drop_interval=0.1,
+):
+    """
+    valve_ids can be list or int
+    inter_drop_interval: might keep valves from overheating
+    """
+    if not hasattr(valve_ids, "__iter__"):
+        valve_ids = [valve_ids]
+
+    output_actions = []
+    for v in valve_ids:
+        output_actions.append((Bpod.OutputChannels.Valve, v))
+
     sma = StateMachine(bpod=bpod)
     sma.add_state(
         state_name="drop",
-        state_timer=valve_on_time,
+        state_timer=valve_opening_time,
+        state_change_conditions={"Tup": "iti"},
+        output_actions=output_actions,
+    )
+    sma.add_state(
+        state_name="iti",
+        state_timer=inter_drop_interval,
         state_change_conditions={"Tup": "exit"},
-        output_actions=[(Bpod.OutputChannels.Valve, valve_code)],
+        output_actions=[],
     )
     return sma

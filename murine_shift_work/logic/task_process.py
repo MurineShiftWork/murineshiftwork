@@ -8,12 +8,12 @@ from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 from PyQt5.QtCore import QThread
 
+from murine_shift_work import patch_logging_levels
 from murine_shift_work.logic.misc import find_task_by_name
 from murine_shift_work.logic.misc import print_box
-from murine_shift_work.logic.misc import test_port_accessible
+from murine_shift_work.logic.misc import test_serial_port_is_accessible
 from murine_shift_work.logic.paths import build_data_paths
 from murine_shift_work.logic.paths import test_path_is_writable
-from murine_shift_work.logic.pybpod_helpers import patch_logging_levels
 
 
 class TaskRunner(QThread):
@@ -124,7 +124,7 @@ class TaskProcess(object):
         self.input_kwargs["session_paths"] = self.session_paths
 
         # Assertions
-        if not test_port_accessible(
+        if not test_serial_port_is_accessible(
             port=self.serial_port, baudrate=self.bpod_baudrate, timeout=1
         ):
             raise IOError(f"Serial port not accessible at {self.serial_port}")

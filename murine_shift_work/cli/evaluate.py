@@ -3,13 +3,13 @@ import logging
 import sys
 from pathlib import Path
 
+from murine_shift_work import patch_logging_levels
 from murine_shift_work import settings as msws
 from murine_shift_work.logic.config import read_config
-from murine_shift_work.logic.config import setup_logging
+from murine_shift_work.logic.log import setup_logging
 from murine_shift_work.logic.misc import find_task_by_name
 from murine_shift_work.logic.misc import list_available_tasks
 from murine_shift_work.logic.misc import print_box
-from murine_shift_work.logic.pybpod_helpers import patch_logging_levels
 
 default_out_path = str(Path.home() / "data")
 default_config_dir = str(msws.__path__[0])

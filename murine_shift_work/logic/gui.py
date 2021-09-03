@@ -3,7 +3,9 @@ import types
 import PySimpleGUI as sg
 
 
-def ask_water_calibration_ready(valve=None):
+def ask_water_calibration_ready(
+    valve=None,
+):  # fixme: remodel into proper pyqt dialog windows
     layout = [
         [sg.Text(f"Ready for calibration of valve #{valve}")],
         [sg.Button("Ok")],

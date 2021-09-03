@@ -5,7 +5,9 @@ import numpy as np
 import sounddevice as sd
 
 
-def _get_samplerate(chosen_device=None):
+def _get_samplerate(
+    chosen_device=None,
+):  # fixme: document where functionality has been taken from IBL here
     chosen_device = chosen_device.lower()
     if "xonar" in chosen_device:
         return 192000
@@ -13,6 +15,39 @@ def _get_samplerate(chosen_device=None):
         return 44100
     else:
         logging.error(f"Sound device not recognised: {chosen_device}")
+
+
+class NewSound(object):
+    _sounds = {}
+
+    def __init__(self):
+        super(NewSound, self).__init__()
+        # receive params for sound device + TTL
+
+    def setup_sound_device(self):
+        pass  # set up sound device (channels, i.e. for TTL)
+
+    def register_new_sound(self, **kwargs):
+        # input: like old make_sound:
+        # def make_sound(
+        #     self,
+        #     sample_rate=44100,
+        #     frequency=5000,
+        #     tone_duration=0.1,
+        #     amplitude=1,
+        #     fade_duration=0.01,
+        #     chans="L+TTL",  # fixme: move this to the constructor as all sounds will have TTL
+        #     ttl_duration_msec=1,
+        # )
+        return 1  # adds new array to sound dict (make getter and setter method), returns key to sound
+
+    @property
+    def sounds(self):
+        return self._sounds
+
+    @sounds.setter
+    def sounds(self, new_sounds: dict):
+        self._sounds = new_sounds
 
 
 class Sounds(object):
@@ -60,7 +95,7 @@ class Sounds(object):
             sound_device=sound_device if sound_device else self.default_device
         )
 
-        self.sound_go_array = self.make_sound(
+        self.sound_go_array = self.make_sound(  # fixme: move these default tones outside. strip back to simple object
             **self.sound_go_params,
             sample_rate=self.default_samplerate,
             chans=ttl,

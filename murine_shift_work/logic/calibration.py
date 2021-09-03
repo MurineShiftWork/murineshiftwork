@@ -18,7 +18,7 @@ class CalibrationData(object):
     columns_to_drop = ["Unnamed: 0"]
 
     def __init__(self, file_path=None, **kwargs):
-        """"""
+        """ """
         super(CalibrationData, self).__init__(**kwargs)
         self.file_path = file_path or self.file_path
 

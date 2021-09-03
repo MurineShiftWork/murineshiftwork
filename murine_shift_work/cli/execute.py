@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 
-from murine_shift_work.logic.config import update_config_file
+from murine_shift_work.logic.config import write_config
 from murine_shift_work.logic.misc import print_box
 
 
@@ -26,7 +26,7 @@ def run_register(**args_dict):
                 new_dict = {}
 
             updated_settings[args_dict["subject"]] = new_dict
-            update_config_file(in_dict=updated_settings, out_file=config_file_subjects)
+            write_config(in_dict=updated_settings, save_path=config_file_subjects)
             print_box(f"Added subject '{subject}' to subject.settings.")
         else:
             print_box(
@@ -38,9 +38,7 @@ def run_register(**args_dict):
         if subject in subject_settings_all:
             subject_settings_all.pop(subject)
 
-            update_config_file(
-                in_dict=subject_settings_all, out_file=config_file_subjects
-            )
+            write_config(in_dict=subject_settings_all, save_path=config_file_subjects)
             print_box(f"Removed subject '{subject}' from subject.settings.")
         else:
             print_box(f"Subject '{subject}' does NOT exist.")
@@ -56,9 +54,7 @@ def run_register(**args_dict):
                 return
 
             subject_settings_all[new_alias] = subject_settings_all.pop(subject)
-            update_config_file(
-                in_dict=subject_settings_all, out_file=config_file_subjects
-            )
+            write_config(in_dict=subject_settings_all, save_path=config_file_subjects)
             print_box(
                 f"Renamed subject '{subject}' to '{new_alias}' in subject.settings."
             )

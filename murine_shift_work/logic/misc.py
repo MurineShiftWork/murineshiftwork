@@ -17,7 +17,7 @@ def list_submodules(module):
     return submodules
 
 
-def test_port_accessible(port=None, baudrate=115200, timeout=1):
+def test_serial_port_is_accessible(port=None, baudrate=115200, timeout=1):
     try:
         device = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
         device.isOpen()

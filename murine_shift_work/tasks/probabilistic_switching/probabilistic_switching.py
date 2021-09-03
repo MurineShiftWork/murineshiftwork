@@ -1,10 +1,8 @@
 import logging
 import time
 from multiprocessing import Queue
-from pathlib import Path
 
-import numpy as np
-from pybpodapi.protocol import Bpod
+from pybpodapi.protocol import Bpod  # Used!
 from rpi_camera_colony.control.conductor import Conductor
 
 from murine_shift_work.logic.specific_state_machines import (
