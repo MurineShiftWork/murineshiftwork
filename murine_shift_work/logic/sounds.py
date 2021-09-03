@@ -137,9 +137,7 @@ class StereoSound(object):
 
         tone = tone * win
         ttl = np.ones(len(tone)) * 0.99
-        one_ms = (
-            round(self.sample_rate / 1000) * self.ttl_duration
-        )  # LBR: original value was *10 for 1ms, but 5ms seems more stable for detection on bpod
+        one_ms = np.array((self.sample_rate / 1000) * self.ttl_duration).astype(int)
         ttl[one_ms:] = 0
         null = np.zeros(len(tone))
 
