@@ -7,8 +7,6 @@ from murine_shift_work.cli.parser import parse_args
 
 def run_cli(*args):
     """Command line interface for Murine Shift Work."""
-    global _console
-    _console = Console(record=True)
     if not args:
         args = sys.argv[1:]
 
