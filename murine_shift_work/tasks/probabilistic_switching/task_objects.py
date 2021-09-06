@@ -145,7 +145,7 @@ class TaskControl(object):
         self.probability_left, self.probability_right = [x / 100 for x in new_prob]
         # fixme: convert to probability beforehand, not by 100 division
 
-        print(
+        logging.info(
             f"New block #{self.block_number} after trial #{self.trial_index} with probabilities {self.probability_left}/{self.probability_right}"
         )
 
@@ -501,7 +501,9 @@ class TaskControl(object):
             initiation_hold_time = available_hold_times[
                 np.random.randint(0, len(available_hold_times))
             ]
-            print(f"-- Drawn new initiation hold time of {initiation_hold_time}s.")
+            logging.debug(
+                f"-- Drawn new initiation hold time of {initiation_hold_time}s."
+            )
             self.initiation_hold_time = initiation_hold_time
 
         # SMA

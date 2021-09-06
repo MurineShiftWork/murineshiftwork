@@ -12,13 +12,12 @@ def make_protocol_identifier_ttl_sequence(
     inter_trial_interval=4,
     output_chanel_pulse=Bpod.OutputChannels.BNC2,
 ):
-    print(
-        f"Generating protocol identifier TTL sequence '{sequence}' on output channel {output_chanel_pulse}"
-    )
     if isinstance(sequence, str):
         sequence = [*sequence]
 
-    logging.info(f"Sending protocol TTL identifier: {sequence}")
+    logging.info(
+        f"Sending protocol TTL identifier: {sequence} on output channel {output_chanel_pulse}"
+    )
 
     sma = StateMachine(bpod)
 
@@ -75,7 +74,9 @@ def add_trial_onset_ttl(
         bnc_channel = [bnc_channel]
 
     if not isinstance(bnc_channel[0], str):
-        raise ValueError("bnc_channel variable can only be list, tuple or str.")
+        raise ValueError(
+            f"bnc_channel variable can only be list, tuple or str, but is {bnc_channel}"
+        )
 
     logging.debug(f"Sending trial onset TTL: {ttl_pulse_duration}s on {bnc_channel}")
 
