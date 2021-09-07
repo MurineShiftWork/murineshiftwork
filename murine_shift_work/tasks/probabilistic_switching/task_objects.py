@@ -110,7 +110,7 @@ class TaskControl(object):
         )
 
         # Persist task settings -> todo: refactor to method
-        with open(str(self.save_path_data) + ".msw.settings.task.json", "w") as f:
+        with open(str(self.save_path_data) + ".settings.task.json", "w") as f:
             json.dump(self.task_settings, f, indent=4, sort_keys=True)
 
         logging.debug("Task control class created.")
