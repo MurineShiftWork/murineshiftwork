@@ -124,16 +124,28 @@ class TaskControl(object):
         self.block_trial_number = 0
         self.trials_post_criterion = 0
         self.criterion_block_switch_reached = False
-        self.moving_average.reset()
 
-        # probabilities
-        # if not self.block_probability_index:
-        #     self.block_probability_index = 0
+        # Reset moving average bias
+        if self.task_settings["reset_bias_on_block_switch"]:
+            self.moving_average.reset()
 
-        range_for_prob = np.arange(self.probabilities.__len__())
-        next_probs_allowed = list(
-            set(range_for_prob) - set([self.block_probability_index])
-        )
+        # Choose first block type to motivate subject
+        if self.trial_index < 2 and self.task_settings["first_block_easy"]:
+            pdiffs = np.abs(np.diff(self.probabilities))
+            pdiffmax = np.max(pdiffs)
+            range_for_prob = [i for i, p in enumerate(pdiffs) if p == pdiffmax]
+        else:
+            range_for_prob = np.arange(self.probabilities.__len__())
+
+        # Exclude current block from choice of next block type
+        if self.task_settings["block_switch_to_different_block_type"]:
+            next_probs_allowed = list(
+                set(range_for_prob) - set([self.block_probability_index])
+            )
+        else:
+            next_probs_allowed = list(set(range_for_prob))
+
+        # Draw new block type
         if len(next_probs_allowed) == 1:
             self.block_probability_index = next_probs_allowed[0]
         else:
@@ -141,9 +153,14 @@ class TaskControl(object):
                 random.randint(0, len(next_probs_allowed) - 1)
             ]
 
+        # Assign new probabilities
         new_prob = self.probabilities[self.block_probability_index]
-        self.probability_left, self.probability_right = [x / 100 for x in new_prob]
-        # fixme: convert to probability beforehand, not by 100 division
+
+        if any([x > 1 for x in new_prob]):
+            logging.debug(
+                f"Given probability proportions {new_prob}. Now converting to percentages (x/100)"
+            )
+            self.probability_left, self.probability_right = [x / 100 for x in new_prob]
 
         logging.info(
             f"New block #{self.block_number} after trial #{self.trial_index} with probabilities {self.probability_left}/{self.probability_right}"
