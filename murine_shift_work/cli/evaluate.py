@@ -4,6 +4,7 @@ from pathlib import Path
 
 from murine_shift_work import settings as msws
 from murine_shift_work.logic.config import read_config
+from murine_shift_work.logic.config import validate_config_file_path
 from murine_shift_work.logic.log import setup_logging
 from murine_shift_work.logic.misc import find_task_by_name
 from murine_shift_work.logic.misc import list_available_tasks
@@ -23,40 +24,27 @@ def get_task_dir(task=None):
         return str(globals()["task_folder"])
 
 
-def validate_config_file_path(
-    config_file=None,
-    default_dir=None,
-):
-    config_file = Path(config_file)
-    if config_file.exists():
-        logging.debug(f"Found config file: {str(config_file)}")
-        return str(config_file)
-    else:
-        if len(config_file.parts) == 1:
-            default_dir = Path(default_dir)
-            if (default_dir / config_file).exists():
-                logging.debug(f"Found config file: {str(default_dir / config_file)}")
-                return str(default_dir / config_file)
-            else:
-                logging.debug(
-                    f"(1) File '{str(config_file)}' does not exist on its own or in default location at '{str(default_dir)}'"
-                )
-                return ""
-        else:
-            logging.debug(
-                f"(2) File '{str(config_file)}' does not exist on its own or in default location at '{str(default_dir)}'"
-            )
-            return ""
+def _evaluate_metadata(args_dict):
+    metadata_list = args_dict["metadata_list"]
+    metadata_list = [
+        v.strip(" ").strip("'").strip('"') for v in metadata_list if "=" in v
+    ]
+    metadata_dict = dict(map(lambda s: s.split("="), metadata_list))
+
+    for metadata_key in ["researcher", "setup", "experiment"]:
+        if (
+            not args_dict[metadata_key].startswith("unknown_")
+            or metadata_key not in metadata_dict
+        ):
+            # metadata_dict[f"_original__{metadata_key}"] = metadata_dict[metadata_key]
+            print(metadata_key)
+            metadata_dict[metadata_key] = args_dict[metadata_key]
+
+    args_dict["metadata"] = metadata_dict
+    return args_dict
 
 
-def evaluate_args(args_dict=None):
-    """
-
-    :param args_dict:
-    :return:
-    """
-    args_dict["original"] = args_dict.copy()
-
+def _evaluate_log_level(args_dict=None):
     # Log level
     if args_dict["debug"]:
         args_dict["log_level"] = "DEBUG"
@@ -66,10 +54,10 @@ def evaluate_args(args_dict=None):
         args_dict["log_level"] = logging.getLevelName(d_int)
     except ValueError:
         pass
+    return args_dict
 
-    setup_logging(level=args_dict["log_level"])
 
-    # Task name
+def _evaluate_task(args_dict=None):
     if args_dict["task"]:
         args_dict["task"] = find_task_by_name(task_name=args_dict["task"])
         args_dict["task_dir"] = get_task_dir(task=args_dict["task"])
@@ -78,8 +66,10 @@ def evaluate_args(args_dict=None):
             raise ValueError("Task name can only be left out if command is 'register'.")
         else:
             logging.debug("No task defined. Command is register.")
+    return args_dict
 
-    # Config files
+
+def _evaluate_and_load_configs(args_dict=None):
     config_dir = args_dict["config_dir"]
     if not Path(config_dir).exists():
         args_dict["config_dir"] = ""
@@ -126,6 +116,30 @@ def evaluate_args(args_dict=None):
     )
     args_dict["settings.subjects.all"] = settings_subjects_all
     args_dict["settings.task.default"] = settings_task_default
+
+    return args_dict
+
+
+def evaluate_args(args_dict=None):
+    """Evaluate parsed arguments.
+
+    :param args_dict: output of parser
+    :return:
+    """
+    # Back up original values
+    args_dict["original"] = args_dict.copy()
+
+    args_dict = _evaluate_log_level(args_dict=args_dict)
+    setup_logging(level=args_dict["log_level"])
+
+    args_dict = _evaluate_task(args_dict=args_dict)
+    args_dict = _evaluate_metadata(args_dict=args_dict)
+
+    args_dict = _evaluate_and_load_configs(args_dict=args_dict)
+
+    # TODO: refactor settings patching
+    settings_subjects_all = args_dict["settings.subjects.all"]
+    settings_task_default = args_dict["settings.task.default"]
 
     if args_dict["command"] == "register":
         pass  # fixme: Do anything ?

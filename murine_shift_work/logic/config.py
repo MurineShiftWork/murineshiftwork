@@ -1,7 +1,9 @@
+import logging
 from pathlib import Path
 from shutil import copyfile
-from rich import get_console
+
 from configobj import ConfigObj
+from rich import get_console
 
 
 def read_config(file=None, unrepr=True):
@@ -31,3 +33,29 @@ def write_config(
 
     if not Path(new_config.filename).exists():
         raise FileNotFoundError(f"Config file not found at {save_path}")
+
+
+def validate_config_file_path(
+    config_file=None,
+    default_dir=None,
+):
+    config_file = Path(config_file)
+    if config_file.exists():
+        logging.debug(f"Found config file: {str(config_file)}")
+        return str(config_file)
+    else:
+        if len(config_file.parts) == 1:
+            default_dir = Path(default_dir)
+            if (default_dir / config_file).exists():
+                logging.debug(f"Found config file: {str(default_dir / config_file)}")
+                return str(default_dir / config_file)
+            else:
+                logging.debug(
+                    f"(1) File '{str(config_file)}' does not exist on its own or in default location at '{str(default_dir)}'"
+                )
+                return ""
+        else:
+            logging.debug(
+                f"(2) File '{str(config_file)}' does not exist on its own or in default location at '{str(default_dir)}'"
+            )
+            return ""

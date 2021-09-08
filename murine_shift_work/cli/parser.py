@@ -34,6 +34,30 @@ def add_args_for_general_use(parser=None):
         default=default_out_path,
         help="Out path for task data",
     )
+    metadata_group = parser.add_argument_group("Metadata")
+    metadata_group.add_argument(
+        "-meta",
+        "--metadata",
+        metavar="KEY=VALUE",
+        nargs="+",
+        dest="metadata_list",
+        help="Metadata key-value pairs. Use other named metadata fields or specify any relevant key-value pair",
+    )
+    metadata_group.add_argument(
+        "--researcher",
+        type=str,
+        default="unknown_researcher",
+        help="Name or initials of researcher acquiring the data",
+    )
+    metadata_group.add_argument(
+        "--setup", type=str, default="unknown_setup", help="Name or ID of setup"
+    )
+    metadata_group.add_argument(
+        "--experiment",
+        type=str,
+        default="unknown_experiment",
+        help="Name or ID of experiment",
+    )
     config_arg_group = parser.add_argument_group("Configuration & settings files")
     config_arg_group.add_argument(
         "-cd",
