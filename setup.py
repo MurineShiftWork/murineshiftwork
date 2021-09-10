@@ -27,7 +27,7 @@ setup(
         "pandas",
         "matplotlib",
         "pybpod-api",
-        "safe-collaborative-architecture",  # required by pybpod
+        "safe-and-collaborative-architecture",  # required by pybpod.
         "sounddevice",  # might require: sudo apt-get install libportaudio2
         "tqdm",
         # "gitpython",
@@ -52,11 +52,10 @@ setup(
     packages=find_packages(),
     entry_points={
         "console_scripts": [
-            "msw_gui = murine_shift_work.__init__:run_gui",
             "murineshiftwork = murine_shift_work.__init__:run_cli",
         ],
     },
-    url="URL-URL-URL",
+    url="https://llrrr@bitbucket.org/lbrcoding/murine_shift_work.git",
     author="Lars B. Rollik",
     author_email="L.B.Rollik@protonmail.com",
     license=license_text,
