@@ -17,6 +17,7 @@ PYDEVD_USE_FRAME_EVAL=NO
 ## TODO
 
 - Refactoring for commandline access
+    - [ ] add CLI option for adding directory where task lives, so that can extend MSW easily with other code
     - [ ] Make refactoring notes
         - remove references to pybpod GUI. setup.py already adjusted.
     - [ ] Log file for MSW and sub-modules [rcc] -> write to log file
