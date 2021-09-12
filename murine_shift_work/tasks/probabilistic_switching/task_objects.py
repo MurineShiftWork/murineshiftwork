@@ -706,7 +706,7 @@ class TaskControl(object):
         logging.debug("Saving task control data..")
         dt = time.time()
         df = pd.DataFrame(self.trial_data)
-        df.to_pickle(str(self.save_path_data) + ".pkl")
+        df.to_pickle(str(self.save_path_data) + ".df.pkl")
         logging.debug(f"Saved data in {np.round(time.time()-dt,2)}s.")
 
     def __del__(self):
