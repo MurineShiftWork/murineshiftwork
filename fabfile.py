@@ -126,3 +126,35 @@ setups_rcc = [f"rpi-{id}" for id in [40, 41, 43, 50, 51, 60, 61, 62]]
 # #       gateway4: 192.168.100.1
 # #       nameservers:
 # #         addresses: [192.168.238.208]
+
+
+"""
+#! /bin/bash
+# Run with sudo !
+
+IPTABLES=/sbin/iptables
+
+WANIF='enp1s0f1'  # outside/internet
+LANIF='enp1s0f0'  # inside/local
+
+# enable ip forwarding in the kernel
+echo 'Enabling Kernel IP forwarding...'
+/bin/echo 1 > /proc/sys/net/ipv4/ip_forward
+
+# flush rules and delete chains
+echo 'Flushing rules and deleting existing chains...'
+$IPTABLES -F
+$IPTABLES -X
+
+# enable masquerading to allow LAN internet access
+echo 'Enabling IP Masquerading and other rules...'
+$IPTABLES -t nat -A POSTROUTING -o $LANIF -j MASQUERADE
+$IPTABLES -A FORWARD -i $LANIF -o $WANIF -m state --state RELATED,ESTABLISHED -j ACCEPT
+$IPTABLES -A FORWARD -i $WANIF -o $LANIF -j ACCEPT
+
+$IPTABLES -t nat -A POSTROUTING -o $WANIF -j MASQUERADE
+$IPTABLES -A FORWARD -i $WANIF -o $LANIF -m state --state RELATED,ESTABLISHED -j ACCEPT
+$IPTABLES -A FORWARD -i $LANIF -o $WANIF -j ACCEPT
+
+echo 'Done.'
+"""
