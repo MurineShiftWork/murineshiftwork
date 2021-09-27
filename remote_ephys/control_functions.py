@@ -1,10 +1,17 @@
 import json
 import logging
 import os.path
+import time
 from datetime import datetime
 from pathlib import Path
 
 import zmq
+
+
+logger = logging.getLogger()
+logger.setLevel("INFO")
+
+delay = 0.25
 
 # TODO
 #  CLI operations
@@ -42,6 +49,7 @@ class RemoteEphysControl:
 
     local_path = ""
     metadata_file = ""
+    subject = ""
 
     def __init__(
         self,
@@ -67,7 +75,7 @@ class RemoteEphysControl:
         self.acquisition_name = acquisition_name or self.acquisition_name
         self.task_name = acquisition_task or self.task_name
         self.remote_acquisition_path = (
-            remote_acquisition_path or self.remote_acquisition_path
+            str(remote_acquisition_path).strip("\\") or self.remote_acquisition_path
         )
         self.local_data_path = local_data_path or self.local_data_path
         self.create_new_dir = create_new_dir or self.create_new_dir
@@ -98,7 +106,7 @@ class RemoteEphysControl:
     def _get_date_str():
         return datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    def send_message(self, message=None):
+    def send_message(self, message=None, expected_return=None):
         received = None
         with zmq.Context() as context:
             with context.socket(zmq.REQ) as socket:
@@ -108,27 +116,37 @@ class RemoteEphysControl:
                 socket.connect(self.remote_ephys_address)
 
                 logging.debug(f"Sending message: {message}")
-                socket.send(str(message).encode())
+                socket.send_string(message)
 
-                received = socket.recv()
-                logging.info(f"Received message: {received.decode()}")
+                received = socket.recv().decode()
+                logging.info(f"Received message: {received}")
 
-        return received
+        if received == expected_return:
+            return True
+        else:
+            return received
 
     def is_previewing(self):
-        return self.send_message(message="IsAcquiring")
+        return self.send_message(message="IsAcquiring", expected_return="1")
 
     def is_recording(self):
-        return self.send_message(message="IsRecording")
+        return self.send_message(message="IsRecording", expected_return="1")
 
     def get_recording_path(self):
         return self.send_message(message="GetRecordingPath")
 
     def start_preview(self):
-        return self.send_message(message="StartAcquisition")
+        return self.send_message(
+            message="StartAcquisition", expected_return="StartedAcquisition"
+        )
 
     def stop_preview(self):
-        return self.send_message(message="StopAcquisition")
+        if self.is_recording() is True:
+            self.stop_recording()
+            time.sleep(delay)
+        return self.send_message(
+            message="StopAcquisition", expected_return="StoppedAcquisition"
+        )
 
     def start_recording(self):
         """
@@ -140,12 +158,13 @@ class RemoteEphysControl:
         """
         session_name = self._make_full_acquisition_name()
         append_text = ""
+        whitespace = " "
         message = (
-            f"StartRecord "
-            f"CreateNewDir={1 if self.create_new_dir else 0} "
-            f"RecDir={self.remote_acquisition_path}\\{self.acquisition_name}\\{session_name} "
-            f"PrependText={session_name} "
-            f"AppendText={append_text} "
+            f"StartRecord{whitespace}"
+            f"CreateNewDir={1 if self.create_new_dir else 0}{whitespace}"
+            f"RecDir={self.remote_acquisition_path}\\{self.acquisition_name}\\{session_name}{whitespace}"
+            f"PrependText={session_name}{whitespace}"
+            f"AppendText={append_text}{whitespace}"
         )
 
         if self.local_data_path is not None:
@@ -163,17 +182,31 @@ class RemoteEphysControl:
                 f.write(json.dumps(vars(self), indent=4, sort_keys=True))
                 logging.debug(f"Metadata written to: {self.metadata_file}")
 
-        return self.send_message(message=message)
+        self.start_preview()
+        time.sleep(delay)
+        is_previewing = self.is_previewing()
+        time.sleep(delay)
+        if is_previewing is True:
+            return self.send_message(
+                message=message, expected_return="StartedRecording"
+            )
+        else:
+            logging.info(f"Cannot start preview. Replied: {is_previewing}")
 
     def stop_recording(self):
-        return self.send_message(message="StopRecord")
+        return self.send_message(
+            message="StopRecord", expected_return="StoppedRecording"
+        )
 
 
 if __name__ == "__main__":
     e = RemoteEphysControl(
-        remote_acquisition_path="E:\\OE_DATA\\LBR\\",
+        address="172.24.242.219",
+        port=5558,
+        remote_acquisition_path=r"E:\\OE_DATA\\LBR\\",
         acquisition_name="_test_subject",
         local_data_path=os.path.expanduser("~/data"),
     )
-    e.start_recording()
+
+    e.start_preview()
     print(" ")
