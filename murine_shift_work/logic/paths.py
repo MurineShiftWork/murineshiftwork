@@ -18,14 +18,22 @@ def build_data_paths(
     subject=None,
     task=None,
     default_subject="_test_subject",
+    skip_subject_folder=False,
     printout=True,
 ):
     basepath = Path(basepath)
+
+    # Session & file names
     subject = default_subject if str(task).startswith("_test__") else subject
     dt = datetime.now().strftime("%Y%m%d_%H%M%S")
     session_basename = "__".join([subject, dt, task])
 
-    session_data_folder = basepath / subject / session_basename
+    # Folder hierarchy
+    if skip_subject_folder:
+        session_data_folder = basepath / session_basename
+    else:
+        session_data_folder = basepath / subject / session_basename
+
     session_behaviour_basename = session_data_folder / session_basename
 
     session_paths = {

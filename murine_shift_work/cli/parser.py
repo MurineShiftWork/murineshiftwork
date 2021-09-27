@@ -34,6 +34,14 @@ def add_args_for_general_use(parser=None):
         default=default_out_path,
         help="Out path for task data",
     )
+    general_args.add_argument(
+        "-child",
+        "--child-session",
+        dest="skip_subject_folder",
+        action="store_true",
+        default=False,
+        help="Set if is child session. If True, skips subject dir & saves session dir directly in `--out-path`",
+    )
     metadata_group = parser.add_argument_group("Metadata")
     metadata_group.add_argument(
         "-meta",

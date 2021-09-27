@@ -107,6 +107,7 @@ class TaskProcess(object):
         task=None,
         auto_init=True,
         auto_start=True,
+        skip_subject_folder=False,
         **kwargs,
     ):
         super(TaskProcess, self).__init__()
@@ -120,7 +121,10 @@ class TaskProcess(object):
         # Make vars
         self.task_name = find_task_by_name(task_name=self.task_in)
         self.session_paths = build_data_paths(
-            basepath=self.out_path, subject=self.subject, task=self.task_name
+            basepath=self.out_path,
+            subject=self.subject,
+            task=self.task_name,
+            skip_subject_folder=skip_subject_folder,
         )
         self.input_kwargs["task_name"] = self.task_name
         self.input_kwargs["session_paths"] = self.session_paths

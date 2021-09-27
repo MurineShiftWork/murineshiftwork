@@ -29,16 +29,19 @@ import zmq
 class RemoteEphysControl:
     address = "127.0.0.1"
     port = 5557
-    network_address = None
+    remote_ephys_address = None
     timeout = 1
     acquisition_name = "_test_acquisition"
-    acquisition_task = "ephys_multibehaviour"
+    task_name = "ephys_multibehaviour"
     remote_acquisition_path = ""
     local_data_path = os.path.expanduser("~/data")
     create_new_dir = True
 
     datetime = None
-    full_acquisition_name = None
+    full_acquisition_name = ""
+
+    local_path = ""
+    metadata_file = ""
 
     def __init__(
         self,
@@ -59,10 +62,10 @@ class RemoteEphysControl:
 
         self.address = address or self.address
         self.port = port or self.port
-        self.network_address = f"tcp://{self.address}:{self.port}"
+        self.remote_ephys_address = f"tcp://{self.address}:{self.port}"
         self.timeout = timeout or self.timeout
         self.acquisition_name = acquisition_name or self.acquisition_name
-        self.acquisition_task = acquisition_task or self.acquisition_task
+        self.task_name = acquisition_task or self.task_name
         self.remote_acquisition_path = (
             remote_acquisition_path or self.remote_acquisition_path
         )
@@ -72,24 +75,24 @@ class RemoteEphysControl:
     def _make_full_acquisition_name(self):
         self.datetime = self._get_date_str()
         self.full_acquisition_name = "__".join(
-            [self.acquisition_name, self.datetime, self.acquisition_task]
+            [self.acquisition_name, self.datetime, self.task_name]
         )
         return self.full_acquisition_name
-
-    def __repr__(self):
-        return self.__str__()
 
     def __str__(self):
         d = {
             "Full acquisition name": self.full_acquisition_name or "<NOT_YET_DEFINED>",
             "Acquisition path": self.remote_acquisition_path,
-            "Network address": self.network_address,
+            "Network address": self.remote_ephys_address,
         }
         s = "\n\tRemoteEphysControl:\n\n"
         for k, v in d.items():
             s += f"{k:>30}:{'':>2}{v}\n"
         s += "\n"
         return s
+
+    def __repr__(self):
+        return self.__str__()
 
     @staticmethod
     def _get_date_str():
@@ -101,8 +104,8 @@ class RemoteEphysControl:
             with context.socket(zmq.REQ) as socket:
                 socket.RCVTIMEO = int(self.timeout * 1000)
 
-                logging.debug(f"Connecting on address: {self.network_address}")
-                socket.connect(self.network_address)
+                logging.debug(f"Connecting on address: {self.remote_ephys_address}")
+                socket.connect(self.remote_ephys_address)
 
                 logging.debug(f"Sending message: {message}")
                 socket.send(str(message).encode())
@@ -135,23 +138,30 @@ class RemoteEphysControl:
             [PrependText=some_text]
             [AppendText=some_text]
         """
-        prepend_text = self._make_full_acquisition_name()
+        session_name = self._make_full_acquisition_name()
         append_text = ""
         message = (
             f"StartRecord "
             f"CreateNewDir={1 if self.create_new_dir else 0} "
-            f"RecDir={self.remote_acquisition_path}\\{prepend_text} "
-            f"PrependText={prepend_text} "
+            f"RecDir={self.remote_acquisition_path}\\{self.acquisition_name}\\{session_name} "
+            f"PrependText={session_name} "
             f"AppendText={append_text} "
         )
 
-        if self.mirror_remote_paths:
-            out_file = (
-                Path(self.local_data_path) / prepend_text / f"{prepend_text}.json"
+        if self.local_data_path is not None:
+            self.local_path = (
+                Path(self.local_data_path) / self.acquisition_name / session_name
             )
-            with open(out_file, "w") as f:
-                f.write(json.dumps({}, indent=4, sort_keys=True))
-                logging.debug(f"Metadata written to: {out_file}")
+            self.local_path.mkdir(parents=True, exist_ok=True)
+
+            self.metadata_file = self.local_path / f"{session_name}.json"
+
+            self.local_path = str(self.local_path)
+            self.metadata_file = str(self.metadata_file)
+            self.subject = self.acquisition_name
+            with open(self.metadata_file, "w") as f:
+                f.write(json.dumps(vars(self), indent=4, sort_keys=True))
+                logging.debug(f"Metadata written to: {self.metadata_file}")
 
         return self.send_message(message=message)
 
@@ -160,6 +170,10 @@ class RemoteEphysControl:
 
 
 if __name__ == "__main__":
-    e = RemoteEphysControl(remote_acquisition_path="F:\\some_folder\\")
-
+    e = RemoteEphysControl(
+        remote_acquisition_path="E:\\OE_DATA\\LBR\\",
+        acquisition_name="_test_subject",
+        local_data_path=os.path.expanduser("~/data"),
+    )
+    e.start_recording()
     print(" ")
