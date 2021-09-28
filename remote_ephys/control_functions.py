@@ -206,6 +206,7 @@ class RemoteEphysControl:
 if __name__ == "__main__":
     e = RemoteEphysControl(
         remote_ip="172.24.242.219",
+        # remote_ip="192.168.100.48",
         remote_port=5558,
         remote_acquisition_path=r"E:\\OE_DATA\\LBR\\",
         acquisition_name="_test_subject",
