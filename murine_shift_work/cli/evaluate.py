@@ -9,6 +9,8 @@ from murine_shift_work.logic.log import setup_logging
 from murine_shift_work.logic.misc import find_task_by_name
 from murine_shift_work.logic.misc import list_available_tasks
 from murine_shift_work.logic.misc import print_box
+from murine_shift_work.logic.paths import get_host_ip
+from murine_shift_work.logic.paths import get_host_name
 
 default_out_path = str(Path.home() / "data")
 default_config_dir = str(msws.__path__[0])
@@ -126,6 +128,10 @@ def evaluate_args(args_dict=None):
     :param args_dict: output of parser
     :return:
     """
+    # Add other metadata
+    args_dict["host_name"] = get_host_name()
+    args_dict["host_ip"] = get_host_ip()
+
     # Back up original values
     args_dict["original"] = args_dict.copy()
 

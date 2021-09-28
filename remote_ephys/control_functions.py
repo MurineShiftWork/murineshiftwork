@@ -47,7 +47,7 @@ class RemoteEphysControl:
     datetime = None
     full_acquisition_name = ""
 
-    local_path = ""
+    local_path_full = ""
     metadata_file = ""
     subject = ""
 
@@ -105,6 +105,22 @@ class RemoteEphysControl:
     @staticmethod
     def _get_date_str():
         return datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    def _persists_metadata(self, session_name):
+        if self.local_data_path is not None:
+            self.local_path_full = (
+                Path(self.local_data_path) / self.acquisition_name / session_name
+            )
+            self.local_path_full.mkdir(parents=True, exist_ok=True)
+
+            self.metadata_file = self.local_path_full / f"{session_name}.json"
+
+            self.local_path_full = str(self.local_path_full)
+            self.metadata_file = str(self.metadata_file)
+            self.subject = self.acquisition_name
+            with open(self.metadata_file, "w") as f:
+                f.write(json.dumps(vars(self), indent=4, sort_keys=True))
+                logging.debug(f"Metadata written to: {self.metadata_file}")
 
     def send_message(self, message=None, expected_return=None):
         received = None
@@ -166,21 +182,7 @@ class RemoteEphysControl:
             f"PrependText={session_name}{whitespace}"
             f"AppendText={append_text}{whitespace}"
         )
-
-        if self.local_data_path is not None:
-            self.local_path = (
-                Path(self.local_data_path) / self.acquisition_name / session_name
-            )
-            self.local_path.mkdir(parents=True, exist_ok=True)
-
-            self.metadata_file = self.local_path / f"{session_name}.json"
-
-            self.local_path = str(self.local_path)
-            self.metadata_file = str(self.metadata_file)
-            self.subject = self.acquisition_name
-            with open(self.metadata_file, "w") as f:
-                f.write(json.dumps(vars(self), indent=4, sort_keys=True))
-                logging.debug(f"Metadata written to: {self.metadata_file}")
+        self._persists_metadata(session_name)
 
         self.start_preview()
         time.sleep(delay)
