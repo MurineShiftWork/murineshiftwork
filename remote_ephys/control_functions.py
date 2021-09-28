@@ -178,7 +178,7 @@ class RemoteEphysControl:
         message = (
             f"StartRecord{whitespace}"
             f"CreateNewDir={1 if self.create_new_dir else 0}{whitespace}"
-            f"RecDir={self.remote_acquisition_path}\\{self.acquisition_name}\\{session_name}{whitespace}"
+            f"RecDir={self.remote_acquisition_path}\\{self.acquisition_name}{whitespace}"
             f"PrependText={session_name}{whitespace}"
             f"AppendText={append_text}{whitespace}"
         )
