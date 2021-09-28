@@ -34,9 +34,9 @@ delay = 0.25
 
 
 class RemoteEphysControl:
-    address = "127.0.0.1"
-    port = 5557
-    remote_ephys_address = None
+    remote_ip = "127.0.0.1"
+    remote_port = 5557
+    remote_tcp_address = None
     timeout = 1
     acquisition_name = "_test_acquisition"
     task_name = "ephys_multibehaviour"
@@ -53,8 +53,8 @@ class RemoteEphysControl:
 
     def __init__(
         self,
-        address=None,
-        port=None,
+        remote_ip=None,
+        remote_port=None,
         timeout=1,
         acquisition_name=None,
         acquisition_task=None,
@@ -68,9 +68,9 @@ class RemoteEphysControl:
         """
         super(RemoteEphysControl, self).__init__()
 
-        self.address = address or self.address
-        self.port = port or self.port
-        self.remote_ephys_address = f"tcp://{self.address}:{self.port}"
+        self.remote_ip = remote_ip or self.remote_ip
+        self.remote_port = remote_port or self.remote_port
+        self.remote_tcp_address = f"tcp://{self.remote_ip}:{self.remote_port}"
         self.timeout = timeout or self.timeout
         self.acquisition_name = acquisition_name or self.acquisition_name
         self.task_name = acquisition_task or self.task_name
@@ -91,7 +91,7 @@ class RemoteEphysControl:
         d = {
             "Full acquisition name": self.full_acquisition_name or "<NOT_YET_DEFINED>",
             "Acquisition path": self.remote_acquisition_path,
-            "Network address": self.remote_ephys_address,
+            "Network address": self.remote_tcp_address,
         }
         s = "\n\tRemoteEphysControl:\n\n"
         for k, v in d.items():
@@ -119,8 +119,10 @@ class RemoteEphysControl:
             self.metadata_file = str(self.metadata_file)
             self.subject = self.acquisition_name
             with open(self.metadata_file, "w") as f:
-                f.write(json.dumps(vars(self), indent=4, sort_keys=True))
+                out_json = json.dumps(vars(self), indent=4, sort_keys=True)
+                f.write(out_json)
                 logging.debug(f"Metadata written to: {self.metadata_file}")
+                logging.info(out_json)
 
     def send_message(self, message=None, expected_return=None):
         received = None
@@ -128,8 +130,8 @@ class RemoteEphysControl:
             with context.socket(zmq.REQ) as socket:
                 socket.RCVTIMEO = int(self.timeout * 1000)
 
-                logging.debug(f"Connecting on address: {self.remote_ephys_address}")
-                socket.connect(self.remote_ephys_address)
+                logging.debug(f"Connecting on address: {self.remote_tcp_address}")
+                socket.connect(self.remote_tcp_address)
 
                 logging.debug(f"Sending message: {message}")
                 socket.send_string(message)
@@ -203,8 +205,8 @@ class RemoteEphysControl:
 
 if __name__ == "__main__":
     e = RemoteEphysControl(
-        address="172.24.242.219",
-        port=5558,
+        remote_ip="172.24.242.219",
+        remote_port=5558,
         remote_acquisition_path=r"E:\\OE_DATA\\LBR\\",
         acquisition_name="_test_subject",
         local_data_path=os.path.expanduser("~/data"),
