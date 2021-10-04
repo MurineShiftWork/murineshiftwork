@@ -9,6 +9,8 @@ from pybpodapi.protocol import StateMachine
 from PyQt5.QtCore import QThread
 
 from murine_shift_work import patch_logging_levels
+from murine_shift_work.logic.log import json_dumps_type_safe
+from murine_shift_work.logic.log import write_json
 from murine_shift_work.logic.misc import find_task_by_name
 from murine_shift_work.logic.misc import print_box
 from murine_shift_work.logic.misc import test_serial_port_is_accessible
@@ -98,6 +100,7 @@ class TaskProcess(object):
     task_runner = None
     # Misc
     exiting = False
+    debug = False
 
     def __init__(
         self,
@@ -111,12 +114,12 @@ class TaskProcess(object):
         **kwargs,
     ):
         super(TaskProcess, self).__init__()
-
         self.serial_port = str(serial_port_bpod)
         self.out_path = str(out_path)
         self.subject = str(subject)
         self.task_in = str(task)
         self.input_kwargs = kwargs
+        self.debug = self.input_kwargs.get("debug", False)
 
         # Make vars
         self.task_name = find_task_by_name(task_name=self.task_in)
@@ -130,27 +133,28 @@ class TaskProcess(object):
         self.input_kwargs["session_paths"] = self.session_paths
 
         # Assertions
-        if not test_serial_port_is_accessible(
+        self.serial_port_accessible = test_serial_port_is_accessible(
             port=self.serial_port, baudrate=self.bpod_baudrate, timeout=1
-        ):
+        )
+        if not self.serial_port_accessible and not self.debug:
             raise IOError(f"Serial port not accessible at {self.serial_port}")
 
-        if not self.task_name:
+        if not self.task_name and not self.debug:
             raise ValueError(
                 f"Task to run '{self.task_in}' not found or not specific enough. {self.task_name}"
             )
 
         Path(self.session_paths["session_folder"]).mkdir(parents=True, exist_ok=False)
         target_file = Path(self.session_paths["session_folder"]) / ".write_test"
-        if not test_path_is_writable(target_file):
+        if not test_path_is_writable(target_file) and not self.debug:
             raise PermissionError(f"Session files not writable at {str(target_file)}")
 
         # Remove logging output for pybpod components
         patch_logging_levels()
 
         # Execute
-        self.connect_bpod()
         self.persist_settings()
+        self.connect_bpod()
 
         if auto_init:
             self.init_task()
@@ -193,18 +197,11 @@ class TaskProcess(object):
             self.serial_is_open = True
 
     def persist_settings(self):
-        settings = vars(self)
-        with open(
-            self.session_paths["session_file_path"] + ".msw.settings.process.json", "w"
-        ) as f:
-            txt = json.dumps(
-                settings,
-                skipkeys=True,
-                sort_keys=True,
-                indent=4,
-                default=lambda x: f"<NoJSON:{type(x)}>",
-            )
-            f.write(txt)
+        write_json(
+            data=vars(self),
+            save_path=self.session_paths["session_file_path"]
+            + ".msw.settings.process.json",
+        )
 
     def init_task(self):
         """Import specific Task and make self.task_runner Thread."""

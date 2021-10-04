@@ -1,3 +1,4 @@
+import json
 import logging
 
 from rich import get_console
@@ -39,3 +40,23 @@ def patch_logging_levels(target_level="WARNING"):
     for m in ["pybpodapi", "pybpodgui_api", "pybpodgui_plugin", "matplotlib"]:
         logger = logging.getLogger(m)
         logger.setLevel(target_level)
+
+
+def json_dumps_type_safe(data):
+    return json.dumps(
+        data,
+        skipkeys=True,
+        sort_keys=True,
+        indent=4,
+        default=lambda x: f"<NoJSON:{type(x)}>",
+    )
+
+
+def write_json(data=None, save_path=None):
+    try:
+        with open(save_path, "w") as f:
+            txt = json_dumps_type_safe(data)
+            f.write(txt)
+            return True
+    except BaseException:
+        return False

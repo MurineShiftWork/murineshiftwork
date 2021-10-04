@@ -27,22 +27,23 @@ def get_task_dir(task=None):
 
 
 def _evaluate_metadata(args_dict):
-    metadata_list = args_dict["metadata_list"]
-    metadata_list = [
-        v.strip(" ").strip("'").strip('"') for v in metadata_list if "=" in v
-    ]
-    metadata_dict = dict(map(lambda s: s.split("="), metadata_list))
+    metadata_list = args_dict.get("metadata_list", None)
+    if metadata_list is not None:
+        metadata_list = [
+            v.strip(" ").strip("'").strip('"') for v in metadata_list if "=" in v
+        ]
+        metadata_dict = dict(map(lambda s: s.split("="), metadata_list))
 
-    for metadata_key in ["researcher", "setup", "experiment"]:
-        if (
-            not args_dict[metadata_key].startswith("unknown_")
-            or metadata_key not in metadata_dict
-        ):
-            # metadata_dict[f"_original__{metadata_key}"] = metadata_dict[metadata_key]
-            print(metadata_key)
-            metadata_dict[metadata_key] = args_dict[metadata_key]
+        for metadata_key in ["researcher", "setup", "experiment"]:
+            if (
+                not args_dict[metadata_key].startswith("unknown_")
+                or metadata_key not in metadata_dict
+            ):
+                # metadata_dict[f"_original__{metadata_key}"] = metadata_dict[metadata_key]
+                print(metadata_key)
+                metadata_dict[metadata_key] = args_dict[metadata_key]
 
-    args_dict["metadata"] = metadata_dict
+        args_dict["metadata"] = metadata_dict
     return args_dict
 
 

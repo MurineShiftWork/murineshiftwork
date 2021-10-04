@@ -22,7 +22,7 @@ def run_client():
 
     # Example settings
     session_name = "_test_subject__20210918_000000__ephys__multibehaviour"
-    rec_dir = os.path.join("E:\OE_DATA\LBR", session_name)
+    rec_dir = os.path.join("E:\\OE_DATA\\LBR", session_name)
     print("Saving data to:", rec_dir)
 
     # Some commands

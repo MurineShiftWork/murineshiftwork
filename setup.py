@@ -19,6 +19,7 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=[
         "configobj",
+        "PyQt5",
         # "opencv-python==3.4.5.20",
         # "PyQtWebEngine",
         "pyqtgraph",
@@ -26,6 +27,7 @@ setup(
         "scipy",
         "pandas",
         "matplotlib",
+        "seaborn",
         "pybpod-api",
         "safe-and-collaborative-architecture",  # required by pybpod.
         "sounddevice",  # might require: sudo apt-get install libportaudio2

@@ -194,5 +194,5 @@ class StereoSound(object):
             raise ValueError(f"No such sound index: {sound_code}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(" ")
