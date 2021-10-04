@@ -1,0 +1,324 @@
+{
+    "debug": true,
+    "input_kwargs": {
+        "calibration_file_sound": "/home/lbr/code/murine_shift_work/murine_shift_work/settings/calibration.sound.default.csv",
+        "calibration_file_water": "/home/lbr/code/murine_shift_work/murine_shift_work/settings/calibration.water.default.csv",
+        "command": "run",
+        "config_dir": "/home/lbr/code/murine_shift_work/murine_shift_work/settings",
+        "config_file_camera": "/home/lbr/code/murine_shift_work/murine_shift_work/settings/camera.rcc.config",
+        "config_file_subjects": "/home/lbr/code/murine_shift_work/murine_shift_work/settings/subject.settings",
+        "config_file_task": "/home/lbr/code/murine_shift_work/murine_shift_work/tasks/probabilistic_switching/task.settings",
+        "debug": true,
+        "experiment": "unknown_experiment",
+        "func": "<NoJSON:<class 'function'>>",
+        "host_ip": "192.168.0.22",
+        "host_name": "sisyphys",
+        "log_level": "DEBUG",
+        "metadata_list": null,
+        "objects": {
+            "data_queue": "<NoJSON:<class 'multiprocessing.queues.Queue'>>",
+            "kill_queue": "<NoJSON:<class 'multiprocessing.queues.Queue'>>"
+        },
+        "original": {
+            "calibration_file_sound": "calibration.sound.default.csv",
+            "calibration_file_water": "calibration.water.default.csv",
+            "command": "run",
+            "config_dir": "/home/lbr/code/murine_shift_work/murine_shift_work/settings",
+            "config_file_camera": "camera.rcc.config",
+            "config_file_subjects": "subject.settings",
+            "config_file_task": "task.settings",
+            "debug": true,
+            "experiment": "unknown_experiment",
+            "func": "<NoJSON:<class 'function'>>",
+            "host_ip": "192.168.0.22",
+            "host_name": "sisyphys",
+            "log_level": "INFO",
+            "metadata_list": null,
+            "out_path": "/home/lbr/code/murine_shift_work/tests/",
+            "researcher": "unknown_researcher",
+            "serial_port_bpod": "/dev/ttyACM0",
+            "serial_port_pulsepal": "/dev/ttyACM1",
+            "setup": "unknown_setup",
+            "skip_subject_folder": false,
+            "subject": "_test_subject",
+            "task": "prob"
+        },
+        "researcher": "unknown_researcher",
+        "serial_port_pulsepal": "/dev/ttyACM1",
+        "session_paths": {
+            "basepath": "<NoJSON:<class 'pathlib.PosixPath'>>",
+            "datetime": "20211004_191858",
+            "session_basename": "_test_subject__20211004_191858__probabilistic_switching",
+            "session_basename_behav": "_test_subject__20211004_191858__probabilistic_switching.msw",
+            "session_file_path": "/home/lbr/code/murine_shift_work/tests/_test_subject/_test_subject__20211004_191858__probabilistic_switching/_test_subject__20211004_191858__probabilistic_switching",
+            "session_folder": "/home/lbr/code/murine_shift_work/tests/_test_subject/_test_subject__20211004_191858__probabilistic_switching",
+            "subject": "_test_subject",
+            "task": "probabilistic_switching"
+        },
+        "settings.camera": {
+            "control": {
+                "address": "192.168.100.10",
+                "port": 54545
+            },
+            "controllers": {
+                "camera_51_blue": {
+                    "address": "192.168.100.51",
+                    "color_effects": [
+                        128,
+                        128
+                    ],
+                    "description": "top view. behaviour setup #1",
+                    "framerate": 60,
+                    "resolution": [
+                        960,
+                        720
+                    ],
+                    "ttl_in_pin": 16,
+                    "ttl_out_duration": 0.001,
+                    "ttl_out_pin": 8
+                }
+            },
+            "general": {
+                "acquisition_name": "default_acq_name_config",
+                "max_acquisition_time": 7200,
+                "remote_data_path": "/home/pi/data/",
+                "remote_python_entrypoint": "rpi_camera_colony.acquisition",
+                "remote_python_interpreter": "/home/pi/miniconda3/envs/py36/bin/python",
+                "rpi_username": "pi"
+            },
+            "log": {
+                "address": "192.168.100.10",
+                "level": "INFO",
+                "log_file": "/tmp/some_log_file",
+                "log_to_console": true,
+                "log_to_file": true,
+                "port": 55555
+            }
+        },
+        "settings.subjects.all": {
+            "_test_subject": {
+                "_test_minimal_task": {
+                    "test_argument": "minimal"
+                },
+                "_test_video": {
+                    "test_argument": "vid"
+                },
+                "experiment": "test_experiment",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.1,
+                    "delay_until_center_init": [
+                        0.05,
+                        0.06,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            100,
+                            99
+                        ],
+                        [
+                            99,
+                            100
+                        ]
+                    ],
+                    "reward_amount_ul": 8
+                },
+                "project": "test_project"
+            }
+        },
+        "settings.subjects.this": {
+            "criterion_contrast_blocks": 0.1,
+            "delay_until_center_init": [
+                0.05,
+                0.06,
+                0.005
+            ],
+            "probabilities": [
+                [
+                    100,
+                    99
+                ],
+                [
+                    99,
+                    100
+                ]
+            ],
+            "reward_amount_ul": 8
+        },
+        "settings.task.default": {
+            "HARDWARE_BNC_STIMULATION": 2,
+            "HARDWARE_BNC_TRIAL_START": 1,
+            "HARDWARE_PORT_LIGHT_INTENSITY": 50,
+            "HARDWARE_PORT_LIGHT_PORTS": [
+                "center"
+            ],
+            "HARDWARE_PULSEPAL_OUTPUT_CHANNEL": 1,
+            "HARDWARE_PULSEPAL_TRIGGER_CHANNEL": 1,
+            "HARDWARE_VALVES_FOR_AIR": [
+                2,
+                4
+            ],
+            "HARDWARE_VALVES_FOR_WATER": [
+                1,
+                3
+            ],
+            "block_switch_to_different_block_type": true,
+            "criterion_contrast_blocks": 0.1,
+            "criterion_neutral_blocks": 0.25,
+            "criterion_tau": 5,
+            "delay_until-side_timeout_for_stopping": 1.5,
+            "delay_until_center_init": [
+                0.05,
+                0.06,
+                0.005
+            ],
+            "delay_until_side_timeout": 10,
+            "first_block_easy": true,
+            "forced_choice_threshold": 20,
+            "mean_neutral_block_length": 25,
+            "min_block_length": 20,
+            "min_trials_post_criterion": 5,
+            "n_max_trials": 1500,
+            "plot_trial_span": 100,
+            "probabilities": [
+                [
+                    100,
+                    99
+                ],
+                [
+                    99,
+                    100
+                ]
+            ],
+            "punish_air_duration": 0.02,
+            "punish_stop_trials": true,
+            "punish_stop_trials_proportion": 1,
+            "record_video": true,
+            "reset_bias_on_block_switch": false,
+            "reward_amount_ul": 8,
+            "reward_delay": 0,
+            "show_live_plot": true,
+            "state_duration_final": 1,
+            "stimulation_pulse_delay": 0,
+            "stimulation_pulse_duration": 0.005,
+            "stimulation_pulse_frequency": 30,
+            "stimulation_pulse_train": 0.5,
+            "stimulation_timepoint": "ACTION_INIT",
+            "stimulation_trial_proportion": 0.2,
+            "stop_cue_amplitude": 0.2,
+            "stop_cue_duration": 0.1,
+            "stop_cue_onset_ramp": 0.05,
+            "stop_trial_delay_adaptive_step": 0.01,
+            "stop_trial_delay_initial": 0.035,
+            "stop_trial_min_max": [
+                0.05,
+                0.3
+            ],
+            "stop_trial_proportion": 0.2,
+            "testing": false,
+            "ttl_identifier_sequence": "sssLss",
+            "ttl_pulse_duration": 0.01,
+            "use_stimulation": false,
+            "use_stop_trials": false
+        },
+        "settings.task.patched": {
+            "HARDWARE_BNC_STIMULATION": 2,
+            "HARDWARE_BNC_TRIAL_START": 1,
+            "HARDWARE_PORT_LIGHT_INTENSITY": 50,
+            "HARDWARE_PORT_LIGHT_PORTS": [
+                "center"
+            ],
+            "HARDWARE_PULSEPAL_OUTPUT_CHANNEL": 1,
+            "HARDWARE_PULSEPAL_TRIGGER_CHANNEL": 1,
+            "HARDWARE_VALVES_FOR_AIR": [
+                2,
+                4
+            ],
+            "HARDWARE_VALVES_FOR_WATER": [
+                1,
+                3
+            ],
+            "block_switch_to_different_block_type": true,
+            "criterion_contrast_blocks": 0.1,
+            "criterion_neutral_blocks": 0.25,
+            "criterion_tau": 5,
+            "delay_until-side_timeout_for_stopping": 1.5,
+            "delay_until_center_init": [
+                0.05,
+                0.06,
+                0.005
+            ],
+            "delay_until_side_timeout": 10,
+            "first_block_easy": true,
+            "forced_choice_threshold": 20,
+            "mean_neutral_block_length": 25,
+            "min_block_length": 20,
+            "min_trials_post_criterion": 5,
+            "n_max_trials": 1500,
+            "plot_trial_span": 100,
+            "probabilities": [
+                [
+                    100,
+                    99
+                ],
+                [
+                    99,
+                    100
+                ]
+            ],
+            "punish_air_duration": 0.02,
+            "punish_stop_trials": true,
+            "punish_stop_trials_proportion": 1,
+            "record_video": true,
+            "reset_bias_on_block_switch": false,
+            "reward_amount_ul": 8,
+            "reward_delay": 0,
+            "show_live_plot": true,
+            "state_duration_final": 1,
+            "stimulation_pulse_delay": 0,
+            "stimulation_pulse_duration": 0.005,
+            "stimulation_pulse_frequency": 30,
+            "stimulation_pulse_train": 0.5,
+            "stimulation_timepoint": "ACTION_INIT",
+            "stimulation_trial_proportion": 0.2,
+            "stop_cue_amplitude": 0.2,
+            "stop_cue_duration": 0.1,
+            "stop_cue_onset_ramp": 0.05,
+            "stop_trial_delay_adaptive_step": 0.01,
+            "stop_trial_delay_initial": 0.035,
+            "stop_trial_min_max": [
+                0.05,
+                0.3
+            ],
+            "stop_trial_proportion": 0.2,
+            "testing": false,
+            "ttl_identifier_sequence": "sssLss",
+            "ttl_pulse_duration": 0.01,
+            "use_stimulation": false,
+            "use_stop_trials": false
+        },
+        "setup": "unknown_setup",
+        "subject.metadata": {
+            "experiment": "test_experiment",
+            "project": "test_project"
+        },
+        "task_dir": "/home/lbr/code/murine_shift_work/murine_shift_work/tasks/probabilistic_switching",
+        "task_name": "probabilistic_switching"
+    },
+    "out_path": "/home/lbr/code/murine_shift_work/tests/",
+    "serial_port": "/dev/ttyACM0",
+    "serial_port_accessible": false,
+    "session_paths": {
+        "basepath": "<NoJSON:<class 'pathlib.PosixPath'>>",
+        "datetime": "20211004_191858",
+        "session_basename": "_test_subject__20211004_191858__probabilistic_switching",
+        "session_basename_behav": "_test_subject__20211004_191858__probabilistic_switching.msw",
+        "session_file_path": "/home/lbr/code/murine_shift_work/tests/_test_subject/_test_subject__20211004_191858__probabilistic_switching/_test_subject__20211004_191858__probabilistic_switching",
+        "session_folder": "/home/lbr/code/murine_shift_work/tests/_test_subject/_test_subject__20211004_191858__probabilistic_switching",
+        "subject": "_test_subject",
+        "task": "probabilistic_switching"
+    },
+    "subject": "_test_subject",
+    "task_in": "probabilistic_switching",
+    "task_name": "probabilistic_switching"
+}
