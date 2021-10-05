@@ -137,7 +137,7 @@ def evaluate_args(args_dict=None):
     args_dict["original"] = args_dict.copy()
 
     args_dict = _evaluate_log_level(args_dict=args_dict)
-    setup_logging(level=args_dict["log_level"])
+    setup_logging(level=args_dict["log_level"], log_file=args_dict["log_file"])
 
     args_dict = _evaluate_task(args_dict=args_dict)
     args_dict = _evaluate_metadata(args_dict=args_dict)

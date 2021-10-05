@@ -113,23 +113,41 @@ Available tasks:
 ```
 
 ##### Starting remote ephys session
+Generates folder structure for parent ephys session locally and on remote.
+
+###### Path structure
+- MSW: /base/subject/[subject__dt__task]
+  - Ephys: /base/subject/[subject__dt__EPHYS]/ session data is in here
+  - MSW child sessions:
+    - /base/subject/[subject__dt__EPHYS]/[msw session folders]/[msw files + rcc files if video recorded]
+
+
+
+
+
+1. CLI
+
+```bash
+remote-ephys-controller  --help
+
+```
+
+Alternative 1. Python module import
 
 ```python
 import os
 import time
 
-from remote_ephys.control_functions import RemoteEphysControl
+from murine_shift_work.remote_ephys.controller import RemoteOpenEphysController
 
-
-e = RemoteEphysControl(
-        remote_ip="172.24.242.219",
-        # remote_ip="192.168.100.48",
-        remote_port=5558,
-        remote_acquisition_path=r"E:\\OE_DATA\\LBR\\",
-        acquisition_name="_test_subject",
-        local_data_path=os.path.expanduser("~/data"),
-    )
-
+e = RemoteOpenEphysController(
+    remote_ip="172.24.242.219",
+    # remote_ip="192.168.100.48",
+    remote_port=5558,
+    remote_acquisition_path=r"E:\\OE_DATA\\LBR\\",
+    acquisition_name="_test_subject",
+    local_data_path=os.path.expanduser("~/data"),
+)
 
 # Control options:
 e.start_preview()
@@ -142,69 +160,37 @@ e.stop_recording()  # stops recording
 e.stop_preview()  # stops recording & preview
 ```
 
+2. Then initiate behaviour session with:
+
+```bash
+murineshiftwork run --is-child-session --out-path [/path/to/local/parent/session] ... [OTHER PARAMS] ... -s SUBJECT -t TASK
+```
+
+
+
+##### Load data
+
+```python
+from murine_shift_work.readers import read_session_data
+
+session_dir = "/path/to/session_dir"
+load_raw = False  # This is also the default value. Does not usually load the pybpod CSV.
+
+session_data = read_session_data(session_dir=session_dir, load_raw=load_raw)
+
+```
+
 
 ## TODO
 
 - Refactoring for commandline access
     - [ ] add CLI option for adding directory where task lives, so that can extend MSW easily with other code
-    - [ ] Make refactoring notes
+    - [x] Make refactoring notes
         - remove references to pybpod GUI. setup.py already adjusted.
-    - [ ] Log file for MSW and sub-modules [rcc] -> write to log file
-
-    - [x] optotagging settings into json format
-    - [x] CLI execute: register subcommands
-    - [ ] install task adjustment for GUI run
-    - [ ] patch updated settings nested
-            - https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
-            - https://stackoverflow.com/questions/5946236/how-to-merge-multiple-dicts-with-same-key-or-different-key
-    - [ ] safe json serialisation with json.dumps(default=) - https://stackoverflow.com/questions/51674222/how-to-make-json-dumps-in-python-ignore-a-non-serializable-field
-    - [ ] argparse key-value pairs - https://stackoverflow.com/questions/27146262/create-variable-key-value-pairs-with-argparse-python
-
-    - [x] finish main task_process class
-    - [x] dry minimal_task example
-    - **[No!]** update installation for task call via GUI  -->> USE SEPARATE VERSIONS UNTIL GUI NOT REQUIRED BY USERS. waste of time to debug GUI+net_port issue
-    - [x] fix PS for CLI
-    - [x] FIXME: instead of parsing from command line, find task settings.config in task dicts -->> this is a task specific requirement ? -> implemented as standard argparse
-    - [x] extend commandline/GUI split architecture to all task protocols
-
-
-- Architecture
-    - [x] Make online plotting with pyqtgraph QApplication wrapper. Create/close bpod outside, then hand Application as input arg.
-
-
-- Tasks & settings
-    - [x] Basic task structure for PS
-    - [x] sound output plays with sounddevice package and TTL is received correctly by bpod BNC input channel
-    - [x] task settings
-    - [x] session params
-    - [ ] trial params FROM SETTINGS TO PARADIGM are used from common variable set. At the moment, not all variables are set in settings, but some in task objects!
-    - [x] general online plot for PS
-    - Main tasks: PS without stopping, PS and stopping
-        - [x] blocks of 10/50/90 with block switch ~~deterministic 40-60 trials or~~ with criterion on nr correct rolling mean
-        - stop signal: auditory cue after center init and pulled out
-        - punish: stop signal ingnored and side in -> air puff
-        - opto stim: init, move2side, choice, ?
-    - Other paradigms
-        - [ ] Open field: ttl sequence + regular synch timestamps. maybe useful in future
-        - [ ] Optotagging: excitatory, inhibitory -> several presets for standard opsins
-    - ~~training paradigms~~
-        - ~~habituation: center init, side light, reward either side~~
-        - ~~training 'lenient': center init, side light, one side rewarded, but no timeout on wrong side chosen first~~
-        - ~~training 'strict' == task deterministic: center inint, side light, one side rewarded and only first choice rewarded~~
-
-
-- hardware
-    - [x] build new arena with 3 ports on 3 different walls
-    - [x] use valve 2 and 4 for air puffs -> set up air valves that get triggered via BNC from port PCB board contacts
-    - [ ] set up all hardware on new ephys rig
-        - bpod, pulsepal, 2x air valves, camera hardware (RPi shelf + usb power supply bank), pc+monitor+peripherals, ! network for RPi
-        - power: bpod 12v, camera bank, pc, monitor, network switch, LED strip for daylight
-
-- test and maintenance modules
-    - [x] Water calibration -> quick procedure along lines of matlab bpod repo and iblrig
-    - [x] sound/noise preparation functions -> similar to iblrig. only taken main sound generator
-    - [ ] parameter GUI with pyqtgraph parameter tree from dict/list style object -> make converter from configobj to parametertree and back
-
+    - [x] Log file for MSW and sub-modules [rcc] -> write to log file
+    - [ ] remote ephys CLI
+- [x] Reader module to load session data. current and legacy
+- [ ]
 
 
 ## Support websites

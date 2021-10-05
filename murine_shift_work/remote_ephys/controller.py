@@ -7,25 +7,6 @@ from pathlib import Path
 
 import zmq
 
-
-logger = logging.getLogger()
-logger.setLevel("INFO")
-
-delay = 0.25
-
-# TODO
-#  CLI operations
-#  --status -> check is_previewing, is_recording, get_recording_path
-#  --preview -> toggle acquisition on/off
-#  --record -> toggle recording on/off  ->> start new recording every time
-#
-# TODO
-#   add "rich" logging or use function from MSW
-#
-# TODO
-#  mirror folder structure on local machine : BOOLEAN
-#  -->> make acquisition folder and write paths as json metadata
-#
 # Path structure
 # MSW: /base/subject/[subject__dt__task]
 # Ephys: /base/subject/[subject__dt__EPHYS]/ session data is in here
@@ -33,15 +14,15 @@ delay = 0.25
 #        /base/subject/[subject__dt__EPHYS]/[msw session folders]/[msw files + rcc files if video recorded]
 
 
-class RemoteEphysControl:
+class RemoteOpenEphysController:
     remote_ip = "127.0.0.1"
     remote_port = 5557
     remote_tcp_address = None
     timeout = 1
     acquisition_name = "_test_acquisition"
-    task_name = "ephys_multibehaviour"
-    remote_acquisition_path = ""
-    local_data_path = os.path.expanduser("~/data")
+    task_name = "ephys_multi_behaviour"
+    remote_path = ""
+    local_path = os.path.expanduser("~/data")
     create_new_dir = True
 
     datetime = None
@@ -51,6 +32,11 @@ class RemoteEphysControl:
     metadata_file = ""
     subject = ""
 
+    default_delay = 0.25
+
+    input_args = []
+    input_kwargs = {}
+
     def __init__(
         self,
         remote_ip=None,
@@ -58,15 +44,17 @@ class RemoteEphysControl:
         timeout=1,
         acquisition_name=None,
         acquisition_task=None,
-        remote_acquisition_path=None,
-        local_data_path=None,
+        remote_path=None,
+        local_path=None,
         create_new_dir=True,
+        *args,
+        **kwargs,
     ):
         """
         https://open-ephys.github.io/gui-docs/User-Manual/Plugins/Network-Events.html
         https://github.com/open-ephys/plugin-GUI/blob/master/Resources/Python/record_control_example_client.py
         """
-        super(RemoteEphysControl, self).__init__()
+        super(RemoteOpenEphysController, self).__init__()
 
         self.remote_ip = remote_ip or self.remote_ip
         self.remote_port = remote_port or self.remote_port
@@ -74,11 +62,12 @@ class RemoteEphysControl:
         self.timeout = timeout or self.timeout
         self.acquisition_name = acquisition_name or self.acquisition_name
         self.task_name = acquisition_task or self.task_name
-        self.remote_acquisition_path = (
-            str(remote_acquisition_path).strip("\\") or self.remote_acquisition_path
-        )
-        self.local_data_path = local_data_path or self.local_data_path
+        self.remote_path = str(remote_path).strip("\\") or self.remote_path
+        self.local_path = local_path or self.local_path
         self.create_new_dir = create_new_dir or self.create_new_dir
+
+        self.input_args = args
+        self.input_kwargs = kwargs
 
     def _make_full_acquisition_name(self):
         self.datetime = self._get_date_str()
@@ -90,7 +79,7 @@ class RemoteEphysControl:
     def __str__(self):
         d = {
             "Full acquisition name": self.full_acquisition_name or "<NOT_YET_DEFINED>",
-            "Acquisition path": self.remote_acquisition_path,
+            "Acquisition path": self.remote_path,
             "Network address": self.remote_tcp_address,
         }
         s = "\n\tRemoteEphysControl:\n\n"
@@ -107,13 +96,15 @@ class RemoteEphysControl:
         return datetime.now().strftime("%Y%m%d_%H%M%S")
 
     def _persists_metadata(self, session_name):
-        if self.local_data_path is not None:
+        if self.local_path is not None:
             self.local_path_full = (
-                Path(self.local_data_path) / self.acquisition_name / session_name
+                Path(self.local_path) / self.acquisition_name / session_name
             )
             self.local_path_full.mkdir(parents=True, exist_ok=True)
 
-            self.metadata_file = self.local_path_full / f"{session_name}.json"
+            self.metadata_file = (
+                self.local_path_full / f"{session_name}.settings.ephys.json"
+            )
 
             self.local_path_full = str(self.local_path_full)
             self.metadata_file = str(self.metadata_file)
@@ -161,7 +152,7 @@ class RemoteEphysControl:
     def stop_preview(self):
         if self.is_recording() is True:
             self.stop_recording()
-            time.sleep(delay)
+            time.sleep(self.default_delay)
         return self.send_message(
             message="StopAcquisition", expected_return="StoppedAcquisition"
         )
@@ -180,16 +171,16 @@ class RemoteEphysControl:
         message = (
             f"StartRecord{whitespace}"
             f"CreateNewDir={1 if self.create_new_dir else 0}{whitespace}"
-            f"RecDir={self.remote_acquisition_path}\\{self.acquisition_name}{whitespace}"
+            f"RecDir={self.remote_path}\\{self.acquisition_name}{whitespace}"
             f"PrependText={session_name}{whitespace}"
             f"AppendText={append_text}{whitespace}"
         )
         self._persists_metadata(session_name)
 
         self.start_preview()
-        time.sleep(delay)
+        time.sleep(self.default_delay)
         is_previewing = self.is_previewing()
-        time.sleep(delay)
+        time.sleep(self.default_delay)
         if is_previewing is True:
             return self.send_message(
                 message=message, expected_return="StartedRecording"
@@ -201,17 +192,3 @@ class RemoteEphysControl:
         return self.send_message(
             message="StopRecord", expected_return="StoppedRecording"
         )
-
-
-if __name__ == "__main__":
-    e = RemoteEphysControl(
-        remote_ip="172.24.242.219",
-        # remote_ip="192.168.100.48",
-        remote_port=5558,
-        remote_acquisition_path=r"E:\\OE_DATA\\LBR\\",
-        acquisition_name="_test_subject",
-        local_data_path=os.path.expanduser("~/data"),
-    )
-
-    e.start_preview()
-    print(" ")

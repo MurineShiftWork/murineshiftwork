@@ -55,6 +55,7 @@ setup(
     entry_points={
         "console_scripts": [
             "murineshiftwork = murine_shift_work.__init__:run_cli",
+            "remote-ephys-controller = murine_shift_work.__init__:run_remote_ephys",
         ],
     },
     url="https://llrrr@bitbucket.org/lbrcoding/murine_shift_work.git",
