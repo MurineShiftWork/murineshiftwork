@@ -25,9 +25,9 @@ def _exec_sys_cmd(cmd=None, shell=True, stdout=subprocess.PIPE):
     )
 
 
-def read_settings_py(filepath=None):
+def read_settings_py(file=None):
     tmp_module = SourceFileLoader(
-        os.path.splitext(Path(filepath).name)[0], str(filepath)
+        os.path.splitext(Path(file).name)[0], str(file)
     ).load_module()
     module_vars = {k: v for k, v in vars(tmp_module).items() if not k.startswith("__")}
     return module_vars

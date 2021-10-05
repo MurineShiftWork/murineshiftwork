@@ -1,18 +1,147 @@
-# Murine Shift Work: Behaviour protocols via pybpod
+<!--
+-*- coding: utf-8 -*-
+
+ Author: Lars B. Rollik <L.B.Rollik@protonmail.com>
+ License:
+-->
+<!-- Banners -->
+
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
+
+
+# Murine Shift Work
+Acquisition software for murine research
+---
+
+#### - Behaviour protocols via `pybpod-api`
+#### - Video acquisition via `RPi Camera Colony`
+#### - Remote control of ephys systems via `Open Ephys NetworkEvents`
 
 ---
 
-## Common problems
 
-#### Pycharm debugger throws error `ControlList has no horizontal_headers attribute`, when starting GUI
-Install pycharm version `2020.1.5`. Problems started after that and continue into the 2021 versions.
+### Features
 
-Temporary fix: add the following user env variables to the pycharm debugging configuration as suggested here
-https://stackoverflow.com/questions/62040805/pycharm-debugger-getting-error-when-break-point-is-kept
+- Command line interface (ready for high-level integration with GUI)
+
+    ```bash
+    # Add new subjects and register them for specific tasks
+    murineshiftwork register ...
+
+    # Run tasks and test/calibration protocols from one entrypoint
+    murineshiftwork run --task [TASK] --subject [SUBJECT]
+    ```
+
+- Simple configuration via text files for subject/task settings
+
+    ```bash
+    # subject.settings
+    [_test_subject]
+        project = "test_project"
+        experiment = "test_experiment"
+
+        [[_test_minimal_task]]
+            test_argument = "minimal"
+
+        [[_test_video]]
+            test_argument = "vid"
+
+        [[probabilistic_switching]]
+            probabilities = [(100,99), (99,100)]
+            delay_until_center_init = [0.050, 0.060, 0.005]
+            reward_amount_ul = 8
+            criterion_contrast_blocks = .1
+
+    ```
+
+- Behavioural protocols
+    - training 3 port center to out journey: This is a training stage for any 3-port arena task
+    - probabilistic switching (PS): basic PS task
+    - PS with stop signals: PS task with additional stop signals
+        - all PS tasks implement additionally stimulation options for specific timepoints
+
+
+- Test protocols
+    - flush water, e.g. before session
+    - sound and TTL test, e.g. does the sound play? and is the soundcard TTL received?
+    - TTL outputs test, e.g. are the TTL for trial start and stimulation triggered and received by the connected systems?
+    - water calibration, e.g. water by valve opening duration
+
+
+- Synchronisation for parallel recordings (ephys, other, ..)
+    - all tasks output a unique TTL sequence to identify the protocol in parallel ephys recordings
+
+
+### Installation
+
+#### Dependencies
+- system: linux, tested with Ubuntu 18.04 and higher
+- apt: `sudo apt-get install linux-lowlatency libportaudio2 qt5-default --upgrade -y`
+- python: see `setup.py`
+
+#### For deployment
+1. `pip install git+https://llrrr@bitbucket.org/lbrcoding/murine_shift_work.git`
+
+#### For development
+1. `git clone https://llrrr@bitbucket.org/lbrcoding/murine_shift_work.git`
+2. `pip install -e murine_shift_work[dev]`
+
+### Usage
+
+##### Registering subjects (& subjects to tasks)
+
+##### Running tasks (& tests or calibration routines)
+```bash
+murineshiftwork run ...
+
 ```
-PYDEVD_USE_CYTHON=NO
-PYDEVD_USE_FRAME_EVAL=NO
+
+See `murineshiftwork run -h` for all options and list of available tasks at end of help section:
+```text
+Available tasks:
+    - _test_flush_water
+    - _test_minimal_task
+    - _test_open_ephys_remote
+    - _test_pyqtgraph_app
+    - _test_sound_and_ttl_in
+    - _test_ttl_outputs
+    - _test_video
+    - _test_water_calibration
+    - optotagging
+    - periodic_trigger
+    - probabilistic_switching
 ```
+
+##### Starting remote ephys session
+
+```python
+import os
+import time
+
+from remote_ephys.control_functions import RemoteEphysControl
+
+
+e = RemoteEphysControl(
+        remote_ip="172.24.242.219",
+        # remote_ip="192.168.100.48",
+        remote_port=5558,
+        remote_acquisition_path=r"E:\\OE_DATA\\LBR\\",
+        acquisition_name="_test_subject",
+        local_data_path=os.path.expanduser("~/data"),
+    )
+
+
+# Control options:
+e.start_preview()
+
+e.start_recording()
+
+time.sleep(2)
+
+e.stop_recording()  # stops recording
+e.stop_preview()  # stops recording & preview
+```
+
 
 ## TODO
 
@@ -76,65 +205,15 @@ PYDEVD_USE_FRAME_EVAL=NO
     - [x] sound/noise preparation functions -> similar to iblrig. only taken main sound generator
     - [ ] parameter GUI with pyqtgraph parameter tree from dict/list style object -> make converter from configobj to parametertree and back
 
-## Features
-- Behavioural protocols
-    - training 3 port center to out journey: This is a training stage for any 3-port arena task
-    - probabilistic switching (PS): basic PS task
-    - PS with stop signals: PS task with additional stop signals
-        - all PS tasks implement additionally stimulation options for specific timepoints
 
-
-- Test protocols
-    - flush water, e.g. before session
-    - sound and TTL test, e.g. does the sound play? and is the soundcard TTL received?
-    - TTL outputs test, e.g. are the TTL for trial start and stimulation triggered and received by the connected systems?
-    - water calibration, e.g. water by valve opening duration
-
-
-- Synchronisation for parallel recordings (ephys, other, ..)
-    - all tasks output a unique TTL sequence to identify the protocol in parallel ephys recordings
-
-## Installation
-1) Make an Anaconda environment
-```
-conda create -n py36 python=3.6 numpy pandas matplotlib scipy
-conda activate py36
-```
-
-2) Setup up additional packages and sound
-    a) Packages for bpod and pybpod gui to work
-   ```bash
-    # https://sites.google.com/site/bpoddocumentation/installing-bpod/ubuntu14
-    sudo apt-get install linux-lowlatency
-
-    #https://stackoverflow.com/questions/49333582/portaudio-library-not-found-by-sounddevice
-    sudo apt-get install libportaudio2
-
-    #https://stackoverflow.com/questions/60042568/this-application-failed-to-start-because-no-qt-platform-plugin-could-be-initiali
-    sudo apt-get install qt5-default
-   ```
-
-    b) Sound settings
-   Open `alsamixer` in the terminal and select sound device with `F6`, then set all outputs, particularly the gain to maximum values
-
-
-3) Install this package with:
-```
-pip install -e .
-```
-
-
-3) Add users, boards, experiments, etc. to the main project and update git repo: both done via install task.
-```NOTE: this is done via install_tasks script now.```
-
-## Usage
-Run the script `start_this_pybpod.py` to open the GUI and trigger the automatic update script
-to add presets to the pybpod project.
 
 ## Support websites
 [Bpod wiki](https://sites.google.com/site/bpoddocumentation)
-[PyBpod docs](pybpod.readthedocs.io)
+
 [PyBpod API docs](https://pybpod.readthedocs.io/projects/pybpod-api)
-[PyBpod GUI docs](https://pybpod.readthedocs.io/projects/pybpod-gui-api)
+
 [sounddevice](https://python-sounddevice.readthedocs.io)
-[proplot](https://proplot.readthedocs.io)
+
+[RPi camera colony DEV](https://llrrr@bitbucket.org/lbrcoding/rpi_camera_colony_dev.git)
+
+[RPi camera colony]( https://github.com/larsrollik/rpi_camera_colony.git)

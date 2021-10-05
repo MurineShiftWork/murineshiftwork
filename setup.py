@@ -32,11 +32,11 @@ setup(
         "safe-and-collaborative-architecture",  # required by pybpod.
         "sounddevice",  # might require: sudo apt-get install libportaudio2
         "tqdm",
-        # "gitpython",
         "rich",
         "myterial",
         "PySimpleGUI",
         "rpi_camera_colony @ git+https://llrrr@bitbucket.org/lbrcoding/rpi_camera_colony_dev.git#egg=rpi_camera_colony",
+        "pyzmq",  # for remote ephys module
     ],
     extras_require={
         "dev": [

@@ -12,7 +12,7 @@ from murine_shift_work.readers.namespace import test_is_recognized_msw_file
 def read_session_data(
     session_dir=None,
     load_raw=False,
-    ignore_errors=True,
+    clean_port4_events=True,
 ):
     """Read session data for this acquisition package.
 
@@ -30,7 +30,7 @@ def read_session_data(
 
     :param session_dir:
     :param load_raw:
-    :param ignore_errors:
+    :param clean_port4_events:
     :return:
     """
     session_dir = Path(session_dir)
@@ -49,7 +49,9 @@ def read_session_data(
             # Add key for session completeness, but might be empty if input load_raw=False
             session_data["raw"] = None
             if load_raw:
-                session_data["raw"] = read_pybpod_csv(filepath=v)
+                session_data["raw"] = read_pybpod_csv(
+                    filepath=v, clean_events=clean_port4_events
+                )
 
         elif Path(k).name.endswith("pkl"):
             session_data["df"] = read_trial_df(filepath=v)
@@ -59,7 +61,7 @@ def read_session_data(
             session_data[k.replace(".json", "")] = read_json(file=session_files_dict[k])
 
         elif Path(k).name == "task_settings.py" and is_legacy_session:
-            session_data["settings.task"] = read_settings_py(filepath=v)
+            session_data["settings.task"] = read_settings_py(file=v)
 
         else:
             print(f"Unrecognized file: {k} - {v}")
