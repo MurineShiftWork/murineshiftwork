@@ -5,7 +5,6 @@ import time
 from numpy import zeros
 
 from murine_shift_work.external.PulsePal3 import PulsePalObject  # Import PulsePalObject
-from murine_shift_work.logic.misc import unpack_input_dict
 
 
 # See: https://sites.google.com/site/pulsepalwiki/user-guide---c-api/c-methods/settriggermode
@@ -46,7 +45,7 @@ class Stimulation:
     channels_currently_active = []
     emergency_off_bool = False
 
-    def __init__(self, port, in_dict={}, test=0):
+    def __init__(self, port: None, in_dict: dict, test: bool = False):
         """Wrapper class for PulsePalObject
         :param port:
         :param in_dict:
@@ -59,8 +58,8 @@ class Stimulation:
         self.pulsePal = PulsePalObject()
         self.port = port
 
-        if in_dict:
-            self.in_dict = unpack_input_dict(in_dict, default_dict=self.in_dict)
+        for k, v in in_dict.items():
+            self.in_dict[k] = v
 
         # STIMULATION parameters
         for channel in self.in_dict["channels_stimulation"]:
