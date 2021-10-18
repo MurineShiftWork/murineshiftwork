@@ -21,13 +21,14 @@ def run_client():
     stop_cmd = "StopRecord"
 
     # Example settings
-    rec_dir = os.path.join(os.getcwd(), "Output_RecordControl")
+    session_name = "_test_subject__20210918_000000__ephys__multibehaviour"
+    rec_dir = os.path.join("E:\\OE_DATA\\LBR", session_name)
     print("Saving data to:", rec_dir)
 
     # Some commands
     commands = [
         start_cmd + " RecDir=%s" % rec_dir,
-        start_cmd + " PrependText=Session01 AppendText=Condition01",
+        start_cmd + " PrependText=some_session_name. AppendText=.ephys",
         start_cmd + " PrependText=Session01 AppendText=Condition02",
         start_cmd + " PrependText=Session02 AppendText=Condition01",
         start_cmd,
@@ -35,8 +36,9 @@ def run_client():
     ]
 
     # Connect network handler
-    ip = "127.0.0.1"
-    port = 5556
+    ip = "192.168.100.48"  # "127.0.0.1"
+    ip = "172.24.242.219"  # "127.0.0.1"
+    port = 5558
     timeout = 1.0
 
     url = "tcp://%s:%d" % (ip, port)
@@ -47,32 +49,32 @@ def run_client():
             socket.connect(url)
 
             # Start data acquisition
-            socket.send("StartAcquisition")
+            socket.send_string("StartAcquisition")
             print(socket.recv())
-            time.sleep(5)
+            # time.sleep(5)
 
-            socket.send("IsAcquiring")
+            socket.send_string("IsAcquiring")
             print("IsAcquiring:", socket.recv())
             print("")
 
             for start_cmd in commands:
 
                 for cmd in [start_cmd, stop_cmd]:
-                    socket.send(cmd)
+                    socket.send_string(cmd)
                     print(socket.recv())
 
                     if "StartRecord" in cmd:
                         # Record data for 5 seconds
-                        socket.send("IsRecording")
+                        socket.send_string("IsRecording")
                         print("IsRecording:", socket.recv())
 
-                        socket.send("GetRecordingPath")
+                        socket.send_string("GetRecordingPath")
                         print("Recording path:", socket.recv())
 
                         time.sleep(5)
                     else:
                         # Stop for 1 second
-                        socket.send("IsRecording")
+                        socket.send_string("IsRecording")
                         print("IsRecording:", socket.recv())
                         time.sleep(1)
 
@@ -81,7 +83,7 @@ def run_client():
             # Finally, stop data acquisition; it might be a good idea to
             # wait a little bit until all data have been written to hard drive
             time.sleep(0.5)
-            socket.send("StopAcquisition")
+            socket.send_string("StopAcquisition")
             print(socket.recv())
 
 

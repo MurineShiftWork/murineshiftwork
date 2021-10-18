@@ -9,6 +9,7 @@ from murine_shift_work.cli.evaluate import default_config_dir
 from murine_shift_work.cli.evaluate import default_out_path
 from murine_shift_work.cli.execute import run_register
 from murine_shift_work.cli.execute import run_task
+from murine_shift_work.logic.log import get_default_log_file_path
 
 
 class ArgparseFormatter(ArgumentDefaultsHelpFormatter, RawDescriptionHelpFormatter):
@@ -33,6 +34,14 @@ def add_args_for_general_use(parser=None):
         type=str,
         default=default_out_path,
         help="Out path for task data",
+    )
+    general_args.add_argument(
+        "-ischild",
+        "--is-child-session",
+        dest="skip_subject_folder",
+        action="store_true",
+        default=False,
+        help="Set if is child session. If True, skips subject dir & saves session dir directly in `--out-path`",
     )
     metadata_group = parser.add_argument_group("Metadata")
     metadata_group.add_argument(
@@ -132,6 +141,15 @@ def add_args_for_flow_control(parser=None):
         dest="log_level",
         type=str,
         default="INFO",
+        help="Log level, e.g. 'INFO' or 'DEBUG'",
+    )
+    flow_control_options.add_argument(
+        "-lf",
+        "--log-file",
+        dest="log_file",
+        type=str,
+        default=get_default_log_file_path(),
+        help="Log file path. Filenames are ignored",
     )
     flow_control_options.add_argument(
         "-d",

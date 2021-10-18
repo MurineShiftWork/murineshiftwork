@@ -9,6 +9,8 @@ from murine_shift_work.logic.log import setup_logging
 from murine_shift_work.logic.misc import find_task_by_name
 from murine_shift_work.logic.misc import list_available_tasks
 from murine_shift_work.logic.misc import print_box
+from murine_shift_work.logic.paths import get_host_ip
+from murine_shift_work.logic.paths import get_host_name
 
 default_out_path = str(Path.home() / "data")
 default_config_dir = str(msws.__path__[0])
@@ -25,22 +27,23 @@ def get_task_dir(task=None):
 
 
 def _evaluate_metadata(args_dict):
-    metadata_list = args_dict["metadata_list"]
-    metadata_list = [
-        v.strip(" ").strip("'").strip('"') for v in metadata_list if "=" in v
-    ]
-    metadata_dict = dict(map(lambda s: s.split("="), metadata_list))
+    metadata_list = args_dict.get("metadata_list", None)
+    if metadata_list is not None:
+        metadata_list = [
+            v.strip(" ").strip("'").strip('"') for v in metadata_list if "=" in v
+        ]
+        metadata_dict = dict(map(lambda s: s.split("="), metadata_list))
 
-    for metadata_key in ["researcher", "setup", "experiment"]:
-        if (
-            not args_dict[metadata_key].startswith("unknown_")
-            or metadata_key not in metadata_dict
-        ):
-            # metadata_dict[f"_original__{metadata_key}"] = metadata_dict[metadata_key]
-            print(metadata_key)
-            metadata_dict[metadata_key] = args_dict[metadata_key]
+        for metadata_key in ["researcher", "setup", "experiment"]:
+            if (
+                not args_dict[metadata_key].startswith("unknown_")
+                or metadata_key not in metadata_dict
+            ):
+                # metadata_dict[f"_original__{metadata_key}"] = metadata_dict[metadata_key]
+                print(metadata_key)
+                metadata_dict[metadata_key] = args_dict[metadata_key]
 
-    args_dict["metadata"] = metadata_dict
+        args_dict["metadata"] = metadata_dict
     return args_dict
 
 
@@ -126,11 +129,15 @@ def evaluate_args(args_dict=None):
     :param args_dict: output of parser
     :return:
     """
+    # Add other metadata
+    args_dict["host_name"] = get_host_name()
+    args_dict["host_ip"] = get_host_ip()
+
     # Back up original values
     args_dict["original"] = args_dict.copy()
 
     args_dict = _evaluate_log_level(args_dict=args_dict)
-    setup_logging(level=args_dict["log_level"])
+    setup_logging(level=args_dict["log_level"], log_file=args_dict["log_file"])
 
     args_dict = _evaluate_task(args_dict=args_dict)
     args_dict = _evaluate_metadata(args_dict=args_dict)

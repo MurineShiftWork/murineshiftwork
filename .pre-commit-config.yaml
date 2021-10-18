@@ -21,6 +21,5 @@ repos:
     - id: detect-private-key
     - id: forbid-new-submodules
     - id: check-json
-    - id: pretty-format-json
     - id: check-added-large-files
     - id: flake8

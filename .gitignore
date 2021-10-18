@@ -2,6 +2,8 @@
 .DS_Store
 main_project/
 msw_project/
+tests/
+test/
 *.csv
 *.settings
 *.bak
