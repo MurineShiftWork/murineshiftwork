@@ -22,7 +22,7 @@ def make_protocol_identifier_ttl_sequence(
     sma = StateMachine(bpod)
 
     for pidx, pulse in enumerate(sequence):
-        # make next pulse
+        # make __read_next_frame pulse
         if pulse.upper().startswith("L"):
             inter_pulse_duration = round(inter_pulse_duration_long, 3)
         elif pulse.upper().startswith("S"):
@@ -32,7 +32,7 @@ def make_protocol_identifier_ttl_sequence(
                 f"Pulse type has to be either 'LONG' or 'SHORT' as a string, but is {pulse}"
             )
 
-        # if is last pulse, add transition to inter-trial interval, otherwise to next pulse
+        # if is last pulse, add transition to inter-trial interval, otherwise to __read_next_frame pulse
         if pidx == len(sequence) - 1:
             exit_state = "pulse_trial_post_interval"
         else:

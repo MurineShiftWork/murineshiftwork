@@ -114,7 +114,9 @@ class TaskProcess(object):
         **kwargs,
     ):
         super(TaskProcess, self).__init__()
-        self.serial_port = str(serial_port_bpod)
+        self.serial_port = str(
+            serial_port_bpod
+        )  # TODO: Encapsulate as bpod handler object. Move to inside protocol for when Bpod requested in config.
         self.out_path = str(out_path)
         self.subject = str(subject)
         self.task_in = str(task)
@@ -135,7 +137,7 @@ class TaskProcess(object):
         # Assertions
         self.serial_port_accessible = test_serial_port_is_accessible(
             port=self.serial_port, baudrate=self.bpod_baudrate, timeout=1
-        )
+        )  # TODO: Encapsulate as bpod handler object. Move to inside protocol for when Bpod requested in config.
         if not self.serial_port_accessible and not self.debug:
             raise IOError(f"Serial port not accessible at {self.serial_port}")
 
@@ -154,7 +156,7 @@ class TaskProcess(object):
 
         # Execute
         self.persist_settings()
-        self.connect_bpod()
+        self.connect_bpod()  # TODO: Encapsulate as bpod handler object. Move to inside protocol for when Bpod requested in config.
 
         if auto_init:
             self.init_task()

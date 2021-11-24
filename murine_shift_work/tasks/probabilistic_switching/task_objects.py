@@ -137,7 +137,7 @@ class TaskControl(object):
         else:
             range_for_prob = np.arange(self.probabilities.__len__())
 
-        # Exclude current block from choice of next block type
+        # Exclude current block from choice of __read_next_frame block type
         if self.task_settings["block_switch_to_different_block_type"]:
             next_probs_allowed = list(
                 set(range_for_prob) - set([self.block_probability_index])
@@ -575,7 +575,7 @@ class TaskControl(object):
             #       side ready + wait for delay
             #       side ready + trigger sound
             #           side in -> AIR
-            #           no entry -> next trial
+            #           no entry -> __read_next_frame trial
             #
             # SWITCH signal:
             #       mouse moving
@@ -619,7 +619,7 @@ class TaskControl(object):
             )
 
         # OUTCOMES: LEFT  --  Encoding:  0=unrewarded, 1=rewarded, -1=punish with air
-        # note: stop signal outcomes set to 0 in next-trial
+        # note: stop signal outcomes set to 0 in __read_next_frame-trial
         if self.next_trial_choice_outcome_left > 0:  # REWARD
             left_valve = self.task_settings["HARDWARE_VALVES_FOR_WATER"][0]
             output_action_left_valve = [(Bpod.OutputChannels.Valve, left_valve)]
