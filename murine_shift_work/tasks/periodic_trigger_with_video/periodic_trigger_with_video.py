@@ -11,6 +11,7 @@ from murine_shift_work.logic.specific_state_machines import (
 )
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
+from murine_shift_work.settings import get_ttl_identifier_sequence
 
 
 class Task(TaskRunner):
@@ -18,7 +19,7 @@ class Task(TaskRunner):
 
     def run(self) -> None:
 
-        TTL_IDENTIFIER_SEQUENCE = "ssssss"
+        TTL_IDENTIFIER_SEQUENCE = get_ttl_identifier_sequence(__file__)
         TRIGGER_ITI = 5  # seconds
 
         trial_index = 0

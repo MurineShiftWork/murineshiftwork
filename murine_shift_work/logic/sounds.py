@@ -52,7 +52,7 @@ class StereoSound(object):
         allow_sys_default_device=True,
         **kwargs,
     ):
-        """"""
+        """ """
         super(StereoSound, self).__init__()
         # Check args
         found_input_device = (
@@ -165,7 +165,7 @@ class StereoSound(object):
         play_blocking=True,
         **kwargs,
     ):
-        """"""
+        """ """
         new_sound_dict = kwargs
         new_sound_dict["play_blocking"] = play_blocking
         new_sound_dict["sound"] = self._make_sound(

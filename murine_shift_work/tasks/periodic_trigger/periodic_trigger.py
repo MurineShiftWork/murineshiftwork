@@ -17,7 +17,7 @@ class Task(TaskRunner):
 
     def run(self) -> None:
 
-        TTL_IDENTIFIER_SEQUENCE = "ssssss"
+        TTL_IDENTIFIER_SEQUENCE = "Lsssss"
         TRIGGER_ITI = 5  # seconds
 
         trial_index = 0
