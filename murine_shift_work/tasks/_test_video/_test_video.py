@@ -12,10 +12,24 @@ from murine_shift_work.logic.task_process import TaskRunner
 from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
     OnlinePlottingForPS,
 )
+from murine_shift_work.logic.specific_state_machines import (
+    make_protocol_identifier_ttl_sequence,
+)
 
 
 class Task(TaskRunner):
     def run(self):
+
+        sma = make_protocol_identifier_ttl_sequence(
+                    bpod=self.bpod,
+                    sequence="LsLsLs",
+                    output_chanel_pulse=eval(
+                        f"Bpod.OutputChannels.BNC1"
+                    ),
+                )
+        self.bpod.run_state_machine(sma)
+        logging.info("Protocol sequence sent.")
+
         trial_index = 0
         max_trials = 4
         while self.continue_task and trial_index < max_trials:

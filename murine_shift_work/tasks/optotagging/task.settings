@@ -7,9 +7,9 @@ TRIGGER_ITI = 1  # seconds
 
 [stimulation]
     # Excitation
-    pulse_duration = 0.005
-    pulse_frequency = 20
-    pulse_train_duration = 1
+    pulse_duration = 0.01
+    pulse_frequency = 2.5
+    pulse_train_duration = 2
     pulse_train_delay = 0
     trigger_channels_for_stimulation = [1,]  # values: 1,2 -- no python index offset here as is used for eval
     trigger_mode = "gated"  # normal, toggle, pulse gate

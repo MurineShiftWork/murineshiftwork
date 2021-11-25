@@ -48,10 +48,10 @@ def find_task_by_name(task_name=None, ignore_error=True):
     elif len(found) == 0:
         return None
     else:
-        msg = f"Task name '{task_name}' is not specific to any available task: {available_tasks}"
+        msg = f"Task name '{task_name}' is not specific to any available task: {available_tasks}\n Selecting first one: {sorted(found)[0]}"
         logging.debug(msg)
         if ignore_error:
-            return None
+            return sorted(found)[0]
         else:
             raise ValueError(msg)
 

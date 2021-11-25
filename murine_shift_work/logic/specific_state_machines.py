@@ -7,7 +7,7 @@ from pybpodapi.state_machine import StateMachine
 def make_protocol_identifier_ttl_sequence(
     bpod=None,
     sequence=None,
-    pulse_duration=0.050,
+    pulse_duration=0.005,
     inter_pulse_duration_long=0.500,
     inter_trial_interval=4,
     output_chanel_pulse=Bpod.OutputChannels.BNC2,
