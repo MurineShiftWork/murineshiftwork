@@ -87,6 +87,6 @@ def test_record():
 
 
 if __name__ == '__main__':
-    import sys
-    sys.argv += ["--preview"]
+    # import sys
+    # sys.argv += ["--preview"]
     run_remote_ephys()
