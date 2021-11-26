@@ -29,22 +29,21 @@ def run_remote_ephys():
         logging.info(f"Is recording: {ctrl.is_previewing()}")
         logging.info(f"Recording path: {ctrl.get_recording_path()}")
 
-    elif args.status:
+    elif args.preview:
         logging.info("Preview toggle")
         if ctrl.is_previewing():
             ctrl.stop_preview()
         else:
             ctrl.start_preview()
 
-    elif args.status:
+    elif args.record:
         logging.info("Recording toggle")
         if ctrl.is_recording():
             ctrl.stop_recording()
         else:
             ctrl.start_recording()
 
-    else:
-        sys.exit(0)
+    sys.exit(0)
 
 
 def test_controller():
@@ -84,4 +83,10 @@ def test_record():
     import sys
 
     sys.argv += ["--record"]
+    run_remote_ephys()
+
+
+if __name__ == '__main__':
+    import sys
+    sys.argv += ["--preview"]
     run_remote_ephys()

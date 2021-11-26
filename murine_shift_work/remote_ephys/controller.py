@@ -16,7 +16,7 @@ import zmq
 
 class RemoteOpenEphysController:
     remote_ip = "127.0.0.1"
-    remote_port = 5557
+    remote_port = 5558
     remote_tcp_address = None
     timeout = 1
     acquisition_name = "_test_acquisition"
@@ -133,7 +133,7 @@ class RemoteOpenEphysController:
         if received == expected_return:
             return True
         else:
-            return received
+            return False
 
     def is_previewing(self):
         return self.send_message(message="IsAcquiring", expected_return="1")

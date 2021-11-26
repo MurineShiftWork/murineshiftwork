@@ -23,7 +23,7 @@ def make_parser_remote_ephys():
     connection_group.add_argument(
         "-port",
         "--remote-port",
-        dest="remote_ip",
+        dest="remote_port",
         type=int,
         default=DEFAULT_REMOTE_PORT,
         help="Remote port",
@@ -67,7 +67,7 @@ def make_parser_remote_ephys():
         dest="status",
         action="store_true",
         default=False,
-        help="",
+        help="Get status",
     )
 
     action_group.add_argument(
@@ -76,7 +76,7 @@ def make_parser_remote_ephys():
         dest="preview",
         action="store_true",
         default=False,
-        help="",
+        help="Toggle preview",
     )
     action_group.add_argument(
         "-r",
@@ -84,7 +84,7 @@ def make_parser_remote_ephys():
         dest="record",
         action="store_true",
         default=False,
-        help="",
+        help="Toggle recording",
     )
     action_group.add_argument(
         "-d",

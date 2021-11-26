@@ -78,17 +78,19 @@ def run_task(**args_dict):
         # Delay for video to start
         time.sleep(5)
 
+        # Start task
+        tp.run_task()
         while tp.is_running():
             try:
                 time.sleep(1)
             except KeyboardInterrupt:
                 tp.stop_task()
 
-        # Stop video
-        c.stop_acquisition()
-        c.cleanup()
+    # Stop video
+    c.stop_acquisition()
+    c.cleanup()
 
-        time.sleep(1)
+    time.sleep(1)
 
 
 if __name__ == "__main__":
