@@ -182,6 +182,8 @@ class RemoteOpenEphysController:
         is_previewing = self.is_previewing()
         time.sleep(self.default_delay)
         if is_previewing is True:
+            logging.info(f"Setting up for session:\t {session_name}")
+            logging.info(f"Sesion path:\n\t{self.local_path_full}\n")
             return self.send_message(
                 message=message, expected_return="StartedRecording"
             )
