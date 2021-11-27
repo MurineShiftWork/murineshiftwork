@@ -110,7 +110,7 @@ class TaskProcess(object):
         task=None,
         auto_init=True,
         auto_start=True,
-        skip_subject_folder=False,
+        is_child_session_to=None,
         **kwargs,
     ):
         super(TaskProcess, self).__init__()
@@ -125,11 +125,12 @@ class TaskProcess(object):
 
         # Make vars
         self.task_name = find_task_by_name(task_name=self.task_in)
+        basepath_and_child_session_option = Path(self.out_path) / is_child_session_to
         self.session_paths = build_data_paths(
-            basepath=self.out_path,
+            basepath=basepath_and_child_session_option,
             subject=self.subject,
             task=self.task_name,
-            skip_subject_folder=skip_subject_folder,
+            skip_subject_folder=True if is_child_session_to else False,
         )
         self.input_kwargs["task_name"] = self.task_name
         self.input_kwargs["session_paths"] = self.session_paths
