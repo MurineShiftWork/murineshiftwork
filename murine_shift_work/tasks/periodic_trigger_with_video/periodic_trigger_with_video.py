@@ -1,5 +1,6 @@
 import logging
 import time
+from pathlib import Path
 
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
@@ -67,9 +68,15 @@ def run_task(**args_dict):
     with TaskProcess(**args_dict) as tp:
         # Video
         group = tp.session_paths["session_basename"].split("__")[0]
+
+        # session_folder = tp.session_paths["session_folder"]
+        child_group = "FIXME"
+
         conductor_args = {
             "config_file": args_dict["config_file_camera"],
-            "acquisition_group": group,
+            "acquisition_group": child_group
+            if args_dict["skip_subject_folder"]
+            else group,
             "acquisition_name": tp.session_paths["session_basename"],
         }
         c = Conductor(**conductor_args)
