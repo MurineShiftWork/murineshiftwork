@@ -7,13 +7,13 @@ from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 from rpi_camera_colony.control.conductor import Conductor
 
+from murine_shift_work.logic.specific_state_machines import (
+    make_protocol_identifier_ttl_sequence,
+)
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
 from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
     OnlinePlottingForPS,
-)
-from murine_shift_work.logic.specific_state_machines import (
-    make_protocol_identifier_ttl_sequence,
 )
 
 
@@ -21,12 +21,10 @@ class Task(TaskRunner):
     def run(self):
 
         sma = make_protocol_identifier_ttl_sequence(
-                    bpod=self.bpod,
-                    sequence="LsLsLs",
-                    output_chanel_pulse=eval(
-                        f"Bpod.OutputChannels.BNC1"
-                    ),
-                )
+            bpod=self.bpod,
+            sequence="LsLsLs",
+            output_chanel_pulse=eval("Bpod.OutputChannels.BNC1"),
+        )
         self.bpod.run_state_machine(sma)
         logging.info("Protocol sequence sent.")
 
@@ -96,6 +94,9 @@ def run_task(**args_dict):
         # Video
         conductor_args = {
             "config_file": args_dict["config_file_camera"],
+            "acquisition_group": args_dict["is_child_session_to"]
+            if args_dict["is_child_session_to"] is not None
+            else tp.session_paths["session_basename"].split("__")[0],
             "acquisition_name": tp.session_paths["session_basename"],
         }
         c = Conductor(**conductor_args)
