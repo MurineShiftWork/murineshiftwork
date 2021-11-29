@@ -37,6 +37,7 @@ class TaskControl(object):
     mean_neutral_block_length = 25  # 10 trials difference to min block length
     min_trials_post_criterion = 5
     trials_post_criterion = 0
+    max_block_length = 50
 
     criterion_contrast_blocks = 0.5  # task_settings.CRITERION_CONTRAST_BLOCKS  # 0.6
     criterion_neutral_blocks = 0.2
@@ -297,6 +298,9 @@ class TaskControl(object):
             or (
                 self.probability_right > self.probability_left
                 and self.moving_average() > self.criterion_contrast_blocks
+            )
+            or (
+                self.block_trial_number >= self.max_block_length - self.min_trials_post_criterion
             )
         ):
             self.criterion_block_switch_reached = True
