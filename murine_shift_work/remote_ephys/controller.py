@@ -216,7 +216,6 @@ class RemoteOpenEphysController:
         message = self._make_start_message_string(
             create_new_dir=True,
             remote_path=r"E:\\OE_DATA\\",
-            acquisition_name=self.acquisition_name,
             prepend_text=session_name,
         )
 
