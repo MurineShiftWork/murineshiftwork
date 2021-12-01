@@ -2,6 +2,7 @@ import json
 import logging
 import os.path
 import time
+from uuid import uuid4
 from datetime import datetime
 from pathlib import Path
 
@@ -157,6 +158,29 @@ class RemoteOpenEphysController:
             message="StopAcquisition", expected_return="StoppedAcquisition"
         )
 
+    @staticmethod
+    def _make_start_message_string(
+        create_new_dir=True,
+        remote_path=None,
+        acquisition_name=None,
+        prepend_text=None,
+        append_text=None,
+    ):
+        whitespace = " "
+        message = (
+            f"StartRecord{whitespace}"
+            f"CreateNewDir={1 if create_new_dir else 0}{whitespace}"
+            f"RecDir={remote_path}\\{acquisition_name}{whitespace}"
+            f"PrependText={prepend_text}{whitespace}"
+            f"AppendText={append_text}{whitespace}"
+        )
+        return message
+
+    def _send_start_record(self, message):
+        return self.send_message(
+            message=message, expected_return="StartedRecording"
+        )
+
     def start_recording(self):
         """
         StartRecord
@@ -166,15 +190,14 @@ class RemoteOpenEphysController:
             [AppendText=some_text]
         """
         session_name = self._make_full_acquisition_name()
-        append_text = ""
-        whitespace = " "
-        message = (
-            f"StartRecord{whitespace}"
-            f"CreateNewDir={1 if self.create_new_dir else 0}{whitespace}"
-            f"RecDir={self.remote_path}\\{self.acquisition_name}{whitespace}"
-            f"PrependText={session_name}{whitespace}"
-            f"AppendText={append_text}{whitespace}"
+
+        message = self._make_start_message_string(
+            create_new_dir=self.create_new_dir,
+            remote_path=self.remote_path,
+            acquisition_name=self.acquisition_name,
+            prepend_text=session_name,
         )
+
         self._persists_metadata(session_name)
 
         self.start_preview()
@@ -184,11 +207,32 @@ class RemoteOpenEphysController:
         if is_previewing is True:
             logging.info(f"Setting up for session:\t {session_name}")
             logging.info(f"Sesion path:\n\t{self.local_path_full}\n")
-            return self.send_message(
-                message=message, expected_return="StartedRecording"
-            )
+            return self._send_start_record(message)
         else:
             logging.info(f"Cannot start preview. Replied: {is_previewing}")
+
+    def safeguard_path_by_overwrite(self):
+        session_name = f"acquisition-{uuid4()}"
+        message = self._make_start_message_string(
+            create_new_dir=True,
+            remote_path=r"E:\\OE_DATA\\",
+            acquisition_name=self.acquisition_name,
+            prepend_text=session_name,
+        )
+
+        self.start_preview()
+        time.sleep(self.default_delay)
+        is_previewing = self.is_previewing()
+        time.sleep(self.default_delay)
+        if is_previewing is True:
+            logging.info(f"Setting up for session:\t {session_name}")
+            logging.info(f"Sesion path:\n\t{self.local_path_full}\n")
+            self._send_start_record(message)
+        else:
+            logging.info(f"Cannot start preview. Replied: {is_previewing}")
+
+        self.stop_recording()
+        logging.info("Safeguard session set")
 
     def stop_recording(self):
         return self.send_message(

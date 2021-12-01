@@ -40,6 +40,8 @@ def run_remote_ephys():
         logging.info("Recording toggle")
         if ctrl.is_recording():
             ctrl.stop_recording()
+            # Safety feature to safeguard against later acquisitions on top of this path in RecordNode:
+            ctrl.safeguard_path_by_overwrite()
         else:
             ctrl.start_recording()
 
@@ -88,5 +90,7 @@ def test_record():
 
 if __name__ == '__main__':
     # import sys
-    # sys.argv += ["--preview"]
+    sys.argv += ["--record"]
     run_remote_ephys()
+
+    print("x")
