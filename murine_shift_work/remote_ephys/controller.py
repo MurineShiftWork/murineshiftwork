@@ -161,16 +161,16 @@ class RemoteOpenEphysController:
     @staticmethod
     def _make_start_message_string(
         create_new_dir=True,
-        remote_path=None,
-        acquisition_name=None,
-        prepend_text=None,
-        append_text=None,
+        remote_path="",
+        acquisition_name="",
+        prepend_text="",
+        append_text="",
     ):
         whitespace = " "
         message = (
             f"StartRecord{whitespace}"
             f"CreateNewDir={1 if create_new_dir else 0}{whitespace}"
-            f"RecDir={remote_path}\\{acquisition_name}{whitespace}"
+            f"RecDir={str(remote_path)}\\{acquisition_name}{whitespace}"
             f"PrependText={prepend_text}{whitespace}"
             f"AppendText={append_text}{whitespace}"
         )
