@@ -1,3 +1,4 @@
+import logging
 from glob import glob
 from pathlib import Path
 
@@ -69,7 +70,7 @@ def read_session_data(
             session_data["settings.task"] = read_settings_py(file=v)
 
         else:
-            print(f"Unrecognized file: {k} - {v}")
+            logging.debug(f"Unrecognized file: {k} - {v}")
 
     # Check for legacy files
     for k, v in session_files_dict.items():
