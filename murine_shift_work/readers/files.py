@@ -91,9 +91,13 @@ def read_trial_df(
     if return_raw:
         return df
     else:
-        df = __dict_series_to_pd_columns(df=df, column="info")
-        df = __dict_series_to_pd_columns(df=df, column="States timestamps")
-        df = __dict_series_to_pd_columns(df=df, column="Events timestamps")
+        try:
+            df = __dict_series_to_pd_columns(df=df, column="info")
+            df = __dict_series_to_pd_columns(df=df, column="States timestamps")
+            df = __dict_series_to_pd_columns(df=df, column="Events timestamps")
+        except KeyError:
+            print("KEY ERROR", filepath)
+            return None
 
         # Column exists in acquisition, but not used in namespace.
         if "analysis" in df:

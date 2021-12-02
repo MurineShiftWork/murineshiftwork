@@ -39,7 +39,7 @@ def read_session_data(
     files_in_dir = glob(str(session_dir / "*"))
 
     def _prepare_key(s=None):
-        return s.split(".msw.")[-1].strip(".msw.")
+        return s.split(".msw.")[-1].replace("msw", "").strip(".")
 
     session_files_dict = {
         _prepare_key(v): v for v in files_in_dir if test_is_recognized_msw_file(v)
