@@ -58,7 +58,7 @@ def read_session_data(
 
         elif k.endswith("json") and ".msw." in v:
             # 3 files: task & process, optionally: settings.ephys for remote acquisition sessions
-            session_data[k.replace(".json", "")] = read_json(file=session_files_dict[k])
+            session_data[k.replace(".json", "")] = read_json(file=v)
 
         elif Path(k).name == "task_settings.py" and is_legacy_session:
             session_data["settings.task"] = read_settings_py(file=v)
