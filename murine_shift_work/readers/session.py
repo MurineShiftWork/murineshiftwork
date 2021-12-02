@@ -38,8 +38,11 @@ def read_session_data(
 
     files_in_dir = glob(str(session_dir / "*"))
 
+    def _prepare_key(s=None):
+        return s.split(".msw.")[-1].strip(".msw.")
+
     session_files_dict = {
-        v.split(".msw.")[-1]: v for v in files_in_dir if test_is_recognized_msw_file(v)
+        _prepare_key(v): v for v in files_in_dir if test_is_recognized_msw_file(v)
     }
     is_legacy_session = test_is_legacy_format(session_dir=session_dir)
 
