@@ -83,9 +83,14 @@ def read_trial_df(
 ):
     df = pd.read_pickle(filepath)
 
+    if df.empty or df.shape == (1, 1):
+        logging.debug("df is empty or shape weird")
+        return None
+
     # If only one column called "0", then is Series of disrupted session, not DataFrame
     columns = list(df.columns)
     if columns.__len__() == 1 and 0 in columns:
+        logging.debug("df has only one column, which is 0")
         return None
 
     if return_raw:
@@ -96,7 +101,7 @@ def read_trial_df(
             df = __dict_series_to_pd_columns(df=df, column="States timestamps")
             df = __dict_series_to_pd_columns(df=df, column="Events timestamps")
         except KeyError:
-            print("KEY ERROR", filepath)
+            logging.debug("KEY ERROR", filepath)
             return None
 
         # Column exists in acquisition, but not used in namespace.
