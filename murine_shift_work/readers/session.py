@@ -70,14 +70,19 @@ def read_session_data(
     required_file_keys = ["raw", "df", "settings.task"]
     if not is_legacy_session:
         required_file_keys += ["settings.process"]
+    else:
+        session_data["is_legacy_session"] = is_legacy_session
 
     session_data["is_complete_session"] = True
     for k in required_file_keys:
         if k not in session_data:
             session_data["is_complete_session"] = False
 
-        if k in session_data and session_data[k] is None:
-            session_data["is_complete_session"] = False
+    if "raw" in session_data and session_data["raw"] is None and load_raw:
+        session_data["complete_session"] = False
+
+    if "df" in session_data and session_data["df"] is None:
+        session_data["complete_session"] = False
 
     # Check if is ephys session at top level
     session_data["is_ephys_session"] = (
