@@ -47,6 +47,8 @@ def read_session_data(
     is_legacy_session = test_is_legacy_format(session_dir=session_dir)
 
     session_data = {}
+    session_data["is_legacy_session"] = is_legacy_session
+
     for k, v in session_files_dict.items():
         if Path(k).name.endswith("csv"):
             # Add key for session completeness, but might be empty if input load_raw=False
@@ -69,23 +71,31 @@ def read_session_data(
         else:
             print(f"Unrecognized file: {k} - {v}")
 
+    # Check for legacy files
+    for k, v in session_files_dict.items():
+        if k.endswith("settings.json") and "settings.process" not in session_data:
+            session_data["settings.process"] = read_json(v)
+
+        elif k.endswith("settings") and "settings.task" not in session_data:
+            session_data["settings.task"] = read_json(v)
+
     # Check if session data is complete
     required_file_keys = ["raw", "df", "settings.task"]
     if not is_legacy_session:
         required_file_keys += ["settings.process"]
-    else:
-        session_data["is_legacy_session"] = is_legacy_session
 
-    session_data["is_complete_session"] = True
+    is_complete_session = True
     for k in required_file_keys:
         if k not in session_data:
-            session_data["is_complete_session"] = False
+            is_complete_session = False
 
     if "raw" in session_data and session_data["raw"] is None and load_raw:
-        session_data["complete_session"] = False
+        is_complete_session = False
 
     if "df" in session_data and session_data["df"] is None:
-        session_data["complete_session"] = False
+        is_complete_session = False
+
+    session_data["is_complete_session"] = is_complete_session
 
     # Check if is ephys session at top level
     session_data["is_ephys_session"] = (
