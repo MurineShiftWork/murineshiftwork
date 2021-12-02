@@ -76,6 +76,9 @@ def read_session_data(
         if k not in session_data:
             session_data["complete_session"] = False
 
+        if k in session_data and session_data[k] is None:
+            session_data["complete_session"] = False
+
     # Check if is ephys session at top level
     session_data["is_ephys_session"] = (
         True if "settings.ephys" in session_data else False

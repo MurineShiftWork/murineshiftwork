@@ -83,6 +83,11 @@ def read_trial_df(
 ):
     df = pd.read_pickle(filepath)
 
+    # If only one column called "0", then is Series of disrupted session, not DataFrame
+    columns = list(df.columns)
+    if columns.__len__() == 1 and 0 in columns:
+        return None
+
     if return_raw:
         return df
     else:
