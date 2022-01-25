@@ -59,6 +59,8 @@ class Task(TaskRunner):
                 )
                 break
 
+            trial_index += 1
+
 
 def run_task(**args_dict):
 

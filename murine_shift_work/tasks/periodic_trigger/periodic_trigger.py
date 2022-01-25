@@ -21,7 +21,7 @@ class Task(TaskRunner):
         TRIGGER_ITI = 5  # seconds
 
         trial_index = 0
-        n_max_trials = 1500
+        n_max_trials = 15000
         while self.continue_task and trial_index <= n_max_trials:
             logging.info(f"Executing trial {trial_index}")
 
@@ -55,6 +55,8 @@ class Task(TaskRunner):
                     f"No data returned on trial #{trial_index}. Terminating protocol."
                 )
                 break
+
+            trial_index += 1
 
 
 def run_task(**kwargs):
