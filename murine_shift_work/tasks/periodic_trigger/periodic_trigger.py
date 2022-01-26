@@ -1,6 +1,7 @@
 import logging
 import time
 
+import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 
@@ -23,7 +24,7 @@ class Task(TaskRunner):
         trial_index = 0
         n_max_trials = 15000
         while self.continue_task and trial_index <= n_max_trials:
-            logging.info(f"Executing trial {trial_index}")
+            logging.info(f"Executing trial {trial_index} [Runtime: {np.round(trial_index*TRIGGER_ITI,3)}]")
 
             if trial_index == 0:
                 sma = make_protocol_identifier_ttl_sequence(
