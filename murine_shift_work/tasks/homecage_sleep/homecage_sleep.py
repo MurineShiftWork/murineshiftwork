@@ -11,8 +11,8 @@ def run_task(**args_dict):
     args_dict.update(
         {
             "ttl_identifier_sequence": "sLsLss",
-            "trigger_iti": 1,
-            "n_max_trials": 10,
+            "trigger_iti": 5,
+            "n_max_trials": 1500,
         }
     )
     run_task_core(**args_dict)

@@ -26,6 +26,9 @@ class Task(TaskRunner):
         n_max_trials = self.input_kwargs.get("n_max_trials", 1500)
         # TTL_IDENTIFIER_SEQUENCE = get_ttl_identifier_sequence(__file__)
         # TRIGGER_ITI = 5  # seconds
+        logging.info(
+            f"Using TTL '{ttl_identifier_sequence}' with ITI of {trigger_iti}s for {n_max_trials} trials."
+        )
 
         trial_index = 0
         while self.continue_task and trial_index <= n_max_trials:
