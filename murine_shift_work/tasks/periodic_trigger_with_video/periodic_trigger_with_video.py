@@ -1,6 +1,5 @@
 import logging
 import time
-from pathlib import Path
 
 import numpy as np
 from pybpodapi.protocol import Bpod
@@ -13,7 +12,6 @@ from murine_shift_work.logic.specific_state_machines import (
 )
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
-from murine_shift_work.settings import get_ttl_identifier_sequence
 
 
 class Task(TaskRunner):
@@ -21,18 +19,24 @@ class Task(TaskRunner):
 
     def run(self) -> None:
 
-        TTL_IDENTIFIER_SEQUENCE = get_ttl_identifier_sequence(__file__)
-        TRIGGER_ITI = 5  # seconds
+        ttl_identifier_sequence = self.input_kwargs.get(
+            "ttl_identifier_sequence", "LLssss"
+        )
+        trigger_iti = self.input_kwargs.get("trigger_iti", 5)
+        n_max_trials = self.input_kwargs.get("n_max_trials", 1500)
+        # TTL_IDENTIFIER_SEQUENCE = get_ttl_identifier_sequence(__file__)
+        # TRIGGER_ITI = 5  # seconds
 
         trial_index = 0
-        n_max_trials = 1500
         while self.continue_task and trial_index <= n_max_trials:
-            logging.info(f"Executing trial {trial_index} [Runtime: {np.round(trial_index*TRIGGER_ITI/60,3)}min]")
+            logging.info(
+                f"Executing trial {trial_index} [Runtime: {np.round(trial_index*trigger_iti/60,3)}min]"
+            )
 
             if trial_index == 0:
                 sma = make_protocol_identifier_ttl_sequence(
                     bpod=self.bpod,
-                    sequence=TTL_IDENTIFIER_SEQUENCE,
+                    sequence=ttl_identifier_sequence,
                     output_chanel_pulse=self._bnc_channel_trial_onset,
                 )
             else:
@@ -47,7 +51,7 @@ class Task(TaskRunner):
 
                 sma.add_state(
                     state_name="iti",
-                    state_timer=TRIGGER_ITI,
+                    state_timer=trigger_iti,
                     state_change_conditions={Bpod.Events.Tup: "exit"},
                     output_actions=[],
                 )

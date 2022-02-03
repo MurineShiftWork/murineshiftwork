@@ -24,7 +24,9 @@ class Task(TaskRunner):
         trial_index = 0
         n_max_trials = 15000
         while self.continue_task and trial_index <= n_max_trials:
-            logging.info(f"Executing trial {trial_index} [Runtime: {np.round(trial_index*TRIGGER_ITI/60,3)}min]")
+            logging.info(
+                f"Executing trial {trial_index} [Runtime: {np.round(trial_index*TRIGGER_ITI/60,3)}min]"
+            )
 
             if trial_index == 0:
                 sma = make_protocol_identifier_ttl_sequence(

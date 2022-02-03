@@ -1,14 +1,15 @@
 TTL_IDENTIFIER_SEQUENCE = "LsLsss"
 N_MAX_TRIALS = 100
 TRIGGER_ITI = 1  # seconds
+RECORD_VIDEO = True  # ! Not implemented
 
 [hardware]
     serial_port_pulsepal = "/dev/ttyACM1"
 
 [stimulation]
     # Excitation
-    pulse_duration = 0.01
-    pulse_frequency = 2.5
+    pulse_duration = 0.005
+    pulse_frequency = 20
     pulse_train_duration = 2
     pulse_train_delay = 0
     trigger_channels_for_stimulation = [1,]  # values: 1,2 -- no python index offset here as is used for eval

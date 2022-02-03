@@ -112,12 +112,12 @@ class Stimulation:
         self.pulsePal.pulseTrainDuration[channel] = float(pulseTrainDuration)
         # delay until pulse train starts
         self.pulsePal.pulseTrainDelay[channel] = round(float(pulseTrainDelay), 3)
-        
+
         # BIphasic
-        #self.pulsePal.interPhaseInterval[channel] = .005  # 10ms Li/Svoboda/2015
-        #self.pulsePal.phase2Duration[channel] = round(float(phase1Duration), 3)
-        #self.pulsePal.phase2Voltage[channel] = phase1Voltage
-        
+        # self.pulsePal.interPhaseInterval[channel] = .005  # 10ms Li/Svoboda/2015
+        # self.pulsePal.phase2Duration[channel] = round(float(phase1Duration), 3)
+        # self.pulsePal.phase2Voltage[channel] = phase1Voltage
+
     def connect(self):
         self.pulsePal.connect(self.port)
         self.off()

@@ -2,9 +2,9 @@ import json
 import logging
 import os.path
 import time
-from uuid import uuid4
 from datetime import datetime
 from pathlib import Path
+from uuid import uuid4
 
 import zmq
 
@@ -177,9 +177,7 @@ class RemoteOpenEphysController:
         return message
 
     def _send_start_record(self, message):
-        return self.send_message(
-            message=message, expected_return="StartedRecording"
-        )
+        return self.send_message(message=message, expected_return="StartedRecording")
 
     def start_recording(self):
         """

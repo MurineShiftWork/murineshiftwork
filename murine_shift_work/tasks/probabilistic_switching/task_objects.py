@@ -300,7 +300,8 @@ class TaskControl(object):
                 and self.moving_average() > self.criterion_contrast_blocks
             )
             or (
-                self.block_trial_number >= self.max_block_length - self.min_trials_post_criterion
+                self.block_trial_number
+                >= self.max_block_length - self.min_trials_post_criterion
             )
         ):
             self.criterion_block_switch_reached = True

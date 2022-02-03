@@ -26,37 +26,37 @@ void send_trigger() {
 void setup() {
   // set up input pin
   pinMode(input_pin, INPUT);
-  
+
   // set up output pin range
   for(int i = output_pin_range_start; i <= output_pin_range_end; i++){
     pinMode(i, OUTPUT);
     digitalWrite(i, LOW);
   }
-  
+
   // serial for debugging
   Serial.begin(9600);
-  Serial.println("Set up."); 
-  
+  Serial.println("Set up.");
+
 }
 
 
 void loop() {
   input_reading = digitalRead(input_pin);
-  
+
   if ( (millis()-debounce_check_time ) > debounce_delay ) {
-    
+
     if (input_reading == HIGH) {
       // serial for debugging
       Serial.print(millis());
       Serial.println("Sending trigger");
-      
+
       // send trigger
       send_trigger();
-      
+
       // stop monitoring until debounced
       debounce_check_time = millis();
     }
 
   }
-  
+
 }

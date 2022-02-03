@@ -1,6 +1,6 @@
+import argparse
 import sys
 import time
-import argparse
 
 try:
     import RPi.GPIO as GPIO
@@ -17,7 +17,11 @@ def cleanup():
 
 def event_callback(pin):
     time_formatted = str(time.time()).split(".")
-    print(".".join([time_formatted[0][-3:], time_formatted[-1][:6]]), "Input detected on pin", pin)
+    print(
+        ".".join([time_formatted[0][-3:], time_formatted[-1][:6]]),
+        "Input detected on pin",
+        pin,
+    )
 
 
 def run_receiver_test(
@@ -28,11 +32,13 @@ def run_receiver_test(
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    GPIO.add_event_detect(pin, GPIO.FALLING, callback=event_callback, bouncetime=bouncetime)
+    GPIO.add_event_detect(
+        pin, GPIO.FALLING, callback=event_callback, bouncetime=bouncetime
+    )
 
     while True:
         try:
-            time.sleep(.001)
+            time.sleep(0.001)
         except KeyboardInterrupt:
             print("Stopping")
             cleanup()
