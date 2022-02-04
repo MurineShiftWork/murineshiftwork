@@ -111,7 +111,7 @@ def read_trial_df(
         if "analysis" in df:
             try:
                 df = __dict_series_to_pd_columns(df=df, column="analysis")
-            except BaseException:
+            except KeyError:
                 df = df.drop("analysis", axis=1)
 
         return df
