@@ -39,7 +39,7 @@ def read_json(file=None):
     return json.loads(data)
 
 
-def read_pybpod_csv(filepath=None, clean_events=True):
+def read_pybpod_csv(filepath=None, clean_events=True, return_trial_structure_only=True):
     """Read csv file from pybpod acquisition.
     Optional: clean up irrelevant events, but make backup with sed.
     """
@@ -66,9 +66,12 @@ def read_pybpod_csv(filepath=None, clean_events=True):
         f"{Path(filepath).name} - Applying datetime conversion to {session_raw.shape[0]} rows.."
     )
 
-    session_raw["TS"] = session_raw["TS"].apply(
-        lambda x: pd.to_datetime(x).to_pydatetime()
-    )
+    if return_trial_structure_only:
+        session_raw = session_raw.loc[session_raw["+INFO"].isna(), :]
+    else:
+        session_raw["TS"] = session_raw["TS"].apply(
+            lambda x: pd.to_datetime(x).to_pydatetime()
+        )
     return session_raw
 
 

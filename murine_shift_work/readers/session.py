@@ -13,6 +13,7 @@ def read_session_data(
     session_dir=None,
     load_raw=False,
     clean_port4_events=True,
+    return_trial_structure_only=True,
 ):
     """Read session data for this acquisition package.
 
@@ -28,9 +29,10 @@ def read_session_data(
         - Raw pybpod data:      .msw.csv or .csv [might be ambiguous with RCC files]
         - 2 settings files:     .msw.settings.[task|process].json
 
-    :param session_dir:
-    :param load_raw:
-    :param clean_port4_events:
+    :param session_dir: directory that contains session files
+    :param load_raw: load raw CSV file
+    :param clean_port4_events: remove events that occurred on Port4
+    :param return_trial_structure_only: returns only trial structure events, no port events etc.
     :return:
     """
     session_dir = Path(session_dir)
@@ -55,7 +57,9 @@ def read_session_data(
             session_data["raw"] = None
             if load_raw:
                 session_data["raw"] = read_pybpod_csv(
-                    filepath=v, clean_events=clean_port4_events
+                    filepath=v,
+                    clean_events=clean_port4_events,
+                    return_trial_structure_only=return_trial_structure_only,
                 )
 
         elif Path(k).name.endswith("pkl"):
