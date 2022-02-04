@@ -1,7 +1,9 @@
 import logging
 import time
+from pathlib import Path
 
 import numpy as np
+import pandas as pd
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 from rpi_camera_colony.control.conductor import Conductor
@@ -14,6 +16,40 @@ from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
 
 
+class TaskData:
+    save_path = None
+    data = []
+
+    def __init__(self, save_path=None):
+        super(TaskData, self).__init__()
+        self.save_path = save_path
+
+    def append(self, trial_index=None, trial_data=None, **info_dict_extension):
+        # If is TTL trial
+        first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
+        if trial_index < 1 and first_state_name.startswith("pulse"):
+            trial_type = "ttl"
+        else:
+            trial_type = "task"
+            # trial_data["info"] = {"trial_type": "ttl", "trial_index": trial_index}
+
+        trial_data["info"] = {
+            "trial_type": trial_type,
+            "trial_index": trial_index,
+            **info_dict_extension,
+        }
+
+        self.data.append(trial_data)
+
+    def save(self, save_path=None):
+        save_path = save_path or self.save_path
+        logging.debug("Saving task control data..")
+        dt = time.time()
+        df = pd.DataFrame(self.data)
+        df.to_pickle(str(save_path) + ".df.pkl")
+        logging.debug(f"Saved data in {np.round(time.time() - dt, 2)}s.")
+
+
 class Task(TaskRunner):
     _bnc_channel_trial_onset = Bpod.OutputChannels.BNC1
 
@@ -24,11 +60,12 @@ class Task(TaskRunner):
         )
         trigger_iti = self.input_kwargs.get("trigger_iti", 5)
         n_max_trials = self.input_kwargs.get("n_max_trials", 1500)
-        # TTL_IDENTIFIER_SEQUENCE = get_ttl_identifier_sequence(__file__)
-        # TRIGGER_ITI = 5  # seconds
         logging.info(
             f"Using TTL '{ttl_identifier_sequence}' with ITI of {trigger_iti}s for {n_max_trials} trials."
         )
+
+        save_path = Path(self.bpod.workspace_path) / self.bpod.session_name
+        task_data = TaskData(save_path=save_path)
 
         trial_index = 0
         while self.continue_task and trial_index <= n_max_trials:
@@ -67,6 +104,11 @@ class Task(TaskRunner):
                 )
                 break
 
+            task_data.append(
+                trial_index=trial_index,
+                trial_data=self.bpod.session.current_trial.export(),
+            )
+            task_data.save()
             trial_index += 1
 
 
