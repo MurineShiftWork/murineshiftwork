@@ -59,7 +59,10 @@ class Task(TaskRunner):
             "ttl_identifier_sequence", "LLssss"
         )
         trigger_iti = self.input_kwargs.get("trigger_iti", 5)
-        n_max_trials = self.input_kwargs.get("n_max_trials", 1500)
+        max_runtime = self.input_kwargs.get("max_runtime", 7200)
+        n_max_trials = self.input_kwargs.get(
+            "n_max_trials", np.ceil(max_runtime / trigger_iti)
+        )
         logging.info(
             f"Using TTL '{ttl_identifier_sequence}' with ITI of {trigger_iti}s for {n_max_trials} trials."
         )
@@ -70,7 +73,8 @@ class Task(TaskRunner):
         trial_index = 0
         while self.continue_task and trial_index <= n_max_trials:
             logging.info(
-                f"Executing trial {trial_index} [Runtime: {np.round(trial_index*trigger_iti/60,3)}min]"
+                f"Executing trial {trial_index}/{n_max_trials} "
+                f"[Runtime: {np.round(trial_index*trigger_iti/60,3)}min / {np.round(max_runtime/60,3)}min]"
             )
 
             if trial_index == 0:
