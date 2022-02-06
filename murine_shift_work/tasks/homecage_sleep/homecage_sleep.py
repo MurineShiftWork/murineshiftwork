@@ -7,12 +7,16 @@ from murine_shift_work.tasks.periodic_trigger_with_video.periodic_trigger_with_v
 
 
 def run_task(**args_dict):
+    trigger_iti = 5
+    max_runtime = 7200  # seconds
+    n_max_trials = int(max_runtime/trigger_iti)
 
     args_dict.update(
         {
             "ttl_identifier_sequence": "sLsLss",
-            "trigger_iti": 5,
-            "n_max_trials": 1500,
+            "trigger_iti": trigger_iti,
+            "n_max_trials": n_max_trials,
+            "max_runtime": max_runtime,
         }
     )
     run_task_core(**args_dict)
