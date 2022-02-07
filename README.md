@@ -193,6 +193,11 @@ session_data = read_session_data(session_dir=session_dir, load_raw=load_raw)
 - [ ]
 
 
+## Fixes & install hints
+
+- Ubuntu for 2+ monitors: (1) install Nvidia drivers from `software update -> additional drivers` menu, then (2) `sudo apt install lightdm`, (3) reboot, (4) `udo dpkg-reconfigure lightdm`
+
+
 ## Support websites
 [Bpod wiki](https://sites.google.com/site/bpoddocumentation)
 
