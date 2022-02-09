@@ -114,4 +114,8 @@ def read_trial_df(
             except KeyError:
                 df = df.drop("analysis", axis=1)
 
+        # Drop unnamed 0 column
+        if 0 in df.columns:
+            df = df.drop(0, axis=1)
+
         return df

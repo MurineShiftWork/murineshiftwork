@@ -99,6 +99,7 @@ def read_session_data(
 
     if "df" in session_data and session_data["df"] is None:
         is_complete_session = False
+        # FIXME: add option to recover trial start times from legacy acquisition from raw CSV
 
     session_data["is_complete_session"] = is_complete_session
 

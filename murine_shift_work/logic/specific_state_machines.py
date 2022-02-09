@@ -19,6 +19,8 @@ def make_protocol_identifier_ttl_sequence(
         f"Sending protocol TTL identifier: {sequence} on output channel {output_chanel_pulse}"
     )
 
+    # FIXME: add random sequence to identify the specific run for repeat protocol: f"{np.random.randint(0, 511):09b}"
+
     sma = StateMachine(bpod)
 
     for pidx, pulse in enumerate(sequence):
