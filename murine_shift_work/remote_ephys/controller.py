@@ -21,13 +21,15 @@ class RemoteOpenEphysController:
     remote_tcp_address = None
     timeout = 1
     acquisition_name = "_test_acquisition"
-    task_name = "ephys_multi_behaviour"
+    acquisition_task_name = "ephys_multi_behaviour"
+    session_name = ""
     remote_path = ""
     local_path = os.path.expanduser("~/data")
     create_new_dir = True
 
     datetime = None
     full_acquisition_name = ""
+    full_session_name = ""
 
     local_path_full = ""
     metadata_file = ""
@@ -45,6 +47,7 @@ class RemoteOpenEphysController:
         timeout=1,
         acquisition_name=None,
         acquisition_task=None,
+        session_name=None,
         remote_path=None,
         local_path=None,
         create_new_dir=True,
@@ -62,7 +65,8 @@ class RemoteOpenEphysController:
         self.remote_tcp_address = f"tcp://{self.remote_ip}:{self.remote_port}"
         self.timeout = timeout or self.timeout
         self.acquisition_name = acquisition_name or self.acquisition_name
-        self.task_name = acquisition_task or self.task_name
+        self.acquisition_task_name = acquisition_task or self.acquisition_task_name
+        self.session_name = session_name or self.session_name
         self.remote_path = str(remote_path).strip("\\") or self.remote_path
         self.local_path = local_path or self.local_path
         self.create_new_dir = create_new_dir or self.create_new_dir
@@ -70,16 +74,24 @@ class RemoteOpenEphysController:
         self.input_args = args
         self.input_kwargs = kwargs
 
-    def _make_full_acquisition_name(self):
+    def _make_full_acquisition_and_session_names(self):
         self.datetime = self._get_date_str()
         self.full_acquisition_name = "__".join(
-            [self.acquisition_name, self.datetime, self.task_name]
+            [self.acquisition_name, self.datetime, self.acquisition_task_name]
         )
-        return self.full_acquisition_name
+        if not self.session_name:
+            self.full_session_name = self.full_acquisition_name
+        else:
+            self.full_session_name = "__".join(
+                [self.acquisition_name, self.datetime, self.session_name]
+            )
+
+        return self.full_acquisition_name, self.full_session_name
 
     def __str__(self):
         d = {
             "Full acquisition name": self.full_acquisition_name or "<NOT_YET_DEFINED>",
+            "Full session name": self.session_name or "<NOT_YET_DEFINED>",
             "Acquisition path": self.remote_path,
             "Network address": self.remote_tcp_address,
         }
@@ -115,6 +127,8 @@ class RemoteOpenEphysController:
                 f.write(out_json)
                 logging.debug(f"Metadata written to: {self.metadata_file}")
                 logging.info(out_json)
+
+        return Path(self.metadata_file).exists()
 
     def send_message(self, message=None, expected_return=None):
         received = None
@@ -163,16 +177,17 @@ class RemoteOpenEphysController:
         create_new_dir=True,
         remote_path="",
         acquisition_name="",
-        prepend_text="",
-        append_text="",
+        full_acquisition_name="",
+        session_name="",
+        session_name_appendix="",
     ):
         whitespace = " "
         message = (
             f"StartRecord{whitespace}"
             f"CreateNewDir={1 if create_new_dir else 0}{whitespace}"
-            f"RecDir={str(remote_path)}\\{acquisition_name}{whitespace}"
-            f"PrependText={prepend_text}{whitespace}"
-            f"AppendText={append_text}{whitespace}"
+            f"RecDir={str(remote_path)}\\{acquisition_name}\\{full_acquisition_name}{whitespace}"
+            f"PrependText={session_name}{whitespace}"
+            f"AppendText={session_name_appendix}{whitespace}"
         )
         return message
 
@@ -187,25 +202,31 @@ class RemoteOpenEphysController:
             [PrependText=some_text]
             [AppendText=some_text]
         """
-        session_name = self._make_full_acquisition_name()
+        (
+            full_acquisition_name,
+            full_session_name,
+        ) = self._make_full_acquisition_and_session_names()
 
         message = self._make_start_message_string(
             create_new_dir=self.create_new_dir,
             remote_path=self.remote_path,
             acquisition_name=self.acquisition_name,
-            prepend_text=session_name,
+            full_acquisition_name=full_acquisition_name,
+            session_name=full_session_name,
         )
-
-        self._persists_metadata(session_name)
 
         self.start_preview()
         time.sleep(self.default_delay)
         is_previewing = self.is_previewing()
         time.sleep(self.default_delay)
         if is_previewing is True:
-            logging.info(f"Setting up for session:\t {session_name}")
+            logging.info(
+                f"Setting up for session:\t {full_acquisition_name} / {full_session_name}"
+            )
             logging.info(f"Sesion path:\n\t{self.local_path_full}\n")
-            return self._send_start_record(message)
+            record_success = self._send_start_record(message)
+            persist_success = self._persists_metadata(full_session_name)
+            return record_success and persist_success
         else:
             logging.info(f"Cannot start preview. Replied: {is_previewing}")
 
@@ -214,7 +235,7 @@ class RemoteOpenEphysController:
         message = self._make_start_message_string(
             create_new_dir=True,
             remote_path=r"E:\\OE_DATA\\",
-            prepend_text=session_name,
+            session_name=session_name,
         )
 
         self.start_preview()

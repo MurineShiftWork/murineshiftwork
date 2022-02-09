@@ -7,6 +7,7 @@ DEFAULT_REMOTE_PATH = r"E:\\OE_DATA\\LBR"
 DEFAULT_LOCAL_PATH = os.path.expanduser("~/data")
 DEFAULT_ACQUISITION_NAME = "_test_subject"
 DEFAULT_ACQUISITION_TASK = "ephys_multi_behaviour"
+DEFAULT_SESSION_NAME = "ephys_pxi"
 
 
 def make_parser_remote_ephys():
@@ -60,9 +61,16 @@ def make_parser_remote_ephys():
         default=DEFAULT_ACQUISITION_TASK,
         help=f"Acquisition task. Default: {DEFAULT_ACQUISITION_TASK}",
     )
+    connection_group.add_argument(
+        "-s",
+        "--session-name",
+        dest="session_name",
+        type=str,
+        default=DEFAULT_SESSION_NAME,
+        help=f"Acquisition task. Default: {DEFAULT_SESSION_NAME}",
+    )
     action_group = parser.add_argument_group("Actions")
     action_group.add_argument(
-        "-s",
         "--status",
         dest="status",
         action="store_true",
@@ -71,7 +79,6 @@ def make_parser_remote_ephys():
     )
 
     action_group.add_argument(
-        "-p",
         "--preview",
         dest="preview",
         action="store_true",
@@ -79,7 +86,6 @@ def make_parser_remote_ephys():
         help="Toggle preview",
     )
     action_group.add_argument(
-        "-r",
         "--record",
         dest="record",
         action="store_true",
