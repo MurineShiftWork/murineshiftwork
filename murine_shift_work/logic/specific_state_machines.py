@@ -1,7 +1,172 @@
 import logging
 
+import numpy as np
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
+
+
+def _compile_pulse(
+    sma=None,
+    pulse_index=None,
+    pulse_duration=None,
+    output_chanel_pulse=None,
+    inter_pulse_duration=None,
+    exit_state=None,
+):
+    sma.add_state(
+        state_name=f"pulse_{pulse_index}_on",
+        state_timer=pulse_duration,
+        state_change_conditions={"Tup": f"pulse_{pulse_index}_off"},
+        output_actions=[(output_chanel_pulse, 1)],
+    )
+
+    sma.add_state(
+        state_name=f"pulse_{pulse_index}_off",
+        state_timer=inter_pulse_duration,
+        state_change_conditions={"Tup": exit_state},
+        output_actions=[(output_chanel_pulse, 0)],
+    )
+    return sma
+
+
+def _add_protocol_ttl(
+    sma=None,
+    sequence=None,
+    pulse_duration=0.005,
+    inter_pulse_duration_long=0.500,
+    iti=None,
+    output_chanel_pulse=Bpod.OutputChannels.BNC2,
+    starting_pulse_index=0,
+    exit_state="exit",
+):
+    assert (
+        isinstance(sequence, str)
+        or isinstance(sequence, list)
+        or isinstance(sequence, tuple)
+    )
+    iti_state_name = "pulse_post_protocol_identifier"
+
+    if isinstance(sequence, str):
+        sequence = [*sequence]
+
+    if iti is None:
+        iti = round(2 * inter_pulse_duration_long, 3)
+
+    logging.info(
+        f"Sending protocol TTL identifier: {sequence} on output channel {output_chanel_pulse}"
+    )
+
+    for pulse_index, pulse_type in enumerate(sequence):
+        pulse_type = pulse_type.upper()
+        if pulse_type.startswith("L"):
+            ipi = round(inter_pulse_duration_long, 3)
+        elif pulse_type.startswith("S"):
+            ipi = round(inter_pulse_duration_long / 2, 3)
+        else:
+            raise ValueError(
+                f"Pulse type has to be either 'LONG' or 'SHORT' as a string, but is {pulse_type}"
+            )
+
+        sma = _compile_pulse(
+            sma=sma,
+            pulse_index=starting_pulse_index + pulse_index + 1,
+            pulse_duration=pulse_duration,
+            output_chanel_pulse=output_chanel_pulse,
+            inter_pulse_duration=ipi,
+            exit_state=iti_state_name
+            if pulse_index == len(sequence) - 1
+            else f"pulse_{starting_pulse_index+pulse_index+2}_on",
+        )
+
+    sma.add_state(
+        state_name=iti_state_name,
+        state_timer=iti,
+        state_change_conditions={"Tup": exit_state},
+        output_actions=[(output_chanel_pulse, 0)],
+    )
+
+    return sma
+
+
+def _add_random_identifier(
+    sma=None,
+    bits=32,
+    pulse_duration=0.02,
+    inter_pulse_interval_long=0.02,
+    iti=None,
+    output_chanel_pulse=Bpod.OutputChannels.BNC2,
+    starting_pulse_index=0,  # FIXME: upstream
+    exit_state="exit",
+):
+    barcode = f"{np.random.randint(low=0, high=2**bits):b}"
+    iti_state_name = "pulse_post_random_identifier"
+    if iti is None:
+        iti = round(2 * inter_pulse_interval_long, 3)
+
+    logging.info(
+        f"Sending random TTL identifier: {barcode} on output channel {output_chanel_pulse}"
+    )
+
+    for bit_index, bit in enumerate(barcode):
+        if int(bit):
+            ipi = inter_pulse_interval_long
+        else:
+            ipi = round(inter_pulse_interval_long / 2, 3)
+
+        sma = _compile_pulse(
+            sma=sma,
+            pulse_index=starting_pulse_index + bit_index + 1,
+            pulse_duration=pulse_duration,
+            output_chanel_pulse=output_chanel_pulse,
+            inter_pulse_duration=ipi,
+            exit_state=iti_state_name
+            if bit_index == len(barcode) - 1
+            else f"pulse_{starting_pulse_index+bit_index+2}_on",
+        )
+
+    sma.add_state(
+        state_name=iti_state_name,
+        state_timer=iti,
+        state_change_conditions={"Tup": exit_state},
+        output_actions=[(output_chanel_pulse, 0)],
+    )
+
+    return sma
+
+
+def make_ttl_identifier_sequences(
+    bpod=None,
+    sequence=None,
+    pulse_duration=0.005,
+    inter_pulse_duration_long=0.500,
+    iti=None,
+    output_chanel_pulse=Bpod.OutputChannels.BNC2,
+):
+    sma = StateMachine(bpod)
+
+    sma = _add_protocol_ttl(
+        sma=sma,
+        sequence=sequence,
+        pulse_duration=pulse_duration,
+        inter_pulse_duration_long=inter_pulse_duration_long,
+        iti=iti,
+        output_chanel_pulse=output_chanel_pulse,
+        starting_pulse_index=0,
+        exit_state="exit",
+    )
+
+    starting_pulse_index = len(sequence)
+    sma = _add_random_identifier(
+        sma=sma,
+        bits=32,
+        pulse_duration=pulse_duration,
+        inter_pulse_interval_long=0.1,
+        iti=iti,
+        output_chanel_pulse=output_chanel_pulse,
+        starting_pulse_index=starting_pulse_index,
+        exit_state="exit",
+    )
+    return sma
 
 
 def make_protocol_identifier_ttl_sequence(
@@ -9,11 +174,14 @@ def make_protocol_identifier_ttl_sequence(
     sequence=None,
     pulse_duration=0.005,
     inter_pulse_duration_long=0.500,
-    inter_trial_interval=4,
+    inter_trial_interval=None,
     output_chanel_pulse=Bpod.OutputChannels.BNC2,
 ):
     if isinstance(sequence, str):
         sequence = [*sequence]
+
+    if inter_trial_interval is None:
+        inter_trial_interval = round(2 * inter_pulse_duration_long, 3)
 
     logging.info(
         f"Sending protocol TTL identifier: {sequence} on output channel {output_chanel_pulse}"
@@ -61,7 +229,6 @@ def make_protocol_identifier_ttl_sequence(
         state_change_conditions={"Tup": "exit"},
         output_actions=[(output_chanel_pulse, 0)],
     )
-
     return sma
 
 
