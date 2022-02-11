@@ -144,6 +144,7 @@ def make_ttl_identifier_sequences(
 ):
     sma = StateMachine(bpod)
 
+    starting_pulse_index = len(sequence)
     sma = _add_protocol_ttl(
         sma=sma,
         sequence=sequence,
@@ -152,10 +153,9 @@ def make_ttl_identifier_sequences(
         iti=iti,
         output_chanel_pulse=output_chanel_pulse,
         starting_pulse_index=0,
-        exit_state="exit",
+        exit_state=f"pulse_{starting_pulse_index}_on",
     )
 
-    starting_pulse_index = len(sequence)
     sma = _add_random_identifier(
         sma=sma,
         bits=32,
