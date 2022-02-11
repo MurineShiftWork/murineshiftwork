@@ -174,67 +174,67 @@ def make_ttl_identifier_sequences(
     return sma
 
 
-def make_protocol_identifier_ttl_sequence(
-    bpod=None,
-    sequence=None,
-    pulse_duration=0.005,
-    inter_pulse_duration_long=0.500,
-    inter_trial_interval=None,
-    output_chanel_pulse=Bpod.OutputChannels.BNC2,
-):
-    if isinstance(sequence, str):
-        sequence = [*sequence]
-
-    if inter_trial_interval is None:
-        inter_trial_interval = round(2 * inter_pulse_duration_long, 3)
-
-    logging.info(
-        f"Sending protocol TTL identifier: {sequence} on output channel {output_chanel_pulse}"
-    )
-
-    # FIXME: add random sequence to identify the specific run for repeat protocol: f"{np.random.randint(0, 511):09b}"
-
-    sma = StateMachine(bpod)
-
-    for pidx, pulse in enumerate(sequence):
-        # make __read_next_frame pulse
-        if pulse.upper().startswith("L"):
-            inter_pulse_duration = round(inter_pulse_duration_long, 3)
-        elif pulse.upper().startswith("S"):
-            inter_pulse_duration = round(inter_pulse_duration_long / 2, 3)
-        else:
-            raise ValueError(
-                f"Pulse type has to be either 'LONG' or 'SHORT' as a string, but is {pulse}"
-            )
-
-        # if is last pulse, add transition to inter-trial interval, otherwise to __read_next_frame pulse
-        if pidx == len(sequence) - 1:
-            exit_state = "pulse_trial_post_interval"
-        else:
-            exit_state = f"pulse_{pidx+1}_on"
-
-        sma.add_state(
-            state_name=f"pulse_{pidx}_on",
-            state_timer=pulse_duration,
-            state_change_conditions={"Tup": f"pulse_{pidx}_off"},
-            output_actions=[(output_chanel_pulse, 1)],
-        )
-
-        sma.add_state(
-            state_name=f"pulse_{pidx}_off",
-            state_timer=inter_pulse_duration,
-            state_change_conditions={"Tup": exit_state},
-            output_actions=[(output_chanel_pulse, 0)],
-        )
-
-    # Inter-trial interval
-    sma.add_state(
-        state_name="pulse_trial_post_interval",
-        state_timer=inter_trial_interval,
-        state_change_conditions={"Tup": "exit"},
-        output_actions=[(output_chanel_pulse, 0)],
-    )
-    return sma
+# def make_protocol_identifier_ttl_sequence(
+#     bpod=None,
+#     sequence=None,
+#     pulse_duration=0.005,
+#     inter_pulse_duration_long=0.500,
+#     inter_trial_interval=None,
+#     output_chanel_pulse=Bpod.OutputChannels.BNC2,
+# ):
+#     if isinstance(sequence, str):
+#         sequence = [*sequence]
+#
+#     if inter_trial_interval is None:
+#         inter_trial_interval = round(2 * inter_pulse_duration_long, 3)
+#
+#     logging.info(
+#         f"Sending protocol TTL identifier: {sequence} on output channel {output_chanel_pulse}"
+#     )
+#
+#     # FIXME: add random sequence to identify the specific run for repeat protocol: f"{np.random.randint(0, 511):09b}"
+#
+#     sma = StateMachine(bpod)
+#
+#     for pidx, pulse in enumerate(sequence):
+#         # make __read_next_frame pulse
+#         if pulse.upper().startswith("L"):
+#             inter_pulse_duration = round(inter_pulse_duration_long, 3)
+#         elif pulse.upper().startswith("S"):
+#             inter_pulse_duration = round(inter_pulse_duration_long / 2, 3)
+#         else:
+#             raise ValueError(
+#                 f"Pulse type has to be either 'LONG' or 'SHORT' as a string, but is {pulse}"
+#             )
+#
+#         # if is last pulse, add transition to inter-trial interval, otherwise to __read_next_frame pulse
+#         if pidx == len(sequence) - 1:
+#             exit_state = "pulse_trial_post_interval"
+#         else:
+#             exit_state = f"pulse_{pidx+1}_on"
+#
+#         sma.add_state(
+#             state_name=f"pulse_{pidx}_on",
+#             state_timer=pulse_duration,
+#             state_change_conditions={"Tup": f"pulse_{pidx}_off"},
+#             output_actions=[(output_chanel_pulse, 1)],
+#         )
+#
+#         sma.add_state(
+#             state_name=f"pulse_{pidx}_off",
+#             state_timer=inter_pulse_duration,
+#             state_change_conditions={"Tup": exit_state},
+#             output_actions=[(output_chanel_pulse, 0)],
+#         )
+#
+#     # Inter-trial interval
+#     sma.add_state(
+#         state_name="pulse_trial_post_interval",
+#         state_timer=inter_trial_interval,
+#         state_change_conditions={"Tup": "exit"},
+#         output_actions=[(output_chanel_pulse, 0)],
+#     )
+#     return sma
 
 
 def add_trial_onset_ttl(

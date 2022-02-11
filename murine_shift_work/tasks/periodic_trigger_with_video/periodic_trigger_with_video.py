@@ -10,7 +10,7 @@ from rpi_camera_colony.control.conductor import Conductor
 
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.logic.specific_state_machines import (
-    make_protocol_identifier_ttl_sequence,
+    make_ttl_identifier_sequences,
 )
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
@@ -78,7 +78,7 @@ class Task(TaskRunner):
             )
 
             if trial_index == 0:
-                sma = make_protocol_identifier_ttl_sequence(
+                sma = make_ttl_identifier_sequences(
                     bpod=self.bpod,
                     sequence=ttl_identifier_sequence,
                     output_chanel_pulse=self._bnc_channel_trial_onset,
