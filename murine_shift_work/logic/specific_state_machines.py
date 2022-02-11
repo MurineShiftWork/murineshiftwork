@@ -146,7 +146,6 @@ def make_ttl_identifier_sequences(
 
     starting_pulse_index = len(sequence)
     exit_state_protocol_ttl = f"pulse_{starting_pulse_index}_on"
-    print(starting_pulse_index, exit_state_protocol_ttl)
 
     sma = _add_protocol_ttl(
         sma=sma,
