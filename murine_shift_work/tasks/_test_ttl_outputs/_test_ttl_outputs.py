@@ -68,7 +68,10 @@ class Task(TaskRunner):
             self.bpod.send_state_machine(sma)
 
             if not self.bpod.run_state_machine(sma):
-                print("nothing returned")
+                logging.warning(
+                    f"No data returned on trial #{trial_index}. Terminating protocol."
+                )
+                break
 
             task_data.append(
                 trial_index=trial_index,
