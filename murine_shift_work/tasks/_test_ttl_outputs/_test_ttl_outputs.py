@@ -7,7 +7,7 @@ import pandas as pd
 from pybpodapi.bpod import Bpod
 
 from murine_shift_work.logic.specific_state_machines import (
-    make_protocol_identifier_ttl_sequence,
+    make_ttl_identifier_sequences,
 )
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
@@ -59,7 +59,7 @@ class Task(TaskRunner):
             logging.info(
                 f"Testing BNC outputs with TTL sequence {test_sequence} on BNC channel {bnc_channel}"
             )
-            sma = make_protocol_identifier_ttl_sequence(
+            sma = make_ttl_identifier_sequences(
                 bpod=self.bpod,
                 sequence=test_sequence,
                 output_chanel_pulse=eval(f"Bpod.OutputChannels.BNC{bnc_channel}"),
