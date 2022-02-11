@@ -53,7 +53,7 @@ def _add_protocol_ttl(
         iti = round(2 * inter_pulse_duration_long, 3)
 
     logging.info(
-        f"Sending protocol TTL identifier: {sequence} on output channel {output_chanel_pulse}"
+        f"Adding protocol TTL identifier: {sequence} on output channel {output_chanel_pulse}"
     )
 
     for pulse_index, pulse_type in enumerate(sequence):
@@ -69,13 +69,13 @@ def _add_protocol_ttl(
 
         sma = _compile_pulse(
             sma=sma,
-            pulse_index=starting_pulse_index + pulse_index + 1,
+            pulse_index=starting_pulse_index + pulse_index,
             pulse_duration=pulse_duration,
             output_chanel_pulse=output_chanel_pulse,
             inter_pulse_duration=ipi,
             exit_state=iti_state_name
             if pulse_index == len(sequence) - 1
-            else f"pulse_{starting_pulse_index+pulse_index+2}_on",
+            else f"pulse_{starting_pulse_index+pulse_index+1}_on",
         )
 
     sma.add_state(
@@ -104,7 +104,7 @@ def _add_random_identifier(
         iti = round(2 * inter_pulse_interval_long, 3)
 
     logging.info(
-        f"Sending random TTL identifier: {barcode} on output channel {output_chanel_pulse}"
+        f"Adding random TTL identifier: {barcode} on output channel {output_chanel_pulse}"
     )
 
     for bit_index, bit in enumerate(barcode):
@@ -115,13 +115,13 @@ def _add_random_identifier(
 
         sma = _compile_pulse(
             sma=sma,
-            pulse_index=starting_pulse_index + bit_index + 1,
+            pulse_index=starting_pulse_index + bit_index,
             pulse_duration=pulse_duration,
             output_chanel_pulse=output_chanel_pulse,
             inter_pulse_duration=ipi,
             exit_state=iti_state_name
             if bit_index == len(barcode) - 1
-            else f"pulse_{starting_pulse_index+bit_index+2}_on",
+            else f"pulse_{starting_pulse_index+bit_index+1}_on",
         )
 
     sma.add_state(
@@ -138,13 +138,16 @@ def make_ttl_identifier_sequences(
     bpod=None,
     sequence=None,
     pulse_duration=0.005,
-    inter_pulse_duration_long=0.500,
+    inter_pulse_duration_long=0.200,
     iti=None,
     output_chanel_pulse=Bpod.OutputChannels.BNC2,
 ):
     sma = StateMachine(bpod)
 
     starting_pulse_index = len(sequence)
+    exit_state_protocol_ttl = f"pulse_{starting_pulse_index}_on"
+    print(starting_pulse_index, exit_state_protocol_ttl)
+
     sma = _add_protocol_ttl(
         sma=sma,
         sequence=sequence,
@@ -153,19 +156,21 @@ def make_ttl_identifier_sequences(
         iti=iti,
         output_chanel_pulse=output_chanel_pulse,
         starting_pulse_index=0,
-        exit_state=f"pulse_{starting_pulse_index}_on",
+        exit_state=exit_state_protocol_ttl,
     )
 
     sma = _add_random_identifier(
         sma=sma,
         bits=32,
         pulse_duration=pulse_duration,
-        inter_pulse_interval_long=0.1,
+        inter_pulse_interval_long=0.05,
         iti=iti,
         output_chanel_pulse=output_chanel_pulse,
         starting_pulse_index=starting_pulse_index,
         exit_state="exit",
     )
+
+    logging.info("Made TTL identifier sequences (protocol + random bits)")
     return sma
 
 
