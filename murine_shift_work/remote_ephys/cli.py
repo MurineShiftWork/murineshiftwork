@@ -7,7 +7,7 @@ DEFAULT_REMOTE_PATH = r"E:\\OE_DATA\\LBR"
 DEFAULT_LOCAL_PATH = os.path.expanduser("~/data")
 DEFAULT_ACQUISITION_NAME = "_test_subject"
 DEFAULT_ACQUISITION_TASK = "ephys_multi_behaviour"
-DEFAULT_SESSION_NAME = "ephys_pxi"
+DEFAULT_SESSION_NAME = "ephys_pxi"  # TODO: use this parameter as --session-name for Intan EMG/EEG recordings
 
 
 def make_parser_remote_ephys():

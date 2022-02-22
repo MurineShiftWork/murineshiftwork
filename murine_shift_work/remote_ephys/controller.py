@@ -108,7 +108,7 @@ class RemoteOpenEphysController:
     def _get_date_str():
         return datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    def _persists_metadata(self, acq_name, session_name):
+    def _persists_metadata(self, acq_name=None, session_name=None):
         if self.local_path is not None:
             self.local_path_full = (
                 Path(self.local_path) / self.acquisition_name / acq_name / session_name
@@ -221,9 +221,12 @@ class RemoteOpenEphysController:
         time.sleep(self.default_delay)
         if is_previewing is True:
             logging.info(
-                f"Setting up for session:\n\t {full_acquisition_name}/{full_session_name}"
+                f"Setting up for ephys session:\n\t{full_acquisition_name}/{full_session_name}\n"
             )
-            logging.info(f"Sesion path:\n\t{self.local_path_full}\n")
+            child_session_path = Path(self.acquisition_name) / full_acquisition_name
+            logging.info(
+                f"Use as child session path:\n\t{child_session_path.as_posix()}\n"
+            )
             record_success = self._send_start_record(message)
             persist_success = self._persists_metadata(
                 full_acquisition_name, full_session_name
