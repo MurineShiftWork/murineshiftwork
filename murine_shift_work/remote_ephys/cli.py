@@ -1,7 +1,7 @@
 import argparse
 import os
 
-DEFAULT_REMOTE_IP = "172.24.242.228"
+DEFAULT_REMOTE_IP = "172.24.242.233"
 DEFAULT_REMOTE_PORT = 5558
 DEFAULT_REMOTE_PATH = r"E:\\OE_DATA\\LBR"
 DEFAULT_LOCAL_PATH = os.path.expanduser("~/data")

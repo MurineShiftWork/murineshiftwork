@@ -108,10 +108,10 @@ class RemoteOpenEphysController:
     def _get_date_str():
         return datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    def _persists_metadata(self, session_name):
+    def _persists_metadata(self, acq_name, session_name):
         if self.local_path is not None:
             self.local_path_full = (
-                Path(self.local_path) / self.acquisition_name / session_name
+                Path(self.local_path) / self.acquisition_name / acq_name / session_name
             )
             self.local_path_full.mkdir(parents=True, exist_ok=True)
 
@@ -221,11 +221,13 @@ class RemoteOpenEphysController:
         time.sleep(self.default_delay)
         if is_previewing is True:
             logging.info(
-                f"Setting up for session:\t {full_acquisition_name} / {full_session_name}"
+                f"Setting up for session:\n\t {full_acquisition_name}/{full_session_name}"
             )
             logging.info(f"Sesion path:\n\t{self.local_path_full}\n")
             record_success = self._send_start_record(message)
-            persist_success = self._persists_metadata(full_session_name)
+            persist_success = self._persists_metadata(
+                full_acquisition_name, full_session_name
+            )
             return record_success and persist_success
         else:
             logging.info(f"Cannot start preview. Replied: {is_previewing}")
