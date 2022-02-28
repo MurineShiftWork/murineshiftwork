@@ -180,12 +180,13 @@ class RemoteOpenEphysController:
         full_acquisition_name="",
         session_name="",
         session_name_appendix="",
+        whitespace=" ",
+        path_sep="/" if os.path.sep == "/" else "\\"
     ):
-        whitespace = " "
         message = (
             f"StartRecord{whitespace}"
             f"CreateNewDir={1 if create_new_dir else 0}{whitespace}"
-            f"RecDir={str(remote_path)}\\{acquisition_name}\\{full_acquisition_name}{whitespace}"
+            f"RecDir={str(remote_path)}{path_sep}{acquisition_name}{path_sep}{full_acquisition_name}{whitespace}"
             f"PrependText={session_name}{whitespace}"
             f"AppendText={session_name_appendix}{whitespace}"
         )
@@ -235,11 +236,11 @@ class RemoteOpenEphysController:
         else:
             logging.info(f"Cannot start preview. Replied: {is_previewing}")
 
-    def safeguard_path_by_overwrite(self):
+    def safeguard_path_by_overwrite(self, path_sep="/" if os.path.sep == "/" else "\\"):
         session_name = f"acquisition-{uuid4()}"
         message = self._make_start_message_string(
             create_new_dir=True,
-            remote_path=r"E:\\OE_DATA\\",
+            remote_path=self.remote_path + path_sep + "_safeguard_acquisition",  # r"E:\\OE_DATA\\",
             session_name=session_name,
         )
 
