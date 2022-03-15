@@ -4,6 +4,7 @@ import sys
 import time
 from pathlib import Path
 
+import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 from PyQt5.QtCore import QThread
@@ -180,24 +181,34 @@ class TaskProcess(object):
             self.bpod.close()
             self.serial_is_open = False
 
-    def connect_bpod(self):
+    def connect_bpod(self, max_try=2):
         """Connect device on serial port."""
         if not self.serial_is_open and not self.exiting:
             logging.debug(f"Connecting bpod on serial port: {self.serial_port}")
-            try:
-                self.bpod = Bpod(
-                    serial_port=self.serial_port,
-                    workspace_path=self.session_paths["session_folder"],
-                    session_name=self.session_paths["session_basename_behav"],
-                )
-                self.bpod.open()
-            except UnicodeDecodeError:
+
+            current_attempt = 0
+            while current_attempt < max_try:
+                try:
+                    self.bpod = Bpod(
+                        serial_port=self.serial_port,
+                        workspace_path=self.session_paths["session_folder"],
+                        session_name=self.session_paths["session_basename_behav"],
+                    )
+                    self.bpod.open()
+                    self.serial_is_open = True
+                    break
+                except UnicodeDecodeError:
+                    current_attempt += 1
+                    print_box(
+                        f"\nFailed to open Bpod on attempt {current_attempt}/{max_try}.\n"
+                    )
+
+            if not self.serial_is_open:
                 print_box(
                     "\nCould not connect to Bpod due to 'UnicodeDecodeError'. "
                     "Happens randomly. Just run same code again.\n"
                 )
                 sys.exit(1)
-            self.serial_is_open = True
 
     def persist_settings(self):
         write_json(

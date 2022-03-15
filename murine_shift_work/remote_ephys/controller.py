@@ -181,7 +181,7 @@ class RemoteOpenEphysController:
         session_name="",
         session_name_appendix="",
         whitespace=" ",
-        path_sep="/" if os.path.sep == "/" else "\\"
+        path_sep="/" if os.path.sep == "/" else "\\",
     ):
         message = (
             f"StartRecord{whitespace}"
@@ -240,7 +240,9 @@ class RemoteOpenEphysController:
         session_name = f"acquisition-{uuid4()}"
         message = self._make_start_message_string(
             create_new_dir=True,
-            remote_path=self.remote_path + path_sep + "_safeguard_acquisition",  # r"E:\\OE_DATA\\",
+            remote_path=self.remote_path
+            + path_sep
+            + "_safeguard_acquisition",  # r"E:\\OE_DATA\\",
             session_name=session_name,
         )
 
