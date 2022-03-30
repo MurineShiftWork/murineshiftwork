@@ -72,6 +72,12 @@ class SomeRemoteTask(ManagedRemoteProcess):
     def __init__(self, specific_remote_kwargs=None, **kwargs):
         super(SomeRemoteTask, self).__init__()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
     def message_handler(self, message=None):
         message_header, message_content = message.split(".")
         if "start" in message_header:
