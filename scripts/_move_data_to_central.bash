@@ -4,18 +4,23 @@
 
 target_path="/mnt/maindata/data/"
 
-parallel -j 10 rsync -av --info=progress2 '{1}:~/data/' $target_path \
+echo "\n\n SETUPS \n\n"
+
+parallel --line-buffer -j 10 rsync -av --info=progress2 '{1}:~/data/' $target_path \
 	--exclude=".git" \
-	--exclude="__pycache__" \
+	--exclude="__*" \
 	--exclude=".idea" \
 	--exclude="tests" \
 	--exclude="*.egg-info" \
-	--exclude="_test*" \
-	--exclude="_*" \
 	--exclude="default_acq_name" \
 	::: \
-	setup1 setup2 setup3 setup4 setup5 #\
+	setup1 setup2 setup3 setup4 setup5 setup6 setup-npxb
+
 #	rpi-40 rpi-41 rpi-43 rpi-50 rpi-51
+#       --exclude="_test*" \
+#       --exclude="_*" \
+
+echo "\n\n RPI \n\n"
 
 parallel --line-buffer -j 10 rsync -av --info=progress2 '{1}:~/data/' $target_path \
         --exclude=".git"  \
@@ -24,7 +29,7 @@ parallel --line-buffer -j 10 rsync -av --info=progress2 '{1}:~/data/' $target_pa
         --exclude="tests" \
         --exclude="*.egg-info" \
 	::: \
-	rpi-40 rpi-41 rpi-43 rpi-50 rpi-51
+	rpi-40 rpi-41 rpi-43 rpi-50 rpi-51 rpi-60 rpi-61 rpi-62 rpi-63 rpi-64 rpi-65 rpi-67 rpi-68 rpi-69 rpi-70
 
 #for rpi in rpi-40 rpi-41 rpi-43 rpi-50 rpi-51
 #do

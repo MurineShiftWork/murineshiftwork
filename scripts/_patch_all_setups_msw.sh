@@ -2,7 +2,7 @@
 # Script: patch_all_setups_msw.sh. Update MSW and RCC code on main setups.
 # Run as: cat patch_all_setups_msw.sh | ssh setup2
 
-for setup in setup1router setup2 setup3 setup4 setup5
+for setup in setup1 setup2 setup3 setup4 setup5 setup6
 do
   ssh $setup << EOF
 # Clone
