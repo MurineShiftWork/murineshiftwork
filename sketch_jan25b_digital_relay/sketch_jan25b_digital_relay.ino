@@ -10,9 +10,9 @@ long debounce_check_time = 0;
 long debounce_delay = 50;
 
 
-void set_multi_pin( int from_pin, int to_poin, int new_status){
-  for(int i = from_pin; i <= to_poin; i++){
-    digitalWrite(i,new_status);
+void set_multi_pin( int from_pin, int to_pin, int new_status){
+  for(int i = from_pin; i <= to_pin; i++){
+    digitalWrite(i, new_status);
   }
 }
 
