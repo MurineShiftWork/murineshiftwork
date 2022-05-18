@@ -88,7 +88,7 @@ def test_record():
     run_remote_ephys()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # import sys
     sys.argv += ["--record"]
     run_remote_ephys()

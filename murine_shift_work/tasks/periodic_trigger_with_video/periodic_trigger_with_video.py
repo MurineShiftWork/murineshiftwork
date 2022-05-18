@@ -2,17 +2,52 @@ import logging
 import time
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 from rpi_camera_colony.control.conductor import Conductor
 
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.logic.specific_state_machines import (
-    make_protocol_identifier_ttl_sequence,
+    make_ttl_identifier_sequences,
 )
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
-from murine_shift_work.settings import get_ttl_identifier_sequence
+
+
+class TaskData:
+    save_path = None
+    data = []
+
+    def __init__(self, save_path=None):
+        super(TaskData, self).__init__()
+        self.save_path = save_path
+
+    def append(self, trial_index=None, trial_data=None, **info_dict_extension):
+        # If is TTL trial
+        first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
+        if trial_index < 1 and first_state_name.startswith("pulse"):
+            trial_type = "ttl"
+        else:
+            trial_type = "task"
+            # trial_data["info"] = {"trial_type": "ttl", "trial_index": trial_index}
+
+        trial_data["info"] = {
+            "trial_type": trial_type,
+            "trial_index": trial_index,
+            **info_dict_extension,
+        }
+
+        self.data.append(trial_data)
+
+    def save(self, save_path=None):
+        save_path = save_path or self.save_path
+        logging.debug("Saving task control data..")
+        dt = time.time()
+        df = pd.DataFrame(self.data)
+        df.to_pickle(str(save_path) + ".df.pkl")
+        logging.debug(f"Saved data in {np.round(time.time() - dt, 2)}s.")
 
 
 class Task(TaskRunner):
@@ -20,18 +55,32 @@ class Task(TaskRunner):
 
     def run(self) -> None:
 
-        TTL_IDENTIFIER_SEQUENCE = get_ttl_identifier_sequence(__file__)
-        TRIGGER_ITI = 5  # seconds
+        ttl_identifier_sequence = self.input_kwargs.get(
+            "ttl_identifier_sequence", "LLssss"
+        )
+        trigger_iti = self.input_kwargs.get("trigger_iti", 5)
+        max_runtime = self.input_kwargs.get("max_runtime", 7200)
+        n_max_trials = self.input_kwargs.get(
+            "n_max_trials", np.ceil(max_runtime / trigger_iti)
+        )
+        logging.info(
+            f"Using TTL '{ttl_identifier_sequence}' with ITI of {trigger_iti}s for {n_max_trials} trials."
+        )
+
+        save_path = Path(self.bpod.workspace_path) / self.bpod.session_name
+        task_data = TaskData(save_path=save_path)
 
         trial_index = 0
-        n_max_trials = 1500
         while self.continue_task and trial_index <= n_max_trials:
-            logging.info(f"Executing trial {trial_index}")
+            logging.info(
+                f"Executing trial {trial_index}/{n_max_trials} "
+                f"[Runtime: {np.round(trial_index*trigger_iti/60,3)}min / {np.round(max_runtime/60,3)}min]"
+            )
 
             if trial_index == 0:
-                sma = make_protocol_identifier_ttl_sequence(
+                sma = make_ttl_identifier_sequences(
                     bpod=self.bpod,
-                    sequence=TTL_IDENTIFIER_SEQUENCE,
+                    sequence=ttl_identifier_sequence,
                     output_chanel_pulse=self._bnc_channel_trial_onset,
                 )
             else:
@@ -46,7 +95,7 @@ class Task(TaskRunner):
 
                 sma.add_state(
                     state_name="iti",
-                    state_timer=TRIGGER_ITI,
+                    state_timer=trigger_iti,
                     state_change_conditions={Bpod.Events.Tup: "exit"},
                     output_actions=[],
                 )
@@ -58,6 +107,13 @@ class Task(TaskRunner):
                     f"No data returned on trial #{trial_index}. Terminating protocol."
                 )
                 break
+
+            task_data.append(
+                trial_index=trial_index,
+                trial_data=self.bpod.session.current_trial.export(),
+            )
+            task_data.save()
+            trial_index += 1
 
 
 def run_task(**args_dict):

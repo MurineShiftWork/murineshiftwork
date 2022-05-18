@@ -1,5 +1,6 @@
 # Ignored file types
 .DS_Store
+.vscode/
 main_project/
 msw_project/
 tests/

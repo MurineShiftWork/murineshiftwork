@@ -162,6 +162,8 @@ class TaskControl(object):
                 f"Given probability proportions {new_prob}. Now converting to percentages (x/100)"
             )
             self.probability_left, self.probability_right = [x / 100 for x in new_prob]
+        else:
+            self.probability_left, self.probability_right = new_prob
 
         logging.info(
             f"New block #{self.block_number} after trial #{self.trial_index} with probabilities {self.probability_left}/{self.probability_right}"
@@ -300,7 +302,8 @@ class TaskControl(object):
                 and self.moving_average() > self.criterion_contrast_blocks
             )
             or (
-                self.block_trial_number >= self.max_block_length - self.min_trials_post_criterion
+                self.block_trial_number
+                >= self.max_block_length - self.min_trials_post_criterion
             )
         ):
             self.criterion_block_switch_reached = True

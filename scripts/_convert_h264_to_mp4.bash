@@ -1,7 +1,10 @@
 #!/bin/bash
 
-fps=60
-target_path="/mnt/maindata/data/"
+target_path=${1:-"/mnt/maindata/data/"}
+fps=${2:-60}
+
+#fps=60
+#target_path="/mnt/maindata/data/"
 
 find $target_path -type f -name "*.h264" -print0 |
     while IFS= read -r -d '' file; do

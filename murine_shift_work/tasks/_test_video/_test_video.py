@@ -8,7 +8,7 @@ from pybpodapi.protocol import StateMachine
 from rpi_camera_colony.control.conductor import Conductor
 
 from murine_shift_work.logic.specific_state_machines import (
-    make_protocol_identifier_ttl_sequence,
+    make_ttl_identifier_sequences,
 )
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
@@ -20,7 +20,7 @@ from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
 class Task(TaskRunner):
     def run(self):
 
-        sma = make_protocol_identifier_ttl_sequence(
+        sma = make_ttl_identifier_sequences(
             bpod=self.bpod,
             sequence="LsLsLs",
             output_chanel_pulse=eval("Bpod.OutputChannels.BNC1"),

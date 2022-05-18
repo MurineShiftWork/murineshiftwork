@@ -193,6 +193,24 @@ session_data = read_session_data(session_dir=session_dir, load_raw=load_raw)
 - [ ]
 
 
+## Fixes & install hints
+
+- Ubuntu for 2+ monitors: (1) install Nvidia drivers from `software update -> additional drivers` menu, then (2) `sudo apt install lightdm`, (3) reboot, (4) `udo dpkg-reconfigure lightdm`
+- Ubuntu VNC server install
+ - `sudo apt install tigervnc-standalone-server` - [ref](https://www.answertopia.com/ubuntu/ubuntu-remote-desktop-access-with-vnc/)
+ - `vncpasswd`
+ - `~/.vnc/xstartup` and `chmod +x ~/.vnc/xstartup` - [ref](https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/2196)
+```bash
+#!/bin/sh
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+vncconfig -iconic &
+export DESKTOP_SESSION=/usr/share/xsessions/ubuntu.desktop
+env GNOME_SHELL_SESSION_MODE=ubuntu dbus-launch --exit-with-session /usr/bin/gnome-session --systemd --session=ubuntu &
+```
+ - `vncserver -localhost no`
+ - `sudo loginctl unlock-sessions` [ref](https://askubuntu.com/questions/1224957/i-cannot-log-in-a-vnc-session-after-the-screen-locks-authentification-error)
+
 ## Support websites
 [Bpod wiki](https://sites.google.com/site/bpoddocumentation)
 

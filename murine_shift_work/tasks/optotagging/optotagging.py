@@ -7,7 +7,7 @@ from pybpodapi.protocol import StateMachine
 
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.logic.specific_state_machines import (
-    make_protocol_identifier_ttl_sequence,
+    make_ttl_identifier_sequences,
 )
 from murine_shift_work.logic.stimulation import Stimulation
 from murine_shift_work.logic.task_process import TaskProcess
@@ -71,7 +71,7 @@ class Task(TaskRunner):
             logging.info(f"Executing trial {trial_index}")
 
             if trial_index == 0:
-                sma = make_protocol_identifier_ttl_sequence(
+                sma = make_ttl_identifier_sequences(
                     bpod=self.bpod,
                     sequence=task_settings["TTL_IDENTIFIER_SEQUENCE"],
                     output_chanel_pulse=self._bnc_channel_trial_onset,

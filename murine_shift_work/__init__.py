@@ -4,7 +4,7 @@
 # License: BSD 3-Clause
 # Source code: https://www.github.com/larsrollik/murine_shift_work.git
 
-__version__ = "0.2.0.dev0"
+__version__ = "0.2.2"
 __author__ = "Lars B. Rollik"
 
 from murine_shift_work.cli import run_cli
