@@ -105,7 +105,7 @@ class Task(TaskRunner):
 
                 print("-- in ON phase --")
 
-                stim_set_id = np.random.randint(0, len(stimulation_param_sets))
+                stim_set_id = np.random.randint(0, len(stimulation_param_sets), dtype=int)
                 trial_stim_settings = stimulation_param_sets.get(stim_set_id)
                 pulse_train_duration = trial_stim_settings.get("pulseTrainDuration")
 
@@ -119,7 +119,8 @@ class Task(TaskRunner):
                         stim_set_param,
                         stim_set_param_value,
                     ) in trial_stim_settings.items():
-                        print("UPDATING:", stim_set_param, stim_set_param_value)
+                        if not ch:
+                            print("UPDATING:", stim_set_param, stim_set_param_value)
 
                         pulsepal.program_one_param(
                             channel=ch,
