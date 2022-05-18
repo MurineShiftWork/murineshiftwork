@@ -100,6 +100,7 @@ class Task(TaskRunner):
                         print("RESET skip counter to change on/off phase")
                     else:
                         print("-- in OFF phase --", skip_counter)
+                        time.sleep(ITI)
                         skip_counter += 1
                         continue
 
