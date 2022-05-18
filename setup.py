@@ -13,30 +13,28 @@ with open(path.join(this_directory, "LICENSE"), encoding="utf-8") as f:
 
 setup(
     name="murine_shift_work",
-    version="0.2.0.dev0",
+    version="0.2.2",
     description="Murine Shift Work: Behaviour protocols via pybpod",
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=[
         "configobj",
-        "PyQt5",
-        # "opencv-python==3.4.5.20",
-        # "PyQtWebEngine",
-        "pyqtgraph",
+        "tqdm",
+        "rich",
+        "pyzmq",  # for remote ephys module
+        # "PyQt5",  # fixme: remove for platform compatibility
+        # "pyqtgraph",  # fixme: remove for platform compatibility
+        # "PySimpleGUI",  # fixme: remove for platform compatibility
+        # "myterial",  # fixme: only useful for plotting
         "numpy",
         "scipy",
         "pandas",
-        "matplotlib",
-        "seaborn",
-        "pybpod-api",
-        "safe-and-collaborative-architecture",  # required by pybpod.
-        "sounddevice",  # might require: sudo apt-get install libportaudio2
-        "tqdm",
-        "rich",
-        "myterial",
-        "PySimpleGUI",
-        "rpi_camera_colony @ git+https://llrrr@bitbucket.org/lbrcoding/rpi_camera_colony_dev.git#egg=rpi_camera_colony",
-        "pyzmq",  # for remote ephys module
+        # "matplotlib",  # fixme: not required at all. only in water/sound calibration plotting
+        # "seaborn",  # fixme: not required at all. only in water/sound calibration plotting
+        "pybpod-api",  # for pybpod.
+        "safe-and-collaborative-architecture",  # for pybpod.
+        "sounddevice",  # for sound output. might require: sudo apt-get install libportaudio2
+        "rpi_camera_colony",  # for video recordings
     ],
     extras_require={
         "dev": [
