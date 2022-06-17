@@ -8,11 +8,34 @@ from murine_shift_work.remote_ephys.cli import make_parser_remote_ephys
 from murine_shift_work.remote_ephys.controller import RemoteOpenEphysController
 
 
+def _evaluate_metadata(args_dict):
+    metadata_list = args_dict.get("metadata_list", None)
+    if metadata_list is not None:
+        metadata_list = [
+            v.strip(" ").strip("'").strip('"') for v in metadata_list if "=" in v
+        ]
+        metadata_dict = dict(map(lambda s: s.split("="), metadata_list))
+        #
+        # for metadata_key in ["researcher", "setup", "experiment"]:
+        #     if (
+        #         not args_dict[metadata_key].startswith("unknown_")
+        #         or metadata_key not in metadata_dict
+        #     ):
+        #         # metadata_dict[f"_original__{metadata_key}"] = metadata_dict[metadata_key]
+        #         print(metadata_key)
+        #         metadata_dict[metadata_key] = args_dict[metadata_key]
+
+        args_dict["metadata"] = metadata_dict
+    return args_dict
+
+
 def run_remote_ephys():
     setup_logging()
 
     parser = make_parser_remote_ephys()
     args = parser.parse_args()
+    args_dict = args.__dict__
+    args_dict = _evaluate_metadata(args_dict=args_dict)
 
     if not (args.status or args.preview or args.record):
         logging.info(
@@ -20,7 +43,7 @@ def run_remote_ephys():
         )
         sys.exit(0)
 
-    ctrl = RemoteOpenEphysController(**args.__dict__)
+    ctrl = RemoteOpenEphysController(**args_dict)
 
     if args.status:
         logging.info("Status requested")
