@@ -24,7 +24,7 @@ import fabric
 
 
 def str_to_pid(value):
-    """"""
+    """ """
     assert isinstance(value, str)
 
     for replace in ["\n", "\r"]:
@@ -37,7 +37,7 @@ def str_to_pid(value):
 
 
 class DispatchHandler:
-    """"""
+    """ """
 
     command = ""
     hostname = ""
@@ -109,7 +109,7 @@ class DispatchHandler:
         detach=False,
         ask_for_pid=False,
     ):
-        """"""
+        """ """
         assert command is not None
 
         run_str = " ".join(
@@ -127,26 +127,26 @@ class DispatchHandler:
         return reply
 
     def dispatch(self):
-        """"""
+        """ """
         self.dispatch_reply = self._run_command(
             command=self.command, detach=True, ask_for_pid=True
         )
         return self.dispatch_reply
 
     def _get_remote_pid(self):
-        """"""
+        """ """
         reply = self._run_command(command=f"pgrep {self.process_name}")
         return str_to_pid(reply.stdout)
 
     def remote_exists(self):
-        """"""
+        """ """
         if self.pid is None:
             return None
 
         return self.pid == self._get_remote_pid()
 
     def terminate(self):
-        """"""
+        """ """
         if self.pid is not None and self.remote_exists():
             self._run_command(command=f"kill -9 {self.pid}")
 

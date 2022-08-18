@@ -15,7 +15,7 @@ from murine_shift_work.logic.specific_state_machines import (
 from murine_shift_work.logic.stimulation import Stimulation
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
-from murine_shift_work.tasks._test_spindle_stim.param_sets import stimulation_param_sets
+from murine_shift_work.tasks.exp_trn_spindle.param_sets import stimulation_param_sets
 
 
 class ProtocolObject:
@@ -106,7 +106,9 @@ class Task(TaskRunner):
 
                 print("-- in ON phase --")
 
-                stim_set_id = np.random.randint(0, len(stimulation_param_sets), dtype=int)
+                stim_set_id = np.random.randint(
+                    0, len(stimulation_param_sets), dtype=int
+                )
                 trial_stim_settings = stimulation_param_sets.get(stim_set_id)
                 pulse_train_duration = trial_stim_settings.get("pulseTrainDuration")
 

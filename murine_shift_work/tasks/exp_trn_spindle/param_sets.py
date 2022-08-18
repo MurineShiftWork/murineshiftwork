@@ -8,31 +8,31 @@ def calc_pulse_train_duration(n_pulses=4, interval=None, spacer=0.5):
 
 
 stimulation_param_sets = {
+    # 0: {
+    #     "phase1Duration": ipi_8hz,
+    #     "interPulseInterval": ipi_8hz,
+    #     "pulseTrainDuration": calc_pulse_train_duration(n_pulses=4, interval=ipi_8hz),
+    # },
+    # 1: {
+    #     "phase1Duration": ipi_10hz,
+    #     "interPulseInterval": ipi_10hz,
+    #     "pulseTrainDuration": calc_pulse_train_duration(n_pulses=4, interval=ipi_10hz),
+    # },
     0: {
-        "phase1Duration": ipi_8hz,
-        "interPulseInterval": ipi_8hz,
-        "pulseTrainDuration": calc_pulse_train_duration(n_pulses=4, interval=ipi_8hz),
-    },
-    1: {
-        "phase1Duration": ipi_10hz,
-        "interPulseInterval": ipi_10hz,
-        "pulseTrainDuration": calc_pulse_train_duration(n_pulses=4, interval=ipi_10hz),
-    },
-    2: {
         "phase1Duration": ipi_8hz,
         "interPulseInterval": ipi_8hz,
         "pulseTrainDuration": calc_pulse_train_duration(n_pulses=10, interval=ipi_8hz),
     },
-    3: {
+    1: {
         "phase1Duration": ipi_10hz,
         "interPulseInterval": ipi_10hz,
         "pulseTrainDuration": calc_pulse_train_duration(n_pulses=10, interval=ipi_10hz),
     },
-    4: {
-        "phase1Duration": ipi_14hz,
-        "interPulseInterval": ipi_14hz,
-        "pulseTrainDuration": calc_pulse_train_duration(n_pulses=10, interval=ipi_14hz),
-    },
+    # 4: {
+    #     "phase1Duration": ipi_14hz,
+    #     "interPulseInterval": ipi_14hz,
+    #     "pulseTrainDuration": calc_pulse_train_duration(n_pulses=10, interval=ipi_14hz),
+    # },
 }
 
 # 4 pulses at 8Hz
