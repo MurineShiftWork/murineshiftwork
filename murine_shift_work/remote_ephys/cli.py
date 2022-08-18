@@ -13,6 +13,7 @@ DEFAULT_SESSION_NAME = "ephys_pxi"  # TODO: use this parameter as --session-name
 
 def make_parser_remote_ephys():
     parser = argparse.ArgumentParser()
+    # SETTINGS for remote
     connection_group = parser.add_argument_group("Remote")
     connection_group.add_argument(
         "-ip",
@@ -70,6 +71,17 @@ def make_parser_remote_ephys():
         default=DEFAULT_SESSION_NAME,
         help=f"Acquisition task. Default: {DEFAULT_SESSION_NAME}",
     )
+    # METADATA
+    metadata_group = parser.add_argument_group("Metadata")
+    metadata_group.add_argument(
+        "-meta",
+        "--metadata",
+        metavar="KEY=VALUE",
+        nargs="+",
+        dest="metadata_list",
+        help="Metadata key-value pairs. Use other named metadata fields or specify any relevant key-value pair",
+    )
+    # ACTIONS
     action_group = parser.add_argument_group("Actions")
     action_group.add_argument(
         "--status",
