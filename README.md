@@ -10,7 +10,7 @@
 
 
 # Murine Shift Work
-Acquisition software for murine research
+Data acquisition software framework (developed for murine research)
 ---
 
 #### - Behaviour protocols via `pybpod-api`

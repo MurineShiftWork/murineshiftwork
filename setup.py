@@ -14,7 +14,7 @@ with open(path.join(this_directory, "LICENSE"), encoding="utf-8") as f:
 setup(
     name="murine_shift_work",
     version="0.2.2",
-    description="Murine Shift Work: Behaviour protocols via pybpod",
+    description="Murine Shift Work: Data acquisition software framework (developed for murine research)",
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=[
