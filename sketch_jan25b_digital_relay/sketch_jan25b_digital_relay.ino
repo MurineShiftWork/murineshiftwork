@@ -14,13 +14,13 @@ void set_multi_pin( int from_pin, int to_pin, int new_status){
   for(int i = from_pin; i <= to_pin; i++){
     digitalWrite(i, new_status);
   }
-}
+}//fct:set_multi_pin
 
 void send_trigger() {
   set_multi_pin(output_pin_range_start, output_pin_range_end, HIGH);
   delay(pulse_length);
   set_multi_pin(output_pin_range_start, output_pin_range_end, LOW);
-}
+}//fct:send_trigger
 
 
 void setup() {
@@ -34,10 +34,10 @@ void setup() {
   }
 
   // serial for debugging
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("Set up.");
 
-}
+}//fct:setup
 
 
 void loop() {
@@ -46,17 +46,17 @@ void loop() {
   if ( (millis()-debounce_check_time ) > debounce_delay ) {
 
     if (input_reading == HIGH) {
-      // serial for debugging
-      Serial.print(millis());
-      Serial.println("Sending trigger");
-
       // send trigger
       send_trigger();
 
       // stop monitoring until debounced
       debounce_check_time = millis();
-    }
 
-  }
+      // serial for debugging
+      Serial.print(millis());
+      Serial.println(" -> Sent trigger");
+    }//if
 
-}
+  }//if
+
+}//fct:loop

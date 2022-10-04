@@ -106,7 +106,9 @@ class Task(TaskRunner):
 
                 print("-- in ON phase --")
 
-                stim_set_id = np.random.randint(0, len(stimulation_param_sets), dtype=int)
+                stim_set_id = np.random.randint(
+                    0, len(stimulation_param_sets), dtype=int
+                )
                 trial_stim_settings = stimulation_param_sets.get(stim_set_id)
                 pulse_train_duration = trial_stim_settings.get("pulseTrainDuration")
 
