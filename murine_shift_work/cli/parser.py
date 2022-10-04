@@ -123,6 +123,14 @@ def add_args_for_hardware_and_calibration(parser=None):
         default="/dev/ttyACM2",
         help="Serial port for weighing scale (for calibration). Unix: /dev/ttyACM{no}. Windows: COM{no}.",
     )
+    hardware_args.add_argument(
+        "-stage",
+        "--serial-port-stage",
+        dest="serial_port_stage",
+        type=str,
+        default="/dev/ttyUSB0",
+        help="Serial port for stage controller (e.g. for moving spouts). Unix: /dev/ttyACM{no}. Windows: COM{no}.",
+    )
     calibration_arg_group = parser.add_argument_group("Calibration files")
     calibration_arg_group.add_argument(
         "-cwater",

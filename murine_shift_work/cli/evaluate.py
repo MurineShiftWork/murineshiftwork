@@ -101,7 +101,8 @@ def _evaluate_and_load_configs(args_dict=None):
             config_file=args_dict["calibration_file_sound"],
             default_dir=args_dict["config_dir"],
         )
-    # args_dict["serial_port_scale"]  TODO
+    # TODO: args_dict["serial_port_scale"]
+    # TODO: args_dict["serial_port_stage"]
 
     # Load config/settings
     settings_subjects_all = (

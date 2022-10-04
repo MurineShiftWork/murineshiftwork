@@ -78,7 +78,7 @@ class CalibrationDataWater(CalibrationData):
     allowable_offset_days = 30
     columns = [
         "measurement_time",
-        "valve",
+        "valve_id",
         "valve_opening_time",
         "n_drops",
         "inter_pulse_interval",
