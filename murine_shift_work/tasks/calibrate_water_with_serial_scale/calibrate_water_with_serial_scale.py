@@ -7,8 +7,6 @@ from serial_weighing_scale import connect_serial_scale
 from tqdm import tqdm
 
 from murine_shift_work.logic.calibration import CalibrationDataWater
-from murine_shift_work.logic.gui import ask_water_calibration_ready
-from murine_shift_work.logic.gui import ask_water_calibration_weight
 from murine_shift_work.logic.specific_state_machines import make_sma_for_drop_of_water
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
@@ -46,12 +44,11 @@ class Task(TaskRunner):
                     f"valve: {valve_id}, with valve time: {valve_opening_time}ms."
                 )
 
-                # ask_water_calibration_ready(valve=valve_id)
-
                 if valve_opening_time > 0.5:
                     corrected_valve_time = np.round(valve_opening_time / 1000, 3)
                     logging.warn(
-                        f"Valve times not converted to ms yet.. Valve time of {valve_opening_time}s is {corrected_valve_time}ms"
+                        f"Valve times not converted to ms yet.. "
+                        f"Valve time of {valve_opening_time}s is {corrected_valve_time}ms"
                     )
                     valve_opening_time = corrected_valve_time
 
@@ -72,7 +69,6 @@ class Task(TaskRunner):
                     if not self.bpod.run_state_machine(sma):
                         break
 
-                # water_weight_g = ask_water_calibration_weight()
                 time.sleep(1)
                 weight_after = scale.read_weight_reliable()
                 logging.info(
