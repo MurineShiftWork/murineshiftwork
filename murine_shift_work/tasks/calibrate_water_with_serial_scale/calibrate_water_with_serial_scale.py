@@ -1,9 +1,11 @@
+import json
 import logging
 import random
 import time
 
 import numpy as np
 from serial_weighing_scale import connect_serial_scale
+from serial_weighing_scale import SerialWeighingScale
 from tqdm import tqdm
 
 from murine_shift_work.logic.calibration import CalibrationDataWater
@@ -25,14 +27,17 @@ class Task(TaskRunner):
             endpoint=False,
         )
 
-        N_DROPS = 200
+        N_DROPS = 10
         INTER_PULSE_INTERVAL = 0.1
         VALVES_TO_CALIBRATE = [1, 3]
 
         random_valve_times = VALVE_TIMES_TO_TEST.copy()
         random.shuffle(random_valve_times)
 
-        scale = connect_serial_scale()
+        scale = SerialWeighingScale(
+            port=self.input_kwargs["serial_port_scale"]
+        )  # default is: "/dev/ttyACM2"
+        scale.tare_scale()
 
         calibration = CalibrationDataWater(
             file_path=self.input_kwargs["calibration_file_water"]
@@ -69,10 +74,11 @@ class Task(TaskRunner):
                     if not self.bpod.run_state_machine(sma):
                         break
 
+                # _ = scale.read_weight_reliable()
                 time.sleep(1)
                 weight_after = scale.read_weight_reliable()
                 logging.info(
-                    f"Valve {valve_id} with {valve_opening_time}ms. Weight AFTER: {weight_before}"
+                    f"Valve {valve_id} with {valve_opening_time}ms. Weight AFTER: {weight_after}"
                 )
 
                 water_weight_g = weight_after - weight_before

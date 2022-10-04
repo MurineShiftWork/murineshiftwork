@@ -92,14 +92,16 @@ def _evaluate_and_load_configs(args_dict=None):
         default_dir=args_dict["config_dir"],
     )
     # - calibration files
-    args_dict["calibration_file_water"] = validate_config_file_path(
-        config_file=args_dict["calibration_file_water"],
-        default_dir=args_dict["config_dir"],
-    )
-    args_dict["calibration_file_sound"] = validate_config_file_path(
-        config_file=args_dict["calibration_file_sound"],
-        default_dir=args_dict["config_dir"],
-    )
+    if "calibrate" not in args_dict["task"]:
+        args_dict["calibration_file_water"] = validate_config_file_path(
+            config_file=args_dict["calibration_file_water"],
+            default_dir=args_dict["config_dir"],
+        )
+        args_dict["calibration_file_sound"] = validate_config_file_path(
+            config_file=args_dict["calibration_file_sound"],
+            default_dir=args_dict["config_dir"],
+        )
+    # args_dict["serial_port_scale"]  TODO
 
     # Load config/settings
     settings_subjects_all = (

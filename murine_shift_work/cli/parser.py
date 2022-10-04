@@ -115,10 +115,19 @@ def add_args_for_hardware_and_calibration(parser=None):
         default="/dev/ttyACM1",
         help="Serial port for pulsepal. Unix: /dev/ttyACM{no}. Windows: COM{no}.",
     )
+    hardware_args.add_argument(
+        "-scale",
+        "--serial-port-scale",
+        dest="serial_port_scale",
+        type=str,
+        default="/dev/ttyACM2",
+        help="Serial port for weighing scale (for calibration). Unix: /dev/ttyACM{no}. Windows: COM{no}.",
+    )
     calibration_arg_group = parser.add_argument_group("Calibration files")
     calibration_arg_group.add_argument(
         "-cwater",
         "--calibration-file-water",
+        dest="calibration_file_water",
         type=str,
         default="calibration.water.default.csv",
         help="Default water calibration file (Only relevant for `run`)",
@@ -126,6 +135,7 @@ def add_args_for_hardware_and_calibration(parser=None):
     calibration_arg_group.add_argument(
         "-csound",
         "--calibration-file-sound",
+        dest="calibration_file_sound",
         type=str,
         default="calibration.sound.default.csv",
         help="Default sound calibration file (Only relevant for `run`)",
