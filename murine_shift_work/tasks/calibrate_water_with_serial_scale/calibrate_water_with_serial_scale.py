@@ -27,7 +27,7 @@ class Task(TaskRunner):
             endpoint=False,
         )
 
-        N_DROPS = 10
+        N_DROPS = 300
         INTER_PULSE_INTERVAL = 0.1
         VALVES_TO_CALIBRATE = [1, 3]
 
