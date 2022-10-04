@@ -30,6 +30,7 @@ class Task(TaskRunner):
         N_DROPS = 300
         INTER_PULSE_INTERVAL = 0.1
         VALVES_TO_CALIBRATE = [1, 3]
+        PRECISION_DECIMALS = 2  # 2 decimals is the precision coming from the scale
 
         random_valve_times = VALVE_TIMES_TO_TEST.copy()
         random.shuffle(random_valve_times)
@@ -81,7 +82,9 @@ class Task(TaskRunner):
                     f"Valve {valve_id} with {valve_opening_time}ms. Weight AFTER: {weight_after}"
                 )
 
-                water_weight_g = weight_after - weight_before
+                water_weight_g = np.round(
+                    weight_after - weight_before, PRECISION_DECIMALS
+                )
                 logging.info(
                     f"Valve {valve_id} with {valve_opening_time}ms. Weight DIFF: {water_weight_g}"
                 )
