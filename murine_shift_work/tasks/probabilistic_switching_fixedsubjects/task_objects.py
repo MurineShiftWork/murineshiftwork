@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
+from stage_controller.move_interface import MoveInterface
 
 from murine_shift_work.logic.calibration import CalibrationDataSound
 from murine_shift_work.logic.calibration import CalibrationDataWater
@@ -15,6 +16,7 @@ from murine_shift_work.logic.maths import ExponentialMovingAverage
 from murine_shift_work.logic.maths import withprob
 from murine_shift_work.logic.sounds import StereoSound
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
+from tests.stage_config import config_for_all_stages
 
 
 class TaskControl(object):
@@ -90,6 +92,8 @@ class TaskControl(object):
         #  and stop signal PS (adaptive stops, probabilities all 1/0 for analysis simplicity)
         # fixme 2: use hardware params for go/stop signal generation
 
+        print("sound")
+        logging.info("sound")
         self.calibration_sound = CalibrationDataSound(
             file_path=self.task_settings["calibration_file_sound"]
         )
@@ -102,6 +106,7 @@ class TaskControl(object):
         self.sound_delay_correction = (
             self.calibration_sound.calculate_sound_delay_correction()
         )
+        print("water", self.task_settings["calibration_file_water"])
         self.calibration_water = CalibrationDataWater(
             file_path=self.task_settings["calibration_file_water"]
         )
@@ -110,14 +115,42 @@ class TaskControl(object):
             target_volume=self.task_settings["reward_amount_ul"],
         )
 
+        axes_names = tuple(
+            config_for_all_stages["stage_tower_setup_1"].get("axes").keys()
+        )
+        serial_port = "/dev/ttyUSB0"
+        stage_config = config_for_all_stages["stage_tower_setup_1"]
+
+        print("MOVE INTERFACE")
+        self.stage = MoveInterface(
+            axes_names=axes_names,
+            serial_port=serial_port,
+            stage_config=stage_config,
+        )
+        logging.info(self.stage)
+
+        self.MOVE_TO_FRONT = 15
+        self.MOVE_TO_BACK = 25
+
         # Persist task settings -> todo: refactor to method
         with open(str(self.save_path_data) + ".settings.task.json", "w") as f:
             json.dump(self.task_settings, f, indent=4, sort_keys=True)
 
         logging.debug("Task control class created.")
+        self.bpod.softcode_handler_function = self.softcode_handler
+        print("XX")
 
     def softcode_handler(self, softcode=None):
+        logging.info(f"SOFT CODE RECEIVED: {softcode}")
+
         self.sound.execute_sound_handler(sound_code=softcode)
+
+        if softcode == self.MOVE_TO_FRONT:
+            logging.info("MOVING TO FRONT")
+            self.stage.move_to_known_position("front")
+        if softcode == self.MOVE_TO_BACK:
+            logging.info("MOVING TO BACK")
+            self.stage.move_to_known_position("back")
 
     def switch_block(self):
         logging.debug("Resetting block.")
@@ -481,7 +514,7 @@ class TaskControl(object):
 
         # LIGHTS - if intensity - for chosen ports (center/side)
         output_actions__center_ready = []
-        output_actions__center_delay = []
+        # output_actions__center_delay = []  # FIXME: STILL USED ??
         output_actions__side_ready = []
         if self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"]:
             if "center" in self.task_settings["HARDWARE_PORT_LIGHT_PORTS"]:
@@ -491,7 +524,7 @@ class TaskControl(object):
                         self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"],
                     )
                 ]
-                output_actions__center_delay = output_actions__center_ready
+                # output_actions__center_delay = output_actions__center_ready # FIXME: STILL USED ??
             if "side" in self.task_settings["HARDWARE_PORT_LIGHT_PORTS"]:
                 output_actions__side_ready = [
                     (
@@ -533,34 +566,41 @@ class TaskControl(object):
         # SMA
         sma = StateMachine(bpod=self.bpod)
 
+        state_center_ready = "center_ready"
         sma = add_trial_onset_ttl(
             sma=sma,
             ttl_pulse_duration=self.task_settings["ttl_pulse_duration"],
             bnc_channel=eval(
                 f"Bpod.OutputChannels.BNC{self.task_settings['HARDWARE_BNC_TRIAL_START']}"
             ),
-            next_state="center_ready",
+            next_state=state_center_ready,  # FIXME: NEXT STATE MOVES STAGE
         )
+        #             sma.add_state(
+        #                 state_name="leave",
+        #                 state_timer=0,
+        #                 state_change_conditions={"Tup": "exit"},
+        #                 output_actions=[("SoftCode", self.sound.sound_stop_code)],  fixme: SOFT CODE
+        #             )
 
         # TRIAL
+        state_side_ready = "side_ready"
         sma.add_state(
-            state_name="center_ready",
-            state_timer=30,
-            state_change_conditions={
-                Bpod.Events.Port2In: "center_initiating"
-            },  # , Bpod.Events.Tup: "exit"},
-            output_actions=output_actions__center_ready,
+            state_name=state_center_ready,
+            state_timer=0,
+            state_change_conditions={Bpod.Events.Tup: state_side_ready},
+            output_actions=output_actions__center_ready
+            + [("SoftCode", self.MOVE_TO_FRONT)],
         )
         # INIT long enough -> proceed. pulled out too early -> back to center_ready
-        sma.add_state(
-            state_name="center_initiating",
-            state_timer=initiation_hold_time,
-            state_change_conditions={
-                Bpod.Events.Port2Out: "center_ready",  # ABORTED
-                Bpod.Events.Tup: "side_ready",
-            },  # CONTINUE
-            output_actions=output_actions__center_delay,
-        )
+        # sma.add_state(
+        #     state_name="center_initiating",
+        #     state_timer=initiation_hold_time,
+        #     state_change_conditions={
+        #         Bpod.Events.Port2Out: "center_ready",  # ABORTED
+        #         Bpod.Events.Tup: "side_ready",
+        #     },  # CONTINUE
+        #     output_actions=output_actions__center_delay,
+        # )
 
         # TRAVEL to side -> wait for entry
         if self.next_trial_give_stop_signal:
@@ -592,7 +632,7 @@ class TaskControl(object):
             #           center light -> center in -> reward
 
             sma.add_state(
-                state_name="side_ready",
+                state_name=state_side_ready,
                 state_timer=delay_until_stop_signal,
                 state_change_conditions={
                     # Bpod.Events.Port1In: "choice_left",
@@ -615,12 +655,12 @@ class TaskControl(object):
             )
         else:  # REGULAR TRIAL
             sma.add_state(
-                state_name="side_ready",
+                state_name=state_side_ready,
                 state_timer=self.task_settings["delay_until_side_timeout"],
                 state_change_conditions={
                     Bpod.Events.Port1In: "choice_left",
                     Bpod.Events.Port3In: "choice_right",
-                    Bpod.Events.Tup: "exit",
+                    Bpod.Events.Tup: "final",
                 },
                 output_actions=output_actions__side_ready,
             )
@@ -684,27 +724,35 @@ class TaskControl(object):
         # Outcome documentation
         sma.add_state(
             state_name=outcome_doc_left,
-            state_timer=0,
+            state_timer=2 if valve_left_outcome else 0,
             state_change_conditions={Bpod.Events.Tup: "final"},
-            output_actions=[],
+            output_actions=[] + [("SoftCode", 78)],
         )
         sma.add_state(
             state_name=outcome_doc_right,
-            state_timer=0,
+            state_timer=2 if valve_right_outcome else 0,
             state_change_conditions={Bpod.Events.Tup: "final"},
-            output_actions=[],
+            output_actions=[] + [("SoftCode", 77)],
         )
         # Cleanup
         sma.add_state(
             state_name="final",
             state_timer=self.task_settings["state_duration_final"],
             state_change_conditions={
-                Bpod.Events.Port1Out: "exit",
-                Bpod.Events.Port2Out: "exit",
-                Bpod.Events.Port3Out: "exit",
+                Bpod.Events.Port1Out: "iti",
+                Bpod.Events.Port2Out: "iti",
+                Bpod.Events.Port3Out: "iti",
+                Bpod.Events.Tup: "iti",
+            },
+            output_actions=[] + [("SoftCode", self.MOVE_TO_BACK)],
+        )
+        sma.add_state(
+            state_name="iti",
+            state_timer=2,
+            state_change_conditions={
                 Bpod.Events.Tup: "exit",
             },
-            output_actions=[],
+            output_actions=[] + [("SoftCode", 88)],
         )
         # END
         return sma

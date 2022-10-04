@@ -179,7 +179,7 @@ class StereoSound(object):
         self._sounds[new_sound_key] = new_sound_dict
         return new_sound_key
 
-    def execute_sound_handler(self, sound_code=None):
+    def execute_sound_handler(self, sound_code=None, raise_errors=False):
         if sound_code in self.sounds.keys():
             logging.debug(f"Playing sound # {sound_code}.")
             sd.play(
@@ -191,7 +191,11 @@ class StereoSound(object):
             logging.debug("Stopped current sound.")
             sd.stop()
         else:
-            raise ValueError(f"No such sound index: {sound_code}")
+            msg = f"No such sound index: {sound_code}"
+            if raise_errors:
+                raise ValueError(msg)
+            else:
+                logging.info(msg)
 
 
 if __name__ == "__main__":
