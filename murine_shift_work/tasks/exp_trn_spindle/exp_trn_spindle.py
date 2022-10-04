@@ -15,7 +15,7 @@ from murine_shift_work.logic.specific_state_machines import (
 from murine_shift_work.logic.stimulation import Stimulation
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
-from murine_shift_work.tasks._test_spindle_stim.param_sets import stimulation_param_sets
+from murine_shift_work.tasks.exp_trn_spindle.param_sets import stimulation_param_sets
 
 
 class ProtocolObject:

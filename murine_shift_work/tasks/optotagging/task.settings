@@ -1,5 +1,5 @@
 TTL_IDENTIFIER_SEQUENCE = "LsLsss"
-N_MAX_TRIALS = 100
+N_MAX_TRIALS = 50
 TRIGGER_ITI = 1  # seconds
 RECORD_VIDEO = True  # ! Not implemented
 
@@ -8,9 +8,9 @@ RECORD_VIDEO = True  # ! Not implemented
 
 [stimulation]
     # Excitation
-    pulse_duration = 0.005
+    pulse_duration = 0.01
     pulse_frequency = 20
-    pulse_train_duration = 2
+    pulse_train_duration = 1
     pulse_train_delay = 0
     trigger_channels_for_stimulation = [1,]  # values: 1,2 -- no python index offset here as is used for eval
     trigger_mode = "gated"  # normal, toggle, pulse gate
