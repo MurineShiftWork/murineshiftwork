@@ -92,8 +92,6 @@ class TaskControl(object):
         #  and stop signal PS (adaptive stops, probabilities all 1/0 for analysis simplicity)
         # fixme 2: use hardware params for go/stop signal generation
 
-        print("sound")
-        logging.info("sound")
         self.calibration_sound = CalibrationDataSound(
             file_path=self.task_settings["calibration_file_sound"]
         )
@@ -106,7 +104,6 @@ class TaskControl(object):
         self.sound_delay_correction = (
             self.calibration_sound.calculate_sound_delay_correction()
         )
-        print("water", self.task_settings["calibration_file_water"])
         self.calibration_water = CalibrationDataWater(
             file_path=self.task_settings["calibration_file_water"]
         )
@@ -120,8 +117,6 @@ class TaskControl(object):
         )
         serial_port = "/dev/ttyUSB0"
         stage_config = config_for_all_stages["stage_tower_setup_1"]
-
-        print("MOVE INTERFACE")
         self.stage = MoveInterface(
             axes_names=axes_names,
             serial_port=serial_port,
@@ -138,7 +133,6 @@ class TaskControl(object):
 
         logging.debug("Task control class created.")
         self.bpod.softcode_handler_function = self.softcode_handler
-        print("XX")
 
     def softcode_handler(self, softcode=None):
         logging.info(f"SOFT CODE RECEIVED: {softcode}")
