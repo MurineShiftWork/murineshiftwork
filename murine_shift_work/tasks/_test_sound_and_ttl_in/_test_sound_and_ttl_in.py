@@ -44,7 +44,9 @@ class Task(TaskRunner):
                 state_name="bnc_off",
                 state_timer=0.1,
                 state_change_conditions={"Tup": "leave"},
-                output_actions=[(self._test_bnc_in_channel, 0)],  # ("SoftCode", 99),
+                output_actions=[
+                    (self._test_bnc_in_channel, 0)
+                ],  # ("SoftCode", 99),
             )
             sma.add_state(
                 state_name="leave",

@@ -23,15 +23,22 @@ class PandasModel(QtCore.QAbstractTableModel):
         if index.isValid():
             if role == QtCore.Qt.DisplayRole:
                 if index.column() != 0:
-                    return str("%.2f" % self._data.values[index.row()][index.column()])
+                    return str(
+                        "%.2f" % self._data.values[index.row()][index.column()]
+                    )
                 else:
                     return str(self._data.values[index.row()][index.column()])
         return None
 
     def headerData(self, section, orientation, role):
-        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+        if (
+            orientation == QtCore.Qt.Horizontal
+            and role == QtCore.Qt.DisplayRole
+        ):
             return self._data.columns[section]
-        elif orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
+        elif (
+            orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole
+        ):
             return str(self._data.index[section])
         return None
 

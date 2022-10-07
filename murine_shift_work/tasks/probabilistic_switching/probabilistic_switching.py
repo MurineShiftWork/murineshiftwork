@@ -13,7 +13,9 @@ from murine_shift_work.logic.task_process import TaskRunner
 from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
     OnlinePlottingForPS,
 )
-from murine_shift_work.tasks.probabilistic_switching.task_objects import TaskControl
+from murine_shift_work.tasks.probabilistic_switching.task_objects import (
+    TaskControl,
+)
 
 
 class Task(TaskRunner):

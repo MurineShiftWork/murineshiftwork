@@ -18,7 +18,9 @@ available_tasks = "\n".join([f"    - {s}" for s in list_available_tasks()])
 
 
 def get_task_dir(task=None):
-    exec(f"from murine_shift_work.tasks import {task} as task_module", globals())
+    exec(
+        f"from murine_shift_work.tasks import {task} as task_module", globals()
+    )
     exec("task_folder = Path(task_module.__file__).parent", globals())
     if "task_folder" not in globals():
         return ""
@@ -30,7 +32,9 @@ def _evaluate_metadata(args_dict):
     metadata_list = args_dict.get("metadata_list", None)
     if metadata_list is not None:
         metadata_list = [
-            v.strip(" ").strip("'").strip('"') for v in metadata_list if "=" in v
+            v.strip(" ").strip("'").strip('"')
+            for v in metadata_list
+            if "=" in v
         ]
         metadata_dict = dict(map(lambda s: s.split("="), metadata_list))
 
@@ -66,7 +70,9 @@ def _evaluate_task(args_dict=None):
         args_dict["task_dir"] = get_task_dir(task=args_dict["task"])
     else:
         if not args_dict["command"] == "register":
-            raise ValueError("Task name can only be left out if command is 'register'.")
+            raise ValueError(
+                "Task name can only be left out if command is 'register'."
+            )
         else:
             logging.debug("No task defined. Command is register.")
     return args_dict
@@ -169,10 +175,14 @@ def evaluate_args(args_dict=None):
 
     # Patch task settings with specific subject settings if available
     args_dict["settings.task.patched"] = settings_task_default
-    settings_subjects_this = settings_subjects_all.get(args_dict["subject"], None)
+    settings_subjects_this = settings_subjects_all.get(
+        args_dict["subject"], None
+    )
 
     if settings_subjects_this:
-        task_settings_patch = settings_subjects_this.get(args_dict["task"], None)
+        task_settings_patch = settings_subjects_this.get(
+            args_dict["task"], None
+        )
         if task_settings_patch:
             args_dict["settings.subjects.this"] = task_settings_patch
             for k, v in task_settings_patch.items():

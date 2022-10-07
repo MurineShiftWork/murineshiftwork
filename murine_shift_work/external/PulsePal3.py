@@ -156,7 +156,10 @@ class PulsePalObject(object):
             )
 
         self.update_parameter_fields(
-            self, param_code=param_code, channel=channel, original_value=original_value
+            self,
+            param_code=param_code,
+            channel=channel,
+            original_value=original_value,
         )
 
     def update_parameter_fields(
@@ -228,17 +231,25 @@ class PulsePalObject(object):
         for i in range(1, 5):
             programValues[pos] = self.phase1Duration[i] * self.cycleFrequency
             pos += 1
-            programValues[pos] = self.interPhaseInterval[i] * self.cycleFrequency
+            programValues[pos] = (
+                self.interPhaseInterval[i] * self.cycleFrequency
+            )
             pos += 1
             programValues[pos] = self.phase2Duration[i] * self.cycleFrequency
             pos += 1
-            programValues[pos] = self.interPulseInterval[i] * self.cycleFrequency
+            programValues[pos] = (
+                self.interPulseInterval[i] * self.cycleFrequency
+            )
             pos += 1
             programValues[pos] = self.burstDuration[i] * self.cycleFrequency
             pos += 1
-            programValues[pos] = self.interBurstInterval[i] * self.cycleFrequency
+            programValues[pos] = (
+                self.interBurstInterval[i] * self.cycleFrequency
+            )
             pos += 1
-            programValues[pos] = self.pulseTrainDuration[i] * self.cycleFrequency
+            programValues[pos] = (
+                self.pulseTrainDuration[i] * self.cycleFrequency
+            )
             pos += 1
             programValues[pos] = self.pulseTrainDelay[i] * self.cycleFrequency
             pos += 1
@@ -255,17 +266,20 @@ class PulsePalObject(object):
             pos = 0
             for i in range(1, 5):
                 value = math.ceil(
-                    ((self.phase1Voltage[i] + 10) / float(20)) * self.dac_bitMax
+                    ((self.phase1Voltage[i] + 10) / float(20))
+                    * self.dac_bitMax
                 )  # Convert volts to bits
                 programValues[pos] = value
                 pos += 1
                 value = math.ceil(
-                    ((self.phase2Voltage[i] + 10) / float(20)) * self.dac_bitMax
+                    ((self.phase2Voltage[i] + 10) / float(20))
+                    * self.dac_bitMax
                 )  # Convert volts to bits
                 programValues[pos] = value
                 pos += 1
                 value = math.ceil(
-                    ((self.restingVoltage[i] + 10) / float(20)) * self.dac_bitMax
+                    ((self.restingVoltage[i] + 10) / float(20))
+                    * self.dac_bitMax
                 )  # Convert volts to bits
                 programValues[pos] = value
                 pos += 1
@@ -283,12 +297,14 @@ class PulsePalObject(object):
             pos += 1
             if self.model == 1:
                 value = math.ceil(
-                    ((self.phase1Voltage[i] + 10) / float(20)) * self.dac_bitMax
+                    ((self.phase1Voltage[i] + 10) / float(20))
+                    * self.dac_bitMax
                 )  # Convert volts to bits
                 programValues[pos] = value
                 pos += 1
                 value = math.ceil(
-                    ((self.phase2Voltage[i] + 10) / float(20)) * self.dac_bitMax
+                    ((self.phase2Voltage[i] + 10) / float(20))
+                    * self.dac_bitMax
                 )  # Convert volts to bits
                 programValues[pos] = value
                 pos += 1
@@ -300,7 +316,8 @@ class PulsePalObject(object):
             pos += 1
             if self.model == 1:
                 value = math.ceil(
-                    ((self.restingVoltage[i] + 10) / float(20)) * self.dac_bitMax
+                    ((self.restingVoltage[i] + 10) / float(20))
+                    * self.dac_bitMax
                 )  # Convert volts to bits
                 programValues[pos] = value
                 pos += 1
@@ -323,7 +340,9 @@ class PulsePalObject(object):
             programValues[pos] = self.linkTriggerChannel2[i]
             pos += 1
         # Pack 8-bit params to bytes and append to program byte-string
-        programByteString = programByteString + struct.pack("BBBBBBBB", *programValues)
+        programByteString = programByteString + struct.pack(
+            "BBBBBBBB", *programValues
+        )
 
         # Add trigger mode params
         programByteString = programByteString + struct.pack(
@@ -449,9 +468,13 @@ class PulsePalObject(object):
             ((voltage + 10) / float(20)) * self.dac_bitMax
         )  # Convert volts to bytes
         if self.model == 1:
-            messageBytes = struct.pack("BBBB", self.OpMenuByte, 79, channel, voltage)
+            messageBytes = struct.pack(
+                "BBBB", self.OpMenuByte, 79, channel, voltage
+            )
         else:
-            messageBytes = struct.pack("<BBBH", self.OpMenuByte, 79, channel, voltage)
+            messageBytes = struct.pack(
+                "<BBBH", self.OpMenuByte, 79, channel, voltage
+            )
         self.serialObject.write(messageBytes)
         # Receive acknowledgement
         ok = self.serialObject.read(1)
@@ -463,7 +486,9 @@ class PulsePalObject(object):
     def setDisplay(self, row1String, row2String):
         messageBytes = row1String + chr(254) + row2String
         messageSize = len(messageBytes)
-        messageBytes = chr(self.OpMenuByte) + chr(78) + chr(messageSize) + messageBytes
+        messageBytes = (
+            chr(self.OpMenuByte) + chr(78) + chr(messageSize) + messageBytes
+        )
         self.serialObject.write(messageBytes)
 
     def saveSDSettings(self, fileName):
@@ -474,7 +499,11 @@ class PulsePalObject(object):
         else:
             fileNameSize = len(fileName)
             messageBytes = (
-                chr(self.OpMenuByte) + chr(90) + chr(1) + chr(fileNameSize) + fileName
+                chr(self.OpMenuByte)
+                + chr(90)
+                + chr(1)
+                + chr(fileNameSize)
+                + fileName
             )
             self.serialObject.write(messageBytes)
 
@@ -486,7 +515,11 @@ class PulsePalObject(object):
         else:
             fileNameSize = len(fileName)
             messageBytes = (
-                chr(self.OpMenuByte) + chr(90) + chr(3) + chr(fileNameSize) + fileName
+                chr(self.OpMenuByte)
+                + chr(90)
+                + chr(3)
+                + chr(fileNameSize)
+                + fileName
             )
             self.serialObject.write(messageBytes)
 
@@ -498,7 +531,11 @@ class PulsePalObject(object):
         else:
             fileNameSize = len(fileName)
             messageBytes = (
-                chr(self.OpMenuByte) + chr(90) + chr(2) + chr(fileNameSize) + fileName
+                chr(self.OpMenuByte)
+                + chr(90)
+                + chr(2)
+                + chr(fileNameSize)
+                + fileName
             )
             self.serialObject.write(messageBytes)
             response = self.serialObject.read(178)
@@ -541,19 +578,28 @@ class PulsePalObject(object):
                 voltage_bits = struct.unpack("<H", response[ind : ind + 2])[0]
                 ind += 2
                 self.phase1Voltage[i] = (
-                    round((((voltage_bits / float(self.dac_bitMax)) * 20) - 10) * 100)
+                    round(
+                        (((voltage_bits / float(self.dac_bitMax)) * 20) - 10)
+                        * 100
+                    )
                     / 100
                 )
                 voltage_bits = struct.unpack("<H", response[ind : ind + 2])[0]
                 ind += 2
                 self.phase2Voltage[i] = (
-                    round((((voltage_bits / float(self.dac_bitMax)) * 20) - 10) * 100)
+                    round(
+                        (((voltage_bits / float(self.dac_bitMax)) * 20) - 10)
+                        * 100
+                    )
                     / 100
                 )
                 voltage_bits = struct.unpack("<H", response[ind : ind + 2])[0]
                 ind += 2
                 self.restingVoltage[i] = (
-                    round((((voltage_bits / float(self.dac_bitMax)) * 20) - 10) * 100)
+                    round(
+                        (((voltage_bits / float(self.dac_bitMax)) * 20) - 10)
+                        * 100
+                    )
                     / 100
                 )
             for i in range(1, 5):
@@ -561,15 +607,21 @@ class PulsePalObject(object):
                 ind += 1
                 self.customTrainID[i] = struct.unpack("B", response[ind])[0]
                 ind += 1
-                self.customTrainTarget[i] = struct.unpack("B", response[ind])[0]
+                self.customTrainTarget[i] = struct.unpack("B", response[ind])[
+                    0
+                ]
                 ind += 1
                 self.customTrainLoop[i] = struct.unpack("B", response[ind])[0]
                 ind += 1
             for i in range(1, 5):
-                self.linkTriggerChannel1[i] = struct.unpack("B", response[ind])[0]
+                self.linkTriggerChannel1[i] = struct.unpack(
+                    "B", response[ind]
+                )[0]
                 ind += 1
             for i in range(1, 5):
-                self.linkTriggerChannel2[i] = struct.unpack("B", response[ind])[0]
+                self.linkTriggerChannel2[i] = struct.unpack(
+                    "B", response[ind]
+                )[0]
                 ind += 1
             self.triggerMode[1] = struct.unpack("B", response[ind])[0]
             ind += 1
@@ -578,7 +630,9 @@ class PulsePalObject(object):
     def __str__(self):
         sb = []
         for key in self.__dict__:
-            sb.append("{key}='{value}'".format(key=key, value=self.__dict__[key]))
+            sb.append(
+                "{key}='{value}'".format(key=key, value=self.__dict__[key])
+            )
 
         return ", ".join(sb)
 

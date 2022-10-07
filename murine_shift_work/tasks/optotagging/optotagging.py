@@ -25,13 +25,21 @@ class OptoTagging(object):
         self.input_kwargs = kwargs
 
     def update(self, trial_index=None, trial_data=None):
-        first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
+        first_state_name = str(
+            list(trial_data["States timestamps"].keys())[0]
+        ).lower()
         if trial_index < 1 and first_state_name.startswith("pulse"):
             # IF TTL TRIAL
-            trial_data["info"] = {"trial_type": "ttl", "trial_index": trial_index}
+            trial_data["info"] = {
+                "trial_type": "ttl",
+                "trial_index": trial_index,
+            }
             return self.trial_data.append(trial_data)
         else:
-            trial_data["info"] = {"trial_type": "task", "trial_index": trial_index}
+            trial_data["info"] = {
+                "trial_type": "task",
+                "trial_index": trial_index,
+            }
             return self.trial_data.append(trial_data)
 
     def save(self):
@@ -53,21 +61,26 @@ class Task(TaskRunner):
     def run(self) -> None:
         task_settings = self.input_kwargs["settings.task.patched"]
         serial_port_pulsepal = self.input_kwargs.get(
-            "serial_port_pulsepal", task_settings["hardware"]["serial_port_pulsepal"]
+            "serial_port_pulsepal",
+            task_settings["hardware"]["serial_port_pulsepal"],
         )
         stimulation = Stimulation(
             port=serial_port_pulsepal,
             in_dict=task_settings["stimulation"],
         )
         stimulation.connect()
-        pulse_train_duration = task_settings["stimulation"]["pulse_train_duration"]
+        pulse_train_duration = task_settings["stimulation"][
+            "pulse_train_duration"
+        ]
 
         optotagging = OptoTagging(
             out_path=self.input_kwargs["session_paths"]["session_file_path"]
         )
 
         trial_index = 0
-        while self.continue_task and trial_index <= task_settings["N_MAX_TRIALS"]:
+        while (
+            self.continue_task and trial_index <= task_settings["N_MAX_TRIALS"]
+        ):
             logging.info(f"Executing trial {trial_index}")
 
             if trial_index == 0:
@@ -95,7 +108,9 @@ class Task(TaskRunner):
                 )
                 sma.add_state(
                     state_name="iti",
-                    state_timer=task_settings["TRIGGER_ITI"],  # + pulse_train_duration,
+                    state_timer=task_settings[
+                        "TRIGGER_ITI"
+                    ],  # + pulse_train_duration,
                     state_change_conditions={Bpod.Events.Tup: "exit"},
                     output_actions=[],
                 )

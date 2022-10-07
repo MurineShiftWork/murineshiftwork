@@ -12,14 +12,20 @@ from murine_shift_work.cli.execute import run_task
 from murine_shift_work.logic.log import get_default_log_file_path
 
 
-class ArgparseFormatter(ArgumentDefaultsHelpFormatter, RawDescriptionHelpFormatter):
+class ArgparseFormatter(
+    ArgumentDefaultsHelpFormatter, RawDescriptionHelpFormatter
+):
     pass
 
 
 def add_args_for_general_use(parser=None):
     general_args = parser.add_argument_group("General arguments")
     general_args.add_argument(
-        "-s", "--subject", type=str, default="_test_subject", help="Subject name"
+        "-s",
+        "--subject",
+        type=str,
+        default="_test_subject",
+        help="Subject name",
     )
     general_args.add_argument(
         "-t",
@@ -59,7 +65,10 @@ def add_args_for_general_use(parser=None):
         help="Name or initials of researcher acquiring the data",
     )
     metadata_group.add_argument(
-        "--setup", type=str, default="unknown_setup", help="Name or ID of setup"
+        "--setup",
+        type=str,
+        default="unknown_setup",
+        help="Name or ID of setup",
     )
     metadata_group.add_argument(
         "--experiment",
@@ -67,7 +76,9 @@ def add_args_for_general_use(parser=None):
         default="unknown_experiment",
         help="Name or ID of experiment",
     )
-    config_arg_group = parser.add_argument_group("Configuration & settings files")
+    config_arg_group = parser.add_argument_group(
+        "Configuration & settings files"
+    )
     config_arg_group.add_argument(
         "-cd",
         "--config-dir",

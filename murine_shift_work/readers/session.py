@@ -45,7 +45,9 @@ def read_session_data(
         return s.split(".msw.")[-1].replace("msw", "").strip(".")
 
     session_files_dict = {
-        _prepare_key(v): v for v in files_in_dir if test_is_recognized_msw_file(v)
+        _prepare_key(v): v
+        for v in files_in_dir
+        if test_is_recognized_msw_file(v)
     }
     is_legacy_session = test_is_legacy_format(session_dir=session_dir)
 
@@ -78,7 +80,10 @@ def read_session_data(
 
     # Check for legacy files
     for k, v in session_files_dict.items():
-        if k.endswith("settings.json") and "settings.process" not in session_data:
+        if (
+            k.endswith("settings.json")
+            and "settings.process" not in session_data
+        ):
             session_data["settings.process"] = read_json(v)
 
         elif k.endswith("settings") and "settings.task" not in session_data:

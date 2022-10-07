@@ -23,7 +23,9 @@ class TaskData:
 
     def append(self, trial_index=None, trial_data=None, **info_dict_extension):
         # If is TTL trial
-        first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
+        first_state_name = str(
+            list(trial_data["States timestamps"].keys())[0]
+        ).lower()
         if trial_index < 1 and first_state_name.startswith("pulse"):
             trial_type = "ttl"
         else:
@@ -62,7 +64,9 @@ class Task(TaskRunner):
             sma = make_ttl_identifier_sequences(
                 bpod=self.bpod,
                 sequence=test_sequence,
-                output_chanel_pulse=eval(f"Bpod.OutputChannels.BNC{bnc_channel}"),
+                output_chanel_pulse=eval(
+                    f"Bpod.OutputChannels.BNC{bnc_channel}"
+                ),
             )
 
             self.bpod.send_state_machine(sma)

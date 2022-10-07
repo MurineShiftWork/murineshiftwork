@@ -26,7 +26,9 @@ def run_register(**args_dict):
                 new_dict = {}
 
             updated_settings[args_dict["subject"]] = new_dict
-            write_config(in_dict=updated_settings, save_path=config_file_subjects)
+            write_config(
+                in_dict=updated_settings, save_path=config_file_subjects
+            )
             print_box(f"Added subject '{subject}' to subject.settings.")
         else:
             print_box(
@@ -38,7 +40,9 @@ def run_register(**args_dict):
         if subject in subject_settings_all:
             subject_settings_all.pop(subject)
 
-            write_config(in_dict=subject_settings_all, save_path=config_file_subjects)
+            write_config(
+                in_dict=subject_settings_all, save_path=config_file_subjects
+            )
             print_box(f"Removed subject '{subject}' from subject.settings.")
         else:
             print_box(f"Subject '{subject}' does NOT exist.")
@@ -54,7 +58,9 @@ def run_register(**args_dict):
                 return
 
             subject_settings_all[new_alias] = subject_settings_all.pop(subject)
-            write_config(in_dict=subject_settings_all, save_path=config_file_subjects)
+            write_config(
+                in_dict=subject_settings_all, save_path=config_file_subjects
+            )
             print_box(
                 f"Renamed subject '{subject}' to '{new_alias}' in subject.settings."
             )
@@ -69,7 +75,9 @@ def run_register(**args_dict):
                             f"Cannot see new folder {str(new)}, but old one does {'' if old.exists() else 'NOT'} exists at {str(old)}"
                         )
                     else:
-                        print_box(f"Moved subject '{subject}' data to {str(new)}.")
+                        print_box(
+                            f"Moved subject '{subject}' data to {str(new)}."
+                        )
                 else:
                     print_box(f"No data to move for subject '{subject}'.")
         else:

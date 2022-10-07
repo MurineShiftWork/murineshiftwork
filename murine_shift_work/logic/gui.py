@@ -69,7 +69,9 @@ class SettingsGUI(object):
             row = [
                 sg.Text(setting_name),
                 sg.Input(
-                    key=setting_name, default_text=default_value, metadata=metadata_type
+                    key=setting_name,
+                    default_text=default_value,
+                    metadata=metadata_type,
                 ),
             ]
             self.layout.append(row)

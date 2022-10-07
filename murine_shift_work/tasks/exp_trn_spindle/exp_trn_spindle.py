@@ -15,7 +15,9 @@ from murine_shift_work.logic.specific_state_machines import (
 from murine_shift_work.logic.stimulation import Stimulation
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
-from murine_shift_work.tasks.exp_trn_spindle.param_sets import stimulation_param_sets
+from murine_shift_work.tasks.exp_trn_spindle.param_sets import (
+    stimulation_param_sets,
+)
 
 
 class ProtocolObject:
@@ -29,13 +31,21 @@ class ProtocolObject:
         self.input_kwargs = kwargs
 
     def update(self, trial_index=None, trial_data=None):
-        first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
+        first_state_name = str(
+            list(trial_data["States timestamps"].keys())[0]
+        ).lower()
         if trial_index < 1 and first_state_name.startswith("pulse"):
             # IF TTL TRIAL
-            trial_data["info"] = {"trial_type": "ttl", "trial_index": trial_index}
+            trial_data["info"] = {
+                "trial_type": "ttl",
+                "trial_index": trial_index,
+            }
             return self.trial_data.append(trial_data)
         else:
-            trial_data["info"] = {"trial_type": "task", "trial_index": trial_index}
+            trial_data["info"] = {
+                "trial_type": "task",
+                "trial_index": trial_index,
+            }
             return self.trial_data.append(trial_data)
 
     def save(self):
@@ -64,7 +74,9 @@ class Task(TaskRunner):
 
         raw_out_path = self.input_kwargs["session_paths"]["session_file_path"]
         with open(str(raw_out_path) + ".msw.stimulation.json", "w") as f:
-            out_json = json.dumps(stimulation_param_sets, indent=4, sort_keys=True)
+            out_json = json.dumps(
+                stimulation_param_sets, indent=4, sort_keys=True
+            )
             f.write(out_json)
 
         protocol_data = ProtocolObject(out_path=raw_out_path)
@@ -110,10 +122,17 @@ class Task(TaskRunner):
                     0, len(stimulation_param_sets), dtype=int
                 )
                 trial_stim_settings = stimulation_param_sets.get(stim_set_id)
-                pulse_train_duration = trial_stim_settings.get("pulseTrainDuration")
+                pulse_train_duration = trial_stim_settings.get(
+                    "pulseTrainDuration"
+                )
 
                 print(
-                    "Trial", trial_index, "Set", stim_set_id, "Val", trial_stim_settings
+                    "Trial",
+                    trial_index,
+                    "Set",
+                    stim_set_id,
+                    "Val",
+                    trial_stim_settings,
                 )
 
                 # update all output channels with these settings
@@ -123,7 +142,11 @@ class Task(TaskRunner):
                         stim_set_param_value,
                     ) in trial_stim_settings.items():
                         if not ch:
-                            print("UPDATING:", stim_set_param, stim_set_param_value)
+                            print(
+                                "UPDATING:",
+                                stim_set_param,
+                                stim_set_param_value,
+                            )
 
                         pulsepal.program_one_param(
                             channel=ch,
@@ -168,9 +191,14 @@ class Task(TaskRunner):
 
             trial_data = self.bpod.session.current_trial.export()
             trial_data.update(
-                {"stimulation": trial_stim_settings, "stim_set_id": stim_set_id}
+                {
+                    "stimulation": trial_stim_settings,
+                    "stim_set_id": stim_set_id,
+                }
             )
-            protocol_data.update(trial_index=trial_index, trial_data=trial_data)
+            protocol_data.update(
+                trial_index=trial_index, trial_data=trial_data
+            )
             protocol_data.save()
             trial_index += 1
 

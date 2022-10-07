@@ -31,7 +31,9 @@ class CalibrationData(object):
     def __add__(self, other):
         assert isinstance(other, dict)
         other.update({"measurement_time": datetime.now()})
-        self.calibration_data = self.calibration_data.append(other, ignore_index=True)
+        self.calibration_data = self.calibration_data.append(
+            other, ignore_index=True
+        )
         return self
 
     def __repr__(self):
@@ -64,7 +66,10 @@ class CalibrationData(object):
         if file_path is not None:
             self.file_path = file_path
 
-        if self.calibration_data is not None and not self.calibration_data.empty:
+        if (
+            self.calibration_data is not None
+            and not self.calibration_data.empty
+        ):
 
             if Path(self.file_path).exists() and not overwrite:
                 raise FileExistsError(
@@ -105,8 +110,13 @@ class CalibrationDataWater(CalibrationData):
             }
         )
 
-    def water_volume_to_valve_time(self, valves=None, target_volume=None, s_to_ms=1000):
-        if self.calibration_data is not None and not self.calibration_data.empty:
+    def water_volume_to_valve_time(
+        self, valves=None, target_volume=None, s_to_ms=1000
+    ):
+        if (
+            self.calibration_data is not None
+            and not self.calibration_data.empty
+        ):
             self.upgrade_calibration_file_field_names()
 
             # Process calibration data
@@ -229,12 +239,16 @@ def fit_water_calibration_exp(x_observed=None, y_observed=None):
     return popt, pcov
 
 
-def evaluate_water_calibration_curve_continuous(popt=None, min=0, max=10, step=0.1):
+def evaluate_water_calibration_curve_continuous(
+    popt=None, min=0, max=10, step=0.1
+):
     x_continuous = np.linspace(min, max, int(max / step), endpoint=True)
     y_continuous = _exponential_function(x_continuous, *popt)
     return x_continuous, y_continuous
 
 
-def evaluate_water_calibration_curve_y_to_x(x_continuous, y_continuous, y_target=None):
+def evaluate_water_calibration_curve_y_to_x(
+    x_continuous, y_continuous, y_target=None
+):
     x_value = np.interp(y_target, x_continuous, y_continuous)
     return x_value

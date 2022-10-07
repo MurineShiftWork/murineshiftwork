@@ -9,7 +9,9 @@ from serial_weighing_scale import SerialWeighingScale
 from tqdm import tqdm
 
 from murine_shift_work.logic.calibration import CalibrationDataWater
-from murine_shift_work.logic.specific_state_machines import make_sma_for_drop_of_water
+from murine_shift_work.logic.specific_state_machines import (
+    make_sma_for_drop_of_water,
+)
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
 
@@ -30,7 +32,9 @@ class Task(TaskRunner):
         N_DROPS = 300
         INTER_PULSE_INTERVAL = 0.1
         VALVES_TO_CALIBRATE = [1, 3]
-        PRECISION_DECIMALS = 2  # 2 decimals is the precision coming from the scale
+        PRECISION_DECIMALS = (
+            2  # 2 decimals is the precision coming from the scale
+        )
 
         random_valve_times = VALVE_TIMES_TO_TEST.copy()
         random.shuffle(random_valve_times)
@@ -51,7 +55,9 @@ class Task(TaskRunner):
                 )
 
                 if valve_opening_time > 0.5:
-                    corrected_valve_time = np.round(valve_opening_time / 1000, 3)
+                    corrected_valve_time = np.round(
+                        valve_opening_time / 1000, 3
+                    )
                     logging.warn(
                         f"Valve times not converted to ms yet.. "
                         f"Valve time of {valve_opening_time}s is {corrected_valve_time}ms"

@@ -29,7 +29,9 @@ def read_settings_py(file=None):
     tmp_module = SourceFileLoader(
         os.path.splitext(Path(file).name)[0], str(file)
     ).load_module()
-    module_vars = {k: v for k, v in vars(tmp_module).items() if not k.startswith("__")}
+    module_vars = {
+        k: v for k, v in vars(tmp_module).items() if not k.startswith("__")
+    }
     return module_vars
 
 
@@ -39,7 +41,9 @@ def read_json(file=None):
     return json.loads(data)
 
 
-def read_pybpod_csv(filepath=None, clean_events=True, return_trial_structure_only=True):
+def read_pybpod_csv(
+    filepath=None, clean_events=True, return_trial_structure_only=True
+):
     """Read csv file from pybpod acquisition.
     Optional: clean up irrelevant events, but make backup with sed.
     """

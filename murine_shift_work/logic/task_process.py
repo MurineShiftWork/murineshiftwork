@@ -126,7 +126,9 @@ class TaskProcess(object):
 
         # Make vars
         self.task_name = find_task_by_name(task_name=self.task_in)
-        basepath_and_child_session_option = Path(self.out_path) / is_child_session_to
+        basepath_and_child_session_option = (
+            Path(self.out_path) / is_child_session_to
+        )
         self.session_paths = build_data_paths(
             basepath=basepath_and_child_session_option,
             subject=self.subject,
@@ -148,10 +150,16 @@ class TaskProcess(object):
                 f"Task to run '{self.task_in}' not found or not specific enough. {self.task_name}"
             )
 
-        Path(self.session_paths["session_folder"]).mkdir(parents=True, exist_ok=False)
-        target_file = Path(self.session_paths["session_folder"]) / ".write_test"
+        Path(self.session_paths["session_folder"]).mkdir(
+            parents=True, exist_ok=False
+        )
+        target_file = (
+            Path(self.session_paths["session_folder"]) / ".write_test"
+        )
         if not test_path_is_writable(target_file) and not self.debug:
-            raise PermissionError(f"Session files not writable at {str(target_file)}")
+            raise PermissionError(
+                f"Session files not writable at {str(target_file)}"
+            )
 
         # Remove logging output for pybpod components
         patch_logging_levels()
@@ -184,7 +192,9 @@ class TaskProcess(object):
     def connect_bpod(self, max_try=2):
         """Connect device on serial port."""
         if not self.serial_is_open and not self.exiting:
-            logging.debug(f"Connecting bpod on serial port: {self.serial_port}")
+            logging.debug(
+                f"Connecting bpod on serial port: {self.serial_port}"
+            )
 
             current_attempt = 0
             while current_attempt < max_try:
@@ -192,7 +202,9 @@ class TaskProcess(object):
                     self.bpod = Bpod(
                         serial_port=self.serial_port,
                         workspace_path=self.session_paths["session_folder"],
-                        session_name=self.session_paths["session_basename_behav"],
+                        session_name=self.session_paths[
+                            "session_basename_behav"
+                        ],
                     )
                     self.bpod.open()
                     self.serial_is_open = True
@@ -224,9 +236,13 @@ class TaskProcess(object):
                 f"from murine_shift_work.tasks.{self.task_name}.{self.task_name} import Task as ThisTask",
                 globals(),
             )
-            exec("self.task_runner = ThisTask(bpod=self.bpod, **self.input_kwargs)")
+            exec(
+                "self.task_runner = ThisTask(bpod=self.bpod, **self.input_kwargs)"
+            )
         except ImportError:
-            raise ImportError(f"Cannot import 'Task' from task '{self.task_name}'")
+            raise ImportError(
+                f"Cannot import 'Task' from task '{self.task_name}'"
+            )
 
     def run_task(self):
         """Run the Task thread."""

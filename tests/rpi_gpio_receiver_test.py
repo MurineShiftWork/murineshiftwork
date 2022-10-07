@@ -28,7 +28,13 @@ def run_receiver_test(
     pin=None,
     bouncetime=100,
 ):
-    print("Setting up GPIO input on pin ", pin, " with bouncetime ", bouncetime, " ms.")
+    print(
+        "Setting up GPIO input on pin ",
+        pin,
+        " with bouncetime ",
+        bouncetime,
+        " ms.",
+    )
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
