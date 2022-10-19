@@ -109,7 +109,9 @@ class RemoteProcessHandler:
     remote_entrypoint_kwargs = {}
 
     def __init__(
-        self, remote_entrypoint_name: str = None, remote_entrypoint_kwargs: dict = None
+        self,
+        remote_entrypoint_name: str = None,
+        remote_entrypoint_kwargs: dict = None,
     ):
         super(RemoteProcessHandler, self).__init__()
         self.remote_entrypoint_name = remote_entrypoint_name
@@ -151,7 +153,8 @@ WORKFLOW:
 if __name__ == "__main__":
     # LOCAL
     remote_handler = RemoteProcessHandler(
-        remote_entrypoint_name="remote_entrypoint_cli", remote_entrypoint_kwargs={}
+        remote_entrypoint_name="remote_entrypoint_cli",
+        remote_entrypoint_kwargs={},
     )
     remote_handler.dispatch()  # -> See below for remote code executing now ...
 

@@ -68,7 +68,9 @@ class Task(TaskRunner):
                 stop_listening()
 
             else:
-                print("-> Key not actionable. Exit protocol by pressing 'enter'")
+                print(
+                    "-> Key not actionable. Exit protocol by pressing 'enter'"
+                )
 
         listen_keyboard(
             on_press=press, sequential=True, lower=True, delay_second_char=0.1

@@ -8,7 +8,9 @@ from tqdm import tqdm
 from murine_shift_work.logic.calibration import CalibrationDataWater
 from murine_shift_work.logic.gui import ask_water_calibration_ready
 from murine_shift_work.logic.gui import ask_water_calibration_weight
-from murine_shift_work.logic.specific_state_machines import make_sma_for_drop_of_water
+from murine_shift_work.logic.specific_state_machines import (
+    make_sma_for_drop_of_water,
+)
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
 
@@ -46,7 +48,9 @@ class Task(TaskRunner):
                 ask_water_calibration_ready(valve=valve_id)
 
                 if valve_opening_time > 0.5:
-                    corrected_valve_time = np.round(valve_opening_time / 1000, 3)
+                    corrected_valve_time = np.round(
+                        valve_opening_time / 1000, 3
+                    )
                     logging.warn(
                         f"Valve times not converted to ms yet.. Valve time of {valve_opening_time}s is {corrected_valve_time}ms"
                     )

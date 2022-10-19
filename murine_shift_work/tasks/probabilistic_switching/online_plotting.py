@@ -126,7 +126,9 @@ class OnlinePlottingForPS(Process):
         self.data_queue = data_queue
         self.kill_queue = kill_queue
         self.max_trials = max_trials if max_trials else self.max_trials
-        self.values_to_show = values_to_show if values_to_show else self.values_to_show
+        self.values_to_show = (
+            values_to_show if values_to_show else self.values_to_show
+        )
         self.data = Data(vector_length=self.max_trials)
 
     def run(self) -> None:
@@ -136,7 +138,9 @@ class OnlinePlottingForPS(Process):
 
         self.app = pg.mkQApp(self.name)
         self.win = pg.GraphicsLayoutWidget(show=True, title=self.name)
-        self.update_window_properties(window_title=Path(self.session_name).name)
+        self.update_window_properties(
+            window_title=Path(self.session_name).name
+        )
 
         # Top row: trial outcomes
         self.plot_to = self.win.addPlot(name="top_row")
@@ -255,7 +259,10 @@ class OnlinePlottingForPS(Process):
         self.kill_queue.put(True)
 
     def update_window_properties(
-        self, window_title="this_process", frame_margins=0.01, window_height=0.25
+        self,
+        window_title="this_process",
+        frame_margins=0.01,
+        window_height=0.25,
     ):
         cursor = self.app.desktop().cursor().pos()
         screen = self.app.desktop().screenNumber(cursor)
@@ -264,7 +271,9 @@ class OnlinePlottingForPS(Process):
         new_top_height_margin = int(screen_size_px.height() * frame_margins)
         # new geometry
         pos = QtCore.QPoint(new_top_width_margin, new_top_height_margin)
-        new_w = int(screen_size_px.width() - 2 * frame_margins * screen_size_px.width())
+        new_w = int(
+            screen_size_px.width() - 2 * frame_margins * screen_size_px.width()
+        )
         new_h = int(screen_size_px.height() * window_height)
         # mov window
         self.win.move(pos)
@@ -289,7 +298,9 @@ class OnlinePlottingForPS(Process):
         :return:
         """
         self.trial_index = dict_for_update["trial_index"]
-        self.data.moving_average[self.trial_index] = dict_for_update["moving_average"]
+        self.data.moving_average[self.trial_index] = dict_for_update[
+            "moving_average"
+        ]
 
         choice = dict_for_update["choice"]
         rewarded = dict_for_update["rewarded"]
@@ -392,7 +403,9 @@ if __name__ == "__main__":
     kill_queue = Queue()
 
     main_process = OnlinePlottingForPS(
-        is_simulation=is_simulation, data_queue=data_queue, kill_queue=kill_queue
+        is_simulation=is_simulation,
+        data_queue=data_queue,
+        kill_queue=kill_queue,
     )
 
     main_process.start()

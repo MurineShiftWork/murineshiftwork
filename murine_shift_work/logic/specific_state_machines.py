@@ -251,7 +251,9 @@ def add_trial_onset_ttl(
             f"bnc_channel variable can only be list, tuple or str, but is {bnc_channel}"
         )
 
-    logging.debug(f"Sending trial onset TTL: {ttl_pulse_duration}s on {bnc_channel}")
+    logging.debug(
+        f"Sending trial onset TTL: {ttl_pulse_duration}s on {bnc_channel}"
+    )
 
     sma.add_state(
         state_name=state_name_tuple[0],

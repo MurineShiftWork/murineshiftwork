@@ -4,7 +4,9 @@ import time
 
 from numpy import zeros
 
-from murine_shift_work.external.PulsePal3 import PulsePalObject  # Import PulsePalObject
+from murine_shift_work.external.PulsePal3 import (
+    PulsePalObject,
+)  # Import PulsePalObject
 
 
 # See: https://sites.google.com/site/pulsepalwiki/user-guide---c-api/c-methods/settriggermode
@@ -66,9 +68,13 @@ class Stimulation:
             self._set_channel_params(
                 channel=int(channel),
                 phase1Duration=round(float(self.in_dict["pulse_duration"]), 3),
-                pulse_frequency=round(float(self.in_dict["pulse_frequency"]), 3),
+                pulse_frequency=round(
+                    float(self.in_dict["pulse_frequency"]), 3
+                ),
                 pulseTrainDuration=float(self.in_dict["pulse_train_duration"]),
-                pulseTrainDelay=round(float(self.in_dict["pulse_train_delay"]), 3),
+                pulseTrainDelay=round(
+                    float(self.in_dict["pulse_train_delay"]), 3
+                ),
             )
 
             self.channels_stimulation[int(channel)] = 1
@@ -107,11 +113,15 @@ class Stimulation:
         self.pulsePal.phase1Duration[channel] = round(float(phase1Duration), 3)
         # inter-pulse interval = 0.05s ~ 20 Hz
         ipi = 1 / float(pulse_frequency)
-        self.pulsePal.interPulseInterval[channel] = round(ipi - phase1Duration, 3)
+        self.pulsePal.interPulseInterval[channel] = round(
+            ipi - phase1Duration, 3
+        )
         # total tone_duration of pulses = 3000 sec
         self.pulsePal.pulseTrainDuration[channel] = float(pulseTrainDuration)
         # delay until pulse train starts
-        self.pulsePal.pulseTrainDelay[channel] = round(float(pulseTrainDelay), 3)
+        self.pulsePal.pulseTrainDelay[channel] = round(
+            float(pulseTrainDelay), 3
+        )
 
         # BIphasic
         # self.pulsePal.interPhaseInterval[channel] = .005  # 10ms Li/Svoboda/2015
@@ -135,7 +145,9 @@ class Stimulation:
         for channel in self.in_dict["trigger_channels_for_stimulation"]:
             if channel > 0 and channel < 3:
                 link_cmd = f"self.pulsePal.linkTriggerChannel{int(channel)} = {self.channels_stimulation[0]}"
-                logging.info(f"PulsePal: Linking trigger channels: {link_cmd}.")
+                logging.info(
+                    f"PulsePal: Linking trigger channels: {link_cmd}."
+                )
                 exec(link_cmd)
                 if (
                     "trigger_mode" in self.in_dict
@@ -171,7 +183,8 @@ class Stimulation:
         self._check_channels_active_reset()
         # add active channel(s), so that clock trigger does not interrupt other channels
         channels_to_switch = (
-            self.channels_clock_trigger[1:] + self.channels_currently_active[1:]
+            self.channels_clock_trigger[1:]
+            + self.channels_currently_active[1:]
         )
         self.pulsePal.triggerOutputChannels(*channels_to_switch)
         time.sleep(0.005)

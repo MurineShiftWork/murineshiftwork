@@ -72,7 +72,10 @@ if __name__ == "__main__":
     tracemalloc.start()
     start_time = time.time()
     with ProcessPoolExecutor(cpu_count()) as exe:
-        fs = [exe.submit(work_no_shared_memory, np_array) for _ in range(cpu_count())]
+        fs = [
+            exe.submit(work_no_shared_memory, np_array)
+            for _ in range(cpu_count())
+        ]
         for _ in as_completed(fs):
             pass
     # Check memory usage

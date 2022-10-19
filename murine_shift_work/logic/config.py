@@ -14,7 +14,10 @@ def read_config(file=None, unrepr=True):
 
 
 def write_config(
-    in_dict=None, save_path=None, do_backup_original=True, backup_extension="bak"
+    in_dict=None,
+    save_path=None,
+    do_backup_original=True,
+    backup_extension="bak",
 ):
     new_config = ConfigObj(in_dict, unrepr=True, list_values=True)
     save_path = str(save_path)
@@ -47,7 +50,9 @@ def validate_config_file_path(
         if len(config_file.parts) == 1:
             default_dir = Path(default_dir)
             if (default_dir / config_file).exists():
-                logging.debug(f"Found config file: {str(default_dir / config_file)}")
+                logging.debug(
+                    f"Found config file: {str(default_dir / config_file)}"
+                )
                 return str(default_dir / config_file)
             else:
                 logging.debug(

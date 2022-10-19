@@ -26,7 +26,9 @@ class TaskData:
 
     def append(self, trial_index=None, trial_data=None, **info_dict_extension):
         # If is TTL trial
-        first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
+        first_state_name = str(
+            list(trial_data["States timestamps"].keys())[0]
+        ).lower()
         if trial_index < 1 and first_state_name.startswith("pulse"):
             trial_type = "ttl"
         else:
