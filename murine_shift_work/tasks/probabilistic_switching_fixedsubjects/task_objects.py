@@ -16,7 +16,9 @@ from murine_shift_work.logic.maths import ExponentialMovingAverage
 from murine_shift_work.logic.maths import withprob
 from murine_shift_work.logic.sounds import StereoSound
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
-from tests.stage_config import config_for_all_stages
+from murine_shift_work.tasks.probabilistic_switching_fixedsubjects.stage_config import (
+    config_for_all_stages,
+)
 
 
 class TaskControl(object):
@@ -87,6 +89,7 @@ class TaskControl(object):
             else save_path_data
         )
         print(f"Running session: {Path(self.save_path_data).name}")
+        print(self.task_settings)
 
         self.task_settings = task_settings
         self.probabilities = self.task_settings["probabilities"]
@@ -145,7 +148,9 @@ class TaskControl(object):
     def softcode_handler(self, softcode=None):
         logging.info(f"SOFT CODE RECEIVED: {softcode}")
 
-        self.sound.execute_sound_handler(sound_code=softcode)
+        self.sound.execute_sound_handler(
+            sound_code=softcode, raise_errors=False
+        )
 
         if softcode == self.MOVE_TO_FRONT:
             logging.info("MOVING TO FRONT")
@@ -800,6 +805,8 @@ class TaskControl(object):
         df = pd.DataFrame(self.trial_data)
         df.to_pickle(str(self.save_path_data) + ".df.pkl")
         logging.debug(f"Saved data in {np.round(time.time()-dt,2)}s.")
+        self.softcode_handler(softcode=self.MOVE_TO_BACK)
+        logging.info("Moved stage BACK on exit")
 
     def __del__(self):
         self.save()
