@@ -43,6 +43,9 @@ class Task(TaskRunner):
             port=self.input_kwargs["serial_port_scale"]
         )  # default is: "/dev/ttyACM2"
         scale.tare_scale()
+        while not scale.read_weight():
+            time.sleep(0.1)
+        print(f"WEIGHT post tare {scale.read_weight_reliable()}")
 
         calibration = CalibrationDataWater(
             file_path=self.input_kwargs["calibration_file_water"]
