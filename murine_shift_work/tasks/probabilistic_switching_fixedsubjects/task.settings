@@ -22,7 +22,7 @@ criterion_tau = 5  # PERFORMANCE_TAU_MOVMEAN
 
 first_block_easy = True  # choose high contrast first block from list of probabilities if has highest contrast
 
-forced_choice_threshold = 20  # nr trials until forced choice trial injected
+forced_choice_threshold = 50  # 20  # nr trials until forced choice trial injected
 
 block_switch_to_different_block_type = True  # BLOCK_SWITCH_TO_DIFFERENT
 n_max_trials = 1500  # N_MAX_TRIALS

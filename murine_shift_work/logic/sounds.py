@@ -199,7 +199,7 @@ class StereoSound(object):
             if raise_errors:
                 raise ValueError(msg)
             else:
-                logging.info(msg)
+                logging.debug(msg)
 
 
 if __name__ == "__main__":

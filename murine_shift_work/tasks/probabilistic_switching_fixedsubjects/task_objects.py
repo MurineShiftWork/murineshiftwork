@@ -89,7 +89,7 @@ class TaskControl(object):
             else save_path_data
         )
         print(f"Running session: {Path(self.save_path_data).name}")
-        print(self.task_settings)
+        logging.info(self.task_settings)
 
         self.task_settings = task_settings
         self.probabilities = self.task_settings["probabilities"]
@@ -146,17 +146,17 @@ class TaskControl(object):
         self.bpod.softcode_handler_function = self.softcode_handler
 
     def softcode_handler(self, softcode=None):
-        logging.info(f"SOFT CODE RECEIVED: {softcode}")
+        logging.debug(f"SOFT CODE RECEIVED: {softcode}")
 
         self.sound.execute_sound_handler(
             sound_code=softcode, raise_errors=False
         )
 
         if softcode == self.MOVE_TO_FRONT:
-            logging.info("MOVING TO FRONT")
+            logging.debug("MOVING TO FRONT")
             self.stage.move_to_known_position("front")
         if softcode == self.MOVE_TO_BACK:
-            logging.info("MOVING TO BACK")
+            logging.debug("MOVING TO BACK")
             self.stage.move_to_known_position("back")
 
     def switch_block(self):
@@ -456,9 +456,9 @@ class TaskControl(object):
         return sma
 
     def draw_next_trial(self):
-        if self.block_trial_number >= 20:
+        n_back_crit = self.task_settings["forced_choice_threshold"]
+        if self.block_trial_number >= n_back_crit:
             key = "choice"
-            n_back_crit = 20
             td_info = [
                 td["info"]
                 for td in self.trial_data
@@ -474,7 +474,9 @@ class TaskControl(object):
                     next_choice_option=-1 * unique_choices[-1]
                 )
             else:
-                self.is_forced_exploration_trial = True
+                self.is_forced_exploration_trial = (
+                    True  # fixme: this is wrong ??
+                )
 
         if self.block_probability_index is None:
             self.switch_block()
@@ -491,7 +493,7 @@ class TaskControl(object):
             "use_stop_trials"
         ] and withprob(self.task_settings["stop_trial_proportion"])
         if self.next_trial_give_stop_signal:
-            # if stop, also punish ?
+            # if stopped, also punish ?
             self.next_trial_choice_outcome_left = (
                 -1
                 if self.task_settings["punish_stop_trials"]
@@ -766,13 +768,13 @@ class TaskControl(object):
         # Outcome documentation
         sma.add_state(
             state_name=outcome_doc_left,
-            state_timer=2 if valve_left_outcome else 0,
+            state_timer=2,  # if valve_left_outcome else 0,
             state_change_conditions={Bpod.Events.Tup: "final"},
             output_actions=[] + [("SoftCode", 78)],
         )
         sma.add_state(
             state_name=outcome_doc_right,
-            state_timer=2 if valve_right_outcome else 0,
+            state_timer=2,  # if valve_right_outcome else 0,
             state_change_conditions={Bpod.Events.Tup: "final"},
             output_actions=[] + [("SoftCode", 77)],
         )
@@ -805,11 +807,17 @@ class TaskControl(object):
         df = pd.DataFrame(self.trial_data)
         df.to_pickle(str(self.save_path_data) + ".df.pkl")
         logging.debug(f"Saved data in {np.round(time.time()-dt,2)}s.")
+
+    def on_exit(self):
+        # save data
+        self.save()
+
+        # retract spout stage
         self.softcode_handler(softcode=self.MOVE_TO_BACK)
-        logging.info("Moved stage BACK on exit")
+        logging.debug("Moved stage BACK on exit")
 
     def __del__(self):
-        self.save()
+        self.on_exit()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.save()
+        self.on_exit()
