@@ -809,12 +809,12 @@ class TaskControl(object):
         logging.debug(f"Saved data in {np.round(time.time()-dt,2)}s.")
 
     def on_exit(self):
-        # save data
-        self.save()
-
         # retract spout stage
         self.softcode_handler(softcode=self.MOVE_TO_BACK)
         logging.debug("Moved stage BACK on exit")
+
+        # save data
+        self.save()
 
     def __del__(self):
         self.on_exit()
