@@ -114,13 +114,21 @@ class TaskControl(object):
             self.calibration_sound.calculate_sound_delay_correction()
         )
         self.calibration_water = CalibrationDataWater(
-            file_path=self.task_settings["calibration_file_water"]
+            file_path=Path(
+                "~/.murineshiftwork/calibration.water.default.csv"
+            ).expanduser(),  # self.task_settings["calibration_file_water"]
         )
         self.valve_times_dict = (
             self.calibration_water.water_volume_to_valve_time(
                 valves=self.task_settings["HARDWARE_VALVES_FOR_WATER"],
                 target_volume=self.task_settings["reward_amount_ul"],
+                s_to_ms=1,
             )
+        )
+        logging.info(
+            f"VALVES: {self.valve_times_dict} "
+            f"FOR {self.task_settings['reward_amount_ul']} "
+            f"on VALVE IDs: {self.task_settings['HARDWARE_VALVES_FOR_WATER']}"
         )
 
         axes_names = tuple(
@@ -790,9 +798,10 @@ class TaskControl(object):
             },
             output_actions=[] + [("SoftCode", self.MOVE_TO_BACK)],
         )
+        ITI = 4
         sma.add_state(
             state_name="iti",
-            state_timer=2,
+            state_timer=ITI,
             state_change_conditions={
                 Bpod.Events.Tup: "exit",
             },
@@ -810,14 +819,20 @@ class TaskControl(object):
 
     def on_exit(self):
         # retract spout stage
-        self.softcode_handler(softcode=self.MOVE_TO_BACK)
-        logging.debug("Moved stage BACK on exit")
+        # self.softcode_handler(softcode=self.MOVE_TO_BACK)
+        # logging.debug("Moved stage BACK on exit")
 
         # save data
         self.save()
 
     def __del__(self):
-        self.on_exit()
+        self.softcode_handler(softcode=self.MOVE_TO_BACK)
+        logging.debug("Moved stage BACK on exit")
+
+        self.save()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.on_exit()
+        self.softcode_handler(softcode=self.MOVE_TO_BACK)
+        logging.debug("Moved stage BACK on exit")
+
+        self.save()

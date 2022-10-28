@@ -1,6 +1,7 @@
 from argparse import ArgumentDefaultsHelpFormatter
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
+from pathlib import Path
 from textwrap import dedent
 
 from murine_shift_work import __version__
@@ -16,6 +17,9 @@ class ArgparseFormatter(
     ArgumentDefaultsHelpFormatter, RawDescriptionHelpFormatter
 ):
     pass
+
+
+CALIBRATION_FILE_PATH = Path("~/.murineshiftwork/")
 
 
 def add_args_for_general_use(parser=None):
@@ -148,7 +152,7 @@ def add_args_for_hardware_and_calibration(parser=None):
         "--calibration-file-water",
         dest="calibration_file_water",
         type=str,
-        default="calibration.water.default.csv",
+        default=CALIBRATION_FILE_PATH / "calibration.water.default.csv",
         help="Default water calibration file (Only relevant for `run`)",
     )
     calibration_arg_group.add_argument(
@@ -156,7 +160,7 @@ def add_args_for_hardware_and_calibration(parser=None):
         "--calibration-file-sound",
         dest="calibration_file_sound",
         type=str,
-        default="calibration.sound.default.csv",
+        default="calibration.sound.default.csv",  # fixme: CALIBRATION_FILE_PATH /
         help="Default sound calibration file (Only relevant for `run`)",
     )
     return hardware_args

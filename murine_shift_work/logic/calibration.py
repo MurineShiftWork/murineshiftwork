@@ -21,6 +21,7 @@ class CalibrationData(object):
         """ """
         super(CalibrationData, self).__init__(**kwargs)
         self.file_path = file_path or self.file_path
+        print(f"CALIBRATION DATA PATH: {self.file_path}")
 
         for k, v in kwargs.items():
             if hasattr(self, k):
@@ -41,6 +42,12 @@ class CalibrationData(object):
 
     def __str__(self):
         return str(self.calibration_data)
+
+    def make_output_dir(self):
+        if self.file_path is None:
+            return
+        if not self.file_path.parent.exists():
+            self.file_path.parent.mkdir(exist_ok=True, parents=True)
 
     def load(self, file_path=None):
         if file_path is not None:
@@ -70,13 +77,16 @@ class CalibrationData(object):
             self.calibration_data is not None
             and not self.calibration_data.empty
         ):
+            self.file_path.expanduser().parent.mkdir(
+                exist_ok=True, parents=True
+            )
 
             if Path(self.file_path).exists() and not overwrite:
                 raise FileExistsError(
                     f"File exists and not allowed to overwrite. {self.file_path}"
                 )
-
             self.calibration_data.to_csv(self.file_path)
+            print(f"SAVING calibration at: {self.file_path}")
 
 
 class CalibrationDataWater(CalibrationData):
@@ -126,7 +136,7 @@ class CalibrationDataWater(CalibrationData):
                 3,
             )
             self.calibration_data["volume_ul"] = np.round(
-                self.calibration_data["weight_per_drop"] * 1000, 3
+                self.calibration_data["weight_per_drop"] * 1e3, 3
             )
             self.calibration_data = self.calibration_data.sort_values(
                 by="valve_opening_time"
@@ -135,6 +145,7 @@ class CalibrationDataWater(CalibrationData):
             if not hasattr(valves, "__iter__"):
                 valves = [valves]
 
+            print(self.calibration_data)
             # Get target valve opening times for given volumes
             calibration_targets = {}
             for this_valve in valves:

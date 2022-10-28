@@ -42,7 +42,11 @@ class Task(TaskRunner):
         scale = SerialWeighingScale(
             port=self.input_kwargs["serial_port_scale"]
         )  # default is: "/dev/ttyACM2"
-        scale.tare_scale()
+        # scale.tare_scale()
+        print(
+            "WAITING FOR SCALE TO RETURN WEIGHTS...",
+            self.input_kwargs["serial_port_scale"],
+        )
         while not scale.read_weight():
             time.sleep(0.1)
         print(f"WEIGHT post tare {scale.read_weight_reliable()}")
