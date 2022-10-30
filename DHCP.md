@@ -11,33 +11,33 @@ RPi racks:
 
 | MAC               |             IP | Setup         | RPi rack        | Position (left->right)  | Cam Loc                  | Use | TODO              |
 |:------------------|---------------:|---------------|-----------------|-------------------------|--------------------------|-----|-------------------|
-| dc:a6:32:34:b1:0d |             83 | 1             | evephys         | 2 (3 physical location) | blue blue/cam            |     |                   |
-| dc:a6:32:34:ae:79 |             85 | 1             | evephys         | 1 (2 same as above)     | white white              |     |                   |
-| dc:a6:32:45:a7:e1 |             86 | 1             | evephys         | 3 (4 same as above)     |                          |     |                   |
+| dc:a6:32:34:b1:0d |            101 | 1             | evephys         | 2 (3 physical location) | blue blue/cam            |     |                   |
+| dc:a6:32:34:ae:79 |            102 | 1             | evephys         | 1 (2 same as above)     | white white              |     |                   |
+| dc:a6:32:45:a7:e1 |            103 | 1             | evephys         | 3 (4 same as above)     |                          |     |                   |
 |                   |                |               |                 |                         |                          |     |                   |
-| dc:a6:32:a2:0f:16 |             40 | 2             | triple left     | 1                       |                          |     |                   |
-| dc:a6:32:d1:28:11 |             41 | 2             | triple left     | 3                       |                          |     |                   |
-| dc:a6:32:d1:28:11 |             43 | 2             | triple left     | 2                       |                          |     |                   |
+| dc:a6:32:a2:0f:16 |             40 | 2             | triple left     | 1                       |                          |     | new 21            |
+| dc:a6:32:d1:28:11 |             41 | 2             | triple left     | 3                       |                          |     | new 22            |
+| dc:a6:32:d1:28:11 |             43 | 2             | triple left     | 2                       |                          |     | new 23            |
 |                   |                |               |                 |                         |                          |     |                   |
-| dc:a6:32:a9:61:aa |             61 | 3             | triple left     | 6                       | blue/rpi blue/cam        |     |                   |
-| dc:a6:32:45:a8:89 |             68 | 3             | triple right    | 1                       | green green              |     |                   |
-| e4:5f:01:1f:d7:10 |             69 | 3             | triple right    | 2                       | orange orange            |     |                   |
+| dc:a6:32:a9:61:aa |             31 | 3             | triple left     | 6                       | blue/rpi blue/cam        |     |                   |
+| dc:a6:32:45:a8:89 |             32 | 3             | triple right    | 1                       | green green              |     |                   |
+| e4:5f:01:1f:d7:10 |             33 | 3             | triple right    | 2                       | orange orange            |     |                   |
 |                   |                |               |                 |                         |                          |     |                   |
-| e4:5f:01:1f:d7:4c |             80 | 4             | triple right    | 4                       | green-white blue/cam     |     |                   |
-| dc:a6:32:a9:61:d1 |             81 | 4             | triple right    | 5                       | white/red red/cam        |     |                   |
-| e4:5f:01:1f:cc:a2 |             82 | 4             | triple right    | 6                       | white/blue green/cam     |     |                   |
+| e4:5f:01:1f:d7:4c |             41 | 4             | triple right    | 4                       | green-white blue/cam     |     |                   |
+| dc:a6:32:a9:61:d1 |             42 | 4             | triple right    | 5                       | white/red red/cam        |     |                   |
+| e4:5f:01:1f:cc:a2 |             43 | 4             | triple right    | 6                       | white/blue green/cam     |     |                   |
 |                   |                |               |                 |                         |                          |     |                   |
-| e4:5f:01:1f:d7:45 |             11 | 5 (new)       | double          | 2                       | green-orange/rpi red/cam | tba | change hostname   |
-| dc:a6:32:d1:28:11 |             50 | 5             | double          | 1                       | red/rpi purple/cam       |     |                   |
-| dc:a6:32:f5:3f:cc |             60 | 5             | double          | 3                       | red-yellow/rpi           |     |                   |
+| e4:5f:01:1f:d7:45 |             51 | 5 (new)       | double          | 2                       | green-orange/rpi red/cam | tba |                   |
+| dc:a6:32:d1:28:11 |             52 | 5             | double          | 1                       | red/rpi purple/cam       |     |                   |
+| dc:a6:32:f5:3f:cc |             53 | 5             | double          | 3                       | red-yellow/rpi           |     |                   |
 |                   |                |               |                 |                         |                          |     |                   |
 | dc:a6:32:45:e4:92 |             51 | 6             | double          | 4                       | yellow/rpi white/cam     |     |                   |
 | dc:a6:32:a9:56:a9 |             62 | 6             | double          | 6                       | purple purple            |     |                   |
 | e4:5f:01:1f:d3:94 |             70 | 6             | double          | 5                       | pink green               |     | INSTALL conda etc |
 |                   |                |               |                 |                         |                          |     |                   |
-| dc:a6:32:a9:61:d7 |             63 | 7/npx         | npx             | 3                       | yellow yellow            |     |                   |
-| dc:a6:32:f5:3f:0f |             64 | 7/npx         | npx             | 2                       | white white              |     |                   |
-| dc:a6:32:f5:3f:ba |             65 | 7/npx         | npx             | 1                       | pink pink                |     |                   |
+| dc:a6:32:a9:61:d7 |             63 | 7/npx         | npx             | 3                       | yellow yellow            |     | new 71            |
+| dc:a6:32:f5:3f:0f |             64 | 7/npx         | npx             | 2                       | white white              |     | new 72            |
+| dc:a6:32:f5:3f:ba |             65 | 7/npx         | npx             | 1                       | pink pink                |     | new 73            |
 |                   |                |               |                 |                         |                          |     |                   |
 | 04:d4:c4:f2:13:da |             11 | 1/evephys     | SETUP PC        |                         |                          |     |                   |
 | 00:e0:4c:80:db:42 |  169.254.8.175 | 1/evephys     | SETUP PC        |                         |                          |     | enp6s0:avahi:     |
