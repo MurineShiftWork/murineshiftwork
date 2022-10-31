@@ -1,0 +1,9 @@
+---
+  - name: example cmd module task
+    hosts: setupsrpi  # testgroup
+    remote_user: pi
+    become: yes
+
+    tasks:
+      - name: reboot RPi
+        command: "sudo /sbin/reboot now"
