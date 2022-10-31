@@ -142,6 +142,10 @@ class TaskControl(object):
             stage_config=stage_config,
         )
         self.stage.save_position_as_known("front")
+        self.stage.write_config(
+            config_path=self.save_path_data.parent
+            / ".".join([self.save_path_data.name, "settings", "stage", "yaml"])
+        )
         logging.info(self.stage)
 
         self.MOVE_TO_FRONT = 15
