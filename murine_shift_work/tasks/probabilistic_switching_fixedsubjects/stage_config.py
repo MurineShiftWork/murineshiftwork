@@ -87,7 +87,7 @@ config_for_all_stages = {
             },
             # "last": {"x": {"position_raw": 250}, "y": {"position_raw": 250}, "z": {"position_raw": 250}},
             "back": {"y": {"velocity_max": 250, "position_raw": 750}},
-            "front": {"y": {"velocity_max": 250, "position_raw": 530}},
+            "front": {"y": {"velocity_max": 250, "position_raw": 560}},
         },
     },
 }

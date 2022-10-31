@@ -141,6 +141,7 @@ class TaskControl(object):
             serial_port=serial_port,
             stage_config=stage_config,
         )
+        self.stage.save_position_as_known("front")
         logging.info(self.stage)
 
         self.MOVE_TO_FRONT = 15

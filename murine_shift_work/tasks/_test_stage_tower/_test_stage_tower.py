@@ -1,8 +1,6 @@
 import logging
 import time
 
-from pybpodapi.bpod import Bpod
-from pybpodapi.state_machine import StateMachine
 from sshkeyboard import listen_keyboard
 from sshkeyboard import stop_listening
 from stage_controller.move_interface import MoveInterface
