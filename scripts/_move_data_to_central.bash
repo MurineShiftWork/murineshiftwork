@@ -29,7 +29,7 @@ parallel --line-buffer -j 10 rsync -av --info=progress2 '{1}:~/data/' $target_pa
         --exclude="tests" \
         --exclude="*.egg-info" \
 	::: \
-	rpi-40 rpi-41 rpi-43 rpi-50 rpi-51 rpi-60 rpi-61 rpi-62 rpi-63 rpi-64 rpi-65 rpi-67 rpi-68 rpi-69 rpi-70
+	rpi-21 rpi-22 rpi-23 rpi-31 rpi-32 rpi-33 rpi-41 rpi-42 rpi-43 rpi-51 rpi-52 rpi-53 rpi-61 rpi-62 rpi-63 rpi-71 rpi-72 rpi-73 rpi-101 rpi-102 rpi-103
 
 #for rpi in rpi-40 rpi-41 rpi-43 rpi-50 rpi-51
 #do

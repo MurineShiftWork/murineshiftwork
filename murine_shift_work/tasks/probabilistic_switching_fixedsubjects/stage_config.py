@@ -1,4 +1,4 @@
-serial_port = "/dev/ttyUSB0"
+serial_port = "/dev/ttyUSB1"
 pmin = 1
 pmax = 999
 vel = 200

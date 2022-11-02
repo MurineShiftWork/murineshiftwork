@@ -134,14 +134,20 @@ class TaskControl(object):
         axes_names = tuple(
             config_for_all_stages["stage_tower_setup_1"].get("axes").keys()
         )
-        serial_port = "/dev/ttyUSB0"
+        # serial_port = task_settings.get() # "/dev/ttyUSB0"
         stage_config = config_for_all_stages["stage_tower_setup_1"]
+        serial_port = task_settings.get("serial_port_stage")
         self.stage = MoveInterface(
             axes_names=axes_names,
             serial_port=serial_port,
             stage_config=stage_config,
         )
-        self.stage.save_position_as_known("front")
+        self.stage.save_position_as_known(
+            "front"
+        )  # fixme: determine front in pre-protocol instead of rely on experimenter's awareness
+        self.stage.move_to_known_position(
+            "back"
+        )  # move back before first trial
         self.stage.write_config(
             config_path=self.save_path_data.parent
             / ".".join([self.save_path_data.name, "settings", "stage", "yaml"])

@@ -75,7 +75,7 @@ class KeyHandler:
         elif key in ["up", "down"]:
             self.move_z(key=key)
 
-        elif key == "k":
+        elif key == "n":
             name = input("Position name:\t")
             print(name)
             pass  # TODO: save position as known. ask a name for new position
@@ -96,7 +96,8 @@ class Task(TaskRunner):
         axes_names = tuple(
             config_for_all_stages["stage_tower_setup_1"].get("axes").keys()
         )
-        serial_port = "/dev/ttyUSB0"
+        # serial_port = "/dev/ttyUSB0"
+        serial_port = self.input_kwargs.get("serial_port_stage")
         stage_config = config_for_all_stages["stage_tower_setup_1"]
 
         move_interface = MoveInterface(

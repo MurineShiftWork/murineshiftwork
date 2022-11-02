@@ -1,6 +1,6 @@
 #!/bin/bash
 
-eval script_path="~/murine_shift_work/scripts"
+eval script_path="~/code/murineshiftwork/scripts"
 
 bash  $script_path/_move_data_to_central.bash
 bash  $script_path/_convert_h264_to_mp4.bash

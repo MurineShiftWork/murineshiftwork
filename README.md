@@ -192,6 +192,13 @@ session_data = read_session_data(session_dir=session_dir, load_raw=load_raw)
 - [x] Reader module to load session data. current and legacy
 - [ ]
 
+### misc
+
+##### .ssh/config entries for all RPi
+```python
+for i in range(21, 110):
+    print(f"""Host rpi-{i}\n\tUser pi\n\tHostName 192.168.100.{i}\n\n""")
+```
 
 ## Fixes & install hints
 

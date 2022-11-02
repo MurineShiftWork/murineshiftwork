@@ -163,6 +163,14 @@ def add_args_for_hardware_and_calibration(parser=None):
         default="calibration.sound.default.csv",  # fixme: CALIBRATION_FILE_PATH /
         help="Default sound calibration file (Only relevant for `run`)",
     )
+    calibration_arg_group.add_argument(
+        "-cstage",
+        "--calibration-file-stage",
+        dest="calibration_file_stage",
+        type=str,
+        default=CALIBRATION_FILE_PATH / "calibration.stage.default.yaml",
+        help="Default stage calibration file (Only relevant for `run`)",
+    )
     return hardware_args
 
 
