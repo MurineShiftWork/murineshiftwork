@@ -1,0 +1,28 @@
+---
+  - name: example cmd module task
+    hosts: setupsrpi  # testgroup
+    remote_user: pi
+    become: yes
+
+    vars_prompt: 
+      - name: "gituser" 
+        prompt: "Enter your git username" 
+        private: no 
+      - name: "gitpassword" 
+        prompt: "Enter your git password" 
+        private: yes
+
+    tasks:
+      - name: install pexpect dependency
+        command: "/home/pi/miniconda3/bin/conda install pexpect"
+
+      - name: Git clone
+        expect:
+          command: git clone https://llrrr@bitbucket.org/lbrcoding/rpi_camera_colony_dev.git /home/pi/rpi_camera_colony_dev
+          responses:
+            Username: "{{ gituser }}" # Username is a regex
+            Password: "{{ gitpassword }}" # Password is a regex
+#        no_log: true
+
+      - name: install rcc
+        command: "/home/pi/miniconda3/envs/py36/bin/pip install /home/pi/rpi_camera_colony_dev --upgrade"
