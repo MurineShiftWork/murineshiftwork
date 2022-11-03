@@ -8,4 +8,3 @@ echo $HOST
 echo $RCMD
 
 /usr/sbin/ip addr | ssh sgw "$RCMD"
-

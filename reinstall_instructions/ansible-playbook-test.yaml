@@ -1,4 +1,4 @@
-# Use as: ansible-playbook 
+# Use as: ansible-playbook
 ---
 - name: Test touch
   hosts: setups
@@ -14,11 +14,11 @@
      - name: Leaving a mark
        command: "touch /tmp/ansible_was_here"
 
-- name: Run commands in conda environment
-  user: pi
-  hosts: testgroup
-  vars:
-    ansible_python_interpreter: /home/pi/miniconda3/bin/python
-  shell: "source activate py36 && pip install {{ item }}"
-    with_items: ["tqdm"]
-
+#- name: Run commands in conda environment
+#  user: pi
+#  hosts: testgroup
+#  vars:
+#    ansible_python_interpreter: /home/pi/miniconda3/bin/python
+#  shell: |
+#    "source activate py36 && pip install {{ item }}"
+#    with_items: ["tqdm"]

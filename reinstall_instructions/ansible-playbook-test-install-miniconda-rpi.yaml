@@ -3,7 +3,7 @@
     hosts: setupsrpi
     remote_user: pi
     become: yes
-    
+
     tasks:
       - name: mk data dir
         file:
@@ -18,7 +18,7 @@
 
       - name: add conda to path
         shell: |
-          echo 'export PATH=/home/pi/miniconda3/bin:$PATH' >> /home/pi/.bashrc 
+          echo 'export PATH=/home/pi/miniconda3/bin:$PATH' >> /home/pi/.bashrc
 
       - name: rpi channel for conda
         command: "/home/pi/miniconda3/bin/conda config --add channels rpi"

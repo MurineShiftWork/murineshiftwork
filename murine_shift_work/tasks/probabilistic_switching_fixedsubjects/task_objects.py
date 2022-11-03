@@ -136,7 +136,7 @@ class TaskControl(object):
         )
         # serial_port = task_settings.get() # "/dev/ttyUSB0"
         stage_config = config_for_all_stages["stage_tower_setup_1"]
-        serial_port = task_settings.get("serial_port_stage")
+        serial_port = "/dev/ttyUSB0"  # task_settings.get("serial_port_stage")
         self.stage = MoveInterface(
             axes_names=axes_names,
             serial_port=serial_port,

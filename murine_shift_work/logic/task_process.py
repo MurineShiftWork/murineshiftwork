@@ -166,6 +166,7 @@ class TaskProcess(object):
 
         # Execute
         self.persist_settings()
+        # if not self.debug:
         self.connect_bpod()  # TODO: Encapsulate as bpod handler object. Move to inside protocol for when Bpod requested in config.
 
         if auto_init:

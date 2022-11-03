@@ -4,12 +4,12 @@
     remote_user: pi
     become: yes
 
-    vars_prompt: 
-      - name: "gituser" 
-        prompt: "Enter your git username" 
-        private: no 
-      - name: "gitpassword" 
-        prompt: "Enter your git password" 
+    vars_prompt:
+      - name: "gituser"
+        prompt: "Enter your git username"
+        private: no
+      - name: "gitpassword"
+        prompt: "Enter your git password"
         private: yes
 
     tasks:
