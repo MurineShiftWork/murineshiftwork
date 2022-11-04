@@ -1,4 +1,4 @@
-# Use as: ansible-playbook 
+# Use as: ansible-playbook
 ---
 - name: Test touch
   hosts: setups
@@ -21,4 +21,3 @@
     ansible_python_interpreter: /home/pi/miniconda3/bin/python
   shell: "source activate py36 && pip install {{ item }}"
     with_items: ["tqdm"]
-
