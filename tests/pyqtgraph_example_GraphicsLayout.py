@@ -5,7 +5,7 @@ labels
 import cv2 as cv
 import numpy as np
 import pyqtgraph as pg
-from PyQt6 import QtCore
+from PyQt5 import QtCore
 
 
 app = pg.mkQApp("Gradiant Layout Example")
@@ -79,12 +79,13 @@ p4.plot([1, 3, 2, 4, 3, 5])
 p5.plot([1, 3, 2, 4, 3, 5])
 
 
-timer = QtCore.QTimer()
+# timer = QtCore.QTimer()
 # timer.setSingleShot(True)
 # not using QTimer.singleShot() because of persistence on PyQt. see PR #1605
 
 
-cap = cv.VideoCapture(0)
+# cap = cv.VideoCapture(0)
+cap = cv.VideoCapture("http://192.168.100.21:9999")
 
 
 def update():

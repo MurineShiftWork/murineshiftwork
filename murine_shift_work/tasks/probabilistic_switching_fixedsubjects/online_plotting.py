@@ -4,6 +4,7 @@ from multiprocessing import Queue
 from pathlib import Path
 from sys import exit
 
+import cv2 as cv
 import myterial as mt
 import numpy as np
 import pyqtgraph as pg
@@ -143,7 +144,7 @@ class OnlinePlottingForPS(Process):
         )
 
         # Top row: trial outcomes
-        self.plot_to = self.win.addPlot(name="top_row")
+        self.plot_to = self.win.addPlot(name="top_row", colspan=3)
         self.viewbox_to = self.plot_to.getViewBox()
         self.viewbox_to.setMouseEnabled(x=True, y=False)
         self.viewbox_to.setRange(
@@ -173,7 +174,7 @@ class OnlinePlottingForPS(Process):
         self.win.nextRow()
 
         # Bottom row: block probabilities
-        self.plot_block = self.win.addPlot(name="bottom_row")
+        self.plot_block = self.win.addPlot(name="bottom_row", colspan=3)
         self.plot_block.setXLink("top_row")
         axis_left_block = self.plot_block.getAxis("left")
         axis_left_block.setLabel("Probability")
@@ -245,6 +246,32 @@ class OnlinePlottingForPS(Process):
             self.update_listener_thread.exit_signal.connect(self.app.quit)
             self.update_listener_thread.start()
 
+        # Add video streams
+        self.win.nextRow()
+
+        self.stream1_vb = self.win.addViewBox(lockAspect=True)
+        self.stream1_image = pg.ImageItem(np.random.normal(size=(960, 720)))
+        self.stream1_vb.addItem(self.stream1_image)
+        # self.stream1_vb.autoRange()
+
+        self.stream2_vb = self.win.addViewBox(lockAspect=True)
+        self.stream2_image = pg.ImageItem(np.random.normal(size=(960, 720)))
+        self.stream2_vb.addItem(self.stream2_image)
+        # self.stream2_vb.autoRange()
+
+        self.stream3_vb = self.win.addViewBox(lockAspect=True)
+        self.stream3_image = pg.ImageItem(np.random.normal(size=(960, 720)))
+        self.stream3_vb.addItem(self.stream3_image)
+        # self.stream3_vb.autoRange()
+
+        self.stream1_capture = None
+        self.stream2_capture = None
+        self.stream3_capture = None
+
+        stream_update_timer = QtCore.QTimer()
+        stream_update_timer.timeout.connect(self.update_streams)
+        stream_update_timer.start()  # 30fps: 1/30=33ms
+
         # Exit clean
         self.app.aboutToQuit.connect(self.add_sig_term)
         self.app.aboutToQuit.connect(self.win.close)
@@ -281,6 +308,66 @@ class OnlinePlottingForPS(Process):
         self.win.setWindowTitle(window_title)
         # self.win.setFixedWidth(self.win.width())
         # self.win.setFixedHeight(self.win.height())
+
+    def update_streams(self):
+        # print("\n\n\nREADY TO UPDATE STREAM DATA\n\n\n")
+        if self.stream1_capture is None:
+            try:
+                cap = cv.VideoCapture("http://192.168.100.21:9999")
+                ret, frame = cap.read()
+                if frame is not None:
+                    # print("\n\n\nOPENED 21\n\n\n")
+                    self.stream1_capture = cap
+            except Exception:
+                pass
+        else:
+            ret, frame = self.stream1_capture.read()
+            if frame is not None:
+                # frame = np.transpose(frame, axes=[1, 0, 2])
+                frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+                frame = np.flipud(frame)
+                frame = np.transpose(frame)
+                self.stream1_image.setImage(frame)
+                # print("\n\n\nSET IMAGE 21\n\n\n")
+
+        if self.stream2_capture is None:
+            try:
+                cap = cv.VideoCapture("http://192.168.100.22:9999")
+                ret, frame = cap.read()
+                if frame is not None:
+                    # print("\n\n\nOPENED 22\n\n\n")
+                    self.stream2_capture = cap
+            except Exception:
+                pass
+        else:
+            ret, frame = self.stream2_capture.read()
+            if frame is not None:
+                # frame = np.transpose(frame, axes=[1, 0, 2])
+                frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+                frame = np.flipud(frame)
+                frame = np.transpose(frame)
+                self.stream2_image.setImage(frame)
+                # print("\n\n\nSET IMAGE 22\n\n\n")
+
+        if self.stream3_capture is None:
+            try:
+                cap = cv.VideoCapture("http://192.168.100.23:9999")
+                ret, frame = cap.read()
+                if frame is not None:
+                    # print("\n\n\nOPENED 23\n\n\n")
+                    self.stream3_capture = cap
+            except Exception:
+                pass
+        else:
+            ret, frame = self.stream3_capture.read()
+            if frame is not None:
+                # frame = np.transpose(frame, axes=[1, 0, 2])
+                frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+                frame = np.flipud(frame)
+                frame = np.transpose(frame)
+                self.stream3_image.setImage(frame)
+                # self.stream3_vb.autoRange()
+                # print("\n\n\nSET IMAGE 23\n\n\n")
 
     def update_data(self, dict_for_update=None):
         """Expected data fields in dict:
@@ -339,6 +426,7 @@ class OnlinePlottingForPS(Process):
         ]
 
         self.update_plots()
+        # self.update_streams()
 
     def update_plots(self):
         pt = make_new_point(
