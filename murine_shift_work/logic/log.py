@@ -60,7 +60,7 @@ def setup_logging(level=None, log_file=None):
         logger.addHandler(logging_handler)
 
         logging.info(
-            f"Set up logging for rcc with level {level} and writing to '{log_file}'"
+            f"Set up logging for MSW with level {level} and writing to '{log_file}'"
         )
 
 
