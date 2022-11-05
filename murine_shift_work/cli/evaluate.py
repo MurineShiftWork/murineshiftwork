@@ -200,7 +200,10 @@ def evaluate_args(args_dict=None):
                 f"Settings overwrite for subject '{args_dict['subject']}':\n{txt}"
             )
     else:
-        if not args_dict["command"] == "register":
+        if (
+            not args_dict["command"] == "register"
+            and args_dict["subject"] != "_test_subject"
+        ):
             print_box(
                 f"No subject settings found for '{args_dict['subject']}'.\n"
                 f"Check that subject is registered"

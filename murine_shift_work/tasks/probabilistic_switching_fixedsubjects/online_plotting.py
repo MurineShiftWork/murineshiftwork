@@ -93,9 +93,9 @@ class Data:
 
 class StreamObject:
     name = None
-    ip_address = None
-    port = None
-    full_address = None
+    stream_ip = None
+    stream_port = None
+    address_uri = None
 
     window_handle = None
 
@@ -114,8 +114,8 @@ class StreamObject:
     def __init__(
         self,
         name: str | int = None,
-        ip_address: str = None,
-        port: int = None,
+        stream_ip: str = None,
+        stream_port: int = None,
         window_handle=None,
         to_grey: bool = True,
         flipud: bool = True,
@@ -123,8 +123,8 @@ class StreamObject:
         transpose: bool = False,
     ):
         self.name = name
-        self.ip_address = ip_address
-        self.port = port
+        self.stream_ip = stream_ip
+        self.stream_port = stream_port
         self.window_handle = window_handle
         self.to_grey = to_grey
         self.flip_ud = flipud
@@ -133,7 +133,7 @@ class StreamObject:
 
         self.make_objects()
 
-        self.full_address = f"http://{self.ip_address}:{self.port}"
+        self.address_uri = f"http://{self.stream_ip}:{self.stream_port}"
 
         self.stream_thread = Thread(target=self.do_stream_video)
         self.stream_thread.daemon = True
@@ -148,10 +148,10 @@ class StreamObject:
         if self.stream_capture is None:
             try:
                 test_socket = socket.socket()
-                test_socket.connect((self.ip_address, self.port))
+                test_socket.connect((self.stream_ip, self.stream_port))
                 test_socket.close()
 
-                cap = cv.VideoCapture(self.full_address)
+                cap = cv.VideoCapture(self.address_uri)
                 ret, frame = cap.read()
                 if frame is not None:
                     self.stream_capture = cap
@@ -359,11 +359,15 @@ class OnlinePlottingForPS(Process):
 
         self.stream_objects = {}
         for name, params in self.video_stream_config.items():
-            self.stream_objects[name] = StreamObject(
-                name=name,
-                window_handle=self.win,
-                **params,
-            )
+            if "stream_video" in params and params["stream_video"]:
+                params[
+                    "transpose"
+                ] = True  # fixme: hacky, do better in config, but not RCC as that should stay general
+                self.stream_objects[name] = StreamObject(
+                    name=name,
+                    window_handle=self.win,
+                    **params,
+                )
 
         stream_update_timer = QtCore.QTimer()
         stream_update_timer.timeout.connect(self.update_streams)

@@ -136,15 +136,18 @@ def run_task(**args_dict):
         c.start_acquisition()
 
         # FIXME: video stream config should come from RCC config -> add transpose etc. to 'stream' section in RCC
-        video_stream_config = {
-            "stream1": {
-                "ip_address": "192.168.100.21",
-                "port": 9999,
-                "transpose": True,
-            }
-            # "stream2": "http://192.168.100.22:9999",
-            # "stream3": "http://192.168.100.23:9999",
-        }
+        video_stream_config = args_dict["settings.camera"].get(
+            "controllers", {}
+        )
+        #     {
+        #     "stream1": {
+        #         "stream_ip": "192.168.100.21",
+        #         "stream_port": 9999,
+        #         "transpose": True,
+        #     }
+        #     # "stream2": "http://192.168.100.22:9999",
+        #     # "stream3": "http://192.168.100.23:9999",
+        # }
 
         # Online plotting
         plotting_process = OnlinePlottingForPS(
