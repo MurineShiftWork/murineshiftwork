@@ -229,6 +229,7 @@ class Task(TaskRunner):
             with open(calibration_file_stage, "r") as f:
                 calibration_stage_dict = yaml.full_load(f.read())
 
+        print("calibration_stage_dict:", calibration_stage_dict)
         print(self.input_kwargs["metadata"])
         for axis_name in ["x", "y", "z"]:
             try:
