@@ -121,6 +121,8 @@ class StreamObject:
         flipud: bool = True,
         fliplr: bool = False,
         transpose: bool = False,
+        *args,
+        **kwargs,
     ):
         self.name = name
         self.stream_ip = stream_ip
@@ -184,6 +186,8 @@ class StreamObject:
     def do_stream_video(self):
         while not self.stopped:
             self.next_frame()
+
+        print(f"EXITING STREAM {self}")
 
     def stop(self):
         self.stopped = True
@@ -382,6 +386,8 @@ class OnlinePlottingForPS(Process):
             exit(self.app.exec_())
 
         self.update_listener_thread.quit()
+        for _, stream in self.stream_objects.items():
+            stream.stopped = True
 
     def add_sig_term(self):
         self.kill_queue.put(True)

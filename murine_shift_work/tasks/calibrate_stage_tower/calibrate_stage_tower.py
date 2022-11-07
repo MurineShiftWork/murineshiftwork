@@ -275,9 +275,14 @@ class Task(TaskRunner):
         )
 
         new_calibration = move_interface.config_dict()
-        new_calibration["_hostname"] = str(hostname)
+
+        overwritten_calibration = calibration_stage_dict.copy()
+        for name, params in new_calibration["axes"].items():
+            overwritten_calibration["axes"][name] = params
+
+        overwritten_calibration["_hostname"] = str(hostname)
         with open(calibration_file_stage, "w") as f:
-            f.write(yaml.dump(new_calibration))
+            f.write(yaml.dump(overwritten_calibration))
 
 
 def run_task(**kwargs):

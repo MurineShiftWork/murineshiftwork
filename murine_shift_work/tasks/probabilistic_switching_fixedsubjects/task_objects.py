@@ -114,10 +114,9 @@ class TaskControl(object):
             self.calibration_sound.calculate_sound_delay_correction()
         )
         self.calibration_water = CalibrationDataWater(
-            file_path=Path(
-                "~/.murineshiftwork/calibration.water.default.csv"
-            ).expanduser(),  # self.task_settings["calibration_file_water"]
+            file_path=task_settings["calibration_file_water"]
         )
+
         self.valve_times_dict = (
             self.calibration_water.water_volume_to_valve_time(
                 valves=self.task_settings["HARDWARE_VALVES_FOR_WATER"],
@@ -131,16 +130,12 @@ class TaskControl(object):
             f"on VALVE IDs: {self.task_settings['HARDWARE_VALVES_FOR_WATER']}"
         )
 
-        axes_names = tuple(
-            config_for_all_stages["stage_tower_setup_1"].get("axes").keys()
-        )
-        # serial_port = task_settings.get() # "/dev/ttyUSB0"
-        stage_config = config_for_all_stages["stage_tower_setup_1"]
-        serial_port = "/dev/ttyUSB0"  # task_settings.get("serial_port_stage")
+        axes_names = tuple(task_settings["settings.stage"].get("axes").keys())
+        serial_port = task_settings.get("serial_port_stage")
         self.stage = MoveInterface(
             axes_names=axes_names,
             serial_port=serial_port,
-            stage_config=stage_config,
+            stage_config=task_settings["settings.stage"],
         )
         self.stage.save_position_as_known(
             "front"

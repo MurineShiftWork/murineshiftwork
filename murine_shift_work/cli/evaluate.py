@@ -2,6 +2,8 @@ import json
 import logging
 from pathlib import Path
 
+import yaml
+
 from murine_shift_work import settings as msws
 from murine_shift_work.logic.config import read_config
 from murine_shift_work.logic.config import validate_config_file_path
@@ -126,6 +128,20 @@ def _evaluate_and_load_configs(args_dict=None):
         if args_dict["config_file_camera"]
         else {}
     )
+    # READ stage config
+    args_dict["calibration_file_stage"] = (
+        Path(args_dict["calibration_file_stage"]).expanduser().as_posix()
+    )
+    if Path(args_dict["calibration_file_stage"]).exists():
+        args_dict["settings.stage"] = yaml.full_load(
+            open(
+                args_dict["calibration_file_stage"], "r"
+            )  # fixme: move to yaml-config-loader AND fix for all configs to load based on file extension
+        )
+    else:
+        args_dict["settings.stage"] = {}
+
+    # add to args
     args_dict["settings.subjects.all"] = settings_subjects_all
     args_dict["settings.task.default"] = settings_task_default
 
@@ -200,10 +216,7 @@ def evaluate_args(args_dict=None):
                 f"Settings overwrite for subject '{args_dict['subject']}':\n{txt}"
             )
     else:
-        if (
-            not args_dict["command"] == "register"
-            and args_dict["subject"] != "_test_subject"
-        ):
+        if not args_dict["command"] == "register":
             print_box(
                 f"No subject settings found for '{args_dict['subject']}'.\n"
                 f"Check that subject is registered"

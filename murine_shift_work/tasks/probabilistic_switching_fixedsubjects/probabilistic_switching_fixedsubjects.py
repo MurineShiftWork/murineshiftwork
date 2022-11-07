@@ -28,6 +28,7 @@ TASK STRUCTURE
 import logging
 import time
 from multiprocessing import Queue
+from pathlib import Path
 
 from pybpodapi.protocol import Bpod  # Used!
 from rpi_camera_colony.control.conductor import Conductor
@@ -51,9 +52,18 @@ class Task(TaskRunner):
         task_settings["calibration_file_sound"] = self.input_kwargs[
             "calibration_file_sound"
         ]  # fixme: improve handing down args
-        task_settings["calibration_file_water"] = self.input_kwargs[
-            "calibration_file_water"
+        task_settings["calibration_file_water"] = (
+            Path(
+                self.input_kwargs["calibration_file_water"]
+                or self.input_kwargs["original"]["calibration_file_water"]
+            )
+            .expanduser()
+            .as_posix()
+        )  # fixme: improve handing down args
+        task_settings["settings.stage"] = self.input_kwargs[
+            "settings.stage"
         ]  # fixme: improve handing down args
+
         task_control = TaskControl(bpod=self.bpod, task_settings=task_settings)
         self.bpod.softcode_handler_function = task_control.softcode_handler
 
