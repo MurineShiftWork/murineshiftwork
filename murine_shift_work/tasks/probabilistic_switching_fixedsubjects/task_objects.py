@@ -338,18 +338,34 @@ class TaskControl(object):
         if self.trial_index < 1:
             return
 
-        item_end = "| "
+        item_spacer = " | "
+        # print(
+        #     f"[T={round(trial_data['Trial start timestamp']/60, 1): >4} min] {item_end}"
+        #     f"Trial#{self.trial_index: >4} {item_end}"
+        #     f"Block#{self.block_number:>2} {item_end}"
+        #     f"BlockTrial#{self.block_trial_number:>4} {item_end}"
+        #     f"Choice: {self.last_choice:>3}. {item_end}"
+        #     f"Pref: {np.round(self.moving_average(),2):>5}. {item_end}"
+        #     f"Reward: {self.reward_number:>4} "
+        #     f"({round(self.task_settings['reward_amount_ul']*self.reward_number, 2):>4}uL). {item_end}"
+        #     f"Crit: {self.trials_post_criterion:>2}"
+        # )
+
         print(
-            f"[T={round(trial_data['Trial start timestamp']/60, 1): >4} min] {item_end}"
-            f"Trial#{self.trial_index: >4} {item_end}"
-            f"Block#{self.block_number:>2} {item_end}"
-            f"BlockTrial#{self.block_trial_number:>4} {item_end}"
-            f"Choice: {self.last_choice:>3}. {item_end}"
-            f"Pref: {np.round(self.moving_average(),2):>5}. {item_end}"
+            f"[{round(trial_data['Trial start timestamp'] / 60, 1): >4}min]{item_spacer}"
+            f"T#{self.trial_index: >4}{item_spacer}"
+            f"B#{self.block_number:>2}{item_spacer}"
+            f"BT#{self.block_trial_number:>4}{item_spacer}"
+            f"Choice: {self.last_choice:>3}{item_spacer}"
+            f"Pref: {np.round(self.moving_average(), 2):>5}{item_spacer}"
             f"Reward: {self.reward_number:>4} "
-            f"({round(self.task_settings['reward_amount_ul']*self.reward_number, 2):>4}uL). {item_end}"
-            f"Crit: {self.trials_post_criterion:>2}"
+            f"({round(self.task_settings['reward_amount_ul'] * self.reward_number, 2):>4}uL).{item_spacer}"
+            f"Crit: {self.trials_post_criterion:>2}{item_spacer}"
+            f"Forced: {self.is_forced_exploration_trial} / "
+            f"T until forced: {self.task_settings['forced_choice_threshold'] - self.block_trial_number}"
         )
+
+        self.is_forced_exploration_trial = False
 
         # Check for block criterion
         neutral_block_bias = (
@@ -471,26 +487,39 @@ class TaskControl(object):
 
     def draw_next_trial(self):
         n_back_crit = self.task_settings["forced_choice_threshold"]
-        if self.block_trial_number >= n_back_crit:
-            key = "choice"
-            td_info = [
-                td["info"]
-                for td in self.trial_data
-                if td and key in td["info"]
-            ]
-            choice_vector = [c[key] for c in td_info if key in c.keys()]
-            unique_choices = np.unique(choice_vector[-n_back_crit:])
-            unique_choices_n_back = unique_choices.__len__()
+        key = "choice"
+        td_info = [
+            td["info"] for td in self.trial_data if td and key in td["info"]
+        ]
+        choice_vector = [c[key] for c in td_info if key in c.keys()]
+        unique_choices = np.unique(choice_vector[-n_back_crit:])
+        unique_choices_n_back = unique_choices.__len__()
 
-            if unique_choices_n_back == 1:
-                self.is_forced_exploration_trial = True
-                return self.make_forced_exploration_sma(
-                    next_choice_option=-1 * unique_choices[-1]
-                )
-            else:
-                self.is_forced_exploration_trial = (
-                    True  # fixme: this is wrong ??
-                )
+        self.is_forced_exploration_trial = False
+        if (
+            self.block_trial_number >= n_back_crit
+            and unique_choices_n_back == 1
+        ):
+            # key = "choice"
+            # td_info = [td["info"] for td in self.trial_data if td and key in td["info"]]
+            # choice_vector = [c[key] for c in td_info if key in c.keys()]
+            # unique_choices = np.unique(choice_vector[-n_back_crit:])
+            # unique_choices_n_back = unique_choices.__len__()
+
+            # if unique_choices_n_back == 1:
+
+            #     return self.make_forced_exploration_sma(
+            #         next_choice_option=-1 * unique_choices[-1]
+            #     )
+            # else:
+            #     self.is_forced_exploration_trial = True  # fixme: this is wrong ??
+            self.is_forced_exploration_trial = True
+            side_dict = {-1: "left", 1: "right"}
+            logging.warning(
+                f"FORCED EXPLORATION TRIAL NEXT. "
+                f"After {n_back_crit} choices to the {side_dict[unique_choices[-1]]}, "
+                f"the next trial enforces a {side_dict[-1 * unique_choices[-1]]} choice."
+            )
 
         if self.block_probability_index is None:
             self.switch_block()
@@ -554,14 +583,21 @@ class TaskControl(object):
             #  connect pulsepal, upload stim settings, add BNC event to output actions
 
         # make SMA
-        sma = self.make_state_machine()
+        sma = self.make_state_machine(
+            as_forced_choice_trial=self.is_forced_exploration_trial,
+            forced_choice_side=-1 * unique_choices[-1]
+            if len(unique_choices)
+            else 0,
+        )
         logging.debug("New trial drawn")
 
         # from importlib import reload
         # task_settings = reload(task_settings)
         return sma
 
-    def make_state_machine(self):
+    def make_state_machine(
+        self, as_forced_choice_trial=False, forced_choice_side=-1
+    ):
         logging.debug(
             f"Making new StateMachine. Outcomes are "
             f"left={self.next_trial_choice_outcome_left}, "
@@ -766,18 +802,61 @@ class TaskControl(object):
         outcome_doc_left = f"outcome_left_{outcome_codes[self.next_trial_choice_outcome_left]}"
         outcome_doc_right = f"outcome_right_{outcome_codes[self.next_trial_choice_outcome_right]}"
 
-        sma.add_state(
-            state_name="choice_left",
-            state_timer=valve_left_outcome,
-            state_change_conditions={Bpod.Events.Tup: outcome_doc_left},
-            output_actions=output_action_left_valve + [],
-        )
-        sma.add_state(
-            state_name="choice_right",
-            state_timer=valve_right_outcome,
-            state_change_conditions={Bpod.Events.Tup: outcome_doc_right},
-            output_actions=output_action_right_valve + [],
-        )
+        if as_forced_choice_trial:
+            if forced_choice_side == -1:  # left
+                sma.add_state(
+                    state_name="choice_left",
+                    state_timer=valve_left_outcome,
+                    state_change_conditions={
+                        Bpod.Events.Tup: outcome_doc_left
+                    },
+                    output_actions=output_action_left_valve + [],
+                )
+                sma.add_state(
+                    state_name="choice_right",
+                    state_timer=0,
+                    state_change_conditions={
+                        Bpod.Events.Tup: state_side_ready
+                    },
+                    output_actions=[],
+                )
+
+            elif forced_choice_side == 1:  # right
+                sma.add_state(
+                    state_name="choice_left",
+                    state_timer=0,
+                    state_change_conditions={
+                        Bpod.Events.Tup: state_side_ready
+                    },
+                    output_actions=[],
+                )
+                sma.add_state(
+                    state_name="choice_right",
+                    state_timer=valve_right_outcome,
+                    state_change_conditions={
+                        Bpod.Events.Tup: outcome_doc_right
+                    },
+                    output_actions=output_action_right_valve + [],
+                )
+
+            else:
+                ValueError(
+                    f"forced_choice_side should be [-1; 1], but not: {forced_choice_side}"
+                )
+
+        else:  # normal trial
+            sma.add_state(
+                state_name="choice_left",
+                state_timer=valve_left_outcome,
+                state_change_conditions={Bpod.Events.Tup: outcome_doc_left},
+                output_actions=output_action_left_valve + [],
+            )
+            sma.add_state(
+                state_name="choice_right",
+                state_timer=valve_right_outcome,
+                state_change_conditions={Bpod.Events.Tup: outcome_doc_right},
+                output_actions=output_action_right_valve + [],
+            )
 
         # Outcome documentation
         sma.add_state(
@@ -804,10 +883,39 @@ class TaskControl(object):
             },
             output_actions=[] + [("SoftCode", self.MOVE_TO_BACK)],
         )
-        ITI = 4
+        ITI = self.task_settings.get("inter_trial_interval")
+        if isinstance(ITI, int):
+            iti_this_trial = ITI
+        elif len(ITI) == 3:
+
+            def draw_jittered_trial_time(start, stop, step, poisson=False):
+                time_range = np.abs(stop - start)
+                available_time_steps = np.linspace(
+                    start=start,
+                    stop=stop,
+                    num=int(np.round(time_range / step)) + 1,
+                    endpoint=True,
+                )
+
+                if poisson:
+                    raise NotImplementedError(
+                        "TODO: draw ITI as Poisson-distributed instead of linear"
+                    )
+                else:
+                    drawn_trial_time = available_time_steps[
+                        np.random.randint(0, len(available_time_steps))
+                    ]
+
+                return drawn_trial_time
+
+            iti_this_trial = draw_jittered_trial_time(*ITI)
+            logging.info(f"Drawn ITI for next trial of {iti_this_trial}s.")
+        else:
+            raise ValueError
+
         sma.add_state(
             state_name="iti",
-            state_timer=ITI,
+            state_timer=iti_this_trial,
             state_change_conditions={
                 Bpod.Events.Tup: "exit",
             },
