@@ -13,6 +13,7 @@ probabilities = [(10, 50), (50, 10), (10, 90), (90, 10), (50, 50), (50, 90), (90
 min_block_length = 20  # plus min_trials_post_criterion equals mean_neutral_block_length
 min_trials_post_criterion = 5
 mean_neutral_block_length = 25
+max_block_length = 75
 
 criterion_contrast_blocks = .75
 criterion_neutral_blocks = .25
@@ -22,7 +23,7 @@ criterion_tau = 5  # PERFORMANCE_TAU_MOVMEAN
 
 first_block_easy = True  # choose high contrast first block from list of probabilities if has highest contrast
 
-inter_trial_interval = [1,2, 0.5]
+inter_trial_interval = [4, 8, 0.5]
 
 forced_choice_threshold = 20  # 50  # nr trials until forced choice trial injected
 

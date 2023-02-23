@@ -63,6 +63,9 @@ class Task(TaskRunner):
         task_settings["settings.stage"] = self.input_kwargs[
             "settings.stage"
         ]  # fixme: improve handing down args
+        task_settings["serial_port_stage"] = self.input_kwargs[
+            "serial_port_stage"
+        ]  # fixme: improve handing down args
 
         task_control = TaskControl(bpod=self.bpod, task_settings=task_settings)
         self.bpod.softcode_handler_function = task_control.softcode_handler
@@ -105,6 +108,7 @@ class Task(TaskRunner):
                         "rewarded": task_control.last_rewarded,
                         "was_stop": task_control.last_stop,
                         "punished": task_control.last_punish,
+                        "forced_choice": task_control.last_forced_choice,
                     }
                 )
 

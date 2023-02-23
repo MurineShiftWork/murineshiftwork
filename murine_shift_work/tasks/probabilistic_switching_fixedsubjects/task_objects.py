@@ -41,7 +41,7 @@ class TaskControl(object):
     mean_neutral_block_length = 25  # 10 trials difference to min block length
     min_trials_post_criterion = 5
     trials_post_criterion = 0
-    max_block_length = 50
+    max_block_length = 75
 
     criterion_contrast_blocks = (
         0.5  # task_settings.CRITERION_CONTRAST_BLOCKS  # 0.6
@@ -75,6 +75,7 @@ class TaskControl(object):
     last_rewarded = 0
     last_punish = 0
     last_stop = 0
+    last_forced_choice = 0
 
     def __init__(self, bpod=None, save_path_data=None, task_settings=None):
         super(TaskControl, self).__init__()
@@ -93,6 +94,9 @@ class TaskControl(object):
 
         self.task_settings = task_settings
         self.probabilities = self.task_settings["probabilities"]
+        self.max_block_length = self.task_settings.get(
+            "max_block_length", self.max_block_length
+        )
         self.criterion_contrast_blocks = self.task_settings[
             "criterion_contrast_blocks"
         ]
@@ -131,10 +135,14 @@ class TaskControl(object):
         )
 
         axes_names = tuple(task_settings["settings.stage"].get("axes").keys())
-        serial_port = task_settings.get("serial_port_stage")
+        serial_port_stage = task_settings.get("serial_port_stage")
+        print("serial_port_stage", serial_port_stage)
+        task_settings["settings.stage"]["connection"][
+            "serial_port"
+        ] = serial_port_stage  # fixme: shouldnt be necessaRY TO OVERWRITE
         self.stage = MoveInterface(
             axes_names=axes_names,
-            serial_port=serial_port,
+            serial_port=serial_port_stage,
             stage_config=task_settings["settings.stage"],
         )
         self.stage.save_position_as_known(
@@ -288,6 +296,7 @@ class TaskControl(object):
             self.reward_number += 1
             self.last_rewarded = 1
             self.last_punish = 0
+
         else:
             self.last_rewarded = 0
             if (
@@ -303,6 +312,7 @@ class TaskControl(object):
                 self.last_punish = 0
 
         self.last_stop = self.next_trial_give_stop_signal
+        self.last_forced_choice = self.is_forced_exploration_trial
 
         if self.next_trial_give_stop_signal:
             self.stop_trial_success = None  # TODO: no outcome or center port -> success, otherwise failed and punished
@@ -493,13 +503,28 @@ class TaskControl(object):
         ]
         choice_vector = [c[key] for c in td_info if key in c.keys()]
         unique_choices = np.unique(choice_vector[-n_back_crit:])
-        unique_choices_n_back = unique_choices.__len__()
+        unique_choices_non_nan = np.array(unique_choices)[
+            ~np.isnan(unique_choices)
+        ]
+        unique_choices_n_back = unique_choices_non_nan.__len__()
+
+        prob = self.probabilities[self.block_probability_index]
 
         self.is_forced_exploration_trial = False
         if (
             self.block_trial_number >= n_back_crit
             and unique_choices_n_back == 1
         ):
+
+            try:
+                if self.last_choice != (np.argmax(prob) - 1):
+                    # only intervene if the choice is suboptimal
+                    logging.warning(
+                        "NEXT SHOULD BE FORCED TRIAL AS IS SUB-OPTIMAL"
+                    )
+            except TypeError:
+                print("FIX ERROR HERE")
+
             # key = "choice"
             # td_info = [td["info"] for td in self.trial_data if td and key in td["info"]]
             # choice_vector = [c[key] for c in td_info if key in c.keys()]
@@ -514,12 +539,22 @@ class TaskControl(object):
             # else:
             #     self.is_forced_exploration_trial = True  # fixme: this is wrong ??
             self.is_forced_exploration_trial = True
-            side_dict = {-1: "left", 1: "right"}
-            logging.warning(
-                f"FORCED EXPLORATION TRIAL NEXT. "
-                f"After {n_back_crit} choices to the {side_dict[unique_choices[-1]]}, "
-                f"the next trial enforces a {side_dict[-1 * unique_choices[-1]]} choice."
-            )
+            side_dict = {
+                -1: "left",
+                1: "right",
+                np.nan: "NAN",
+                float("NaN"): "NAN",
+            }
+            try:
+                logging.warning(
+                    f"FORCED EXPLORATION TRIAL NEXT. "
+                    f"After {n_back_crit} choices to the {side_dict[unique_choices_non_nan[-1]]}, "
+                    f"the next trial enforces a {side_dict[-1 * unique_choices_non_nan[-1]]} choice."
+                )
+            except KeyError:
+                print("HERE AGAIN", n_back_crit, unique_choices_non_nan)
+                self.is_forced_exploration_trial = False
+                print("ERROR, therefore trying to avoid forced choice now")
 
         if self.block_probability_index is None:
             self.switch_block()

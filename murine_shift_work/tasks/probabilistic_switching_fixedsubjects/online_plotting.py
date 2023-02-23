@@ -89,6 +89,7 @@ class Data:
         self.probability_left = nan_vector(length=vector_length)
         self.probability_right = nan_vector(length=vector_length)
         self.test__block_probability_tuple = (0.9, 0.1)
+        self.forced_choice = nan_vector(length=vector_length)
 
 
 class StreamObject:
@@ -442,7 +443,12 @@ class OnlinePlottingForPS(Process):
         rewarded = dict_for_update["rewarded"]
         punished = dict_for_update["punished"]
         was_stop = dict_for_update["was_stop"]
-        print(choice, rewarded, punished, was_stop)
+        forced_choice = dict_for_update.get(
+            "forced_choice", False
+        )  # todo: use to plot red dot at [trial nr, y=0] to indicate forced choice
+        print(choice, rewarded, punished, was_stop, forced_choice)
+        self.data.forced_choice[self.trial_index] = forced_choice
+
         if choice == -1:
             if rewarded:
                 self.data.current_trial_outcome_point = trial_outcomes[0]
@@ -477,6 +483,17 @@ class OnlinePlottingForPS(Process):
         self.update_plots()
 
     def update_plots(self):
+        # forced choice ?
+        fc = self.data.forced_choice[self.trial_index]
+        if fc:
+            pt = make_new_point(
+                x=self.trial_index,
+                y=0,  # {"name": "forced-choice", "y": 0, "color": mt.red},
+                color=mt.red,
+            )
+            self.plot_trial_outcomes.addPoints([pt])
+
+        # outcome ?
         pt = make_new_point(
             x=self.trial_index,
             y=self.data.current_trial_outcome_point["y"],

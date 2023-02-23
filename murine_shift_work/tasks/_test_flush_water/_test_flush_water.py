@@ -11,7 +11,7 @@ from murine_shift_work.logic.task_process import TaskRunner
 class Task(TaskRunner):
     def run(self):
         valve_opening_time = 0.5
-        valve_numbers = [1, 2, 3, 4]
+        valve_numbers = [1, 3]
 
         valves_to_open = []
         for valve in valve_numbers:
