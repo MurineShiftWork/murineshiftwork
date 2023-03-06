@@ -21,6 +21,27 @@ from murine_shift_work.tasks.probabilistic_switching_fixedsubjects.stage_config 
 )
 
 
+def draw_jittered_trial_time(start, stop, step, poisson=False):
+    time_range = np.abs(stop - start)
+    available_time_steps = np.linspace(
+        start=start,
+        stop=stop,
+        num=int(np.round(time_range / step)) + 1,
+        endpoint=True,
+    )
+
+    if poisson:
+        raise NotImplementedError(
+            "TODO: draw ITI as Poisson-distributed instead of linear"
+        )
+    else:
+        drawn_trial_time = available_time_steps[
+            np.random.randint(0, len(available_time_steps))
+        ]
+
+    return drawn_trial_time
+
+
 class TaskControl(object):
     bpod = None
     sound = None
@@ -100,10 +121,6 @@ class TaskControl(object):
         self.criterion_contrast_blocks = self.task_settings[
             "criterion_contrast_blocks"
         ]
-
-        # fixme 1: implement loading of presets for basic PS (no stop)
-        #  and stop signal PS (adaptive stops, probabilities all 1/0 for analysis simplicity)
-        # fixme 2: use hardware params for go/stop signal generation
 
         self.calibration_sound = CalibrationDataSound(
             file_path=self.task_settings["calibration_file_sound"]
@@ -258,28 +275,6 @@ class TaskControl(object):
         times_left = st["choice_left"][0]
         times_right = st["choice_right"][0]
 
-        # TODO: USE THESE VARIABLES FOR OUTCOME EVALUATION FOR ANALYSIS DATA MATRIX
-        # outcome_left_reward = (
-        #     st["outcome_left_reward"][0]
-        #     if "outcome_left_reward" in st.keys()
-        #     else [np.nan]
-        # )
-        # outcome_right_reward = (
-        #     st["outcome_right_reward"][0]
-        #     if "outcome_right_reward" in st.keys()
-        #     else [np.nan]
-        # )
-        # outcome_left_punish = (
-        #     st["outcome_left_punish"][0]
-        #     if "outcome_left_punish" in st.keys()
-        #     else [np.nan]
-        # )
-        # outcome_right_punish = (
-        #     st["outcome_right_punish"][0]
-        #     if "outcome_right_punish" in st.keys()
-        #     else [np.nan]
-        # )
-
         if not np.isnan(np.array(times_left)).any():
             self.last_choice = -1
         elif not np.isnan(np.array(times_right)).any():
@@ -349,18 +344,6 @@ class TaskControl(object):
             return
 
         item_spacer = " | "
-        # print(
-        #     f"[T={round(trial_data['Trial start timestamp']/60, 1): >4} min] {item_end}"
-        #     f"Trial#{self.trial_index: >4} {item_end}"
-        #     f"Block#{self.block_number:>2} {item_end}"
-        #     f"BlockTrial#{self.block_trial_number:>4} {item_end}"
-        #     f"Choice: {self.last_choice:>3}. {item_end}"
-        #     f"Pref: {np.round(self.moving_average(),2):>5}. {item_end}"
-        #     f"Reward: {self.reward_number:>4} "
-        #     f"({round(self.task_settings['reward_amount_ul']*self.reward_number, 2):>4}uL). {item_end}"
-        #     f"Crit: {self.trials_post_criterion:>2}"
-        # )
-
         print(
             f"[{round(trial_data['Trial start timestamp'] / 60, 1): >4}min]{item_spacer}"
             f"T#{self.trial_index: >4}{item_spacer}"
@@ -525,20 +508,7 @@ class TaskControl(object):
             except TypeError:
                 print("FIX ERROR HERE")
 
-            # key = "choice"
-            # td_info = [td["info"] for td in self.trial_data if td and key in td["info"]]
-            # choice_vector = [c[key] for c in td_info if key in c.keys()]
-            # unique_choices = np.unique(choice_vector[-n_back_crit:])
-            # unique_choices_n_back = unique_choices.__len__()
-
-            # if unique_choices_n_back == 1:
-
-            #     return self.make_forced_exploration_sma(
-            #         next_choice_option=-1 * unique_choices[-1]
-            #     )
-            # else:
-            #     self.is_forced_exploration_trial = True  # fixme: this is wrong ??
-            self.is_forced_exploration_trial = True
+            self.is_forced_exploration_trial = True  # FIXME
             side_dict = {
                 -1: "left",
                 1: "right",
@@ -625,9 +595,6 @@ class TaskControl(object):
             else 0,
         )
         logging.debug("New trial drawn")
-
-        # from importlib import reload
-        # task_settings = reload(task_settings)
         return sma
 
     def make_state_machine(
@@ -643,58 +610,37 @@ class TaskControl(object):
         output_actions__center_ready = []
         # output_actions__center_delay = []  # FIXME: STILL USED ??
         output_actions__side_ready = []
-        if self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"]:
-            if "center" in self.task_settings["HARDWARE_PORT_LIGHT_PORTS"]:
-                output_actions__center_ready = [
-                    (
-                        Bpod.OutputChannels.PWM2,
-                        self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"],
-                    )
-                ]
-                # output_actions__center_delay = output_actions__center_ready # FIXME: STILL USED ??
-            if "side" in self.task_settings["HARDWARE_PORT_LIGHT_PORTS"]:
-                output_actions__side_ready = [
-                    (
-                        Bpod.OutputChannels.PWM1,
-                        self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"],
-                    ),
-                    (
-                        Bpod.OutputChannels.PWM3,
-                        self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"],
-                    ),
-                ]
 
-        initiation_hold_time = self.task_settings["delay_until_center_init"]
-        if isinstance(initiation_hold_time, list):
-            initiation_hold_time = np.asarray(initiation_hold_time)
-            if len(initiation_hold_time) > 2:
-                step = initiation_hold_time[2] * 1000  # sec to msec
-            else:
-                step = 1
-
-            hold_time_range = (
-                np.abs(np.diff(initiation_hold_time[:2])) * 1000
-            )  # sec to msec
-            available_hold_times = np.linspace(
-                initiation_hold_time[0],
-                initiation_hold_time[1],
-                int(np.round(hold_time_range / step)) + 1,
-                endpoint=True,
-            )
-            available_hold_times = np.round(
-                available_hold_times, 3
-            )  # ms rounding
-            initiation_hold_time = available_hold_times[
-                np.random.randint(0, len(available_hold_times))
-            ]
-            logging.debug(
-                f"-- Drawn new initiation hold time of {initiation_hold_time}s."
-            )
-            self.initiation_hold_time = initiation_hold_time
+        # initiation_hold_time = self.task_settings["delay_until_center_init"]
+        # if isinstance(initiation_hold_time, list):
+        #     initiation_hold_time = np.asarray(initiation_hold_time)
+        #     if len(initiation_hold_time) > 2:
+        #         step = initiation_hold_time[2] * 1000  # sec to msec
+        #     else:
+        #         step = 1
+        #
+        #     hold_time_range = (
+        #         np.abs(np.diff(initiation_hold_time[:2])) * 1000
+        #     )  # sec to msec
+        #     available_hold_times = np.linspace(
+        #         initiation_hold_time[0],
+        #         initiation_hold_time[1],
+        #         int(np.round(hold_time_range / step)) + 1,
+        #         endpoint=True,
+        #     )
+        #     available_hold_times = np.round(available_hold_times, 3)  # ms rounding
+        #     initiation_hold_time = available_hold_times[
+        #         np.random.randint(0, len(available_hold_times))
+        #     ]
+        #     logging.debug(
+        #         f"-- Drawn new initiation hold time of {initiation_hold_time}s."
+        #     )
+        #     self.initiation_hold_time = initiation_hold_time
 
         # SMA
         sma = StateMachine(bpod=self.bpod)
 
+        # TTL -> center ready
         state_center_ready = "center_ready"
         sma = add_trial_onset_ttl(
             sma=sma,
@@ -702,16 +648,10 @@ class TaskControl(object):
             bnc_channel=eval(
                 f"Bpod.OutputChannels.BNC{self.task_settings['HARDWARE_BNC_TRIAL_START']}"
             ),
-            next_state=state_center_ready,  # FIXME: NEXT STATE MOVES STAGE
+            next_state=state_center_ready,
         )
-        #             sma.add_state(
-        #                 state_name="leave",
-        #                 state_timer=0,
-        #                 state_change_conditions={"Tup": "exit"},
-        #                 output_actions=[("SoftCode", self.sound.sound_stop_code)],  fixme: SOFT CODE
-        #             )
 
-        # TRIAL
+        # stage moves forward -> side ready
         state_side_ready = "side_ready"
         sma.add_state(
             state_name=state_center_ready,
@@ -720,79 +660,17 @@ class TaskControl(object):
             output_actions=output_actions__center_ready
             + [("SoftCode", self.MOVE_TO_FRONT)],
         )
-        # INIT long enough -> proceed. pulled out too early -> back to center_ready
-        # sma.add_state(
-        #     state_name="center_initiating",
-        #     state_timer=initiation_hold_time,
-        #     state_change_conditions={
-        #         Bpod.Events.Port2Out: "center_ready",  # ABORTED
-        #         Bpod.Events.Tup: "side_ready",
-        #     },  # CONTINUE
-        #     output_actions=output_actions__center_delay,
-        # )
 
-        # TRAVEL to side -> wait for entry
-        if self.next_trial_give_stop_signal:
-            delay_until_stop_signal = (
-                self.stop_signal_delay - self.sound_delay_correction
-            )
-            delay_until_side_timeout = (
-                self.task_settings["side_timeout_for_stopping"]
-                - delay_until_stop_signal
-            )
-
-            print(
-                f"-- STOP trial with delay={round(delay_until_stop_signal,2)}s "
-                f"({self.stop_signal_delay}-{self.sound_delay_correction}) "
-                f"and timeout after {delay_until_side_timeout}s"
-            )
-            # STOP signal:
-            #       mouse moving
-            #       side ready + wait for delay
-            #       side ready + trigger sound
-            #           side in -> AIR
-            #           no entry -> __read_next_frame trial
-            #
-            # SWITCH signal:
-            #       mouse moving
-            #       side ready + wait for delay
-            #       side ready + trigger sound
-            #           side in -> AIR
-            #           center light -> center in -> reward
-
-            sma.add_state(
-                state_name=state_side_ready,
-                state_timer=delay_until_stop_signal,
-                state_change_conditions={
-                    # Bpod.Events.Port1In: "choice_left",
-                    # Bpod.Events.Port3In: "choice_right",
-                    Bpod.Events.Tup: "side_ready_post_stop",
-                },
-                output_actions=output_actions__side_ready,
-            )
-            sma.add_state(
-                state_name="side_ready_post_stop",
-                state_timer=delay_until_side_timeout,
-                state_change_conditions={
-                    Bpod.Events.Port1In: "choice_left",
-                    # Bpod.Events.Port2In: "exit",
-                    Bpod.Events.Port3In: "choice_right",
-                    Bpod.Events.Tup: "exit",
-                },
-                output_actions=output_actions__side_ready
-                + [("SoftCode", self.sound_stop)],
-            )
-        else:  # REGULAR TRIAL
-            sma.add_state(
-                state_name=state_side_ready,
-                state_timer=self.task_settings["delay_until_side_timeout"],
-                state_change_conditions={
-                    Bpod.Events.Port1In: "choice_left",
-                    Bpod.Events.Port3In: "choice_right",
-                    Bpod.Events.Tup: "final",
-                },
-                output_actions=output_actions__side_ready,
-            )
+        sma.add_state(
+            state_name=state_side_ready,
+            state_timer=self.task_settings["delay_until_side_timeout"],
+            state_change_conditions={
+                Bpod.Events.Port1In: "choice_left",
+                Bpod.Events.Port3In: "choice_right",
+                Bpod.Events.Tup: "final",
+            },
+            output_actions=output_actions__side_ready,
+        )
 
         # OUTCOMES: LEFT  --  Encoding:  0=unrewarded, 1=rewarded, -1=punish with air
         # note: stop signal outcomes set to 0 in __read_next_frame-trial
@@ -922,27 +800,6 @@ class TaskControl(object):
         if isinstance(ITI, int):
             iti_this_trial = ITI
         elif len(ITI) == 3:
-
-            def draw_jittered_trial_time(start, stop, step, poisson=False):
-                time_range = np.abs(stop - start)
-                available_time_steps = np.linspace(
-                    start=start,
-                    stop=stop,
-                    num=int(np.round(time_range / step)) + 1,
-                    endpoint=True,
-                )
-
-                if poisson:
-                    raise NotImplementedError(
-                        "TODO: draw ITI as Poisson-distributed instead of linear"
-                    )
-                else:
-                    drawn_trial_time = available_time_steps[
-                        np.random.randint(0, len(available_time_steps))
-                    ]
-
-                return drawn_trial_time
-
             iti_this_trial = draw_jittered_trial_time(*ITI)
             logging.info(f"Drawn ITI for next trial of {iti_this_trial}s.")
         else:
@@ -967,11 +824,6 @@ class TaskControl(object):
         logging.debug(f"Saved data in {np.round(time.time()-dt,2)}s.")
 
     def on_exit(self):
-        # retract spout stage
-        # self.softcode_handler(softcode=self.MOVE_TO_BACK)
-        # logging.debug("Moved stage BACK on exit")
-
-        # save data
         self.save()
 
     def __del__(self):
