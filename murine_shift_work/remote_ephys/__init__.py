@@ -115,7 +115,7 @@ def test_record():
 
 if __name__ == "__main__":
     # import sys
-    sys.argv += ["--record"]
+    sys.argv += ["--record", "--is-child-session-to", "ch-sess"]
     run_remote_ephys()
 
     print("x")
