@@ -19,7 +19,6 @@ from murine_shift_work.tasks.probabilistic_switching.online_plotting import (
 
 class Task(TaskRunner):
     def run(self):
-
         sma = make_ttl_identifier_sequences(
             bpod=self.bpod,
             sequence="LsLsLs",

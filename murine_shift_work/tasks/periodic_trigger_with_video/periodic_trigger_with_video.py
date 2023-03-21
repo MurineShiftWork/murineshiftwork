@@ -56,7 +56,6 @@ class Task(TaskRunner):
     _bnc_channel_trial_onset = Bpod.OutputChannels.BNC1
 
     def run(self) -> None:
-
         ttl_identifier_sequence = self.input_kwargs.get(
             "ttl_identifier_sequence", "LLssss"
         )
@@ -119,7 +118,6 @@ class Task(TaskRunner):
 
 
 def run_task(**args_dict):
-
     # Do not auto start, so that camera can start first
     args_dict.update({"auto_start": False})
 

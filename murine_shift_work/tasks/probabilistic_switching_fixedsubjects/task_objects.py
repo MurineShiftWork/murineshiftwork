@@ -498,7 +498,6 @@ class TaskControl(object):
             self.block_trial_number >= n_back_crit
             and unique_choices_n_back == 1
         ):
-
             try:
                 if self.last_choice != (np.argmax(prob) - 1):
                     # only intervene if the choice is suboptimal
