@@ -498,7 +498,6 @@ class TaskControl(object):
             self.block_trial_number >= n_back_crit
             and unique_choices_n_back == 1
         ):
-
             try:
                 if self.last_choice != (np.argmax(prob) - 1):
                     # only intervene if the choice is suboptimal
@@ -608,34 +607,7 @@ class TaskControl(object):
 
         # LIGHTS - if intensity - for chosen ports (center/side)
         output_actions__center_ready = []
-        # output_actions__center_delay = []  # FIXME: STILL USED ??
         output_actions__side_ready = []
-
-        # initiation_hold_time = self.task_settings["delay_until_center_init"]
-        # if isinstance(initiation_hold_time, list):
-        #     initiation_hold_time = np.asarray(initiation_hold_time)
-        #     if len(initiation_hold_time) > 2:
-        #         step = initiation_hold_time[2] * 1000  # sec to msec
-        #     else:
-        #         step = 1
-        #
-        #     hold_time_range = (
-        #         np.abs(np.diff(initiation_hold_time[:2])) * 1000
-        #     )  # sec to msec
-        #     available_hold_times = np.linspace(
-        #         initiation_hold_time[0],
-        #         initiation_hold_time[1],
-        #         int(np.round(hold_time_range / step)) + 1,
-        #         endpoint=True,
-        #     )
-        #     available_hold_times = np.round(available_hold_times, 3)  # ms rounding
-        #     initiation_hold_time = available_hold_times[
-        #         np.random.randint(0, len(available_hold_times))
-        #     ]
-        #     logging.debug(
-        #         f"-- Drawn new initiation hold time of {initiation_hold_time}s."
-        #     )
-        #     self.initiation_hold_time = initiation_hold_time
 
         # SMA
         sma = StateMachine(bpod=self.bpod)
@@ -715,61 +687,42 @@ class TaskControl(object):
         outcome_doc_left = f"outcome_left_{outcome_codes[self.next_trial_choice_outcome_left]}"
         outcome_doc_right = f"outcome_right_{outcome_codes[self.next_trial_choice_outcome_right]}"
 
+        # NORMAL TRIAL
+        state_change_conditions_left = {Bpod.Events.Tup: outcome_doc_left}
+        state_change_conditions_right = {Bpod.Events.Tup: outcome_doc_right}
+
+        # FORCED CHOICE
         if as_forced_choice_trial:
+            state_change_conditions_side_ready = {
+                Bpod.Events.Tup: state_side_ready
+            }
+
             if forced_choice_side == -1:  # left
-                sma.add_state(
-                    state_name="choice_left",
-                    state_timer=valve_left_outcome,
-                    state_change_conditions={
-                        Bpod.Events.Tup: outcome_doc_left
-                    },
-                    output_actions=output_action_left_valve + [],
+                state_change_conditions_right = (
+                    state_change_conditions_side_ready
                 )
-                sma.add_state(
-                    state_name="choice_right",
-                    state_timer=0,
-                    state_change_conditions={
-                        Bpod.Events.Tup: state_side_ready
-                    },
-                    output_actions=[],
-                )
-
             elif forced_choice_side == 1:  # right
-                sma.add_state(
-                    state_name="choice_left",
-                    state_timer=0,
-                    state_change_conditions={
-                        Bpod.Events.Tup: state_side_ready
-                    },
-                    output_actions=[],
+                state_change_conditions_left = (
+                    state_change_conditions_side_ready
                 )
-                sma.add_state(
-                    state_name="choice_right",
-                    state_timer=valve_right_outcome,
-                    state_change_conditions={
-                        Bpod.Events.Tup: outcome_doc_right
-                    },
-                    output_actions=output_action_right_valve + [],
-                )
-
             else:
-                ValueError(
-                    f"forced_choice_side should be [-1; 1], but not: {forced_choice_side}"
+                logging.warning(
+                    f"\n\n\n\n -> as_forced_choice_trial: {as_forced_choice_trial}, "
+                    f"but forced_choice_side: {forced_choice_side} <- \n\n\n\n"
                 )
 
-        else:  # normal trial
-            sma.add_state(
-                state_name="choice_left",
-                state_timer=valve_left_outcome,
-                state_change_conditions={Bpod.Events.Tup: outcome_doc_left},
-                output_actions=output_action_left_valve + [],
-            )
-            sma.add_state(
-                state_name="choice_right",
-                state_timer=valve_right_outcome,
-                state_change_conditions={Bpod.Events.Tup: outcome_doc_right},
-                output_actions=output_action_right_valve + [],
-            )
+        sma.add_state(
+            state_name="choice_left",
+            state_timer=valve_left_outcome,
+            state_change_conditions=state_change_conditions_left,
+            output_actions=output_action_left_valve + [],
+        )
+        sma.add_state(
+            state_name="choice_right",
+            state_timer=valve_right_outcome,
+            state_change_conditions=state_change_conditions_right,
+            output_actions=output_action_right_valve + [],
+        )
 
         # Outcome documentation
         sma.add_state(

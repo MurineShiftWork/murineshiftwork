@@ -49,7 +49,6 @@ def run_register(**args_dict):
 
     elif "rename" in option:
         if subject in subject_settings_all.keys():
-
             new_alias = args_dict["new_alias"]
             if new_alias in subject_settings_all.keys():
                 print_box(

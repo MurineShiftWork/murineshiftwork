@@ -58,7 +58,6 @@ def run_client():
             print("")
 
             for start_cmd in commands:
-
                 for cmd in [start_cmd, stop_cmd]:
                     socket.send_string(cmd)
                     print(socket.recv())

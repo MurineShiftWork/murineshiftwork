@@ -9,7 +9,6 @@ from murine_shift_work.tasks.periodic_trigger_with_video.periodic_trigger_with_v
 
 
 def run_task(**args_dict):
-
     # FIXME: add Intan recording around sleep time
     #  - extract required input args from: make_parser_remote_ephys
     #  - run via: run_remote_ephys

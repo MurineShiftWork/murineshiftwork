@@ -17,7 +17,6 @@ class Task(TaskRunner):
     _bnc_channel_trial_onset = Bpod.OutputChannels.BNC1
 
     def run(self) -> None:
-
         TTL_IDENTIFIER_SEQUENCE = "Lsssss"
         TRIGGER_ITI = 5  # seconds
 

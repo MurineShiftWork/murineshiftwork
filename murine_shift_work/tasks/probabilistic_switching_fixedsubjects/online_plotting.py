@@ -68,7 +68,6 @@ class QueueMonitor(QtCore.QThread):
         self.kill_queue = kill_queue
 
     def run(self) -> None:
-
         while True:
             time.sleep(0.1)
             if not self.kill_queue.empty():
@@ -169,7 +168,6 @@ class StreamObject:
             ret, frame = self.stream_capture.read()
 
             if frame is not None:
-
                 if self.to_grey:
                     frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 

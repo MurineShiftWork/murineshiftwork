@@ -7,7 +7,6 @@ from murine_shift_work.tasks.periodic_trigger_with_video.periodic_trigger_with_v
 
 
 def run_task(**args_dict):
-
     args_dict.update(
         {
             "ttl_identifier_sequence": "ssssss",

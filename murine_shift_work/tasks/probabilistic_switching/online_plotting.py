@@ -65,7 +65,6 @@ class QueueMonitor(QtCore.QThread):
         self.kill_queue = kill_queue
 
     def run(self) -> None:
-
         while True:
             time.sleep(0.1)
             if not self.kill_queue.empty():
