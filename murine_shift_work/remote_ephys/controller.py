@@ -30,6 +30,7 @@ class RemoteOpenEphysController:
     datetime = None
     full_acquisition_name = ""
     full_session_name = ""
+    is_child_session_to = ""
 
     local_path_full = ""
     metadata_file = ""
@@ -39,6 +40,8 @@ class RemoteOpenEphysController:
 
     input_args = []
     input_kwargs = {}
+
+    path_sep = "/" if os.path.sep == "/" else "\\"
 
     def __init__(
         self,
@@ -51,6 +54,7 @@ class RemoteOpenEphysController:
         remote_path=None,
         local_path=None,
         create_new_dir=True,
+        is_child_session_to=None,
         *args,
         **kwargs,
     ):
@@ -72,6 +76,9 @@ class RemoteOpenEphysController:
         self.remote_path = str(remote_path).strip("\\") or self.remote_path
         self.local_path = local_path or self.local_path
         self.create_new_dir = create_new_dir or self.create_new_dir
+        self.is_child_session_to = (
+            is_child_session_to or self.is_child_session_to
+        )
 
         self.input_args = args
         self.input_kwargs = kwargs
@@ -87,6 +94,13 @@ class RemoteOpenEphysController:
             self.full_session_name = "__".join(
                 [self.acquisition_name, self.datetime, self.session_name]
             )
+
+        if self.is_child_session_to:
+            # print(" ")
+            self._acquisition_name_backup = self.acquisition_name
+            self.acquisition_name = f"{self.is_child_session_to}"  # {self.path_sep}{self.full_session_name}"
+            self.full_acquisition_name = ""
+            self.full_session_name += "__"
 
         return self.full_acquisition_name, self.full_session_name
 
@@ -113,11 +127,17 @@ class RemoteOpenEphysController:
 
     def _persists_metadata(self, acq_name=None, session_name=None):
         if self.local_path is not None:
+            if session_name.endswith("__"):
+                session_name = session_name[:-2]
+
+            session_name_for_path = (
+                "" if self.is_child_session_to else session_name
+            )
             self.local_path_full = (
                 Path(self.local_path)
                 / self.acquisition_name
                 / acq_name
-                / session_name
+                / session_name_for_path
             )
             self.local_path_full.mkdir(parents=True, exist_ok=True)
 
@@ -189,12 +209,11 @@ class RemoteOpenEphysController:
         session_name="",
         session_name_appendix="",
         whitespace=" ",
-        path_sep="/" if os.path.sep == "/" else "\\",
     ):
         message = (
             f"StartRecord{whitespace}"
             f"CreateNewDir={1 if create_new_dir else 0}{whitespace}"
-            f"RecDir={str(remote_path)}{path_sep}{acquisition_name}{path_sep}{full_acquisition_name}{whitespace}"
+            f"RecDir={str(remote_path)}{RemoteOpenEphysController.path_sep}{acquisition_name}{RemoteOpenEphysController.path_sep}{full_acquisition_name}{whitespace}"
             f"PrependText={session_name}{whitespace}"
             f"AppendText={session_name_appendix}{whitespace}"
         )

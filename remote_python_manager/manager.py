@@ -50,7 +50,6 @@ class ManagedRemoteProcess:
         socket_address=None,
         socket_port=None,
     ):
-
         super(ManagedRemoteProcess, self).__init__()
 
         self._open_comms()

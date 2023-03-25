@@ -51,7 +51,6 @@ class Display(Process):
         self.dt_avg = 0.1
 
     def run(self) -> None:
-
         # self.app = pg.mkQApp(self.name)
         self.app = QtWidgets.QApplication([])
         self.win = pg.GraphicsLayoutWidget(show=True, title=self.name)

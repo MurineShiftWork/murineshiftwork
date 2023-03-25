@@ -1,8 +1,8 @@
 import argparse
 import os
 
-# DEFAULT_REMOTE_IP = "172.24.242.233"  # FIXME: ip seems to change all the time
-DEFAULT_REMOTE_IP = "192.168.100.48"
+DEFAULT_REMOTE_IP = "172.24.243.45"  # FIXME: ip seems to change all the time
+# DEFAULT_REMOTE_IP = "192.168.100.48"
 DEFAULT_REMOTE_PORT = 5558
 DEFAULT_REMOTE_PATH = r"E:\\OE_DATA\\LBR"
 DEFAULT_LOCAL_PATH = os.path.expanduser("~/data")
@@ -70,6 +70,14 @@ def make_parser_remote_ephys():
         type=str,
         default=DEFAULT_SESSION_NAME,
         help=f"Acquisition task. Default: {DEFAULT_SESSION_NAME}",
+    )
+    connection_group.add_argument(
+        "-child-to",
+        "--is-child-session-to",
+        dest="is_child_session_to",
+        type=str,
+        default="",
+        help="Set if is child session. If not empty, skips subject dir & saves session dir directly in `--out-path`",
     )
     # METADATA
     metadata_group = parser.add_argument_group("Metadata")
