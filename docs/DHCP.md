@@ -19,7 +19,7 @@ RPi racks:
 | dc:a6:32:d1:28:11 |             22 | 2             | triple left     | 3                       | purple                   | left face     |                   |
 | DC:A6:32:45:E4:5F |             23 | 2             | triple left     | 2                       | red yellow               | right face    |                   |
 |                   |                |               |                 |                         |                          |               |                   |
-| dc:a6:32:a9:61:aa |             31 | 3             | triple left     | 6                       | blue/rpi blue/cam        | bottom tongue |                   |
+| dc:a6:32:a9:61:aa |             31 | 3    3        | triple left     | 6                       | blue/rpi blue/cam        | bottom tongue |                   |
 | dc:a6:32:45:a8:89 |             32 | 3             | triple right    | 1                       | green green              | left face     |                   |
 | e4:5f:01:1f:d7:10 |             33 | 3             | triple right    | 2                       | orange orange            | right face    |                   |
 |                   |                |               |                 |                         |                          |               |                   |

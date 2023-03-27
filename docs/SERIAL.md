@@ -1,24 +1,24 @@
 # Serial addresses
 
-| Setup | Device | by-path                                                                         | MAC (by-id)                                                            | /dev/tty* |
-|------:|:-------|---------------------------------------------------------------------------------|:-----------------------------------------------------------------------|:----------|
-|     1 | bpod   | pci-0000:00:14.0-usb-0:2:1.0   pci-0000:00:14.0-usb-0:4.4:1.0                   | usb-Teensyduino_USB_Serial_5817740-if00                                | ACM1      |
-|     1 | stage  | pci-0000:00:14.0-usb-0:1:1.0-port0   pci-0000:00:14.0-usb-0:4.3:1.0-port0       | usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_0001-if00-port0 | USB0      |
-|       |        |                                                                                 |                                                                        |           |
-|     2 | bpod   | pci-0000:00:14.0-usb-0:4.1.4:1.0                                                | usb-Teensyduino_USB_Serial_9289480-if00                                | ACM0      |
-|     2 | stage  | pci-0000:00:14.0-usb-0:4.2:1.0-port0                                            |                                                                        | USB1      |
-|       |        |                                                                                 |                                                                        |           |
-|     3 | bpod   | pci-0000:00:14.0-usb-0:4.1.2:1.0                                                | usb-Teensyduino_USB_Serial_5789440-if00                                | ACM2      |
-|     3 | stage  | pci-0000:00:14.0-usb-0:4.1.3:1.0-port0                                          |                                                                        | USB2      |
-|       |        |                                                                                 |                                                                        |           |
-|     4 | bpod   | pci-0000:00:14.0-usb-0:4.1.1:1.0                                                | usb-Teensyduino_USB_Serial_5816670-if00                                | ACM3      |
-|     4 | stage  | pci-0000:00:14.0-usb-0:10.2:1.0-port0                                           |                                                                        | USB3      |
-|       |        |                                                                                 |                                                                        |           |
-|     5 | bpod   | pci-0000:00:14.0-usb-0:10.1.3:1.0     pci-0000:00:14.0-usb-0:10.1.3:1.0         | usb-Teensyduino_USB_Serial_5818020-if00                                | ACM5      |
-|     5 | stage  | pci-0000:00:14.0-usb-0:10.4:1.0-port0   pci-0000:00:14.0-usb-0:10.1.4:1.0-port0 |                                                                        | USB4      |
-|       |        |                                                                                 |                                                                        |           |
-|     6 | bpod   | pci-0000:00:14.0-usb-0:10.1.2:1.0                                               | usb-Teensyduino_USB_Serial_5817240-if00                                | ACM4      |
-|     6 | stage  | pci-0000:00:14.0-usb-0:10.1.1:1.0-port0                                         |                                                                        | USB5      |
+|     | Setup | Device | by-path                                                                         | MAC (by-id)                                                            | /dev/tty* |
+|-----|------:|:-------|---------------------------------------------------------------------------------|:-----------------------------------------------------------------------|:----------|
+| o   |     1 | bpod   | pci-0000:00:14.0-usb-0:2:1.0   pci-0000:00:14.0-usb-0:4.4:1.0                   | usb-Teensyduino_USB_Serial_5817740-if00                                | ACM5      |
+| o   |     1 | stage  | pci-0000:00:14.0-usb-0:1:1.0-port0   pci-0000:00:14.0-usb-0:4.3:1.0-port0       | usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_0001-if00-port0 | USB0      |
+|     |       |        |                                                                                 |                                                                        |           |
+| o   |     2 | bpod   | pci-0000:00:14.0-usb-0:4.1.4:1.0                                                | usb-Teensyduino_USB_Serial_9289480-if00                                | ACM3      |
+| o   |     2 | stage  | pci-0000:00:14.0-usb-0:4.2:1.0-port0                                            |                                                                        | USB1      |
+|     |       |        |                                                                                 |                                                                        |           |
+| o   |     3 | bpod   | pci-0000:00:14.0-usb-0:4.1.2:1.0                                                | usb-Teensyduino_USB_Serial_5789440-if00                                | ACM1      |
+| o   |     3 | stage  | pci-0000:00:14.0-usb-0:4.1.3:1.0-port0                                          |                                                                        | USB2      |
+|     |       |        |                                                                                 |                                                                        |           |
+| o   |     4 | bpod   | pci-0000:00:14.0-usb-0:4.1.1:1.0                                                | usb-Teensyduino_USB_Serial_5816670-if00                                | ACM0      |
+| o   |     4 | stage  | pci-0000:00:14.0-usb-0:10.2:1.0-port0                                           |                                                                        | USB3      |
+|     |       |        |                                                                                 |                                                                        |           |
+| o   |     5 | bpod   | pci-0000:00:14.0-usb-0:10.1.3:1.0     pci-0000:00:14.0-usb-0:10.1.3:1.0         | usb-Teensyduino_USB_Serial_5818020-if00                                | ACM4      |
+| o   |     5 | stage  | pci-0000:00:14.0-usb-0:10.4:1.0-port0   pci-0000:00:14.0-usb-0:10.1.4:1.0-port0 |                                                                        | USB4      |
+|     |       |        |                                                                                 |                                                                        |           |
+| o   |     6 | bpod   | pci-0000:00:14.0-usb-0:10.1.2:1.0                                               | usb-Teensyduino_USB_Serial_5817240-if00                                | ACM2      |
+| o   |     6 | stage  | pci-0000:00:14.0-usb-0:10.1.1:1.0-port0                                         |                                                                        | USB5      |
 
 
 setup1
@@ -86,7 +86,8 @@ murineshiftwork run -t fixedsubj \
   -cc /mnt/maindata/CONFIG_FILES/camera.rcc.setup2.fixed.from.murinemanager \
   -cwater ~/.murineshiftwork/calibration.water.setup2.csv \
   -cstage ~/.murineshiftwork/calibration.stage.setup2.yaml \
-  -meta x=11 y=12 z=13
+  -meta x=11 y=12 z=13 \
+  -s s080
 
 
 ```

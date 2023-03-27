@@ -399,84 +399,84 @@ class TaskControl(object):
 
         self.save()
 
-    def make_forced_exploration_sma(self, next_choice_option=None):
-        if next_choice_option < 0:  # LEFT
-            left_valve = self.task_settings["HARDWARE_VALVES_FOR_WATER"][0]
-            output_action_only_valve = [
-                (Bpod.OutputChannels.Valve, left_valve)
-            ]
-            valve_outcome = self.valve_times_dict[left_valve]
-            port_nr = left_valve
-            side_name = "left"
-        else:
-            right_valve = self.task_settings["HARDWARE_VALVES_FOR_WATER"][1]
-            output_action_only_valve = [
-                (Bpod.OutputChannels.Valve, right_valve)
-            ]
-            valve_outcome = self.valve_times_dict[right_valve]
-            port_nr = right_valve
-            side_name = "right"
-
-        output_actions__side_ready = [
-            (
-                eval(f"Bpod.OutputChannels.PWM{port_nr}"),
-                self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"],
-            ),
-        ]
-        state_name_choice = f"choice_{side_name}"
-        state_change_condition = {
-            eval(f"Bpod.Events.Port{port_nr}In"): state_name_choice
-        }
-
-        logging.warning(
-            f"{self.trial_index} -- Making forced choice to side: {next_choice_option}"
-        )
-        sma = StateMachine(self.bpod)
-        # TTL
-        sma = add_trial_onset_ttl(
-            sma=sma,
-            ttl_pulse_duration=self.task_settings["ttl_pulse_duration"],
-            bnc_channel=eval(
-                f"Bpod.OutputChannels.BNC{self.task_settings['HARDWARE_BNC_TRIAL_START']}"
-            ),
-            next_state="side_ready",
-        )
-        # WAITING
-        sma.add_state(
-            state_name="side_ready",
-            state_timer=20,
-            state_change_conditions={
-                **state_change_condition,
-                Bpod.Events.Tup: "exit",
-            },
-            output_actions=output_actions__side_ready + [],
-        )
-        sma.add_state(
-            state_name="choice_left",
-            state_timer=valve_outcome,
-            state_change_conditions={Bpod.Events.Tup: "final"},
-            output_actions=output_action_only_valve + [],
-        )
-        sma.add_state(
-            state_name="choice_right",
-            state_timer=valve_outcome,
-            state_change_conditions={Bpod.Events.Tup: "final"},
-            output_actions=output_action_only_valve + [],
-        )
-
-        sma.add_state(
-            state_name="final",
-            state_timer=self.task_settings["state_duration_final"],
-            state_change_conditions={
-                Bpod.Events.Port1Out: "exit",
-                Bpod.Events.Port2Out: "exit",
-                Bpod.Events.Port3Out: "exit",
-                Bpod.Events.Tup: "exit",
-            },
-            output_actions=[],
-        )
-
-        return sma
+    # def make_forced_exploration_sma(self, next_choice_option=None):
+    #     if next_choice_option < 0:  # LEFT
+    #         left_valve = self.task_settings["HARDWARE_VALVES_FOR_WATER"][0]
+    #         output_action_only_valve = [
+    #             (Bpod.OutputChannels.Valve, left_valve)
+    #         ]
+    #         valve_outcome = self.valve_times_dict[left_valve]
+    #         port_nr = left_valve
+    #         side_name = "left"
+    #     else:
+    #         right_valve = self.task_settings["HARDWARE_VALVES_FOR_WATER"][1]
+    #         output_action_only_valve = [
+    #             (Bpod.OutputChannels.Valve, right_valve)
+    #         ]
+    #         valve_outcome = self.valve_times_dict[right_valve]
+    #         port_nr = right_valve
+    #         side_name = "right"
+    #
+    #     output_actions__side_ready = [
+    #         (
+    #             eval(f"Bpod.OutputChannels.PWM{port_nr}"),
+    #             self.task_settings["HARDWARE_PORT_LIGHT_INTENSITY"],
+    #         ),
+    #     ]
+    #     state_name_choice = f"choice_{side_name}"
+    #     state_change_condition = {
+    #         eval(f"Bpod.Events.Port{port_nr}In"): state_name_choice
+    #     }
+    #
+    #     logging.warning(
+    #         f"{self.trial_index} -- Making forced choice to side: {next_choice_option}"
+    #     )
+    #     sma = StateMachine(self.bpod)
+    #     # TTL
+    #     sma = add_trial_onset_ttl(
+    #         sma=sma,
+    #         ttl_pulse_duration=self.task_settings["ttl_pulse_duration"],
+    #         bnc_channel=eval(
+    #             f"Bpod.OutputChannels.BNC{self.task_settings['HARDWARE_BNC_TRIAL_START']}"
+    #         ),
+    #         next_state="side_ready",
+    #     )
+    #     # WAITING
+    #     sma.add_state(
+    #         state_name="side_ready",
+    #         state_timer=20,
+    #         state_change_conditions={
+    #             **state_change_condition,
+    #             Bpod.Events.Tup: "exit",
+    #         },
+    #         output_actions=output_actions__side_ready + [],
+    #     )
+    #     sma.add_state(
+    #         state_name="choice_left",
+    #         state_timer=valve_outcome,
+    #         state_change_conditions={Bpod.Events.Tup: "final"},
+    #         output_actions=output_action_only_valve + [],
+    #     )
+    #     sma.add_state(
+    #         state_name="choice_right",
+    #         state_timer=valve_outcome,
+    #         state_change_conditions={Bpod.Events.Tup: "final"},
+    #         output_actions=output_action_only_valve + [],
+    #     )
+    #
+    #     sma.add_state(
+    #         state_name="final",
+    #         state_timer=self.task_settings["state_duration_final"],
+    #         state_change_conditions={
+    #             Bpod.Events.Port1Out: "exit",
+    #             Bpod.Events.Port2Out: "exit",
+    #             Bpod.Events.Port3Out: "exit",
+    #             Bpod.Events.Tup: "exit",
+    #         },
+    #         output_actions=[],
+    #     )
+    #
+    #     return sma
 
     def draw_next_trial(self):
         n_back_crit = self.task_settings["forced_choice_threshold"]
@@ -690,21 +690,26 @@ class TaskControl(object):
         # NORMAL TRIAL
         state_change_conditions_left = {Bpod.Events.Tup: outcome_doc_left}
         state_change_conditions_right = {Bpod.Events.Tup: outcome_doc_right}
+        state_change_conditions_side_ready = {
+            Bpod.Events.Tup: state_side_ready
+        }
+
+        # DEBUG
+        # as_forced_choice_trial = True
+        # forced_choice_side = -1
 
         # FORCED CHOICE
         if as_forced_choice_trial:
-            state_change_conditions_side_ready = {
-                Bpod.Events.Tup: state_side_ready
-            }
-
             if forced_choice_side == -1:  # left
                 state_change_conditions_right = (
                     state_change_conditions_side_ready
                 )
+                output_action_right_valve = []
             elif forced_choice_side == 1:  # right
                 state_change_conditions_left = (
                     state_change_conditions_side_ready
                 )
+                output_action_left_valve = []
             else:
                 logging.warning(
                     f"\n\n\n\n -> as_forced_choice_trial: {as_forced_choice_trial}, "
