@@ -73,20 +73,19 @@ class CalibrationData(object):
         if file_path is not None:
             self.file_path = file_path
 
+        file_path = Path(self.file_path)
         if (
             self.calibration_data is not None
             and not self.calibration_data.empty
         ):
-            self.file_path.expanduser().parent.mkdir(
-                exist_ok=True, parents=True
-            )
+            file_path.expanduser().parent.mkdir(exist_ok=True, parents=True)
 
-            if Path(self.file_path).exists() and not overwrite:
+            if file_path.exists() and not overwrite:
                 raise FileExistsError(
-                    f"File exists and not allowed to overwrite. {self.file_path}"
+                    f"File exists and not allowed to overwrite. {file_path}"
                 )
-            self.calibration_data.to_csv(self.file_path)
-            print(f"SAVING calibration at: {self.file_path}")
+            self.calibration_data.to_csv(file_path)
+            print(f"SAVING calibration at: {file_path}")
 
 
 class CalibrationDataWater(CalibrationData):
@@ -171,6 +170,21 @@ class CalibrationDataWater(CalibrationData):
             and self.calibration_data is not None
             and not self.calibration_data.empty
         ):
+            # TODO: move processing block into separate fct that gets called after calibration, before saving as well!
+            # Process calibration data
+            self.calibration_data["weight_per_drop"] = np.round(
+                self.calibration_data["water_weight_g"]
+                / self.calibration_data["n_drops"],
+                3,
+            )
+            self.calibration_data["volume_ul"] = np.round(
+                self.calibration_data["weight_per_drop"] * 1e3, 3
+            )
+            self.calibration_data = self.calibration_data.sort_values(
+                by="valve_opening_time"
+            )
+
+            # PLOT
             f = plt.figure(dpi=450)
             sns.lineplot(
                 data=self.calibration_data,

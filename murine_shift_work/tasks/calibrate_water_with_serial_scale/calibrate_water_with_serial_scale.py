@@ -29,8 +29,8 @@ class Task(TaskRunner):
             endpoint=False,
         )
 
-        N_DROPS = 300
-        INTER_PULSE_INTERVAL = 0.1
+        N_DROPS = 400
+        INTER_PULSE_INTERVAL = 0.15
         VALVES_TO_CALIBRATE = [1, 3]
         PRECISION_DECIMALS = (
             2  # 2 decimals is the precision coming from the scale
@@ -111,7 +111,7 @@ class Task(TaskRunner):
                 )
 
         logging.debug(f"\n{str(calibration)}\n")
-        calibration.save()
+        calibration.save(overwrite=True)
         calibration.save_calibration_plot()
 
 

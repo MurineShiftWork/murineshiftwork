@@ -14,7 +14,9 @@ parallel --line-buffer -j 10 rsync -av --info=progress2 '{1}:~/data/' $target_pa
 	--exclude="*.egg-info" \
 	--exclude="default_acq_name" \
 	::: \
-	setup1 setup2 setup3 setup4 setup5 setup6 setup-npxb
+	npxb
+
+#	setup1 setup2 setup3 setup4 setup5 setup6 setup-npxb
 
 #	rpi-40 rpi-41 rpi-43 rpi-50 rpi-51
 #       --exclude="_test*" \
