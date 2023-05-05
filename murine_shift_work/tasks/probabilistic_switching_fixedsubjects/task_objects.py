@@ -642,7 +642,7 @@ class TaskControl(object):
         state_side_ready = "side_ready"
         sma.add_state(
             state_name=state_center_ready,
-            state_timer=0,
+            state_timer=0.3,
             state_change_conditions={Bpod.Events.Tup: state_side_ready},
             output_actions=output_actions__center_ready
             + [("SoftCode", self.MOVE_TO_FRONT)],
