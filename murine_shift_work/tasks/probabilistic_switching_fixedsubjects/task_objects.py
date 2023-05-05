@@ -210,12 +210,27 @@ class TaskControl(object):
             self.moving_average.reset()
 
         # Choose first block type to motivate subject
-        if self.trial_index < 2 and self.task_settings["first_block_easy"]:
+        if (
+            self.trial_index < 2
+            and self.block_number == 1
+            and self.task_settings["first_block_easy"]
+        ):
             pdiffs = np.abs(np.diff(self.probabilities))
             pdiffmax = np.max(pdiffs)
             range_for_prob = [i for i, p in enumerate(pdiffs) if p == pdiffmax]
+            print(f"BLOCK 1 drawn as {range_for_prob}")
+        elif self.block_number == 2 and self.task_settings["first_block_easy"]:
+            pdiffs = np.abs(np.diff(self.probabilities))
+            pdiffmax = np.max(pdiffs)
+            range_for_prob = [
+                i
+                for i, p in enumerate(pdiffs)
+                if p == pdiffmax and i != self.block_probability_index
+            ]
+            print(f"BLOCK 2 drawn as {range_for_prob}")
         else:
             range_for_prob = np.arange(self.probabilities.__len__())
+            print(f"BLOCK 2+ drawn as {range_for_prob}")
 
         # Exclude current block from choice of __read_next_frame block type
         if self.task_settings["block_switch_to_different_block_type"]:
