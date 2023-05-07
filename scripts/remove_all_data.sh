@@ -11,3 +11,10 @@ do
 	printf "\n $rpi \n"
 	ssh $rpi sudo 'rm -rf ~/data/*'
 done
+
+
+for setup in murinemanager npxb intan
+do
+	printf "\n $setup \n"
+	ssh $setup 'rm -rf ~/data/*'
+done
