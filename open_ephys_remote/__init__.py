@@ -31,26 +31,19 @@ def run_cli(*args):
 
 if __name__ == "__main__":
     # sys.argv += [
-    #     "record",
-    #     "-ip",
-    #     "192.168.100.19",
-    #     "--prepend-text",
-    #     settings["prepend_text"],
-    #     "--base-text",
-    #     settings["base_text"],
-    #     "--append-text",
-    #     settings["append_text"],
-    #     "--parent-directory",
-    #     settings["parent_directory"],
     # ]
 
     args = [
         "record",
         "-ip",
         "192.168.100.19",
+        "--remote-path",
+        "/home/lbr/data/",
         "--subject",
         "_test_oe_argv",
         "--session-extension",
-        "ephys_intan",
+        "ephys_intan2",
+        "--is-child-session-to",
+        "_test_oe_argv__20230509_111519__ephys_multi_behavior",
     ]
     run_cli(args)

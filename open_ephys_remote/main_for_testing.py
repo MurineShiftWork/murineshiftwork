@@ -35,7 +35,7 @@ if __name__ == "__main__":
         "append_text": "",
         "base_text": f"{main_session_folder}",  # session_name,
         "prepend_text": "",
-        "parent_directory": f"E:\\\\OE_DATA\\\\'LBR'\\\\{subject}",  # main_session_folder
+        "parent_directory": rf"E:\\\\OE_DATA\\\\LBR\\\\{subject}",  # main_session_folder
     }
 
     var = {

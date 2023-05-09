@@ -88,11 +88,26 @@ def add_group_metadata(parser=None):
         help="Local path",
     )
     settings_group.add_argument(
+        "--remote-path",
+        dest="remote_path",
+        type=str,
+        default=r"E:\\\\OE_DATA\\\\LBR\\\\",
+        help="Remote path",
+    )
+    settings_group.add_argument(
         "--subject",
         dest="subject",
         type=str,
         default="_test_oe_controller",
         help="Subject",
+    )
+    settings_group.add_argument(
+        "--child",
+        "--is-child-session-to",
+        dest="is_child_session_to",
+        type=str,
+        default="",
+        help="Child session main name like '_test_subject__{dt}__{acquisition_extension}'",
     )
     settings_group.add_argument(
         "--acquisition-extension",
