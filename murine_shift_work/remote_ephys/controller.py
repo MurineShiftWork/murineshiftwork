@@ -145,15 +145,6 @@ class RemoteOpenEphysController:
                 self.local_path_full / f"{session_name}.settings.ephys.json"
             )
 
-            self.local_path_full = str(self.local_path_full)
-            self.metadata_file = str(self.metadata_file)
-            self.subject = self.acquisition_name
-            with open(self.metadata_file, "w") as f:
-                out_json = json.dumps(vars(self), indent=4, sort_keys=True)
-                f.write(out_json)
-                logging.debug(f"Metadata written to: {self.metadata_file}")
-                logging.info(out_json)
-
         return Path(self.metadata_file).exists()
 
     def send_message(self, message=None, expected_return=None):

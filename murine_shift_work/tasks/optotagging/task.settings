@@ -4,11 +4,11 @@ TRIGGER_ITI = 1  # seconds
 RECORD_VIDEO = True  # ! Not implemented
 
 [hardware]
-    serial_port_pulsepal = "/dev/ttyACM1"
+    serial_port_pulsepal = "/dev/ttyACM0"
 
 [stimulation]
     # Excitation
-    pulse_duration = 0.01
+    pulse_duration = 0.005
     pulse_frequency = 20
     pulse_train_duration = 1
     pulse_train_delay = 0
