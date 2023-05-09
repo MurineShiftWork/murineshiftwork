@@ -29,7 +29,7 @@ class RemoteControlOE:
         return f"http://{self.ip}:{self.port}/api"
 
     def _set_status(self, cmd: str = None):
-        r = requests.put(f"{self.baseurl}/status", json={"mode": cmd})
+        _ = requests.put(f"{self.baseurl}/status", json={"mode": cmd})
         return self.status()
 
     def _get_status(self):
@@ -84,7 +84,7 @@ class RemoteControlOE:
         settings = settings or self._patch_presets()
         node_str = f"/{node}" if node is not None else ""
 
-        r = requests.put(f"{self.baseurl}/recording{node_str}", json=settings)
+        _ = requests.put(f"{self.baseurl}/recording{node_str}", json=settings)
         return self._get_presets()
 
     def transmit_settings(self, settings: dict = None):

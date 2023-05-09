@@ -13,13 +13,15 @@ class OERemoteController:
     _status_preview = "ACQUIRE"
     _status_record = "RECORD"
 
-    def __init__(self, ip: str = None, port: int = 37497):
+    def __init__(self, ip: str = None, port: int = 37497, **kwargs):
         super().__init__()
         self.ip = str(ip)
         self.port = int(port)
 
         self._get_settings()
         self._get_status()
+
+        self._kwargs = kwargs
 
     @property
     def baseurl(self):
@@ -82,7 +84,11 @@ class OERemoteController:
 
         return rjson
 
-    def set_settings(self, node: int = None, settings: dict = None):
+    def set_settings(
+        self,
+        settings: dict = None,
+        node: int = None,
+    ):
         node_str = f"/{node}" if node is not None else ""
 
         _ = requests.put(f"{self.baseurl}/recording{node_str}", json=settings)

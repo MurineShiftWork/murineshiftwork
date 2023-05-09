@@ -1,14 +1,13 @@
+import json
+import logging
 import time
 from datetime import datetime
 from pathlib import Path
+from pprint import pprint
 
 from open_ephys_remote.controller import OERemoteController
 
 if __name__ == "__main__":
-    from datetime import datetime
-    import json
-    import logging
-    from pprint import pprint
 
     def _get_date_str():
         return datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -36,7 +35,7 @@ if __name__ == "__main__":
         "append_text": "",
         "base_text": f"{main_session_folder}",  # session_name,
         "prepend_text": "",
-        "parent_directory": f"E:\\\\OE_DATA\\\\\LBR\\\\{subject}",  # main_session_folder
+        "parent_directory": f"E:\\\\OE_DATA\\\\'LBR'\\\\{subject}",  # main_session_folder
     }
 
     var = {
