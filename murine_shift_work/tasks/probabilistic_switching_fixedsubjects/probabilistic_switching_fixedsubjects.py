@@ -165,7 +165,7 @@ def run_task(**args_dict):
         plotting_process.start()
 
         # Delay for video to start
-        time.sleep(5)
+        time.sleep(6)
 
         # Start task
         tp.run_task()

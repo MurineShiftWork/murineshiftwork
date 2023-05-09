@@ -141,7 +141,7 @@ class TaskControl(object):
         self.valve_times_dict = (
             self.calibration_water.water_volume_to_valve_time(
                 valves=self.task_settings["HARDWARE_VALVES_FOR_WATER"],
-                target_volume=self.task_settings["reward_amount_ul"],
+                target_volume=float(self.task_settings["reward_amount_ul"]),
                 s_to_ms=1,
             )
         )
@@ -162,6 +162,7 @@ class TaskControl(object):
             serial_port=serial_port_stage,
             stage_config=task_settings["settings.stage"],
         )
+        self.stage.save_position_as_known("front_center")
         self.stage.save_position_as_known(
             "front"
         )  # fixme: determine front in pre-protocol instead of rely on experimenter's awareness
@@ -176,6 +177,15 @@ class TaskControl(object):
 
         self.MOVE_TO_FRONT = 15
         self.MOVE_TO_BACK = 25
+
+        self.stage_anti_bias_bool = self.task_settings.get(
+            "stage_anti_bias_bool", False
+        )
+        self.stage_bias = 0
+        self.stage_bias_max = self.task_settings.get("stage_anti_bias_max", 50)
+        self.n_back_crit_bias = self.task_settings.get(
+            "stage_anti_bias_n_back", 5
+        )
 
         # Persist task settings -> todo: refactor to method
         with open(str(self.save_path_data) + ".settings.task.json", "w") as f:
@@ -210,12 +220,27 @@ class TaskControl(object):
             self.moving_average.reset()
 
         # Choose first block type to motivate subject
-        if self.trial_index < 2 and self.task_settings["first_block_easy"]:
+        if (
+            self.trial_index < 2
+            and self.block_number == 1
+            and self.task_settings["first_block_easy"]
+        ):
             pdiffs = np.abs(np.diff(self.probabilities))
             pdiffmax = np.max(pdiffs)
             range_for_prob = [i for i, p in enumerate(pdiffs) if p == pdiffmax]
+            print(f"BLOCK 1 drawn as {range_for_prob}")
+        elif self.block_number == 2 and self.task_settings["first_block_easy"]:
+            pdiffs = np.abs(np.diff(self.probabilities))
+            pdiffmax = np.max(pdiffs)
+            range_for_prob = [
+                i
+                for i, p in enumerate(pdiffs)
+                if p == pdiffmax and i != self.block_probability_index
+            ]
+            print(f"BLOCK 2 drawn as {range_for_prob}")
         else:
             range_for_prob = np.arange(self.probabilities.__len__())
+            print(f"BLOCK 2+ drawn as {range_for_prob}")
 
         # Exclude current block from choice of __read_next_frame block type
         if self.task_settings["block_switch_to_different_block_type"]:
@@ -493,37 +518,13 @@ class TaskControl(object):
 
         prob = self.probabilities[self.block_probability_index]
 
-        self.is_forced_exploration_trial = False
-        if (
-            self.block_trial_number >= n_back_crit
-            and unique_choices_n_back == 1
-        ):
-            try:
-                if self.last_choice != (np.argmax(prob) - 1):
-                    # only intervene if the choice is suboptimal
-                    logging.warning(
-                        "NEXT SHOULD BE FORCED TRIAL AS IS SUB-OPTIMAL"
-                    )
-            except TypeError:
-                print("FIX ERROR HERE")
+        # stage anti bias
+        if self.stage_anti_bias_bool:
+            self._check_stage_anti_bias(choice_vector)
 
-            self.is_forced_exploration_trial = True  # FIXME
-            side_dict = {
-                -1: "left",
-                1: "right",
-                np.nan: "NAN",
-                float("NaN"): "NAN",
-            }
-            try:
-                logging.warning(
-                    f"FORCED EXPLORATION TRIAL NEXT. "
-                    f"After {n_back_crit} choices to the {side_dict[unique_choices_non_nan[-1]]}, "
-                    f"the next trial enforces a {side_dict[-1 * unique_choices_non_nan[-1]]} choice."
-                )
-            except KeyError:
-                print("HERE AGAIN", n_back_crit, unique_choices_non_nan)
-                self.is_forced_exploration_trial = False
-                print("ERROR, therefore trying to avoid forced choice now")
+        self._check_forced_exploration_trial(
+            n_back_crit, prob, unique_choices_n_back, unique_choices_non_nan
+        )
 
         if self.block_probability_index is None:
             self.switch_block()
@@ -596,6 +597,74 @@ class TaskControl(object):
         logging.debug("New trial drawn")
         return sma
 
+    def _check_forced_exploration_trial(
+        self, n_back_crit, prob, unique_choices_n_back, unique_choices_non_nan
+    ):
+        self.is_forced_exploration_trial = False
+        if (
+            self.block_trial_number >= n_back_crit
+            and unique_choices_n_back == 1
+        ):
+            try:
+                if self.last_choice != (np.argmax(prob) - 1):
+                    # only intervene if the choice is suboptimal
+                    logging.warning(
+                        "NEXT SHOULD BE FORCED TRIAL AS IS SUB-OPTIMAL"
+                    )
+            except TypeError:
+                print("FIX ERROR HERE")
+
+            self.is_forced_exploration_trial = True  # FIXME
+            side_dict = {
+                -1: "left",
+                1: "right",
+                np.nan: "NAN",
+                float("NaN"): "NAN",
+            }
+            try:
+                logging.warning(
+                    f"FORCED EXPLORATION TRIAL NEXT. "
+                    f"After {n_back_crit} choices to the {side_dict[unique_choices_non_nan[-1]]}, "
+                    f"the next trial enforces a {side_dict[-1 * unique_choices_non_nan[-1]]} choice."
+                )
+            except KeyError:
+                print("HERE AGAIN", n_back_crit, unique_choices_non_nan)
+                self.is_forced_exploration_trial = False
+                print("ERROR, therefore trying to avoid forced choice now")
+
+    def _check_stage_anti_bias(self, choice_vector):
+        # n_back_crit_bias = 3
+        bias_unique_choices = np.unique(
+            choice_vector[-self.n_back_crit_bias :]
+        )
+        bias_unique_choices_non_nan = np.array(bias_unique_choices)[
+            ~np.isnan(bias_unique_choices)
+        ]
+        bias_unique_choices_n_back = bias_unique_choices_non_nan.__len__()
+        if (
+            bias_unique_choices_n_back == 1
+            and self.block_trial_number >= self.n_back_crit_bias
+        ):
+            # only one type of choice AND only evaluate during current block analog to forced-choice trials
+            print("ANTI BIAS")
+            if np.abs(self.stage_bias) <= self.stage_bias_max:
+                print("BIAS NOT MAXED OUT")
+                if self.last_choice == -1:  # LEFT
+                    bias_increment = -self.stage.small_increment
+                elif self.last_choice == 1:  # RIGHT
+                    bias_increment = self.stage.small_increment
+                else:
+                    print("shouldn't occur!")
+                    bias_increment = 0
+
+                self.stage.known_positions["front"]["x"][
+                    "position_raw"
+                ] += bias_increment
+
+                print(
+                    f"NEW ANTI BIAS position: {bias_increment} -> {self.stage.known_positions}"
+                )
+
     def make_state_machine(
         self, as_forced_choice_trial=False, forced_choice_side=-1
     ):
@@ -627,7 +696,7 @@ class TaskControl(object):
         state_side_ready = "side_ready"
         sma.add_state(
             state_name=state_center_ready,
-            state_timer=0,
+            state_timer=0.3,
             state_change_conditions={Bpod.Events.Tup: state_side_ready},
             output_actions=output_actions__center_ready
             + [("SoftCode", self.MOVE_TO_FRONT)],

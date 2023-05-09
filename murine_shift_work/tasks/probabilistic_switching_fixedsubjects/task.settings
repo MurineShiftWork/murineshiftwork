@@ -23,12 +23,16 @@ criterion_tau = 5  # PERFORMANCE_TAU_MOVMEAN
 
 first_block_easy = True  # choose high contrast first block from list of probabilities if has highest contrast
 
+stage_anti_bias_bool = False  # USE ONLY WITH 100/99 probabilities, so that can balance rewards
+stage_anti_bias_max = 50
+stage_anti_bias_n_back = 5
+
 inter_trial_interval = [4, 8, 0.5]
 
 forced_choice_threshold = 20  # 50  # nr trials until forced choice trial injected
 
 block_switch_to_different_block_type = True  # BLOCK_SWITCH_TO_DIFFERENT
-n_max_trials = 1500  # N_MAX_TRIALS
+n_max_trials = 401  # N_MAX_TRIALS
 
 delay_until_center_init = [0.150, 0.200, 0.005]  # DELAY_UNTIL_CENTER_INIT - range[low,high,step]
 delay_until_side_timeout = 10  # DELAY_UNTIL_SIDE_TIMEOUT
@@ -75,4 +79,4 @@ HARDWARE_VALVES_FOR_WATER = [1, 3]
 HARDWARE_VALVES_FOR_AIR = [2, 4]
 
 ttl_identifier_sequence = "sssLss"
-ttl_pulse_duration = 0.01
+ttl_pulse_duration = 0.010
