@@ -6,7 +6,7 @@ target_path="/mnt/maindata/data/"
 
 echo "\n\n SETUPS \n\n"
 
-parallel --line-buffer -j 10 rsync -av --info=progress2 '{1}:~/data/' $target_path \
+parallel --line-buffer -j 10 rsync -avh --no-inc-recursive --info=progress2 '{1}:~/data/' $target_path \
 	--exclude=".git" \
 	--exclude="__*" \
 	--exclude=".idea" \
@@ -24,7 +24,7 @@ parallel --line-buffer -j 10 rsync -av --info=progress2 '{1}:~/data/' $target_pa
 
 echo "\n\n RPI \n\n"
 
-parallel --line-buffer -j 10 rsync -av --info=progress2 '{1}:~/data/' $target_path \
+parallel --line-buffer -j 10 rsync -avh --no-inc-recursive --info=progress2 '{1}:~/data/' $target_path \
         --exclude=".git"  \
         --exclude="__pycache__" \
         --exclude=".idea" \

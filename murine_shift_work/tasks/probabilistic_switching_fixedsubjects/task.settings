@@ -22,7 +22,10 @@ reset_bias_on_block_switch = False
 criterion_tau = 5  # PERFORMANCE_TAU_MOVMEAN
 
 first_block_easy = True  # choose high contrast first block from list of probabilities if has highest contrast
+
 stage_anti_bias_bool = False  # USE ONLY WITH 100/99 probabilities, so that can balance rewards
+stage_anti_bias_max = 50
+stage_anti_bias_n_back = 5
 
 inter_trial_interval = [4, 8, 0.5]
 

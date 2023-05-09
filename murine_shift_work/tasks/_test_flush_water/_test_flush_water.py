@@ -10,7 +10,7 @@ from murine_shift_work.logic.task_process import TaskRunner
 
 class Task(TaskRunner):
     def run(self):
-        valve_opening_time = 0.25
+        valve_opening_time = 05.25
         valve_numbers = [1, 3]
 
         valves_to_open = []

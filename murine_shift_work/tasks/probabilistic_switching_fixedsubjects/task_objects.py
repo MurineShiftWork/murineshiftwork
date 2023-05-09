@@ -177,10 +177,15 @@ class TaskControl(object):
 
         self.MOVE_TO_FRONT = 15
         self.MOVE_TO_BACK = 25
-        self.stage_anti_bias_bool = self.task_settings["stage_anti_bias_bool"]
+
+        self.stage_anti_bias_bool = self.task_settings.get(
+            "stage_anti_bias_bool", False
+        )
         self.stage_bias = 0
-        self.stage_bias_max = 50
-        self.n_back_crit_bias = 5
+        self.stage_bias_max = self.task_settings.get("stage_anti_bias_max", 50)
+        self.n_back_crit_bias = self.task_settings.get(
+            "stage_anti_bias_n_back", 5
+        )
 
         # Persist task settings -> todo: refactor to method
         with open(str(self.save_path_data) + ".settings.task.json", "w") as f:
@@ -636,7 +641,11 @@ class TaskControl(object):
             ~np.isnan(bias_unique_choices)
         ]
         bias_unique_choices_n_back = bias_unique_choices_non_nan.__len__()
-        if bias_unique_choices_n_back == 1:
+        if (
+            bias_unique_choices_n_back == 1
+            and self.block_trial_number >= self.n_back_crit_bias
+        ):
+            # only one type of choice AND only evaluate during current block analog to forced-choice trials
             print("ANTI BIAS")
             if np.abs(self.stage_bias) <= self.stage_bias_max:
                 print("BIAS NOT MAXED OUT")
