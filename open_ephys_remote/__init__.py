@@ -1,6 +1,8 @@
 import logging
 import sys
 
+import rich
+
 from open_ephys_remote.cli.parser import parse_args
 
 

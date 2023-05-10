@@ -3,6 +3,7 @@ import argparse
 from open_ephys_remote.cli.execute import run_preview
 from open_ephys_remote.cli.execute import run_record
 from open_ephys_remote.cli.execute import run_status
+from open_ephys_remote.cli.execute import run_stop
 
 
 class ArgparseFormatter(
@@ -159,7 +160,7 @@ def add_subparser_stop(sub_parser=None):
         formatter_class=ArgparseFormatter,
     )
     add_group_base(parser=parser_status)
-    parser_status.set_defaults(func=run_record)
+    parser_status.set_defaults(func=run_stop)
 
 
 def parse_args(args=None):

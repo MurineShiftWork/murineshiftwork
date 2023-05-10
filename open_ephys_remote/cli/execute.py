@@ -1,9 +1,11 @@
 import json
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
 
+from open_ephys_remote.cli._log import setup_logging
 from open_ephys_remote.controller import OERemoteController
 
 
@@ -70,6 +72,7 @@ def run_record(
             "create_new_dir": True,
             "datetime": dt,
             "full_acquisition_name": main_session_folder,
+            "main_session_folder": main_session_folder,
             "full_session_name": session_name,
             #
             "is_child_session_to": is_child_session_to,
@@ -89,6 +92,14 @@ def run_record(
     settings = _create_namespace_settings(kwargs=kwargs)
     Path(settings["local_path_full"]).mkdir(parents=True, exist_ok=True)
 
+    # Logging level
+    log_level = "DEBUG" if kwargs["debug"] else "INFO"
+    setup_logging(
+        level=log_level,
+        log_file=Path(settings["local_path_full"])
+        / (settings["session_name"] + ".log"),
+    )
+
     oe = OERemoteController(
         ip=ip,
         port=port,
@@ -96,6 +107,8 @@ def run_record(
         parent_directory=parent_directory,
         **kwargs,
     )
+    oe.preview()
+
     pprint(oe.settings)
 
     kwargs.pop("func")
@@ -103,6 +116,7 @@ def run_record(
     _ = oe.set_all_record_nodes(settings=settings)
     pprint(oe.settings)
 
+    time.sleep(1)
     oe.record()
 
     if oe.status == oe._status_record:
