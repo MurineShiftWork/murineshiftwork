@@ -1,0 +1,60 @@
+TTL_IDENTIFIER_SEQUENCE = "LsLsss"
+N_MAX_TRIALS = 2
+TRIGGER_ITI = 1  # seconds
+RECORD_VIDEO = True  # ! Not implemented
+
+[hardware]
+    serial_port_pulsepal = "/dev/ttyACM0"
+
+[stimulation]
+    [[protocol_1ms_20hz]]
+        # Excitation
+        pulse_duration = 0.001
+        pulse_frequency = 20
+        pulse_train_duration = 1
+        pulse_train_delay = 0
+        trigger_channels_for_stimulation = [1,]  # values: 1,2 -- no python index offset here as is used for eval
+        trigger_mode = "gated"  # normal, toggle, pulse gate
+        channels_stimulation = [1,]   # values: 0,1,2,3
+        channel_trigger_clock = [4,]
+        reset_stimulation_after_sec = .005
+        continuous = False
+
+    [[protocol_5ms_20hz]]
+        # Excitation
+        pulse_duration = 0.005
+        pulse_frequency = 20
+        pulse_train_duration = 1
+        pulse_train_delay = 0
+        trigger_channels_for_stimulation = [1,]  # values: 1,2 -- no python index offset here as is used for eval
+        trigger_mode = "gated"  # normal, toggle, pulse gate
+        channels_stimulation = [1,]   # values: 0,1,2,3
+        channel_trigger_clock = [4,]
+        reset_stimulation_after_sec = .005
+        continuous = False
+
+    [[protocol_1ms_40hz]]
+        # Excitation
+        pulse_duration = 0.001
+        pulse_frequency = 40
+        pulse_train_duration = 1
+        pulse_train_delay = 0
+        trigger_channels_for_stimulation = [1,]  # values: 1,2 -- no python index offset here as is used for eval
+        trigger_mode = "gated"  # normal, toggle, pulse gate
+        channels_stimulation = [1,]   # values: 0,1,2,3
+        channel_trigger_clock = [4,]
+        reset_stimulation_after_sec = .005
+        continuous = False
+
+
+# # Inhibition
+# pulse_duration = 1000
+# pulse_frequency = 1
+# pulse_train_duration = 1000
+# pulse_train_delay = 0
+# trigger_channels_for_stimulation = [1,]  # values: 1,2 -- no python index offset here as is used for eval
+# # trigger_mode = "gated"  # normal, toggle, pulse gate
+# channels_stimulation = [1,]   # values: 0,1,2,3
+# channel_trigger_clock = [4,]
+# reset_stimulation_after_sec = .005
+# # continuous = False

@@ -30,7 +30,8 @@ import time
 from multiprocessing import Queue
 from pathlib import Path
 
-from pybpodapi.protocol import Bpod  # Used!
+from pybpodapi.protocol import Bpod
+from pybpodapi.state_machine import StateMachine
 from rpi_camera_colony.control.conductor import Conductor
 
 from murine_shift_work.logic.specific_state_machines import (
@@ -44,6 +45,8 @@ from murine_shift_work.tasks.probabilistic_switching_fixedsubjects.online_plotti
 from murine_shift_work.tasks.probabilistic_switching_fixedsubjects.task_objects import (
     TaskControl,
 )
+from open_ephys_remote.cli.execute import run_record
+from open_ephys_remote.cli.execute import run_stop
 
 
 class Task(TaskRunner):
@@ -88,12 +91,20 @@ class Task(TaskRunner):
 
             self.bpod.send_state_machine(sma)
 
-            if not self.bpod.run_state_machine(sma):
+            try:
+                print("TRYING SMA RUN")
+                has_run = self.bpod.run_state_machine(sma)
+            except TypeError:
+                print("SMA RUN FAILED ON TRY")
+                has_run = False
+
+            if not has_run:
                 logging.warning(
                     f"No data returned on trial #{trial_index}. Terminating protocol."
                 )
-                self.input_kwargs["objects"]["kill_queue"].put(True)
-                break
+                # self.input_kwargs["objects"]["kill_queue"].put(True)
+                # break
+                trial_index += 1
 
             trial_data = self.bpod.session.current_trial.export()
             task_control.update(trial_index=trial_index, trial_data=trial_data)
@@ -164,6 +175,25 @@ def run_task(**args_dict):
         )
         plotting_process.start()
 
+        # if piezo, then expect params to start intan lick detection
+        # piezo_ip = "192.168.100.19"
+        # use_piezo_lick_detection = tp.input_kwargs["settings.task.patched"].get(
+        #     "use_piezo_lick_detection", False
+        # )
+        # use_piezo_lick_detection = True
+        #
+        # if use_piezo_lick_detection:
+        #     logging.info(f"Starting piezo lick detection on {piezo_ip}")
+        #     run_record(
+        #         ip=piezo_ip,
+        #         local_path="/mnt/fastdata/data",
+        #         remote_path="/home/lbr/data",
+        #         session_extension="ephys_intan_lick",
+        #         subject=args_dict["subject"],
+        #         is_child_session_to=args_dict["is_child_session_to"],
+        #         acquisition_extension="ephys_multi_behavior",
+        #     )
+
         # Delay for video to start
         time.sleep(6)
 
@@ -181,6 +211,10 @@ def run_task(**args_dict):
         # Stop video
         c.stop_acquisition()
         c.cleanup()
+
+        # # Stop piezo lick detection
+        # if use_piezo_lick_detection:
+        #     run_stop(ip=piezo_ip)
 
         time.sleep(1)
 

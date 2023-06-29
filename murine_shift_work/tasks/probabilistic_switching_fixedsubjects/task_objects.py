@@ -14,32 +14,12 @@ from murine_shift_work.logic.calibration import CalibrationDataSound
 from murine_shift_work.logic.calibration import CalibrationDataWater
 from murine_shift_work.logic.maths import ExponentialMovingAverage
 from murine_shift_work.logic.maths import withprob
+from murine_shift_work.logic.misc import draw_jittered_trial_time
 from murine_shift_work.logic.sounds import StereoSound
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.tasks.probabilistic_switching_fixedsubjects.stage_config import (
     config_for_all_stages,
 )
-
-
-def draw_jittered_trial_time(start, stop, step, poisson=False):
-    time_range = np.abs(stop - start)
-    available_time_steps = np.linspace(
-        start=start,
-        stop=stop,
-        num=int(np.round(time_range / step)) + 1,
-        endpoint=True,
-    )
-
-    if poisson:
-        raise NotImplementedError(
-            "TODO: draw ITI as Poisson-distributed instead of linear"
-        )
-    else:
-        drawn_trial_time = available_time_steps[
-            np.random.randint(0, len(available_time_steps))
-        ]
-
-    return drawn_trial_time
 
 
 class TaskControl(object):
@@ -187,6 +167,10 @@ class TaskControl(object):
             "stage_anti_bias_n_back", 5
         )
 
+        print("stage_anti_bias_bool", self.stage_anti_bias_bool)
+        print("stage_bias_max", self.stage_bias_max)
+        print("n_back_crit_bias", self.n_back_crit_bias)
+
         # Persist task settings -> todo: refactor to method
         with open(str(self.save_path_data) + ".settings.task.json", "w") as f:
             json.dump(self.task_settings, f, indent=4, sort_keys=True)
@@ -299,6 +283,15 @@ class TaskControl(object):
         st = trial_data["States timestamps"]
         times_left = st["choice_left"][0]
         times_right = st["choice_right"][0]
+
+        # print(
+        #     "states",
+        #     st,
+        # )
+        # print(
+        #     "ev",
+        #     {k: v for k, v in trial_data["Events timestamps"].items() if "BNC" in k},
+        # )
 
         if not np.isnan(np.array(times_left)).any():
             self.last_choice = -1
@@ -642,7 +635,8 @@ class TaskControl(object):
         ]
         bias_unique_choices_n_back = bias_unique_choices_non_nan.__len__()
         if (
-            bias_unique_choices_n_back == 1
+            self.stage_anti_bias_bool
+            and bias_unique_choices_n_back == 1
             and self.block_trial_number >= self.n_back_crit_bias
         ):
             # only one type of choice AND only evaluate during current block analog to forced-choice trials
@@ -696,7 +690,7 @@ class TaskControl(object):
         state_side_ready = "side_ready"
         sma.add_state(
             state_name=state_center_ready,
-            state_timer=0.3,
+            state_timer=1.1,
             state_change_conditions={Bpod.Events.Tup: state_side_ready},
             output_actions=output_actions__center_ready
             + [("SoftCode", self.MOVE_TO_FRONT)],
@@ -706,8 +700,10 @@ class TaskControl(object):
             state_name=state_side_ready,
             state_timer=self.task_settings["delay_until_side_timeout"],
             state_change_conditions={
-                Bpod.Events.Port1In: "choice_left",
-                Bpod.Events.Port3In: "choice_right",
+                # Bpod.Events.Port1In: "choice_left",
+                # Bpod.Events.Port3In: "choice_right",
+                Bpod.Events.BNC1Low: "choice_left",
+                Bpod.Events.BNC2Low: "choice_right",
                 Bpod.Events.Tup: "final",
             },
             output_actions=output_actions__side_ready,

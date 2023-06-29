@@ -4,6 +4,7 @@
 
 # Ignored file types
 .DS_Store
+*.json
 
 # Custom config files
 *.conf.custom

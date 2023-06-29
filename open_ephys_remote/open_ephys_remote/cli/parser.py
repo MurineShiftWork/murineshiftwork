@@ -46,37 +46,37 @@ def add_group_base(parser=None):
     )
 
 
-def add_group_settings(parser=None):
-    settings_group = parser.add_argument_group("Settings")
-    settings_group.add_argument(
-        "--append-text",
-        dest="append_text",
-        type=str,
-        default="",
-        help="Append text",
-    )
-    settings_group.add_argument(
-        "--base-text",
-        dest="base_text",
-        type=str,
-        default="",
-        help="Base text",
-    )
-    settings_group.add_argument(
-        "--prepend-text",
-        dest="prepend_text",
-        type=str,
-        default="",
-        help="Prepend text",
-    )
-    settings_group.add_argument(
-        "-dir",
-        "--parent-directory",
-        dest="parent_directory",
-        type=str,
-        default="",
-        help="Parent directory",
-    )
+# def add_group_settings(parser=None):
+#     settings_group = parser.add_argument_group("Settings")
+#     settings_group.add_argument(
+#         "--append-text",
+#         dest="append_text",
+#         type=str,
+#         default="",
+#         help="Append text",
+#     )
+#     settings_group.add_argument(
+#         "--base-text",
+#         dest="base_text",
+#         type=str,
+#         default="",
+#         help="Base text",
+#     )
+#     settings_group.add_argument(
+#         "--prepend-text",
+#         dest="prepend_text",
+#         type=str,
+#         default="",
+#         help="Prepend text",
+#     )
+#     settings_group.add_argument(
+#         "-dir",
+#         "--parent-directory",
+#         dest="parent_directory",
+#         type=str,
+#         default="",
+#         help="Parent directory",
+#     )
 
 
 def add_group_metadata(parser=None):

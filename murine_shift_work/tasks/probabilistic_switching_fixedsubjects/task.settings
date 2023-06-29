@@ -27,6 +27,8 @@ stage_anti_bias_bool = False  # USE ONLY WITH 100/99 probabilities, so that can 
 stage_anti_bias_max = 50
 stage_anti_bias_n_back = 5
 
+use_piezo_lick_detection = False
+
 inter_trial_interval = [4, 8, 0.5]
 
 forced_choice_threshold = 20  # 50  # nr trials until forced choice trial injected

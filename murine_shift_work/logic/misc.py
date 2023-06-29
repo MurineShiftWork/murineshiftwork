@@ -1,6 +1,7 @@
 import logging
 from pkgutil import iter_modules
 
+import numpy as np
 import serial
 
 
@@ -69,3 +70,24 @@ def print_box(msg=None, indent=2):
     text_body = "".join(line_strings)
 
     print(top + text_body + top)
+
+
+def draw_jittered_trial_time(start, stop, step=None, poisson=False):
+    time_range = np.abs(stop - start)
+    available_time_steps = np.linspace(
+        start=start,
+        stop=stop,
+        num=int(np.round(time_range / step)) + 1,
+        endpoint=True,
+    )
+
+    if poisson:
+        raise NotImplementedError(
+            "TODO: draw ITI as Poisson-distributed instead of linear"
+        )
+    else:
+        drawn_trial_time = available_time_steps[
+            np.random.randint(0, len(available_time_steps))
+        ]
+
+    return drawn_trial_time

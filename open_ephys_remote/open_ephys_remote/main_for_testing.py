@@ -1,11 +1,10 @@
 import json
 import logging
-import time
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
 
-from open_ephys_remote.controller import OERemoteController
+from open_ephys_remote.open_ephys_remote.controller import OERemoteController
 
 if __name__ == "__main__":
 
