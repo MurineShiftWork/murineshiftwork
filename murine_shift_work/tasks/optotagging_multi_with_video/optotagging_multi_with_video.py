@@ -16,7 +16,7 @@ from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
 
 
-class OptoTagging(object):
+class OptoTagging:
     input_kwargs = {}
     out_path = ""
     trial_data = []
