@@ -4,17 +4,17 @@
 
 target_path="/mnt/maindata/data/"
 
-echo "\n\n SETUPS \n\n"
-
-parallel --line-buffer -j 10 rsync -avh --no-inc-recursive --info=progress2 '{1}:~/data/' $target_path \
-	--exclude=".git" \
-	--exclude="__*" \
-	--exclude=".idea" \
-	--exclude="tests" \
-	--exclude="*.egg-info" \
-	--exclude="default_acq_name" \
-	::: \
-	npxb
+#echo "\n\n SETUPS \n\n"#
+#
+#parallel --line-buffer -j 10 rsync -avh --no-inc-recursive --info=progress2 '{1}:~/data/' $target_path \
+#	--exclude=".git" \
+#	--exclude="__*" \
+#	--exclude=".idea" \
+#	--exclude="tests" \
+#	--exclude="*.egg-info" \
+#	--exclude="default_acq_name" \
+#	::: \
+#	npxb
 
 #	setup1 setup2 setup3 setup4 setup5 setup6 setup-npxb
 

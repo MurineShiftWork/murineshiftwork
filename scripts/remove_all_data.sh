@@ -1,4 +1,4 @@
-#!/bin/sh
+1#!/bin/sh
 
 #for setup in setup1 setup2 setup3 setup4 setup5 setup6 npxb
 #do
@@ -13,7 +13,7 @@ do
 done
 
 
-for setup in murinemanager npxb intan
+for setup in npxb intan
 do
 	printf "\n $setup \n"
 	ssh $setup 'rm -rf ~/data/*'

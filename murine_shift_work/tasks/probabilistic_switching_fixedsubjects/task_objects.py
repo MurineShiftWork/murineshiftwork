@@ -8,7 +8,8 @@ import numpy as np
 import pandas as pd
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
-from stage_controller.move_interface import MoveInterface
+from one_axis_stage.interface import StageController
+from one_axis_stage.interface import MoveInterface
 
 from murine_shift_work.logic.calibration import CalibrationDataSound
 from murine_shift_work.logic.calibration import CalibrationDataWater
@@ -131,26 +132,30 @@ class TaskControl(object):
             f"on VALVE IDs: {self.task_settings['HARDWARE_VALVES_FOR_WATER']}"
         )
 
-        axes_names = tuple(task_settings["settings.stage"].get("axes").keys())
+        # axes_names = tuple(task_settings["settings.stage"].get("axes").keys())
         serial_port_stage = task_settings.get("serial_port_stage")
-        print("serial_port_stage", serial_port_stage)
+        # print("serial_port_stage", serial_port_stage)
         task_settings["settings.stage"]["connection"][
             "serial_port"
         ] = serial_port_stage  # fixme: shouldnt be necessaRY TO OVERWRITE
-        self.stage = MoveInterface(
-            axes_names=axes_names,
-            serial_port=serial_port_stage,
-            stage_config=task_settings["settings.stage"],
-        )
-        self.stage.save_position_as_known("front_center")
-        self.stage.save_position_as_known(
-            "front"
-        )  # fixme: determine front in pre-protocol instead of rely on experimenter's awareness
+        self.stage = StageController.from_config(task_settings["settings.stage"])
+        # self.move_interface = MoveInterface(controller=self.stage)
+        #
+        self.stage.small_increment = 20
+        self.stage.large_increment = 40
+        #
+        # self.stage.save_as_known_position("front_center")
+        print(self.stage.known_positions)
+        self.stage.save_as_known_position("front")
+        # fixme: determine front in pre-protocol instead of rely on experimenter's awareness
+        print(self.stage.known_positions)
+
         self.stage.move_to_known_position(
             "back"
         )  # move back before first trial
-        self.stage.write_config(
-            config_path=self.save_path_data.parent
+
+        self.stage.save_config(
+            config_file=self.save_path_data.parent
             / ".".join([self.save_path_data.name, "settings", "stage", "yaml"])
         )
         logging.info(self.stage)
@@ -509,6 +514,9 @@ class TaskControl(object):
         ]
         unique_choices_n_back = unique_choices_non_nan.__len__()
 
+        if self.block_probability_index is None:
+            self.switch_block()
+
         prob = self.probabilities[self.block_probability_index]
 
         # stage anti bias
@@ -518,9 +526,6 @@ class TaskControl(object):
         self._check_forced_exploration_trial(
             n_back_crit, prob, unique_choices_n_back, unique_choices_non_nan
         )
-
-        if self.block_probability_index is None:
-            self.switch_block()
 
         # side probabilities ?
         self.next_trial_choice_outcome_left = (
@@ -690,22 +695,33 @@ class TaskControl(object):
         state_side_ready = "side_ready"
         sma.add_state(
             state_name=state_center_ready,
-            state_timer=1.1,
+            state_timer=0.75,
             state_change_conditions={Bpod.Events.Tup: state_side_ready},
             output_actions=output_actions__center_ready
             + [("SoftCode", self.MOVE_TO_FRONT)],
         )
 
+        if self.task_settings["lick_detection_events"] == "ports":
+            state_change_conditions_lick = {
+                Bpod.Events.Port1In: "choice_left",
+                Bpod.Events.Port3In: "choice_right",
+            }
+        elif self.task_settings["lick_detection_events"] == "bnc":
+            state_change_conditions_lick = {
+                Bpod.Events.BNC1Low: "choice_left",
+                Bpod.Events.BNC2Low: "choice_right",
+            }
+        else:
+            raise ValueError(f"Unknown option for 'lick_detection_events': "
+                             f"{self.task_settings['lick_detection_events']}"
+                             )
+
+        state_change_conditions_lick.update({Bpod.Events.Tup: "final"})
+
         sma.add_state(
             state_name=state_side_ready,
             state_timer=self.task_settings["delay_until_side_timeout"],
-            state_change_conditions={
-                # Bpod.Events.Port1In: "choice_left",
-                # Bpod.Events.Port3In: "choice_right",
-                Bpod.Events.BNC1Low: "choice_left",
-                Bpod.Events.BNC2Low: "choice_right",
-                Bpod.Events.Tup: "final",
-            },
+            state_change_conditions=state_change_conditions_lick,
             output_actions=output_actions__side_ready,
         )
 

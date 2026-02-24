@@ -45,8 +45,6 @@ from murine_shift_work.tasks.probabilistic_switching_fixedsubjects.online_plotti
 from murine_shift_work.tasks.probabilistic_switching_fixedsubjects.task_objects import (
     TaskControl,
 )
-from open_ephys_remote.cli.execute import run_record
-from open_ephys_remote.cli.execute import run_stop
 
 
 class Task(TaskRunner):

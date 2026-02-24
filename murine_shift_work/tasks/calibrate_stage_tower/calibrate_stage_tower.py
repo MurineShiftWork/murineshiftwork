@@ -8,7 +8,8 @@ import numpy as np
 import yaml
 from sshkeyboard import listen_keyboard
 from sshkeyboard import stop_listening
-from stage_controller.move_interface import MoveInterface
+from one_axis_stage.interface import MoveInterface
+from one_axis_stage.controller import StageController
 
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
@@ -133,42 +134,30 @@ class KeyHandler:
             print("Setting MAX position for axis:")
             # u/i/o for x/y/z MAX + j/k/l for x/y/z MIN
             if key == "u":
-                self.move_interface.x.position_max = (
-                    self.move_interface.x.position_raw
-                )
+                self.move_interface.x.position_max = self.move_interface.x.position_raw
                 print(f"\tX -> {self.move_interface.x.position_raw}")
 
             elif key == "i":
-                self.move_interface.y.position_max = (
-                    self.move_interface.y.position_raw
-                )
+                self.move_interface.y.position_max = self.move_interface.y.position_raw
                 print(f"\tY -> {self.move_interface.y.position_raw}")
 
             elif key == "o":
-                self.move_interface.z.position_max = (
-                    self.move_interface.z.position_raw
-                )
+                self.move_interface.z.position_max = self.move_interface.z.position_raw
                 print(f"\tZ -> {self.move_interface.z.position_raw}")
 
         elif key in ["j", "k", "l"]:
             print("Setting MIN position for axis:")
             # u/i/o for x/y/z MAX + j/k/l for x/y/z MIN
             if key == "j":
-                self.move_interface.x.position_min = (
-                    self.move_interface.x.position_raw
-                )
+                self.move_interface.x.position_min = self.move_interface.x.position_raw
                 print(f"\tX -> {self.move_interface.x.position_raw}")
 
             elif key == "k":
-                self.move_interface.y.position_min = (
-                    self.move_interface.y.position_raw
-                )
+                self.move_interface.y.position_min = self.move_interface.y.position_raw
                 print(f"\tY -> {self.move_interface.y.position_raw}")
 
             elif key == "l":
-                self.move_interface.z.position_min = (
-                    self.move_interface.z.position_raw
-                )
+                self.move_interface.z.position_min = self.move_interface.z.position_raw
                 print(f"\tZ -> {self.move_interface.z.position_raw}")
 
         # SET KNOWN
@@ -181,10 +170,12 @@ class KeyHandler:
         # SHOW CONFIG
         elif key == "space":
             print(self.move_interface)
+            for _, axis in self.move_interface.controller.axes.items():
+                print(axis.get_info())
 
         elif key == "p":
-            for name, axis in self.move_interface.axes.items():
-                axis.ping()
+            for name, axis in self.move_interface.controller.axes.items():
+                axis.get_info()
                 print(f"pinging: {name}")
 
         # EXIT & SAVE
@@ -194,9 +185,7 @@ class KeyHandler:
             save_path = Path(
                 f"~/.murineshiftwork/msw.debug.stage.config.{hostname}.yaml"
             ).expanduser()
-            self.move_interface.write_config(
-                config_path=save_path, overwrite=True
-            )
+            self.move_interface.controller.save_config(config_file=save_path, overwrite=True)
 
             stop_listening()
 
@@ -229,18 +218,19 @@ class Task(TaskRunner):
             with open(calibration_file_stage, "r") as f:
                 calibration_stage_dict = yaml.full_load(f.read())
 
-        print("calibration_stage_dict:", calibration_stage_dict)
+        # print("calibration_stage_dict:", calibration_stage_dict)
         print(self.input_kwargs["metadata"])
-        for axis_name in ["x", "y", "z"]:
-            try:
-                axis_id = self.input_kwargs["metadata"].get(axis_name, None)
-            except KeyError:
-                continue
-            print(f"{axis_name}, axis id : {axis_id}")
-
-            if axis_id is not None:
-                print(f"Trying to set new id on axis {axis_name}: {axis_id}")
-                calibration_stage_dict["axes"][axis_name]["id"] = int(axis_id)
+        # for axis_name in ["x", "y", "z"]:
+        #     try:
+        #         axis_id = self.input_kwargs["metadata"].get(axis_name, None)
+        #     except KeyError:
+        #         continue
+        #
+        #     print(f"{axis_name}, axis id : {axis_id}")
+        #
+        #     if axis_id is not None:
+        #         print(f"Trying to set new id on axis {axis_name}: {axis_id}")
+        #         calibration_stage_dict["axes"][axis_name]["id"] = int(axis_id)
 
         # stage_config = calibration_stage_dict.get(hostname, "default")
         # print(calibration_stage_dict.get(hostname, "default"))
@@ -248,7 +238,7 @@ class Task(TaskRunner):
         # axes_names = tuple(
         #     config_for_all_stages["stage_tower_setup_1"].get("axes").keys()
         # )
-        axes_names = tuple(calibration_stage_dict.get("axes").keys())
+        # axes_names = tuple(calibration_stage_dict.get("axes").keys())
         serial_port_stage = self.input_kwargs.get(
             "serial_port_stage", "XX"
         )  # "/dev/ttyUSB0")
@@ -256,13 +246,17 @@ class Task(TaskRunner):
         #     "stage_tower_setup_1"
         # ]  # todo: calibration_file_stage
 
-        print("calibration stage dict", calibration_stage_dict)
-
-        move_interface = MoveInterface(
-            axes_names=axes_names,
-            serial_port=serial_port_stage,
-            stage_config=calibration_stage_dict,
-        )
+        # print("calibration stage dict", calibration_stage_dict)
+        #
+        # move_interface = MoveInterface(
+        #     axes_names=axes_names,
+        #     serial_port=serial_port_stage,
+        #     stage_config=calibration_stage_dict,
+        # )
+        calibration_stage_dict["connection"]["serial_port"] = serial_port_stage
+        ctrl = StageController.from_config(calibration_stage_dict)
+        ctrl.save_config(config_file=calibration_file_stage)
+        move_interface = MoveInterface(ctrl, small_increment=20, large_increment=40)
 
         kh = KeyHandler(move_interface=move_interface)
 
@@ -274,15 +268,17 @@ class Task(TaskRunner):
             delay_second_char=0.1,
         )
 
-        new_calibration = move_interface.config_dict()
+        ctrl.save_config(calibration_file_stage)
 
-        overwritten_calibration = calibration_stage_dict.copy()
-        for name, params in new_calibration["axes"].items():
-            overwritten_calibration["axes"][name] = params
-
-        overwritten_calibration["_hostname"] = str(hostname)
-        with open(calibration_file_stage, "w") as f:
-            f.write(yaml.dump(overwritten_calibration))
+        # new_calibration = move_interface.config_dict()
+        #
+        # overwritten_calibration = ctrl.config.copy()
+        # for name, params in new_calibration["axes"].items():
+        #     overwritten_calibration["axes"][name] = params
+        #
+        # overwritten_calibration["_hostname"] = str(hostname)
+        # with open(calibration_file_stage, "w") as f:
+        #     f.write(yaml.dump(overwritten_calibration))
 
 
 def run_task(**kwargs):

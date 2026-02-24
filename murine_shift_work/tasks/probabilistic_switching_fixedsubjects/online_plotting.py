@@ -255,7 +255,7 @@ class OnlinePlottingForPS(Process):
         )
 
         # Top row: trial outcomes
-        self.plot_to = self.win.addPlot(name="top_row", colspan=3)
+        self.plot_to = self.win.addPlot(name="top_row", colspan=4)
         self.viewbox_to = self.plot_to.getViewBox()
         self.viewbox_to.setMouseEnabled(x=True, y=False)
         self.viewbox_to.setRange(
@@ -285,7 +285,7 @@ class OnlinePlottingForPS(Process):
         self.win.nextRow()
 
         # Bottom row: block probabilities
-        self.plot_block = self.win.addPlot(name="bottom_row", colspan=3)
+        self.plot_block = self.win.addPlot(name="bottom_row", colspan=4)
         self.plot_block.setXLink("top_row")
         axis_left_block = self.plot_block.getAxis("left")
         axis_left_block.setLabel("Probability")

@@ -14,7 +14,7 @@ find $target_path -type f -name "*.h264" -print0 |
 	then
 		:	# converted_file exists
 	else
-		printf "\n ==>> Converting file: $f"
+		printf "\n ==>> Converting file: $file \n"
 		MP4Box -fps $fps -add $file $converted_file
 	fi
     done

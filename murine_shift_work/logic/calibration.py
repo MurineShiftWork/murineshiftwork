@@ -11,7 +11,7 @@ import seaborn as sns
 from scipy.optimize import curve_fit
 
 
-class CalibrationData(object):
+class CalibrationData:
     file_path = None
     calibration_data = None
     columns = []
@@ -32,7 +32,7 @@ class CalibrationData(object):
     def __add__(self, other):
         assert isinstance(other, dict)
         other.update({"measurement_time": datetime.now()})
-        self.calibration_data = self.calibration_data.append(
+        self.calibration_data = self.calibration_data._append(
             other, ignore_index=True
         )
         return self

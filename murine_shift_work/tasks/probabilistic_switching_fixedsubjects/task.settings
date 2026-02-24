@@ -34,7 +34,7 @@ inter_trial_interval = [4, 8, 0.5]
 forced_choice_threshold = 20  # 50  # nr trials until forced choice trial injected
 
 block_switch_to_different_block_type = True  # BLOCK_SWITCH_TO_DIFFERENT
-n_max_trials = 401  # N_MAX_TRIALS
+n_max_trials = 750  # N_MAX_TRIALS
 
 delay_until_center_init = [0.150, 0.200, 0.005]  # DELAY_UNTIL_CENTER_INIT - range[low,high,step]
 delay_until_side_timeout = 10  # DELAY_UNTIL_SIDE_TIMEOUT
@@ -43,6 +43,8 @@ delay_until_side_timeout_for_stopping = 1.5  # DELAY_UNTIL_SIDE_TIMEOUT_FOR_STOP
 state_duration_final = 1  # STATE_DURATION_FINAL
 reward_amount_ul = 2.0  # REWARD_AMOUNT_UL
 reward_delay = 0  # REWARD_DELAY
+
+lick_detection_events = "ports"  # or: "bnc"
 
 use_stop_trials = False  # TRIALS THAT SHOULD GET ABORTED ON STOP CUE
 stop_trial_proportion = 0.20  # PROPORTION OF STOP TRIALS FROM ALL TRIALS

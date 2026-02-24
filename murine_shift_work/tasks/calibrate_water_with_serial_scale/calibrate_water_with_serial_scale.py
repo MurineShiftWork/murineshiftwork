@@ -40,16 +40,19 @@ class Task(TaskRunner):
         random.shuffle(random_valve_times)
 
         scale = SerialWeighingScale(
-            port=self.input_kwargs["serial_port_scale"]
+            serial_port=self.input_kwargs["serial_port_scale"]
         )  # default is: "/dev/ttyACM2"
-        # scale.tare_scale()
+        scale.start()
         print(
             "WAITING FOR SCALE TO RETURN WEIGHTS...",
             self.input_kwargs["serial_port_scale"],
         )
-        while not scale.read_weight():
-            time.sleep(0.1)
-        print(f"WEIGHT post tare {scale.read_weight_reliable()}")
+        while not scale.is_ready:
+            time.sleep(.25)
+
+        scale.tare()
+        time.sleep(2)
+        print(f"WEIGHT post tare {scale.read_weight()}")
 
         calibration = CalibrationDataWater(
             file_path=self.input_kwargs["calibration_file_water"]
