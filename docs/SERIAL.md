@@ -14,8 +14,8 @@
 | o |     3 | bpod        |    | pci-0000:00:14.0-usb-0:9.4.1:1.0       |             |           |
 | o |     3 | stage       |    | pci-0000:00:14.0-usb-0:9.4.2:1.0-port0 |             |           |
 |   |       |             |    |                                        |             |           |
-| o |     4 | bpod        |    | pci-0000:00:14.0-usb-0:12:1.0          |             |           |
-| o |     4 | stage       |    | pci-0000:00:14.0-usb-0:10:1.0-port0    |             |           |
+| o |     4 | bpod        |    | pci-0000:00:14.0-usb-0:9.3.4:1.0       |             |           |
+| o |     4 | stage       |    | pci-0000:00:14.0-usb-0:9.4.3:1.0-port0 |             |           |
 |   |       |             |    |                                        |             |           |
 | o |   npx | bpod        |    |                                        |             |           |
 | o |   npx | stage       |    |                                        |             |           |
@@ -57,7 +57,7 @@ murineshiftwork run -t calibrate_water_with_serial_scale \
 ### setup1
 ```bash
 
-murineshiftwork run -t fixedsubj\
+murineshiftwork run -t fixedsubj \
   -b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.1:1.0) \
   -stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.2:1.0-port0) \
   -cs /mnt/maindata/CONFIG_FILES/subject.settings \
@@ -76,7 +76,7 @@ fixedsubj
 ### setup2
 ```bash
 
-murineshiftwork run -t fixedsubj\
+murineshiftwork run -t fixedsubj \
   -b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.3.3:1.0) \
   -stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.3.1:1.0-port0) \
   -cs /mnt/maindata/CONFIG_FILES/subject.settings \
@@ -94,7 +94,7 @@ fixedsubj
 
 ### setup3
 ```bash
-murineshiftwork run -t fixedsubj\
+murineshiftwork run -t fixedsubj \
  -b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.4.1:1.0) \
  -stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.4.2:1.0-port0) \
  -cs /mnt/maindata/CONFIG_FILES/subject.settings \
@@ -108,9 +108,9 @@ murineshiftwork run -t fixedsubj\
 
 ### setup4
 ```bash
-murineshiftwork run -t flush\
--b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:12:1.0) \
--stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:10:1.0-port0) \
+murineshiftwork run -t flush \
+-b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.3.4:1.0) \
+-stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.4.3:1.0-port0) \
 -cs /mnt/maindata/CONFIG_FILES/subject.settings \
 -cc /mnt/maindata/CONFIG_FILES/camera.rcc.setup4.fixed.from.murinemanager \
 -cwater ~/.murineshiftwork/calibration.water.setup4.csv \
