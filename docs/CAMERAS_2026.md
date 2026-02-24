@@ -45,3 +45,5 @@
 | --    |              |            |                   |        |              |                 |    |      |    |     |       |
 
 
+## Etc
+- https://pinout.xyz/ -> use GPIO labels, not BCM in python for pigpio
