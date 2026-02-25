@@ -1,0 +1,18 @@
+# /etc/systemd/system/rce-agent.service
+# Managed by Ansible — local edits will be overwritten on next deploy.
+[Unit]
+Description=RPI Camera Ensemble Agent
+After=network.target pigpiod.service
+Wants=pigpiod.service
+
+[Service]
+Type=simple
+User={{ app_user }}
+ExecStart={{ app_venv }}/bin/rce-agent run --config /home/{{ app_user }}/.rce/rce-agent.yaml
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

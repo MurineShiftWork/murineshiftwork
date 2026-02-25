@@ -123,11 +123,11 @@ def _evaluate_and_load_configs(args_dict=None):
         if args_dict["config_file_task"]
         else {}
     )
-    args_dict["settings.camera"] = (
-        read_config(file=args_dict["config_file_camera"])
-        if args_dict["config_file_camera"]
-        else {}
-    )
+    # args_dict["settings.camera"] = (
+    #     read_config(file=args_dict["config_file_camera"])
+    #     if args_dict["config_file_camera"]
+    #     else {}
+    # )
     # READ stage config
     args_dict["calibration_file_stage"] = (
         Path(args_dict["calibration_file_stage"]).expanduser().as_posix()

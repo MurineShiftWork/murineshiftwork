@@ -32,7 +32,12 @@ from pathlib import Path
 
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
-from rpi_camera_colony.control.conductor import Conductor
+# from rpi_camera_colony.control.conductor import Conductor
+from rpi_camera_ensemble.conductor.conductor import Conductor
+from rpi_camera_ensemble.config.acquisition import (
+    EnsembleAcquisitionConfig,
+)
+from rpi_camera_ensemble.config.conductor import ConductorConfig
 
 from murine_shift_work.logic.specific_state_machines import (
     make_ttl_identifier_sequences,
@@ -145,23 +150,46 @@ def run_task(**args_dict):
     # Do not auto start, so that camera can start first
     args_dict.update({"auto_start": False})
 
+    # Video
+    ensemble_cfg_file = args_dict["config_file_camera"]
+    print("DBG:", ensemble_cfg_file)
+    assert Path(ensemble_cfg_file).exists()
+    ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
+    conductor_cfg = ConductorConfig()
+    conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
+    conductor.start()
+    conductor.setup_agents()
+
     # Enter behaviour context
     with TaskProcess(**args_dict) as tp:
-        # Video
-        conductor_args = {
-            "config_file": args_dict["config_file_camera"],
-            "acquisition_group": args_dict["is_child_session_to"]
-            if args_dict["is_child_session_to"] is not None
-            else tp.session_paths["session_basename"].split("__")[0],
-            "acquisition_name": tp.session_paths["session_basename"],
-        }
-        c = Conductor(**conductor_args)
-        c.start_acquisition()
+        # Paths for video
+        _session = tp.session_paths["session_basename"]
+        _subject = tp.session_paths["subject"]
 
-        # FIXME: video stream config should come from RCC config -> add transpose etc. to 'stream' section in RCC
-        video_stream_config = args_dict["settings.camera"].get(
-            "controllers", {}
+        conductor.initialize_acquisition(
+            acquisition_path=(
+                f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
+                if args_dict["is_child_session_to"] is not None
+                else f"{_subject}/{_session}"
+            ),
+            acquisition_name=_session,
         )
+        conductor.start_preview()
+        conductor.start_recording()
+        # assert 1 == 0
+        # conductor_args = {
+        #     "config_file": args_dict["config_file_camera"],
+        #     "acquisition_group": args_dict["is_child_session_to"]
+        #     if args_dict["is_child_session_to"] is not None
+        #     else tp.session_paths["session_basename"].split("__")[0],
+        #     "acquisition_name": tp.session_paths["session_basename"],
+        # }
+        # c = Conductor(**conductor_args)
+        # c.start_acquisition()
+        # FIX-ME: video stream config should come from RCC config -> add transpose etc. to 'stream' section in RCC
+        # video_stream_config = args_dict["settings.camera"].get(
+        #     "controllers", {}
+        # )
 
         # Online plotting
         plotting_process = OnlinePlottingForPS(
@@ -169,7 +197,7 @@ def run_task(**args_dict):
             is_simulation=False,
             data_queue=dq,
             kill_queue=kq,
-            video_stream_config=video_stream_config,
+            # video_stream_config=video_stream_config,
         )
         plotting_process.start()
 
@@ -193,7 +221,7 @@ def run_task(**args_dict):
         #     )
 
         # Delay for video to start
-        time.sleep(6)
+        time.sleep(3)
 
         # Start task
         tp.run_task()
@@ -207,8 +235,10 @@ def run_task(**args_dict):
         kq.put(True)
 
         # Stop video
-        c.stop_acquisition()
-        c.cleanup()
+        # c.stop_acquisition()
+        # c.cleanup()
+        conductor.stop_acquisition()
+        conductor.stop()
 
         # # Stop piezo lick detection
         # if use_piezo_lick_detection:

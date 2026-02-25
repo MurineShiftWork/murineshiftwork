@@ -1,0 +1,9 @@
+# rce-agent configuration — /home/{{ app_user }}/.rce/rce-agent.yaml
+# Loaded at startup by: rce-agent run --config /home/{{ app_user }}/.rce/rce-agent.yaml
+# Managed by Ansible for initial deploy (force: no — safe to edit afterwards).
+instance_name: {{ ansible_hostname }}
+log_level: INFO
+api_host: 0.0.0.0
+api_port: 8876
+log_dir: /home/{{ app_user }}/log
+data_dir: {{ data_dir }}

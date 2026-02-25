@@ -1,3 +1,6 @@
+data/
+rpi_camera_ensemble/
+
 # IDE files
 .idea/
 .vscode/

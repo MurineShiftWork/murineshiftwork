@@ -372,9 +372,9 @@ class OnlinePlottingForPS(Process):
                     **params,
                 )
 
-        stream_update_timer = QtCore.QTimer()
-        stream_update_timer.timeout.connect(self.update_streams)
-        stream_update_timer.start(30)  # 30fps: 1/30=33ms
+        # stream_update_timer = QtCore.QTimer()
+        # stream_update_timer.timeout.connect(self.update_streams)
+        # stream_update_timer.start(30)  # 30fps: 1/30=33ms
 
         # Exit clean
         self.app.aboutToQuit.connect(self.add_sig_term)
@@ -395,7 +395,7 @@ class OnlinePlottingForPS(Process):
         self,
         window_title="this_process",
         frame_margins=0.01,
-        window_height=0.9,
+        window_height=0.45,
     ):
         cursor = self.app.desktop().cursor().pos()
         screen = self.app.desktop().screenNumber(cursor)

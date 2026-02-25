@@ -45,7 +45,7 @@ murineshiftwork run -t calibrate_water_with_serial_scale \
   -b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:12:1.0) \
   -stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:10:1.0-port0) \
   -cs /mnt/maindata/CONFIG_FILES/subject.settings \
-  -cc /mnt/maindata/CONFIG_FILES/camera.rcc.setup4.fixed.from.murinemanager \
+  -cc ~/.murineshiftwork/setup4-rce.yaml \
   -cwater ~/.murineshiftwork/calibration.water.setup4.csv \
   -cstage ~/.murineshiftwork/calibration.stage.setup4.yaml \
   -meta x=51 y=52 z=53 \
@@ -61,7 +61,7 @@ murineshiftwork run -t fixedsubj \
   -b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.1:1.0) \
   -stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.2:1.0-port0) \
   -cs /mnt/maindata/CONFIG_FILES/subject.settings \
-  -cc /mnt/maindata/CONFIG_FILES/camera.rcc.setup1.fixed.from.murinemanager \
+  -cc ~/.murineshiftwork/setup1-rce.yaml \
   -cwater ~/.murineshiftwork/calibration.water.setup1.csv \
   -cstage ~/.murineshiftwork/calibration.stage.setup1.yaml \
   -meta x=11 y=12 z=13 \
@@ -80,7 +80,7 @@ murineshiftwork run -t fixedsubj \
   -b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.3.3:1.0) \
   -stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.3.1:1.0-port0) \
   -cs /mnt/maindata/CONFIG_FILES/subject.settings \
-  -cc /mnt/maindata/CONFIG_FILES/camera.rcc.setup2.fixed.from.murinemanager \
+  -cc ~/.murineshiftwork/setup2-rce.yaml \
   -cwater ~/.murineshiftwork/calibration.water.setup2.csv \
   -cstage ~/.murineshiftwork/calibration.stage.setup2.yaml \
   -meta x=41 y=42 z=43 \
@@ -98,7 +98,7 @@ murineshiftwork run -t fixedsubj \
  -b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.4.1:1.0) \
  -stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.4.2:1.0-port0) \
  -cs /mnt/maindata/CONFIG_FILES/subject.settings \
- -cc /mnt/maindata/CONFIG_FILES/camera.rcc.setup3.fixed.from.murinemanager \
+ -cc ~/.murineshiftwork/setup3-rce.yaml \
  -cwater ~/.murineshiftwork/calibration.water.setup3.csv \
  -cstage ~/.murineshiftwork/calibration.stage.setup3.yaml \
  -meta x=71 y=72 z=73 \
@@ -112,7 +112,7 @@ murineshiftwork run -t flush \
 -b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.3.4:1.0) \
 -stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:9.4.3:1.0-port0) \
 -cs /mnt/maindata/CONFIG_FILES/subject.settings \
--cc /mnt/maindata/CONFIG_FILES/camera.rcc.setup4.fixed.from.murinemanager \
+-cc ~/.murineshiftwork/setup4-rce.yaml \
 -cwater ~/.murineshiftwork/calibration.water.setup4.csv \
 -cstage ~/.murineshiftwork/calibration.stage.setup4.yaml \
 -meta x=51 y=52 z=53 \
