@@ -26,7 +26,7 @@ def read_session_data(
             - csv:              ".msw.csv" or "switching.csv"
 
     Expected files:
-        - Trial dataframe:      .msw.pkl or .msw.df.pkl
+        - Trial dataframe:      .msw.jsonl or .msw.df.jsonl (v2.0.0+), .msw.pkl or .msw.df.pkl (legacy)
         - Raw pybpod data:      .msw.csv or .csv [might be ambiguous with RCC files]
         - 2 settings files:     .msw.settings.[task|process].json
 
@@ -65,7 +65,7 @@ def read_session_data(
                     return_trial_structure_only=return_trial_structure_only,
                 )
 
-        elif Path(k).name.endswith("pkl"):
+        elif Path(k).name.endswith("pkl") or Path(k).name.endswith("jsonl"):
             session_data["df"] = read_trial_df(filepath=v)
 
         elif k.endswith("json") and ".msw." in v:
@@ -88,6 +88,19 @@ def read_session_data(
 
         elif k.endswith("settings") and "settings.task" not in session_data:
             session_data["settings.task"] = read_json(v)
+
+    # Expose msw_version at top level — always set so callers can branch on it
+    # without digging into settings.process.
+    #   "legacy"  — very old format: task_settings.py, no process JSON
+    #   "< 1.0.0" — process JSON exists but pre-version-tracking (before 2026-05-04)
+    #   "x.y.z"   — version string written by TaskProcess.persist_settings()
+    proc = session_data.get("settings.process", {}) or {}
+    if "msw_version" in proc:
+        session_data["msw_version"] = proc["msw_version"]
+    elif is_legacy_session:
+        session_data["msw_version"] = "legacy"
+    else:
+        session_data["msw_version"] = "< 1.0.0"
 
     # Check if session data is complete
     required_file_keys = ["raw", "df", "settings.task"]

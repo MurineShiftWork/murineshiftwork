@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from murine_shift_work.io.trial_data import load_trial_data
+
 
 def _exec_sys_cmd(cmd=None, shell=True, stdout=subprocess.PIPE):
     """
@@ -84,11 +86,17 @@ def __dict_series_to_pd_columns(df=None, column=None):
     return df.drop(column, axis=1).join(tmp)
 
 
+
+
 def read_trial_df(
     filepath=None,
     return_raw=False,
 ):
-    df = pd.read_pickle(filepath)
+    filepath = Path(filepath)
+    if filepath.suffix == ".jsonl":
+        df = pd.DataFrame(load_trial_data(filepath))
+    else:
+        df = pd.read_pickle(filepath)
 
     if df.empty or df.shape == (1, 1):
         logging.debug("df is empty or shape weird")

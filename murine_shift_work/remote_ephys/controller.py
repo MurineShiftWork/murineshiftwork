@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
+from murine_shift_work.logic.paths import MSW_DATETIME_FORMAT
+
 import zmq
 
 # Path structure
@@ -123,7 +125,7 @@ class RemoteOpenEphysController:
 
     @staticmethod
     def _get_date_str():
-        return datetime.now().strftime("%Y%m%d_%H%M%S")
+        return datetime.now().strftime(MSW_DATETIME_FORMAT)
 
     def _persists_metadata(self, acq_name=None, session_name=None):
         if self.local_path is not None:

@@ -14,6 +14,7 @@ from murine_shift_work.logic.calibration import CalibrationDataWater
 from murine_shift_work.logic.maths import ExponentialMovingAverage
 from murine_shift_work.logic.maths import withprob
 from murine_shift_work.logic.sounds import StereoSound
+from murine_shift_work.io.trial_data import save_trial_data
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 
 
@@ -755,8 +756,7 @@ class TaskControl(object):
     def save(self):
         logging.debug("Saving task control data..")
         dt = time.time()
-        df = pd.DataFrame(self.trial_data)
-        df.to_pickle(str(self.save_path_data) + ".df.pkl")
+        save_trial_data(self.trial_data, str(self.save_path_data) + ".df.jsonl")
         logging.debug(f"Saved data in {np.round(time.time()-dt,2)}s.")
 
     def __del__(self):

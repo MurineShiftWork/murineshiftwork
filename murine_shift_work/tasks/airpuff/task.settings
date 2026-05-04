@@ -1,5 +1,5 @@
 TTL_IDENTIFIER_SEQUENCE = "sLsLss"
-air_puff_durations = [0.1, 0.2]
+air_puff_durations = [0.01, 0.1]
 n_repeats_per_duration = 30
-inter_trial_interval = [4, 8, 0.5]
+inter_trial_interval = [4, 6, 0.5]
 HARDWARE_VALVE_FOR_AIR = 2

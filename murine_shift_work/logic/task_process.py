@@ -7,8 +7,9 @@ from pathlib import Path
 import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
-from PyQt5.QtCore import QThread
+from PyQt6.QtCore import QThread
 
+from murine_shift_work import __version__ as _msw_version
 from murine_shift_work import patch_logging_levels
 from murine_shift_work.logic.log import json_dumps_type_safe
 from murine_shift_work.logic.log import write_json
@@ -126,14 +127,15 @@ class TaskProcess(object):
 
         # Make vars
         self.task_name = find_task_by_name(task_name=self.task_in)
-        basepath_and_child_session_option = (
-            Path(self.out_path) / is_child_session_to
-        )
+        # basepath_and_child_session_option = (
+        #     Path(self.out_path) / is_child_session_to
+        # )
         self.session_paths = build_data_paths(
-            basepath=basepath_and_child_session_option,
+            basepath=Path(self.out_path),
             subject=self.subject,
             task=self.task_name,
-            skip_subject_folder=True if is_child_session_to else False,
+            is_child_session_to=is_child_session_to,
+            # skip_subject_folder=True if is_child_session_to else False,
         )
         self.input_kwargs["task_name"] = self.task_name
         self.input_kwargs["session_paths"] = self.session_paths
@@ -224,8 +226,9 @@ class TaskProcess(object):
                 sys.exit(1)
 
     def persist_settings(self):
+        data = {**vars(self), "msw_version": _msw_version}
         write_json(
-            data=vars(self),
+            data=data,
             save_path=self.session_paths["session_file_path"]
             + ".msw.settings.process.json",
         )

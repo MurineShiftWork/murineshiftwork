@@ -6,3 +6,6 @@
 # https://askubuntu.com/questions/359856/share-wireless-internet-connection-through-ethernet
 
 sudo apt-get install linux-lowlatency libportaudio2 qt5-default --upgrade -y
+# ! now requires:
+conda update libstdcxx-ng
+conda update libgcc-ng

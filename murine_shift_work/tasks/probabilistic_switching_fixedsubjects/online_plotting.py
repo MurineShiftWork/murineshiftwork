@@ -35,11 +35,11 @@ def draw_simulation_case():
     return trial_outcomes[np.random.randint(0, 4)]
 
 
-def make_new_point(x=None, y=None, color=None):
+def make_new_point(x=None, y=None, color=None, size=10):
     color = QtGui.QColor(color)
     return {
         "pos": (x, y),
-        "size": 10,
+        "size": size,
         "pen": {"color": color, "width": 2},
         "brush": QtGui.QBrush(color),
     }
@@ -200,7 +200,7 @@ class StreamObject:
 class OnlinePlottingForPS(Process):
     daemon = True
 
-    session_name = "unnamed session"
+    window_title = "unnamed session"
     is_simulation = False
     data_queue = None
     kill_queue = None
@@ -209,7 +209,7 @@ class OnlinePlottingForPS(Process):
     win = None
 
     trial_index = 0
-    values_to_show = 150
+    values_to_show = 120
     max_trials = 1500
 
     simulation_update_interval = 250
@@ -219,7 +219,7 @@ class OnlinePlottingForPS(Process):
 
     def __init__(
         self,
-        session_name=None,
+        window_title=None,
         is_simulation=False,
         data_queue=None,
         kill_queue=None,
@@ -234,7 +234,7 @@ class OnlinePlottingForPS(Process):
         if not is_simulation and not data_queue:
             raise ValueError("Choose either simulation or provide data_queue")
 
-        self.session_name = session_name if session_name else self.session_name
+        self.window_title = window_title or self.window_title
         self.is_simulation = is_simulation
         self.data_queue = data_queue
         self.kill_queue = kill_queue
@@ -251,7 +251,7 @@ class OnlinePlottingForPS(Process):
         self.app = pg.mkQApp(self.name)
         self.win = pg.GraphicsLayoutWidget(show=True, title=self.name)
         self.update_window_properties(
-            window_title=Path(self.session_name).name
+            window_title=self.window_title
         )
 
         # Top row: trial outcomes
@@ -276,11 +276,11 @@ class OnlinePlottingForPS(Process):
         # # Add plots
         lw = 5  # todo: move up
         plot_to_color = mt.grey
-        self.plot_trial_outcomes = pg.ScatterPlotItem()
         self.plot_moving_average = pg.PlotDataItem()
         self.plot_moving_average.setPen(color=plot_to_color, width=lw)
-        self.plot_to.addItem(self.plot_trial_outcomes)
+        self.plot_trial_outcomes = pg.ScatterPlotItem(size=lw)
         self.plot_to.addItem(self.plot_moving_average)
+        self.plot_to.addItem(self.plot_trial_outcomes)
 
         self.win.nextRow()
 
@@ -340,7 +340,7 @@ class OnlinePlottingForPS(Process):
         for ref in [0.5]:
             line_data = np.ones(shape=xdata.shape) * ref
             line = pg.PlotDataItem(x=xdata, y=line_data)
-            line.setPen(color=mt.white, style=QtCore.Qt.DashLine)
+            line.setPen(color=mt.white, style=QtCore.Qt.PenStyle.DashLine)
             self.plot_block.addItem(line)
 
         if self.is_simulation:
@@ -382,7 +382,7 @@ class OnlinePlottingForPS(Process):
 
         # RUN
         if self.app:
-            exit(self.app.exec_())
+            exit(self.app.exec())
 
         self.update_listener_thread.quit()
         for _, stream in self.stream_objects.items():
@@ -395,11 +395,17 @@ class OnlinePlottingForPS(Process):
         self,
         window_title="this_process",
         frame_margins=0.01,
-        window_height=0.45,
+        window_height=0.24,
     ):
-        cursor = self.app.desktop().cursor().pos()
-        screen = self.app.desktop().screenNumber(cursor)
-        screen_size_px = self.app.desktop().screenGeometry(screen)
+        screens = QtGui.QGuiApplication.screens()
+        cursor = QtGui.QCursor.pos()
+        cursor_screen = None
+        for s in screens:
+          if s.geometry().contains(cursor):
+            cursor_screen = s
+            break
+
+        screen_size_px = cursor_screen.geometry()
         new_top_width_margin = int(screen_size_px.width() * frame_margins)
         new_top_height_margin = int(screen_size_px.height() * frame_margins)
         # new geometry
@@ -480,7 +486,7 @@ class OnlinePlottingForPS(Process):
 
         self.update_plots()
 
-    def update_plots(self):
+    def update_plots(self, pt_size=5):
         # forced choice ?
         fc = self.data.forced_choice[self.trial_index]
         if fc:
@@ -488,6 +494,7 @@ class OnlinePlottingForPS(Process):
                 x=self.trial_index,
                 y=0,  # {"name": "forced-choice", "y": 0, "color": mt.red},
                 color=mt.red,
+                size=pt_size,
             )
             self.plot_trial_outcomes.addPoints([pt])
 
@@ -496,6 +503,7 @@ class OnlinePlottingForPS(Process):
             x=self.trial_index,
             y=self.data.current_trial_outcome_point["y"],
             color=self.data.current_trial_outcome_point["color"],
+            size=pt_size,
         )
         self.plot_trial_outcomes.addPoints([pt])
         # fixme: change addPoints to setPoints and set all from self.data.trial_outcome_points

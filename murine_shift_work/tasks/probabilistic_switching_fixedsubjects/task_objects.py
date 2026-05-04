@@ -11,10 +11,12 @@ from pybpodapi.protocol import StateMachine
 from one_axis_stage.interface import StageController
 from one_axis_stage.interface import MoveInterface
 
+from murine_shift_work.logic.barcode import BARCODE_FIRST_STATE_NAME
 from murine_shift_work.logic.calibration import CalibrationDataSound
 from murine_shift_work.logic.calibration import CalibrationDataWater
 from murine_shift_work.logic.maths import ExponentialMovingAverage
 from murine_shift_work.logic.maths import withprob
+from murine_shift_work.io.trial_data import save_trial_data
 from murine_shift_work.logic.misc import draw_jittered_trial_time
 from murine_shift_work.logic.sounds import StereoSound
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
@@ -266,19 +268,18 @@ class TaskControl(object):
 
         # TODO: block update rules fixed trials vs criterion
 
-    def update(self, trial_index=None, trial_data=None):
+    def update(self, trial_index=None, trial_data=None, barcode_value=None, barcode_wall_time=None):
         self.trial_index = trial_index
-        # trial_data is: bpod start ts, trial start ts, trial end ts, state and event ts
 
-        first_state_name = str(
-            list(trial_data["States timestamps"].keys())[0]
-        ).lower()
-        if self.trial_index < 1 and first_state_name.startswith("pulse"):
-            # IF TTL TRIAL
-            self.switch_block()
+        first_state_name = str(list(trial_data["States timestamps"].keys())[0])
+        if first_state_name.lower() == BARCODE_FIRST_STATE_NAME.lower():
+            if self.trial_index == 0:
+                self.switch_block()  # initialise first block after session-start barcode
             trial_data["info"] = {
-                "trial_type": "ttl",
+                "trial_type": "barcode",
                 "trial_index": self.trial_index,
+                "barcode_value": barcode_value,
+                "barcode_wall_time": barcode_wall_time,
             }
             return self.trial_data.append(trial_data)
 
@@ -695,7 +696,7 @@ class TaskControl(object):
         state_side_ready = "side_ready"
         sma.add_state(
             state_name=state_center_ready,
-            state_timer=0.75,
+            state_timer=0.80,
             state_change_conditions={Bpod.Events.Tup: state_side_ready},
             output_actions=output_actions__center_ready
             + [("SoftCode", self.MOVE_TO_FRONT)],
@@ -858,8 +859,7 @@ class TaskControl(object):
     def save(self):
         logging.debug("Saving task control data..")
         dt = time.time()
-        df = pd.DataFrame(self.trial_data)
-        df.to_pickle(str(self.save_path_data) + ".df.pkl")
+        save_trial_data(self.trial_data, str(self.save_path_data) + ".df.jsonl")
         logging.debug(f"Saved data in {np.round(time.time()-dt,2)}s.")
 
     def on_exit(self):

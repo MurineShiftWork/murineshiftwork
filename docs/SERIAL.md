@@ -1,26 +1,28 @@
 # Serial addresses
 
-|   | Setup | Device      |    | by-path                                | MAC (by-id) | /dev/tty* |
-|---|------:|:------------|:---|----------------------------------------|:------------|:----------|
-|   |   msw | scale       |    | pci-0000:00:14.0-usb-0:9.4.4:1.0       |             | ACM1      |
-|   |       |             |    |                                        |             |           |
-| o |     1 | bpod        |    | pci-0000:00:14.0-usb-0:9.1:1.0         |             | ACM2      |
-| o |     1 | stage       |    | pci-0000:00:14.0-usb-0:9.2:1.0-port0   |             | USB0      |
-|   |     1 | arduino     |    | pci-0000:00:14.0-usb-0:4:1.0           |             | ACM0      |
-|   |       |             |    |                                        |             |           |
-| o |     2 | bpod        |    | pci-0000:00:14.0-usb-0:9.3.3:1.0       |             | ACM3      |
-| o |     2 | stage       |    | pci-0000:00:14.0-usb-0:9.3.1:1.0-port0 |             | USB1      |
-|   |       |             |    |                                        |             |           |
-| o |     3 | bpod        |    | pci-0000:00:14.0-usb-0:9.4.1:1.0       |             |           |
-| o |     3 | stage       |    | pci-0000:00:14.0-usb-0:9.4.2:1.0-port0 |             |           |
-|   |       |             |    |                                        |             |           |
-| o |     4 | bpod        |    | pci-0000:00:14.0-usb-0:9.3.4:1.0       |             |           |
-| o |     4 | stage       |    | pci-0000:00:14.0-usb-0:9.4.3:1.0-port0 |             |           |
-|   |       |             |    |                                        |             |           |
-| o |   npx | bpod        |    |                                        |             |           |
-| o |   npx | stage       |    |                                        |             |           |
-|   |       |             |    |                                        |             |           |
-|   |       | bpod 8 port |    | pci-0000:00:14.0-usb-0:1:1.0           |             |           |
+|   | Setup | Device      |    | by-path                                   | MAC (by-id) | /dev/tty* |
+|---|------:|:------------|:---|-------------------------------------------|:------------|:----------|
+|   |   msw | scale       |    | pci-0000:00:14.0-usb-0:9.4.4:1.0          |             | ACM1      |
+|   |  npxb | scale       |    | pci-0000:00:14.0-usbv2-0:10.4.2:1.0       |             | ACM1      |
+|   |       |             |    |                                           |             |           |
+| o |     1 | bpod        |    | pci-0000:00:14.0-usb-0:9.1:1.0            |             | ACM2      |
+| o |     1 | stage       |    | pci-0000:00:14.0-usb-0:9.2:1.0-port0      |             | USB0      |
+|   |     1 | arduino     |    | pci-0000:00:14.0-usb-0:4:1.0              |             | ACM0      |
+|   |       |             |    |                                           |             |           |
+| o |     2 | bpod        |    | pci-0000:00:14.0-usb-0:9.3.3:1.0          |             | ACM3      |
+| o |     2 | stage       |    | pci-0000:00:14.0-usb-0:9.3.1:1.0-port0    |             | USB1      |
+|   |       |             |    |                                           |             |           |
+| o |     3 | bpod        |    | pci-0000:00:14.0-usb-0:9.4.1:1.0          |             |           |
+| o |     3 | stage       |    | pci-0000:00:14.0-usb-0:9.4.2:1.0-port0    |             |           |
+|   |       |             |    |                                           |             |           |
+| o |     4 | bpod        |    | pci-0000:00:14.0-usb-0:9.3.4:1.0          |             |           |
+| o |     4 | stage       |    | pci-0000:00:14.0-usb-0:9.4.3:1.0-port0    |             |           |
+|   |       |             |    |                                           |             |           |
+| o |   npx | bpod        |    | pci-0000:00:14.0-usb-0:10.1:1.0           |             |           |
+| o |   npx | stage       |    | pci-0000:00:14.0-usb-0:10.4.4.3:1.0-port0 |             |           |
+| o |   npx | pulsepal    |    | pci-0000:00:14.0-usb-0:10.2:1.0           |             |           |
+|   |       |             |    |                                           |             |           |
+|   |       | bpod 8 port |    | pci-0000:00:14.0-usb-0:1:1.0              |             |           |
 
 
 | Setup | Stage id | x  | y  | z  | cam btm | cam L | cam R | cam front |
@@ -54,6 +56,28 @@ murineshiftwork run -t calibrate_water_with_serial_scale \
 
 ```
 
+
+### setup NPXB
+```bash
+
+murineshiftwork run -t flush \
+  -b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:10.1:1.0) \
+  -p $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:10.2:1.0) \
+  -stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:10.4.4.3:1.0-port0) \
+  -cs /mnt/fastdata/CONFIG_FILES/subject.settings \
+  -cc ~/.murineshiftwork/setup-npxb-rce.yaml \
+  -cwater ~/.murineshiftwork/calibration.water.setup.npxb.csv \
+  -cstage ~/.murineshiftwork/calibration.stage.setup.npxb.yaml \
+  -meta x=31 y=32 z=33 setup=npxb \
+  -o /mnt/fastdata/data/ -s s115_acute_m1102187_120
+
+calibrate_stage
+fixedsubj
+-s SUBJECTNAME
+
+```
+
+
 ### setup1
 ```bash
 
@@ -64,7 +88,7 @@ murineshiftwork run -t fixedsubj \
   -cc ~/.murineshiftwork/setup1-rce.yaml \
   -cwater ~/.murineshiftwork/calibration.water.setup1.csv \
   -cstage ~/.murineshiftwork/calibration.stage.setup1.yaml \
-  -meta x=11 y=12 z=13 \
+  -meta x=11 y=12 z=13 setup=setup1\
   -o /mnt/maindata/data/ -s s115_acute_m1102187_120
 
 calibrate_stage
@@ -83,7 +107,7 @@ murineshiftwork run -t fixedsubj \
   -cc ~/.murineshiftwork/setup2-rce.yaml \
   -cwater ~/.murineshiftwork/calibration.water.setup2.csv \
   -cstage ~/.murineshiftwork/calibration.stage.setup2.yaml \
-  -meta x=41 y=42 z=43 \
+  -meta x=41 y=42 z=43 setup=setup2\
   -o /mnt/maindata/data/ -s s118_acute_m1102190_242
 
 calibrate_stage
@@ -101,7 +125,7 @@ murineshiftwork run -t fixedsubj \
  -cc ~/.murineshiftwork/setup3-rce.yaml \
  -cwater ~/.murineshiftwork/calibration.water.setup3.csv \
  -cstage ~/.murineshiftwork/calibration.stage.setup3.yaml \
- -meta x=71 y=72 z=73 \
+ -meta x=71 y=72 z=73 setup=setup3\
  -o /mnt/maindata/data/ -s s116_acute_m1102188_132
 
 ```
@@ -115,7 +139,7 @@ murineshiftwork run -t flush \
 -cc ~/.murineshiftwork/setup4-rce.yaml \
 -cwater ~/.murineshiftwork/calibration.water.setup4.csv \
 -cstage ~/.murineshiftwork/calibration.stage.setup4.yaml \
--meta x=51 y=52 z=53 \
+-meta x=51 y=52 z=53 setup=setup4 \
 -o /mnt/maindata/data/ -s s118_acute_m1102190_242
 
 

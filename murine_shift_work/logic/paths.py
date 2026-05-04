@@ -1,6 +1,13 @@
+import re
 import socket
 from datetime import datetime
 from pathlib import Path
+
+MSW_DATETIME_FORMAT = "%Y%m%d_%H%M%S_%f"
+
+# Characters that are forbidden in subject/task path components.
+# Includes shell special chars, glob chars, and common typos (#, @, !, space).
+_FORBIDDEN_PATH_CHARS = re.compile(r'[#@!$%^&*()+=\[\]{};:\'",<>?\\|`~ ]')
 
 
 def test_path_is_writable(path=None):
@@ -19,21 +26,28 @@ def build_data_paths(
     subject=None,
     task=None,
     default_subject="_test_subject",
-    skip_subject_folder=False,
+    is_child_session_to=None,
     printout=True,
 ):
     basepath = Path(basepath)
 
     # Session & file names
     subject = default_subject if str(task).startswith("_test__") else subject
-    dt = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if subject and _FORBIDDEN_PATH_CHARS.search(subject):
+        bad = _FORBIDDEN_PATH_CHARS.findall(subject)
+        raise ValueError(
+            f"Subject name contains forbidden characters {bad!r}: {subject!r}. "
+            f"Use only letters, digits, hyphens, and underscores."
+        )
+    dt = datetime.now().strftime(MSW_DATETIME_FORMAT)
     session_basename = "__".join([subject, dt, task])
 
     # Folder hierarchy
-    if skip_subject_folder:
-        session_data_folder = basepath / session_basename
-    else:
-        session_data_folder = basepath / subject / session_basename
+    session_data_folder = (
+        basepath / subject / is_child_session_to / session_basename
+        if is_child_session_to is not None
+        else basepath / subject / session_basename
+    )
 
     session_behaviour_basename = session_data_folder / session_basename
 

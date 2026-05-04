@@ -1,12 +1,19 @@
 import logging
 import time
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
-from rpi_camera_colony.control.conductor import Conductor
+# from rpi_camera_colony.control.conductor import Conductor
+from rpi_camera_ensemble.conductor.conductor import Conductor
+from rpi_camera_ensemble.config.acquisition import (
+    EnsembleAcquisitionConfig,
+)
+from rpi_camera_ensemble.config.conductor import ConductorConfig
 
+from murine_shift_work.io.trial_data import save_trial_data
 from murine_shift_work.logic.misc import draw_jittered_trial_time
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.logic.specific_state_machines import (
@@ -50,8 +57,7 @@ class AirPuff(object):
         return self.trial_data.append(trial_data)
 
     def save(self):
-        session_df = pd.DataFrame(self.trial_data)
-        session_df.to_pickle(str(self.out_path) + ".msw.pkl")
+        save_trial_data(self.trial_data, str(self.out_path) + ".msw.jsonl")
         logging.debug(f"Saved session data to {str(self.out_path)}")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -169,25 +175,35 @@ def run_task(**args_dict):
     # Do not auto start, so that camera can start first
     args_dict.update({"auto_start": False})
 
-    with TaskProcess(**args_dict) as tp:
-        # Video
-        conductor_args = {
-            "config_file": args_dict["config_file_camera"],
-            "acquisition_group": args_dict["is_child_session_to"]
-            if args_dict["is_child_session_to"] is not None
-            else tp.session_paths["session_basename"].split("__")[0],
-            "acquisition_name": tp.session_paths["session_basename"],
-        }
-        c = Conductor(**conductor_args)
-        c.start_acquisition()
+    # Video
+    ensemble_cfg_file = args_dict["config_file_camera"]
+    print("DBG:", ensemble_cfg_file)
+    assert Path(ensemble_cfg_file).exists()
+    ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
+    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
+    conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
+    conductor.start()
+    conductor.setup_agents()
 
-        # FIXME: video stream config should come from RCC config -> add transpose etc. to 'stream' section in RCC
-        # video_stream_config = args_dict["settings.camera"].get(
-        #     "controllers", {}
-        # )
+    # Enter behaviour context
+    with TaskProcess(**args_dict) as tp:
+        # Paths for video
+        _session = tp.session_paths["session_basename"]
+        _subject = tp.session_paths["subject"]
+
+        conductor.initialize_acquisition(
+            acquisition_path=(
+                f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
+                if args_dict["is_child_session_to"] is not None
+                else f"{_subject}/{_session}"
+            ),
+            acquisition_name=_session,
+        )
+        conductor.start_preview()
+        conductor.start_recording()
 
         # Delay for video to start
-        time.sleep(6)
+        time.sleep(3)
 
         tp.run_task()
         while tp.is_running():
@@ -197,8 +213,8 @@ def run_task(**args_dict):
                 tp.stop_task()
 
         # Stop video
-        c.stop_acquisition()
-        c.cleanup()
+        conductor.stop_acquisition()
+        conductor.stop()
 
         time.sleep(1)
 

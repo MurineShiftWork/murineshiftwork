@@ -16,6 +16,7 @@ EXCLUDES=(
     --exclude="*.csv.bak*"
     --exclude="__pycache__"
     --exclude="*.pyc*"
+    --exclude="_test_subject*"
 )
 
 echo "Cleaning pyc/__pycache__ in $SOURCE_DIR..."

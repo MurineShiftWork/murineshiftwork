@@ -8,6 +8,7 @@ from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 from pypulsepal import PulsePal as PyPulsePal
 
+from murine_shift_work.io.trial_data import save_trial_data
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.logic.specific_state_machines import (
     make_ttl_identifier_sequences,
@@ -49,8 +50,7 @@ class ProtocolObject:
             return self.trial_data.append(trial_data)
 
     def save(self):
-        session_df = pd.DataFrame(self.trial_data)
-        session_df.to_pickle(str(self.out_path) + ".msw.pkl")
+        save_trial_data(self.trial_data, str(self.out_path) + ".msw.jsonl")
         logging.debug(f"Saved session data to {str(self.out_path)}")
 
     def __exit__(self, exc_type, exc_val, exc_tb):

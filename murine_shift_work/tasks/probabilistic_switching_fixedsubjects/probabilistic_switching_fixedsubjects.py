@@ -32,15 +32,18 @@ from pathlib import Path
 
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
-# from rpi_camera_colony.control.conductor import Conductor
 from rpi_camera_ensemble.conductor.conductor import Conductor
 from rpi_camera_ensemble.config.acquisition import (
     EnsembleAcquisitionConfig,
 )
 from rpi_camera_ensemble.config.conductor import ConductorConfig
+from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
-from murine_shift_work.logic.specific_state_machines import (
-    make_ttl_identifier_sequences,
+from murine_shift_work.logic.barcode import (
+    BARCODE_FIRST_STATE_NAME,
+    barcode_config_from_settings,
+    inject_barcode_states,
+    prepare_barcode,
 )
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
@@ -73,6 +76,10 @@ class Task(TaskRunner):
             "serial_port_stage"
         ]  # fixme: improve handing down args
 
+        barcode_cfg = barcode_config_from_settings(task_settings)
+        barcoder = BarcodeTTL(barcode_cfg)
+        bnc_channel = eval(f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}")
+
         task_control = TaskControl(bpod=self.bpod, task_settings=task_settings)
         self.bpod.softcode_handler_function = task_control.softcode_handler
 
@@ -81,36 +88,36 @@ class Task(TaskRunner):
         while self.continue_task and trial_index < max_trials:
             logging.info(f"Trial: {trial_index}")
 
+            barcode_value = None
+            barcode_wall_time = None
+
             if trial_index == 0 and not task_settings["testing"]:
-                sma = make_ttl_identifier_sequences(
-                    bpod=self.bpod,
-                    sequence=task_settings["ttl_identifier_sequence"],
-                    output_chanel_pulse=eval(
-                        f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}"
-                    ),
-                )
+                barcode_value, barcode_wall_time, timing_seq = prepare_barcode(barcoder)
+                sma = StateMachine(bpod=self.bpod)
+                sma = inject_barcode_states(sma, timing_seq, bnc_channel, last_state_name="exit")
             else:
                 sma = task_control.draw_next_trial()
 
             self.bpod.send_state_machine(sma)
 
             try:
-                print("TRYING SMA RUN")
                 has_run = self.bpod.run_state_machine(sma)
             except TypeError:
-                print("SMA RUN FAILED ON TRY")
                 has_run = False
 
             if not has_run:
                 logging.warning(
                     f"No data returned on trial #{trial_index}. Terminating protocol."
                 )
-                # self.input_kwargs["objects"]["kill_queue"].put(True)
-                # break
                 trial_index += 1
 
             trial_data = self.bpod.session.current_trial.export()
-            task_control.update(trial_index=trial_index, trial_data=trial_data)
+            task_control.update(
+                trial_index=trial_index,
+                trial_data=trial_data,
+                barcode_value=barcode_value,
+                barcode_wall_time=barcode_wall_time,
+            )
             if task_settings["show_live_plot"] and trial_index > 0:
                 self.input_kwargs["objects"]["data_queue"].put(
                     {
@@ -128,6 +135,25 @@ class Task(TaskRunner):
 
             task_control.save()
             trial_index += 1
+
+        if not task_settings["testing"]:
+            try:
+                bv_end, bwt_end, timing_seq_end = prepare_barcode(barcoder)
+                sma_end = StateMachine(bpod=self.bpod)
+                sma_end = inject_barcode_states(sma_end, timing_seq_end, bnc_channel, last_state_name="exit")
+                self.bpod.send_state_machine(sma_end)
+                self.bpod.run_state_machine(sma_end)
+                trial_data_end = self.bpod.session.current_trial.export()
+                task_control.update(
+                    trial_index=trial_index,
+                    trial_data=trial_data_end,
+                    barcode_value=bv_end,
+                    barcode_wall_time=bwt_end,
+                )
+                task_control.save()
+                logging.info("Session-end barcode sent.")
+            except Exception:
+                logging.warning("Session-end barcode failed to send.", exc_info=True)
 
         self.input_kwargs["objects"]["kill_queue"].put(True)
         logging.debug("Exiting Task.")
@@ -150,12 +176,14 @@ def run_task(**args_dict):
     # Do not auto start, so that camera can start first
     args_dict.update({"auto_start": False})
 
+    setup_name = args_dict["metadata"].get("setup", "n/a")
+
     # Video
     ensemble_cfg_file = args_dict["config_file_camera"]
     print("DBG:", ensemble_cfg_file)
     assert Path(ensemble_cfg_file).exists()
     ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
-    conductor_cfg = ConductorConfig()
+    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
     conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
     conductor.start()
     conductor.setup_agents()
@@ -193,7 +221,7 @@ def run_task(**args_dict):
 
         # Online plotting
         plotting_process = OnlinePlottingForPS(
-            session_name=tp.session_paths["session_basename"],
+            window_title=f"[{setup_name}]  {tp.session_paths['session_basename']}",
             is_simulation=False,
             data_queue=dq,
             kill_queue=kq,

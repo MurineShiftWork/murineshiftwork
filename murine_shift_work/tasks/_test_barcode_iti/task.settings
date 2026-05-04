@@ -1,0 +1,24 @@
+# Test protocol: TTL barcode embedded in ITI
+# Verify that barcodes are transmitted correctly and alignment to ephys works.
+#
+# Wire HARDWARE_BNC_BARCODE output to ephys digital input.
+# Wire HARDWARE_BNC_TRIAL_START output to ephys digital input (optional, for trial onset reference).
+
+n_max_trials = 30
+
+ttl_identifier_sequence = "sssLss"
+ttl_pulse_duration = 0.010       # sec, trial onset TTL pulse width
+
+inter_trial_interval = [2, 5, 0.5]   # [min, max, step] seconds, jittered
+wait_duration = 1.0                   # sec, simulated trial period
+
+#[hardware]
+HARDWARE_BNC_TRIAL_START = 1
+HARDWARE_BNC_BARCODE = 2
+
+#[barcode]
+# Default config: 37-bit timestamp, 35ms bits, 10ms init pulses
+# Total barcode duration = 6 * init + bits * bit_duration = 60 + 1295 = ~1355ms
+barcode_bits = 37
+barcode_bit_duration_ms = 35.0
+barcode_init_duration_ms = 10.0

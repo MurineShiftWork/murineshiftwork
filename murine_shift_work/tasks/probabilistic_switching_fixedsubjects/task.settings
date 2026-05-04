@@ -44,7 +44,7 @@ state_duration_final = 1  # STATE_DURATION_FINAL
 reward_amount_ul = 2.0  # REWARD_AMOUNT_UL
 reward_delay = 0  # REWARD_DELAY
 
-lick_detection_events = "ports"  # or: "bnc"
+lick_detection_events = "ports"  # or: "bnc" (for piezo/BNC lick sensors)
 
 use_stop_trials = False  # TRIALS THAT SHOULD GET ABORTED ON STOP CUE
 stop_trial_proportion = 0.20  # PROPORTION OF STOP TRIALS FROM ALL TRIALS
@@ -82,5 +82,10 @@ HARDWARE_PORT_LIGHT_PORTS = ["center"]  # "side" - selects the ports to illumina
 HARDWARE_VALVES_FOR_WATER = [1, 3]
 HARDWARE_VALVES_FOR_AIR = [2, 4]
 
-ttl_identifier_sequence = "sssLss"
 ttl_pulse_duration = 0.010
+
+# [barcode] — must match ttl_barcoder BarcodeConfig used in alignment.py
+barcode_bits = 37
+barcode_bit_duration_ms = 35.0
+barcode_init_duration_ms = 10.0
+barcode_tolerance = 0.25

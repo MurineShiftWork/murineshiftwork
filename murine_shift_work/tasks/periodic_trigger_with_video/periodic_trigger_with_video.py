@@ -12,6 +12,7 @@ from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.logic.specific_state_machines import (
     make_ttl_identifier_sequences,
 )
+from murine_shift_work.io.trial_data import save_trial_data
 from murine_shift_work.logic.task_process import TaskProcess
 from murine_shift_work.logic.task_process import TaskRunner
 
@@ -47,8 +48,7 @@ class TaskData:
         save_path = save_path or self.save_path
         logging.debug("Saving task control data..")
         dt = time.time()
-        df = pd.DataFrame(self.data)
-        df.to_pickle(str(save_path) + ".df.pkl")
+        save_trial_data(self.data, str(save_path) + ".df.jsonl")
         logging.debug(f"Saved data in {np.round(time.time() - dt, 2)}s.")
 
 

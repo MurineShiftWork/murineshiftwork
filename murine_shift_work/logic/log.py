@@ -3,6 +3,8 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+from murine_shift_work.logic.paths import MSW_DATETIME_FORMAT
+
 from rich import get_console
 from rich.logging import RichHandler
 
@@ -13,7 +15,7 @@ def get_default_log_file_path(path=None):
 
     path = Path(path)
 
-    dt = datetime.now().strftime("%Y%m%d_%H%M%S")
+    dt = datetime.now().strftime(MSW_DATETIME_FORMAT)
     out_name = f"murineshiftwork.{dt}.log"
     if path.is_dir():
         path = path / out_name

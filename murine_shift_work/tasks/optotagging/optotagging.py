@@ -5,6 +5,7 @@ import pandas as pd
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
+from murine_shift_work.io.trial_data import save_trial_data
 from murine_shift_work.logic.specific_state_machines import add_trial_onset_ttl
 from murine_shift_work.logic.specific_state_machines import (
     make_ttl_identifier_sequences,
@@ -43,8 +44,7 @@ class OptoTagging(object):
             return self.trial_data.append(trial_data)
 
     def save(self):
-        session_df = pd.DataFrame(self.trial_data)
-        session_df.to_pickle(str(self.out_path) + ".msw.pkl")
+        save_trial_data(self.trial_data, str(self.out_path) + ".msw.jsonl")
         logging.debug(f"Saved session data to {str(self.out_path)}")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -78,55 +78,59 @@ class Task(TaskRunner):
         )
 
         trial_index = 0
-        while (
-            self.continue_task and trial_index <= task_settings["N_MAX_TRIALS"]
-        ):
-            logging.info(f"Executing trial {trial_index}")
+        try:
+            while (
+                self.continue_task and trial_index <= task_settings["N_MAX_TRIALS"]
+            ):
+                logging.info(f"Executing trial {trial_index}")
 
-            if trial_index == 0:
-                sma = make_ttl_identifier_sequences(
-                    bpod=self.bpod,
-                    sequence=task_settings["TTL_IDENTIFIER_SEQUENCE"],
-                    output_chanel_pulse=self._bnc_channel_trial_onset,
-                )
-            else:
-                sma = StateMachine(bpod=self.bpod)
-                # Trial onset
-                sma = add_trial_onset_ttl(
-                    sma=sma,
-                    ttl_pulse_duration=0.001,
-                    bnc_channel=self._bnc_channel_trial_onset,
-                    next_state="pulses",
-                )
-                # Stimulation TTL
-                sma = add_trial_onset_ttl(
-                    sma=sma,
-                    state_name_tuple=("pulses", "pulse_off"),
-                    ttl_pulse_duration=pulse_train_duration,  # 0.001,
-                    bnc_channel=self._bnc_channel_stimulation,
-                    next_state="iti",
-                )
-                sma.add_state(
-                    state_name="iti",
-                    state_timer=task_settings[
-                        "TRIGGER_ITI"
-                    ],  # + pulse_train_duration,
-                    state_change_conditions={Bpod.Events.Tup: "exit"},
-                    output_actions=[],
-                )
+                if trial_index == 0:
+                    sma = make_ttl_identifier_sequences(
+                        bpod=self.bpod,
+                        sequence=task_settings["TTL_IDENTIFIER_SEQUENCE"],
+                        output_chanel_pulse=self._bnc_channel_trial_onset,
+                    )
+                else:
+                    sma = StateMachine(bpod=self.bpod)
+                    # Trial onset
+                    sma = add_trial_onset_ttl(
+                        sma=sma,
+                        ttl_pulse_duration=0.001,
+                        bnc_channel=self._bnc_channel_trial_onset,
+                        next_state="pulses",
+                    )
+                    # Stimulation TTL
+                    sma = add_trial_onset_ttl(
+                        sma=sma,
+                        state_name_tuple=("pulses", "pulse_off"),
+                        ttl_pulse_duration=pulse_train_duration,  # 0.001,
+                        bnc_channel=self._bnc_channel_stimulation,
+                        next_state="iti",
+                    )
+                    sma.add_state(
+                        state_name="iti",
+                        state_timer=task_settings[
+                            "TRIGGER_ITI"
+                        ],  # + pulse_train_duration,
+                        state_change_conditions={Bpod.Events.Tup: "exit"},
+                        output_actions=[],
+                    )
 
-            self.bpod.send_state_machine(sma)
+                self.bpod.send_state_machine(sma)
 
-            if not self.bpod.run_state_machine(sma):
-                logging.warning(
-                    f"No data returned on trial #{trial_index}. Terminating protocol."
-                )
-                break
+                if not self.bpod.run_state_machine(sma):
+                    logging.warning(
+                        f"No data returned on trial #{trial_index}. Terminating protocol."
+                    )
+                    break
 
-            trial_data = self.bpod.session.current_trial.export()
-            optotagging.update(trial_index=trial_index, trial_data=trial_data)
-            optotagging.save()
-            trial_index += 1
+                trial_data = self.bpod.session.current_trial.export()
+                optotagging.update(trial_index=trial_index, trial_data=trial_data)
+                optotagging.save()
+                trial_index += 1
+        finally:
+            stimulation.disconnect()
+            logging.info("Stimulation disconnected.")
 
         logging.debug("Exiting Task.")
 
