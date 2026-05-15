@@ -4,34 +4,31 @@ from pathlib import Path
 
 import yaml
 
-from murineshiftwork import settings as msws
+from murineshiftwork.cli.defaults import available_tasks, default_config_dir, default_out_path
+from murineshiftwork.cli.preflight import preflight_hardware_check
 from murineshiftwork.logic.config import read_config
 from murineshiftwork.logic.config import validate_config_file_path
 from murineshiftwork.logic.log import setup_logging
 from murineshiftwork.logic.misc import find_task_by_name
-from murineshiftwork.logic.misc import list_available_tasks
 from murineshiftwork.logic.misc import print_box
-from murineshiftwork.logic.config_io import load_setup_config
-from murineshiftwork.logic.config_io import load_subject_config
-from murineshiftwork.logic.config_models import ExecutionConfig
-from murineshiftwork.logic.machine_config import resolve_config_dir
+from murineshiftwork.logic.config import load_setup_config
+from murineshiftwork.logic.config import load_subject_config
+from murineshiftwork.logic.config import ExecutionConfig
+from murineshiftwork.logic.machine_config import resolve_config_dir, resolve_data_dir
 from murineshiftwork.logic.paths import get_host_ip
 from murineshiftwork.logic.paths import get_host_name
 
-default_out_path = str(Path.home() / "data")
-default_config_dir = resolve_config_dir()
-available_tasks = "\n".join([f"    - {s}" for s in list_available_tasks()])
+# Re-export for anything that imported these from here before the split
+__all__ = ["evaluate_args", "get_task_dir", "available_tasks", "default_config_dir", "default_out_path"]
 
 
 def get_task_dir(task=None):
-    exec(
-        f"from murineshiftwork.tasks import {task} as task_module", globals()
-    )
-    exec("task_folder = Path(task_module.__file__).parent", globals())
-    if "task_folder" not in globals():
+    import importlib
+    try:
+        mod = importlib.import_module(f"murineshiftwork.tasks.{task}.{task}")
+        return str(Path(mod.__file__).parent)
+    except (ImportError, AttributeError):
         return ""
-    else:
-        return str(globals()["task_folder"])
 
 
 def _evaluate_metadata(args_dict):
@@ -49,8 +46,6 @@ def _evaluate_metadata(args_dict):
                 not args_dict[metadata_key].startswith("unknown_")
                 or metadata_key not in metadata_dict
             ):
-                # metadata_dict[f"_original__{metadata_key}"] = metadata_dict[metadata_key]
-                print(metadata_key)
                 metadata_dict[metadata_key] = args_dict[metadata_key]
 
         args_dict["metadata"] = metadata_dict
@@ -58,7 +53,6 @@ def _evaluate_metadata(args_dict):
 
 
 def _evaluate_log_level(args_dict=None):
-    # Log level
     if args_dict["debug"]:
         args_dict["log_level"] = "DEBUG"
     try:
@@ -91,8 +85,6 @@ def _evaluate_and_load_configs(args_dict=None):
     if not Path(config_dir).exists():
         args_dict["config_dir"] = ""
 
-    # Validate paths
-    # - config files
     args_dict["config_file_subjects"] = validate_config_file_path(
         config_file=args_dict["config_file_subjects"],
         default_dir=args_dict["config_dir"],
@@ -105,7 +97,6 @@ def _evaluate_and_load_configs(args_dict=None):
         config_file=args_dict["config_file_camera"],
         default_dir=args_dict["config_dir"],
     )
-    # - calibration files
     if "calibrate" not in args_dict["task"]:
         args_dict["calibration_file_water"] = validate_config_file_path(
             config_file=args_dict["calibration_file_water"],
@@ -115,10 +106,7 @@ def _evaluate_and_load_configs(args_dict=None):
             config_file=args_dict["calibration_file_sound"],
             default_dir=args_dict["config_dir"],
         )
-    # TODO: args_dict["serial_port_scale"]
-    # TODO: args_dict["serial_port_stage"]
 
-    # Load config/settings
     settings_subjects_all = (
         read_config(file=args_dict["config_file_subjects"])
         if args_dict["config_file_subjects"]
@@ -129,29 +117,19 @@ def _evaluate_and_load_configs(args_dict=None):
         if args_dict["config_file_task"]
         else {}
     )
-    # args_dict["settings.camera"] = (
-    #     read_config(file=args_dict["config_file_camera"])
-    #     if args_dict["config_file_camera"]
-    #     else {}
-    # )
-    # READ stage config
+
     args_dict["calibration_file_stage"] = (
         Path(args_dict["calibration_file_stage"]).expanduser().as_posix()
     )
     if Path(args_dict["calibration_file_stage"]).exists():
-        args_dict["settings.stage"] = yaml.full_load(
-            open(
-                args_dict["calibration_file_stage"], "r"
-            )  # fixme: move to yaml-config-loader AND fix for all configs to load based on file extension
-        )
+        with open(args_dict["calibration_file_stage"], "r") as _f:
+            args_dict["settings.stage"] = yaml.full_load(_f)
     else:
         args_dict["settings.stage"] = {}
 
-    # add to args
     args_dict["settings.subjects.all"] = settings_subjects_all
     args_dict["settings.task.default"] = settings_task_default
 
-    # Load new-style configs — silent no-op if YAML files absent, old flag path continues
     args_dict["setup_config"] = load_setup_config(
         config_dir=args_dict["config_dir"],
         setup_name=args_dict.get("setup", ""),
@@ -170,11 +148,8 @@ def evaluate_args(args_dict=None):
     :param args_dict: output of parser
     :return:
     """
-    # Add other metadata
     args_dict["host_name"] = get_host_name()
     args_dict["host_ip"] = get_host_ip()
-
-    # Back up original values
     args_dict["original"] = args_dict.copy()
 
     args_dict = _evaluate_log_level(args_dict=args_dict)
@@ -182,10 +157,8 @@ def evaluate_args(args_dict=None):
 
     args_dict = _evaluate_task(args_dict=args_dict)
     args_dict = _evaluate_metadata(args_dict=args_dict)
-
     args_dict = _evaluate_and_load_configs(args_dict=args_dict)
 
-    # TODO: refactor settings patching
     settings_subjects_all = args_dict["settings.subjects.all"]
     settings_task_default = args_dict["settings.task.default"]
 
@@ -197,7 +170,7 @@ def evaluate_args(args_dict=None):
         in_ini = subject in settings_subjects_all
         in_yaml = subject_config is not None
 
-        if not in_ini and not in_yaml:
+        if not in_ini and not in_yaml and subject != "_test_subject":
             if args_dict["debug"]:
                 args_dict["subject"] = "_test_subject"
                 logging.debug("Overwriting subject to _test_subject for debug mode")
@@ -219,7 +192,6 @@ def evaluate_args(args_dict=None):
     patched = dict(settings_task_default)
     task_name = args_dict.get("task", "")
 
-    # Layer 2: INI subject overrides
     settings_subjects_this = settings_subjects_all.get(args_dict["subject"], None)
     if settings_subjects_this:
         task_patch_ini = settings_subjects_this.get(task_name, {})
@@ -228,37 +200,32 @@ def evaluate_args(args_dict=None):
             if k != task_name and not isinstance(v, dict):
                 args_dict.setdefault("subject.metadata", {})[k] = v
 
-    # Layer 3: YAML SubjectConfig.task_overrides
     subject_config = args_dict.get("subject_config")
     if subject_config and task_name in subject_config.task_overrides:
         yaml_patch = subject_config.task_overrides[task_name]
         patched.update(yaml_patch)
-        logging.debug(
-            f"Subject YAML task_overrides for '{task_name}': {yaml_patch}"
-        )
+        logging.debug(f"Subject YAML task_overrides for '{task_name}': {yaml_patch}")
 
-    # Layer 4: CLI --task-settings KEY=VALUE overrides
-    cli_overrides = _parse_key_value_list(
-        args_dict.get("task_settings_overrides", [])
-    )
+    cli_overrides = _parse_key_value_list(args_dict.get("task_settings_overrides", []))
     patched.update(cli_overrides)
-
     if cli_overrides:
         logging.debug(f"CLI task-settings overrides applied: {cli_overrides}")
 
     if patched:
-        txt = json.dumps(patched, indent=4, sort_keys=True, default=str)
-        logging.debug(f"settings.task.patched for '{task_name}':\n{txt}")
+        logging.debug(
+            f"settings.task.patched for '{task_name}':\n"
+            + json.dumps(patched, indent=4, sort_keys=True, default=str)
+        )
 
-    # Inject CLI-level calibration file paths as lowest-priority defaults in patched settings
-    # Tasks read from settings.task.patched; override via -ts calibration_file_water=/path
-    for _cal_key in ("calibration_file_water", "calibration_file_sound", "calibration_file_stage"):
+    for _cal_key in ("calibration_file_water", "calibration_file_sound", "calibration_file_stage",
+                     "serial_port_stage", "serial_port_pulsepal", "serial_port_scale"):
         if _cal_key in args_dict and _cal_key not in patched:
             patched[_cal_key] = args_dict[_cal_key]
+    if "settings.stage" in args_dict and "settings.stage" not in patched:
+        patched["settings.stage"] = args_dict["settings.stage"]
 
     args_dict["settings.task.patched"] = patched
 
-    # Resolve bpod serial port from SetupConfig when available
     setup_config = args_dict.get("setup_config")
     if setup_config and "bpod" in setup_config.devices:
         try:
@@ -271,9 +238,8 @@ def evaluate_args(args_dict=None):
                 f"using CLI value {args_dict['serial_port_bpod']!r}"
             )
 
-    # Resolve camera config from SetupConfig when available and CLI path is absent/invalid
     if setup_config and setup_config.cameras:
-        cam_path = setup_config.cameras.get("config", "")
+        cam_path = setup_config.cameras.config
         if cam_path and (not args_dict.get("config_file_camera") or
                          not Path(args_dict.get("config_file_camera", "")).exists()):
             args_dict["config_file_camera"] = cam_path
@@ -285,6 +251,9 @@ def evaluate_args(args_dict=None):
         task_name=task_name,
         task_settings=patched,
     )
+
+    if args_dict.get("command") == "run":
+        preflight_hardware_check(args_dict)
 
     return args_dict
 

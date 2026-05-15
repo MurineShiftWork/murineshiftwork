@@ -219,7 +219,6 @@ class Task(TaskRunner):
                 calibration_stage_dict = yaml.full_load(f.read())
 
         # print("calibration_stage_dict:", calibration_stage_dict)
-        print(self.input_kwargs["metadata"])
         # for axis_name in ["x", "y", "z"]:
         #     try:
         #         axis_id = self.input_kwargs["metadata"].get(axis_name, None)

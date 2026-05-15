@@ -6,7 +6,7 @@ from typing import Optional
 
 import yaml
 
-from murineshiftwork.logic.config_models import SetupConfig, SubjectConfig, ValveCalibration
+from murineshiftwork.logic.config.models import SetupConfig, SubjectConfig, ValveCalibration
 
 
 def load_setup_config(config_dir: str | Path, setup_name: str) -> Optional[SetupConfig]:
@@ -19,7 +19,7 @@ def load_setup_config(config_dir: str | Path, setup_name: str) -> Optional[Setup
         return None
     path = Path(config_dir) / "setups" / f"{setup_name}.yaml"
     if not path.exists():
-        logging.debug(f"No setup config at {path} — using legacy flags")
+        logging.warning(f"Setup '{setup_name}' not found at {path} — bpod port from CLI arg only")
         return None
     with open(path) as f:
         data = yaml.safe_load(f)

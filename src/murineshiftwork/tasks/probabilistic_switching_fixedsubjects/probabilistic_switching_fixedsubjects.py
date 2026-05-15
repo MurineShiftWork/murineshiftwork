@@ -58,23 +58,6 @@ from murineshiftwork.tasks.probabilistic_switching_fixedsubjects.task_objects im
 class Task(TaskRunner):
     def run(self):
         task_settings = self.input_kwargs["settings.task.patched"]
-        task_settings["calibration_file_sound"] = self.input_kwargs[
-            "calibration_file_sound"
-        ]  # fixme: improve handing down args
-        task_settings["calibration_file_water"] = (
-            Path(
-                self.input_kwargs["calibration_file_water"]
-                or self.input_kwargs["original"]["calibration_file_water"]
-            )
-            .expanduser()
-            .as_posix()
-        )  # fixme: improve handing down args
-        task_settings["settings.stage"] = self.input_kwargs[
-            "settings.stage"
-        ]  # fixme: improve handing down args
-        task_settings["serial_port_stage"] = self.input_kwargs[
-            "serial_port_stage"
-        ]  # fixme: improve handing down args
 
         barcode_cfg = barcode_config_from_settings(task_settings)
         barcoder = BarcodeTTL(barcode_cfg)

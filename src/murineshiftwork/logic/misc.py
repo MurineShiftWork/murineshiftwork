@@ -28,12 +28,22 @@ def test_serial_port_is_accessible(port=None, baudrate=115200, timeout=1):
 
 
 def list_available_tasks(detailed=False):
-    import pkgutil
-    from murineshiftwork import tasks as msw_tasks
+    from pathlib import Path
+    import murineshiftwork.tasks as _tasks_pkg
+
+    tasks_dir = Path(_tasks_pkg.__path__[0]) if hasattr(_tasks_pkg, "__path__") else None
+    if tasks_dir is None or not tasks_dir.exists():
+        # Namespace-package fallback: locate via installed package file
+        import murineshiftwork
+        tasks_dir = Path(murineshiftwork.__file__).parent / "tasks"
 
     summary = {}
-    for module in pkgutil.iter_modules(msw_tasks.__path__):
-        summary[module.name] = module
+    for item in sorted(tasks_dir.iterdir()):
+        if item.is_dir() and not item.name.startswith("_") or (
+            item.is_dir() and item.name.startswith("_test_")
+        ):
+            if (item / f"{item.name}.py").exists():
+                summary[item.name] = item
 
     if detailed:
         return summary

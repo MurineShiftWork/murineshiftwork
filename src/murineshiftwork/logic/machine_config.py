@@ -23,6 +23,7 @@ from murineshiftwork import settings as _msws
 
 _MACHINE_CONFIG_FILE = Path.home() / ".murineshiftwork" / "msw_machine.yaml"
 _HISTORICAL_DEFAULT = Path("/mnt/maindata/msw_configs")
+_HISTORICAL_DATA_DEFAULT = Path("/mnt/maindata/data")
 _PACKAGE_DEFAULT = Path(_msws.__path__[0])
 
 
@@ -78,6 +79,33 @@ def write_machine_config(config_dir: str | Path, **extra_fields) -> None:
     with open(_MACHINE_CONFIG_FILE, "w") as f:
         yaml.dump(existing, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
     logging.info(f"Machine config written to {_MACHINE_CONFIG_FILE}")
+
+
+def resolve_data_dir(cli_override: str = "") -> str:
+    """Return the default data output directory, applying priority chain.
+
+    Priority (highest first):
+      1. --out-path CLI argument (passed as cli_override)
+      2. MSW_DATA_DIR environment variable
+      3. ~/.murineshiftwork/msw_machine.yaml ``data_dir`` key
+      4. /mnt/maindata/data (historical default, if it exists)
+      5. ~/data (fallback)
+    """
+    if cli_override and not cli_override.startswith("unknown_"):
+        return cli_override
+
+    env = os.environ.get("MSW_DATA_DIR", "").strip()
+    if env:
+        return env
+
+    mc = _load_machine_config()
+    if mc.get("data_dir"):
+        return str(mc["data_dir"])
+
+    if _HISTORICAL_DATA_DEFAULT.exists():
+        return str(_HISTORICAL_DATA_DEFAULT)
+
+    return str(Path.home() / "data")
 
 
 def read_machine_config() -> dict:

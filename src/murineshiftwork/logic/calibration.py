@@ -156,7 +156,7 @@ class CalibrationDataWater(CalibrationData):
                     data_for_valve["valve_opening_time"].tolist(),
                     data_for_valve["volume_ul"].tolist(),
                 ))
-                from murineshiftwork.logic.config_models import ValveCalibration
+                from murineshiftwork.logic.config import ValveCalibration
                 vc = ValveCalibration(points=[[m, u] for m, u in points])
                 calibration_targets[this_valve] = vc.ms_for_ul(target_volume) / s_to_ms
             return calibration_targets
@@ -192,7 +192,7 @@ class CalibrationDataWater(CalibrationData):
         Caller should run .validate() before writing to setup config.
         """
         from datetime import datetime
-        from murineshiftwork.logic.config_models import ValveCalibration
+        from murineshiftwork.logic.config import ValveCalibration
 
         df = self.calibration_data.copy()
         df = df[df["valve_id"] == valve_id].copy()

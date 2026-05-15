@@ -101,12 +101,10 @@ def run_task(**args_dict):
     msw run -s subject -t task
     msw run -s subject -t task -p serial_port
     """
+    import importlib
     task_name = args_dict["task"]
-    exec(
-        f"from murineshiftwork.tasks.{task_name}.{task_name} import run_task",
-        globals(),
-    )
-    run_task(**args_dict)
+    mod = importlib.import_module(f"murineshiftwork.tasks.{task_name}.{task_name}")
+    mod.run_task(**args_dict)
     logging.debug("Task finished.")
 
 
@@ -124,11 +122,20 @@ def run_init(**args_dict):
     for sub in ("setups", "subjects", "tasks", "device_configs/cameras"):
         (config_dir / sub).mkdir(parents=True, exist_ok=True)
 
-    write_machine_config(config_dir)
+    extra = {}
+    data_dir_arg = args_dict.get("data_dir", "")
+    if data_dir_arg:
+        data_dir = Path(data_dir_arg).expanduser().resolve()
+        data_dir.mkdir(parents=True, exist_ok=True)
+        extra["data_dir"] = str(data_dir)
 
+    write_machine_config(config_dir, **extra)
+
+    data_line = f"Data dir:   {extra.get('data_dir', '(not set — defaults to ~/data)')}\n" if extra.get("data_dir") else ""
     print_box(
         f"Initialised MSW on this machine.\n"
         f"Config dir: {config_dir}\n"
+        f"{data_line}"
         f"Machine config: {get_machine_config_path()}\n\n"
         f"Next steps:\n"
         f"  murineshiftwork setup create <setup_name>\n"

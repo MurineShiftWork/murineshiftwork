@@ -5,9 +5,9 @@ from pathlib import Path
 from textwrap import dedent
 
 from murineshiftwork import __version__
-from murineshiftwork.cli.evaluate import available_tasks
-from murineshiftwork.cli.evaluate import default_config_dir
-from murineshiftwork.cli.evaluate import default_out_path
+from murineshiftwork.cli.defaults import available_tasks
+from murineshiftwork.cli.defaults import default_config_dir
+from murineshiftwork.cli.defaults import default_out_path
 from murineshiftwork.cli.execute import run_init
 from murineshiftwork.cli.execute import run_register
 from murineshiftwork.cli.execute import run_setup
@@ -314,6 +314,13 @@ def make_subparser_init(sub_parsers):
         "config_dir",
         type=str,
         help="Path to the shared msw_configs directory (created if absent)",
+    )
+    p.add_argument(
+        "--data-dir",
+        type=str,
+        default="",
+        dest="data_dir",
+        help="Default output directory for session data (saved in msw_machine.yaml)",
     )
     p.add_argument("--force", action="store_true", default=False)
     p.set_defaults(func=run_init)

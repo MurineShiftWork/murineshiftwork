@@ -4,11 +4,11 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from threading import Thread
 
 import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
-from PyQt6.QtCore import QThread
 
 from murineshiftwork import __version__ as _msw_version
 from murineshiftwork import patch_logging_levels
@@ -36,35 +36,35 @@ def _get_git_commit() -> str:
         return ""
 
 
-class TaskRunner(QThread):
+class TaskRunner(Thread):
+    """Base class for task threads.
+
+    Subclass and override ``run()``.  Check ``self.continue_task`` in the run
+    loop so ``stop()`` can interrupt gracefully.  No Qt dependency — GUI layers
+    can wrap this in a QThread adapter if needed.
+    """
+
     bpod = None
     input_kwargs = None
     continue_task = True
 
     def __init__(self, bpod=None, **kwargs):
-        super(TaskRunner, self).__init__()
+        super().__init__(daemon=True)
         self.bpod = bpod
         self.input_kwargs = kwargs
         self.prepare()
 
     def prepare(self):
-        """Do long loading / computation task here, before starting the task.
-        Use input kwargs to e.g. start video, load task settings, make task objects, GUI, etc.
-        """
+        """Override for setup work before the task starts (load settings, open video, etc.)."""
         logging.debug("No 'TaskRunner.prepare()' implementation.")
 
     def run(self) -> None:
-        """Run the main task logic:
-
-        (1) Make task objects here or in `prepare()`
-        (2) Run task (while loop contingent on `self.continue_task` and any task-specific conditions)
-        (3) Shutdown / clean up
+        """Override with task loop logic.
 
         trial_index = 0
         max_trials = 1500
         while self.continue_task and trial_index < max_trials:
-            time.sleep(2)
-
+            ...
         """
         raise NotImplementedError(
             "This function has to get re-implemented in child classes."
@@ -240,18 +240,17 @@ class TaskProcess(object):
 
     def init_task(self):
         """Import specific Task and make self.task_runner Thread."""
+        import importlib
         try:
-            exec(
-                f"from murineshiftwork.tasks.{self.task_name}.{self.task_name} import Task as ThisTask",
-                globals(),
+            mod = importlib.import_module(
+                f"murineshiftwork.tasks.{self.task_name}.{self.task_name}"
             )
-            exec(
-                "self.task_runner = ThisTask(bpod=self.bpod, **self.input_kwargs)"
-            )
-        except ImportError:
+            TaskClass = getattr(mod, "Task")
+        except (ImportError, AttributeError) as exc:
             raise ImportError(
-                f"Cannot import 'Task' from task '{self.task_name}'"
+                f"Cannot import 'Task' from task '{self.task_name}': {exc}"
             )
+        self.task_runner = TaskClass(bpod=self.bpod, **self.input_kwargs)
 
     def run_task(self):
         """Run the Task thread."""
@@ -259,7 +258,7 @@ class TaskProcess(object):
         time.sleep(0.1)
 
     def is_running(self):
-        return self.task_runner.isRunning()
+        return self.task_runner.is_alive()
 
     def stop_task(self):
         if self.task_runner is not None:
