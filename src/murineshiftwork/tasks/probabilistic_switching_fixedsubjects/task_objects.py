@@ -91,7 +91,7 @@ class TaskControl(object):
     last_stop = 0
     last_forced_choice = 0
 
-    def __init__(self, bpod=None, save_path_data=None, task_settings=None, barcoder=None):
+    def __init__(self, bpod=None, save_path_data=None, task_settings=None, barcoder=None, execution_config=None):
         super(TaskControl, self).__init__()
 
         if not bpod:
@@ -135,13 +135,20 @@ class TaskControl(object):
             file_path=task_settings["calibration_file_water"]
         )
 
-        self.valve_times_dict = (
-            self.calibration_water.water_volume_to_valve_time(
-                valves=self.task_settings["HARDWARE_VALVES_FOR_WATER"],
-                target_volume=float(self.task_settings["reward_amount_ul"]),
-                s_to_ms=1,
-            )
+        valves = self.task_settings["HARDWARE_VALVES_FOR_WATER"]
+        target_vol = float(self.task_settings["reward_amount_ul"])
+        self.valve_times_dict = self.calibration_water.water_volume_to_valve_time(
+            valves=valves,
+            target_volume=target_vol,
+            s_to_ms=1,
         )
+        if self.valve_times_dict is None and execution_config and execution_config.setup:
+            setup = execution_config.setup
+            self.valve_times_dict = {
+                v: setup.valve_ms_for_ul(v, target_vol)
+                for v in valves
+            }
+            logging.info("Valve times from SetupConfig (no water calibration CSV)")
         logging.info(
             f"VALVES: {self.valve_times_dict} "
             f"FOR {self.task_settings['reward_amount_ul']} "
@@ -207,11 +214,17 @@ class TaskControl(object):
         )
 
         if softcode == self.MOVE_TO_FRONT:
-            logging.debug("MOVING TO FRONT")
-            self.stage.move_to_known_position("front")
+            logging.info("Stage: moving to front")
+            try:
+                self.stage.move_to_known_position("front")
+            except Exception as exc:
+                logging.error(f"Stage move_to_front failed: {exc}", exc_info=True)
         if softcode == self.MOVE_TO_BACK:
-            logging.debug("MOVING TO BACK")
-            self.stage.move_to_known_position("back")
+            logging.info("Stage: moving to back")
+            try:
+                self.stage.move_to_known_position("back")
+            except Exception as exc:
+                logging.error(f"Stage move_to_back failed: {exc}", exc_info=True)
 
     def switch_block(self):
         logging.debug("Resetting block.")
@@ -718,20 +731,12 @@ class TaskControl(object):
             + [("SoftCode", self.MOVE_TO_FRONT)],
         )
 
-        if self.task_settings["lick_detection_events"] == "ports":
-            state_change_conditions_lick = {
-                Bpod.Events.Port1In: "choice_left",
-                Bpod.Events.Port3In: "choice_right",
-            }
-        elif self.task_settings["lick_detection_events"] == "bnc":
-            state_change_conditions_lick = {
-                Bpod.Events.BNC1Low: "choice_left",
-                Bpod.Events.BNC2Low: "choice_right",
-            }
-        else:
-            raise ValueError(f"Unknown option for 'lick_detection_events': "
-                             f"{self.task_settings['lick_detection_events']}"
-                             )
+        lick_event_left = self.task_settings.get("LICK_EVENT_LEFT", "Port1In")
+        lick_event_right = self.task_settings.get("LICK_EVENT_RIGHT", "Port3In")
+        state_change_conditions_lick = {
+            getattr(Bpod.Events, lick_event_left): "choice_left",
+            getattr(Bpod.Events, lick_event_right): "choice_right",
+        }
 
         state_change_conditions_lick.update({Bpod.Events.Tup: "final"})
 
@@ -842,15 +847,16 @@ class TaskControl(object):
         )
         # Cleanup — transitions to barcode_start (ITI barcode) or plain iti if no barcoder
         iti_entry = BARCODE_FIRST_STATE_NAME if self.barcoder is not None else "iti"
+        lick_out_left = lick_event_left.replace("In", "Out").replace("Low", "High")
+        lick_out_right = lick_event_right.replace("In", "Out").replace("Low", "High")
+        final_exits = {Bpod.Events.Tup: iti_entry}
+        for out_ev in (lick_out_left, lick_out_right):
+            if hasattr(Bpod.Events, out_ev):
+                final_exits[getattr(Bpod.Events, out_ev)] = iti_entry
         sma.add_state(
             state_name="final",
             state_timer=self.task_settings["state_duration_final"],
-            state_change_conditions={
-                Bpod.Events.Port1Out: iti_entry,
-                Bpod.Events.Port2Out: iti_entry,
-                Bpod.Events.Port3Out: iti_entry,
-                Bpod.Events.Tup: iti_entry,
-            },
+            state_change_conditions=final_exits,
             output_actions=[] + [("SoftCode", self.MOVE_TO_BACK)],
         )
         ITI = self.task_settings.get("inter_trial_interval")

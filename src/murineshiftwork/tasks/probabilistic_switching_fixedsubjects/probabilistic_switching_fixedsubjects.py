@@ -63,7 +63,12 @@ class Task(TaskRunner):
         barcoder = BarcodeTTL(barcode_cfg)
         bnc_channel = eval(f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}")
 
-        task_control = TaskControl(bpod=self.bpod, task_settings=task_settings, barcoder=barcoder)
+        task_control = TaskControl(
+            bpod=self.bpod,
+            task_settings=task_settings,
+            barcoder=barcoder,
+            execution_config=self.input_kwargs.get("execution_config"),
+        )
         self.bpod.softcode_handler_function = task_control.softcode_handler
 
         trial_index = 0

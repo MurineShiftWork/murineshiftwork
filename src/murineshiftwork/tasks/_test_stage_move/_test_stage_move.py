@@ -88,7 +88,6 @@ class Task(TaskRunner):
             lower=True,
             delay_second_char=0.1,
         )
-        ctrl.disconnect()
 
 
 def run_task(**kwargs):

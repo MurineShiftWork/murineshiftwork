@@ -46,7 +46,6 @@ delay_until_side_timeout_for_stopping: 1.5
 state_duration_final: 1
 reward_amount_ul: 2.0
 reward_delay: 0
-lick_detection_events: ports
 use_stop_trials: false
 stop_trial_proportion: 0.2
 stop_trial_delay_initial: 0.035
@@ -71,6 +70,8 @@ HARDWARE_BNC_TRIAL_START: 1
 HARDWARE_BNC_STIMULATION: 2
 HARDWARE_PULSEPAL_TRIGGER_CHANNEL: 1
 HARDWARE_PULSEPAL_OUTPUT_CHANNEL: 1
+LICK_EVENT_LEFT: Port1In
+LICK_EVENT_RIGHT: Port3In
 HARDWARE_PORT_LIGHT_INTENSITY: 50
 HARDWARE_PORT_LIGHT_PORTS:
 - center
