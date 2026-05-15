@@ -7,6 +7,7 @@ from murineshiftwork.logic.config import SubjectConfig, SetupConfig, ValveCalibr
 from murineshiftwork.logic.config import (
     load_setup_config,
     load_subject_config,
+    save_subject_task_stage_position,
     update_valve_calibration,
 )
 
@@ -159,3 +160,67 @@ def test_update_valve_calibration_preserves_other_fields(tmp_path):
     # Existing valve 3 and bpod device must be preserved
     assert "3" in raw["calibrations"]["bpod_valve"]
     assert "bpod" in raw["devices"]
+
+
+# ---------------------------------------------------------------------------
+# save_subject_task_stage_position
+
+def test_save_subject_task_stage_position_creates_file(tmp_path):
+    save_subject_task_stage_position(
+        tmp_path, "t001", "probabilistic_switching_fixedsubjects", "mouse_t001"
+    )
+    path = tmp_path / "subjects" / "t001.yaml"
+    assert path.exists()
+
+    with open(path) as f:
+        raw = yaml.safe_load(f)
+    overrides = raw["task_overrides"]["probabilistic_switching_fixedsubjects"]
+    assert overrides["stage_position"] == "mouse_t001"
+
+
+def test_save_subject_task_stage_position_merge_does_not_overwrite(tmp_path):
+    # First call
+    save_subject_task_stage_position(
+        tmp_path, "t001", "probabilistic_switching_fixedsubjects", "mouse_t001"
+    )
+    # Second call with a different task — must not overwrite first entry
+    save_subject_task_stage_position(
+        tmp_path, "t001", "sequence_automated", "mouse_t001_seq"
+    )
+
+    path = tmp_path / "subjects" / "t001.yaml"
+    with open(path) as f:
+        raw = yaml.safe_load(f)
+
+    assert raw["task_overrides"]["probabilistic_switching_fixedsubjects"]["stage_position"] == "mouse_t001"
+    assert raw["task_overrides"]["sequence_automated"]["stage_position"] == "mouse_t001_seq"
+
+
+def test_save_subject_task_stage_position_overwrites_position_in_same_task(tmp_path):
+    save_subject_task_stage_position(tmp_path, "t001", "task_a", "old_pos")
+    save_subject_task_stage_position(tmp_path, "t001", "task_a", "new_pos")
+
+    path = tmp_path / "subjects" / "t001.yaml"
+    with open(path) as f:
+        raw = yaml.safe_load(f)
+    assert raw["task_overrides"]["task_a"]["stage_position"] == "new_pos"
+
+
+def test_save_subject_task_stage_position_preserves_other_task_override_keys(tmp_path):
+    (tmp_path / "subjects").mkdir()
+    path = tmp_path / "subjects" / "t001.yaml"
+    existing = {
+        "name": "t001",
+        "task_overrides": {
+            "task_a": {"VALVE_OPENING_TIME_MS": 70, "stage_position": "old_pos"}
+        },
+    }
+    path.write_text(yaml.dump(existing))
+
+    save_subject_task_stage_position(tmp_path, "t001", "task_a", "new_pos")
+
+    with open(path) as f:
+        raw = yaml.safe_load(f)
+    # stage_position updated, other key preserved
+    assert raw["task_overrides"]["task_a"]["stage_position"] == "new_pos"
+    assert raw["task_overrides"]["task_a"]["VALVE_OPENING_TIME_MS"] == 70

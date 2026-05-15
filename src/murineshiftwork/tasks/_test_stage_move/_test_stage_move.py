@@ -1,13 +1,15 @@
 import logging
 import time
+from pathlib import Path
 
+import yaml
 from sshkeyboard import listen_keyboard
 from sshkeyboard import stop_listening
-from stage_controller.move_interface import MoveInterface
+from one_axis_stage.interface import MoveInterface
+from one_axis_stage.controller import StageController
 
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner
-from tests.stage_config import config_for_all_stages
 
 
 class KeyHandler:
@@ -23,98 +25,69 @@ class KeyHandler:
     def set_speed(self, key=None):
         if key in "-_":
             self.speed_mode = "slow"
-
         elif key in "=+":
             self.speed_mode = "fast"
-
-        print(f"Speed mode switched to {self.speed_mode}")
+        print(f"Speed mode: {self.speed_mode}")
 
     def move_xy(self, key=None):
         if key == "w":
-            if self.slow():
-                self.move_interface.ym()
-            else:
-                self.move_interface.ymm()
+            self.move_interface.ym() if self.slow() else self.move_interface.ymm()
         elif key == "a":
-            if self.slow():
-                self.move_interface.xp()
-            else:
-                self.move_interface.xpp()
+            self.move_interface.xp() if self.slow() else self.move_interface.xpp()
         elif key == "s":
-            if self.slow():
-                self.move_interface.yp()
-            else:
-                self.move_interface.ypp()
+            self.move_interface.yp() if self.slow() else self.move_interface.ypp()
         elif key == "d":
-            if self.slow():
-                self.move_interface.xm()
-            else:
-                self.move_interface.xmm()
+            self.move_interface.xm() if self.slow() else self.move_interface.xmm()
 
     def move_z(self, key=None):
         if key == "up":
-            if self.slow():
-                self.move_interface.zp()
-            else:
-                self.move_interface.zpp()
+            self.move_interface.zp() if self.slow() else self.move_interface.zpp()
         elif key == "down":
-            if self.slow():
-                self.move_interface.zm()
-            else:
-                self.move_interface.zmm()
+            self.move_interface.zm() if self.slow() else self.move_interface.zmm()
 
     def press(self, key):
         print(f"KEY: {key}")
-
         if key in ["-", "_", "=", "+"]:
             self.set_speed(key=key)
-
         elif key in ["w", "a", "s", "d"]:
             self.move_xy(key=key)
-
         elif key in ["up", "down"]:
             self.move_z(key=key)
-
-        elif key == "n":
-            name = input("Position name:\t")
-            print(name)
-            pass  # TODO: save position as known. ask a name for new position
-
         elif key == "p":
             print(self.move_interface)
-
         elif key == "enter":
-            # todo: save config (including new known positions) to file for use with Task
             stop_listening()
-
         else:
-            print("-> Key not actionable. Exit protocol by pressing 'enter'")
+            print("-> Not actionable. Press 'enter' to exit.")
 
 
 class Task(TaskRunner):
     def run(self):
-        axes_names = tuple(
-            config_for_all_stages["stage_tower_setup_1"].get("axes").keys()
-        )
-        # serial_port = "/dev/ttyUSB0"
-        serial_port = self.input_kwargs.get("serial_port_stage")
-        stage_config = config_for_all_stages["stage_tower_setup_1"]
+        s = self.input_kwargs.get("settings.task.patched", {})
+        serial_port_stage = self.input_kwargs.get("serial_port_stage", "")
+        calibration_file_stage = Path(
+            s.get("calibration_file_stage", "")
+        ).expanduser()
 
-        move_interface = MoveInterface(
-            axes_names=axes_names,
-            serial_port=serial_port,
-            stage_config=stage_config,
-        )
+        if not calibration_file_stage.exists():
+            logging.error(f"Stage calibration file not found: {calibration_file_stage}")
+            return
 
-        kh = KeyHandler(move_interface=move_interface)
+        with open(calibration_file_stage) as f:
+            config = yaml.safe_load(f)
+        config["connection"]["serial_port"] = serial_port_stage
+
+        ctrl = StageController.from_config(config)
+        move_interface = MoveInterface(ctrl, small_increment=20, large_increment=40)
 
         print("\n\tREADY FOR INPUTS !\n")
         listen_keyboard(
-            on_press=kh.press,
+            on_press=KeyHandler(move_interface=move_interface).press,
             sequential=True,
             lower=True,
             delay_second_char=0.1,
         )
+        ctrl.disconnect()
 
 
 def run_task(**kwargs):

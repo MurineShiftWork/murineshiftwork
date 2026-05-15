@@ -97,8 +97,8 @@ def add_args_for_general_use(parser=None):
         "-cs",
         "--config-file-subjects",
         type=str,
-        default="subject.settings",
-        help="Settings file name or path.",
+        default="",
+        help="Settings file name or path (legacy INI; no longer used by default).",
     )
     config_arg_group.add_argument(
         "-ct",

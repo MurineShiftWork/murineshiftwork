@@ -8,7 +8,6 @@ Priority for config_dir resolution (highest wins):
   2. MSW_CONFIG_DIR environment variable
   3. ~/.murineshiftwork/msw_machine.yaml `config_dir` key
   4. /mnt/maindata/msw_configs (historical default, if it exists)
-  5. Package settings directory (fallback)
 """
 from __future__ import annotations
 
@@ -22,7 +21,6 @@ import yaml
 _MACHINE_CONFIG_FILE = Path.home() / ".murineshiftwork" / "msw_machine.yaml"
 _HISTORICAL_DEFAULT = Path("/mnt/maindata/msw_configs")
 _HISTORICAL_DATA_DEFAULT = Path("/mnt/maindata/data")
-_PACKAGE_DEFAULT = Path(__file__).parent.parent / "settings"
 
 
 def _load_machine_config() -> dict:
@@ -59,8 +57,7 @@ def resolve_config_dir(cli_override: str = "") -> str:
     if _HISTORICAL_DEFAULT.exists():
         return str(_HISTORICAL_DEFAULT)
 
-    # 5. Package fallback
-    return str(_PACKAGE_DEFAULT)
+    return ""
 
 
 def write_machine_config(config_dir: str | Path, **extra_fields) -> None:

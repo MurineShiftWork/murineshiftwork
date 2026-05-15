@@ -85,6 +85,45 @@ def update_valve_calibration(
     return True
 
 
+def save_subject_task_stage_position(
+    config_dir: str | Path,
+    subject_name: str,
+    task_name: str,
+    position_name: str,
+) -> None:
+    """Write stage_position into subject's task_overrides for the given task.
+
+    Creates the subjects YAML file if it doesn't exist.
+    Merges into existing task_overrides without overwriting other keys.
+    """
+    subjects_dir = Path(config_dir) / "subjects"
+    subjects_dir.mkdir(parents=True, exist_ok=True)
+    path = subjects_dir / f"{subject_name}.yaml"
+
+    if path.exists():
+        with open(path) as f:
+            raw = yaml.safe_load(f) or {}
+    else:
+        raw = {
+            "name": subject_name,
+            "registered": "",
+            "project": "",
+            "experiment": "",
+            "comment": "",
+            "aliases": [],
+            "task_overrides": {},
+        }
+
+    raw.setdefault("task_overrides", {}).setdefault(task_name, {})["stage_position"] = position_name
+
+    with open(path, "w") as f:
+        yaml.dump(raw, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+    logging.info(
+        f"Saved stage_position '{position_name}' for subject '{subject_name}', task '{task_name}' → {path}"
+    )
+
+
 def load_subject_config(config_dir: str | Path, subject_name: str) -> Optional[SubjectConfig]:
     """Load SubjectConfig from {config_dir}/subjects/{subject_name}.yaml.
 

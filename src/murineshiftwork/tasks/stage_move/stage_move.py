@@ -1,10 +1,8 @@
 import logging
-import shutil
 import socket
 import time
 from pathlib import Path
 
-import numpy as np
 import yaml
 from sshkeyboard import listen_keyboard
 from sshkeyboard import stop_listening
@@ -162,10 +160,10 @@ class KeyHandler:
 
         # SET KNOWN
         elif key == "n":
-            # known_position_names = list(self.move_interface.known_positions.keys())
-            new_name = f"new_position_{np.random.randint()}"
-            self.move_interface.save_position_as_known(position_name=new_name)
-            print(self.move_interface.known_positions)
+            import datetime
+            name = datetime.datetime.now().strftime("pos_%Y%m%d_%H%M%S")
+            self.move_interface.save_position_as_known(position_name=name)
+            print(f"Saved current position as '{name}': {self.move_interface.known_positions.get(name)}")
 
         # SHOW CONFIG
         elif key == "space":
@@ -208,11 +206,6 @@ class Task(TaskRunner):
         ).expanduser()
         print(f"calibration_file_stage: {calibration_file_stage}")
         if not Path(calibration_file_stage).exists():
-            # from murineshiftwork import settings
-            #
-            # default_file = Path(settings.__path__[0]) / "calibration.stage.default.yaml"
-            # shutil.copyfile(default_file, calibration_file_stage)
-            # print(f"COPIED FILE: {default_file} TO {calibration_file_stage}")
             calibration_stage_dict = DEFAULT_CONFIG
         else:
             with open(calibration_file_stage, "r") as f:

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from murineshiftwork.logic.config import write_config
+from murineshiftwork.logic.config import load_subject_config
 from murineshiftwork.logic.machine_config import (
     get_machine_config_path,
     read_machine_config,
@@ -15,62 +15,62 @@ from murineshiftwork.logic.misc import print_box
 
 
 def run_register(**args_dict):
-    """ """
+    """Legacy 'register' subcommand — delegates to YAML-based subject management."""
     option = args_dict["subcommand"]
     subject = args_dict["subject"]
-    subject_settings_all = args_dict["settings.subjects.all"]
-    config_file_subjects = args_dict["config_file_subjects"]
+    config_dir = Path(resolve_config_dir(args_dict.get("config_dir", "")))
+    subjects_dir = config_dir / "subjects"
+    subjects_dir.mkdir(parents=True, exist_ok=True)
     data_folder = Path(args_dict["out_path"])
 
-    if "add" in option:
-        if (
-            not args_dict["subject"] in args_dict["settings.subjects.all"]
-            and Path(args_dict["config_file_subjects"]).exists()
-        ):
-            updated_settings = args_dict["settings.subjects.all"]
-            if args_dict.get("task", ""):
-                new_dict = {args_dict.get("task"): {}}
-            else:
-                new_dict = {}
+    subject_path = subjects_dir / f"{subject}.yaml"
 
-            updated_settings[args_dict["subject"]] = new_dict
-            write_config(
-                in_dict=updated_settings, save_path=config_file_subjects
-            )
-            print_box(f"Added subject '{subject}' to subject.settings.")
-        else:
+    if "add" in option:
+        if subject_path.exists() and not args_dict.get("force", False):
+            existing = load_subject_config(config_dir, subject)
             print_box(
-                f"Subject '{subject}' already exists with settings:\n"
-                f"{json.dumps(args_dict['settings.subjects.all'][subject], indent=4, sort_keys=True)}"
+                f"Subject '{subject}' already exists at {subject_path}.\n"
+                f"task_overrides: {json.dumps(existing.task_overrides if existing else {}, indent=4, sort_keys=True)}"
             )
+        else:
+            data = {
+                "name": subject,
+                "registered": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
+                "project": args_dict.get("project", ""),
+                "experiment": args_dict.get("experiment", ""),
+                "comment": args_dict.get("comment", ""),
+                "aliases": [],
+                "task_overrides": {args_dict["task"]: {}} if args_dict.get("task") else {},
+            }
+            with open(subject_path, "w") as f:
+                yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            print_box(f"Registered subject '{subject}' at {subject_path}.")
 
     elif "remove" in option:
-        if subject in subject_settings_all:
-            subject_settings_all.pop(subject)
-
-            write_config(
-                in_dict=subject_settings_all, save_path=config_file_subjects
-            )
-            print_box(f"Removed subject '{subject}' from subject.settings.")
+        if subject_path.exists():
+            subject_path.unlink()
+            print_box(f"Removed subject '{subject}' (deleted {subject_path}).")
         else:
-            print_box(f"Subject '{subject}' does NOT exist.")
+            print_box(f"Subject '{subject}' does NOT exist at {subject_path}.")
 
     elif "rename" in option:
-        if subject in subject_settings_all.keys():
+        if subject_path.exists():
             new_alias = args_dict["new_alias"]
-            if new_alias in subject_settings_all.keys():
+            new_path = subjects_dir / f"{new_alias}.yaml"
+            if new_path.exists():
                 print_box(
-                    f"New subject alias '{new_alias}' already exists. Cannot rename subject '{subject}'."
+                    f"New subject alias '{new_alias}' already exists at {new_path}. Cannot rename '{subject}'."
                 )
                 return
 
-            subject_settings_all[new_alias] = subject_settings_all.pop(subject)
-            write_config(
-                in_dict=subject_settings_all, save_path=config_file_subjects
-            )
-            print_box(
-                f"Renamed subject '{subject}' to '{new_alias}' in subject.settings."
-            )
+            subject_path.rename(new_path)
+            # Update the 'name' field inside the YAML to match
+            with open(new_path) as f:
+                raw = yaml.safe_load(f) or {}
+            raw["name"] = new_alias
+            with open(new_path, "w") as f:
+                yaml.dump(raw, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            print_box(f"Renamed subject '{subject}' to '{new_alias}'.")
 
             if args_dict["move_data"]:
                 old = data_folder / subject
@@ -79,21 +79,55 @@ def run_register(**args_dict):
                     old.rename(new)
                     if not new.exists():
                         raise FileNotFoundError(
-                            f"Cannot see new folder {str(new)}, but old one does {'' if old.exists() else 'NOT'} exists at {str(old)}"
+                            f"Cannot see new folder {str(new)}, but old folder {'' if old.exists() else 'NOT '}exists at {str(old)}"
                         )
                     else:
-                        print_box(
-                            f"Moved subject '{subject}' data to {str(new)}."
-                        )
+                        print_box(f"Moved subject '{subject}' data to {str(new)}.")
                 else:
                     print_box(f"No data to move for subject '{subject}'.")
         else:
-            print_box(f"Subject '{subject}' does NOT exist.")
+            print_box(f"Subject '{subject}' does NOT exist at {subject_path}.")
 
     else:
         raise ValueError(f"Unknown option '{option}'")
 
     logging.debug("Registration operations completed.")
+
+
+def _apply_stage_position(args_dict: dict) -> None:
+    """Move stage to the named position from task settings before task starts."""
+    patched = args_dict.get("settings.task.patched", {})
+    position_name = patched.get("stage_position")
+    serial_port_stage = args_dict.get("serial_port_stage", "")
+    if not position_name or not serial_port_stage:
+        return
+
+    calib_path = Path(patched.get("calibration_file_stage", "")).expanduser()
+    if not calib_path.exists():
+        logging.warning(
+            f"stage_position '{position_name}' set but calibration file not found: {calib_path}"
+        )
+        return
+
+    from one_axis_stage.controller import StageController
+    with open(calib_path) as f:
+        config = yaml.safe_load(f)
+    config["connection"]["serial_port"] = serial_port_stage
+    known = config.get("known_positions", {})
+    if position_name not in known:
+        logging.warning(
+            f"stage_position '{position_name}' not in known_positions of {calib_path.name}"
+        )
+        return
+
+    ctrl = StageController.from_config(config)
+    target = known[position_name]
+    for axis_name, axis_cfg in target.items():
+        axis = ctrl.axes.get(axis_name)
+        if axis is not None and hasattr(axis, "move_to"):
+            axis.move_to(**axis_cfg)
+    ctrl.disconnect()
+    logging.info(f"Stage moved to position '{position_name}'")
 
 
 def run_task(**args_dict):
@@ -102,6 +136,7 @@ def run_task(**args_dict):
     msw run -s subject -t task -p serial_port
     """
     import importlib
+    _apply_stage_position(args_dict)
     task_name = args_dict["task"]
     mod = importlib.import_module(f"murineshiftwork.tasks.{task_name}.{task_name}")
     mod.run_task(**args_dict)

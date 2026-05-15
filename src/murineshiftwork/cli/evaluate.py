@@ -107,11 +107,6 @@ def _evaluate_and_load_configs(args_dict=None):
             default_dir=args_dict["config_dir"],
         )
 
-    settings_subjects_all = (
-        read_config(file=args_dict["config_file_subjects"])
-        if args_dict["config_file_subjects"]
-        else {}
-    )
     settings_task_default = (
         read_config(file=args_dict["config_file_task"])
         if args_dict["config_file_task"]
@@ -127,7 +122,6 @@ def _evaluate_and_load_configs(args_dict=None):
     else:
         args_dict["settings.stage"] = {}
 
-    args_dict["settings.subjects.all"] = settings_subjects_all
     args_dict["settings.task.default"] = settings_task_default
 
     args_dict["setup_config"] = load_setup_config(
@@ -159,7 +153,6 @@ def evaluate_args(args_dict=None):
     args_dict = _evaluate_metadata(args_dict=args_dict)
     args_dict = _evaluate_and_load_configs(args_dict=args_dict)
 
-    settings_subjects_all = args_dict["settings.subjects.all"]
     settings_task_default = args_dict["settings.task.default"]
 
     if args_dict["command"] == "register":
@@ -167,38 +160,28 @@ def evaluate_args(args_dict=None):
     elif args_dict["command"] == "run":
         subject = args_dict["subject"]
         subject_config = args_dict.get("subject_config")
-        in_ini = subject in settings_subjects_all
         in_yaml = subject_config is not None
 
-        if not in_ini and not in_yaml and subject != "_test_subject":
+        if not in_yaml and subject != "_test_subject":
             if args_dict["debug"]:
                 args_dict["subject"] = "_test_subject"
                 logging.debug("Overwriting subject to _test_subject for debug mode")
             else:
                 raise ValueError(
-                    f"\n\n\tUnknown subject '{subject}'. Not found in subject.settings nor in "
+                    f"\n\n\tUnknown subject '{subject}'. Not found in "
                     f"{args_dict['config_dir']}/subjects/. "
-                    f"Register first: murineshiftwork register add -s {subject}\n"
+                    f"Register first: murineshiftwork subject add -s {subject}\n"
                 )
     else:
         raise ValueError(f"Unknown command: '{args_dict['command']}'")
 
     # Build settings.task.patched — priority (lowest → highest):
-    #   1. task.settings INI defaults
-    #   2. subject INI task-specific overrides
-    #   3. SubjectConfig.task_overrides (YAML)
-    #   4. CLI --task-settings KEY=VALUE
+    #   1. task.yaml defaults
+    #   2. SubjectConfig.task_overrides (YAML)
+    #   3. CLI --task-settings KEY=VALUE
 
     patched = dict(settings_task_default)
     task_name = args_dict.get("task", "")
-
-    settings_subjects_this = settings_subjects_all.get(args_dict["subject"], None)
-    if settings_subjects_this:
-        task_patch_ini = settings_subjects_this.get(task_name, {})
-        patched.update(task_patch_ini)
-        for k, v in settings_subjects_this.items():
-            if k != task_name and not isinstance(v, dict):
-                args_dict.setdefault("subject.metadata", {})[k] = v
 
     subject_config = args_dict.get("subject_config")
     if subject_config and task_name in subject_config.task_overrides:
