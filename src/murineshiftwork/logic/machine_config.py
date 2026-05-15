@@ -19,12 +19,10 @@ from typing import Optional
 
 import yaml
 
-from murineshiftwork import settings as _msws
-
 _MACHINE_CONFIG_FILE = Path.home() / ".murineshiftwork" / "msw_machine.yaml"
 _HISTORICAL_DEFAULT = Path("/mnt/maindata/msw_configs")
 _HISTORICAL_DATA_DEFAULT = Path("/mnt/maindata/data")
-_PACKAGE_DEFAULT = Path(_msws.__path__[0])
+_PACKAGE_DEFAULT = Path(__file__).parent.parent / "settings"
 
 
 def _load_machine_config() -> dict:

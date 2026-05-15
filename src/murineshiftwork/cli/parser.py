@@ -104,7 +104,7 @@ def add_args_for_general_use(parser=None):
         "-ct",
         "--config-file-task",
         type=str,
-        default="task.settings",
+        default="task.yaml",
         help="Settings file name or path.",
     )
     config_arg_group.add_argument(

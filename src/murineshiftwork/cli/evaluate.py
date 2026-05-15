@@ -97,7 +97,7 @@ def _evaluate_and_load_configs(args_dict=None):
         config_file=args_dict["config_file_camera"],
         default_dir=args_dict["config_dir"],
     )
-    if "calibrate" not in args_dict["task"]:
+    if not args_dict["task"].startswith("_calibration"):
         args_dict["calibration_file_water"] = validate_config_file_path(
             config_file=args_dict["calibration_file_water"],
             default_dir=args_dict["config_dir"],

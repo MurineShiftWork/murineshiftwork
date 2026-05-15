@@ -7,27 +7,27 @@ Central planning document. Active items only; completed work is in git history a
 ## In progress / next sprint
 
 ### Named task config presets (stages / modes)
-Each task can define named preset groups in its `task.settings` (or a sidecar YAML).
+Each task can define named preset groups in its `task.yaml` as top-level keys containing dicts.
 Selecting a preset by name applies a batch of overrides — no per-param `-ts` juggling.
 
 Proposed design:
-```ini
-# task.settings
-[stage_100_100]
-REWARD_PROB_LEFT = 1.0
-REWARD_PROB_RIGHT = 1.0
+```yaml
+# task.yaml
+stage_100_100:
+  REWARD_PROB_LEFT: 1.0
+  REWARD_PROB_RIGHT: 1.0
 
-[stage_90_10]
-REWARD_PROB_LEFT = 0.9
-REWARD_PROB_RIGHT = 0.1
+stage_90_10:
+  REWARD_PROB_LEFT: 0.9
+  REWARD_PROB_RIGHT: 0.1
 ```
 CLI: `msw run -t probabilistic_switching -s mouse01 --stage stage_90_10`
 Subject YAML can also pin a preset: `task_overrides: {probabilistic_switching: {stage: stage_90_10}}`
 
-Layer in the existing settings patch priority: presets apply between INI defaults and subject overrides.
+Layer in the existing settings patch priority: presets apply between YAML defaults and subject overrides.
 
 ### Controller / hardware-injection layer
-- `TaskProcess` now accepts `bpod=` (injected `RobustBpodSession`) — done
+- `TaskProcess` now accepts `bpod=` (injected `BpodFactory`) — done
 - Next: `ControllerSession` that owns all hardware handles (Bpod, PulsePal, Stage) across the
   session and passes them to `TaskProcess`
 - Enables: start/stop without reconnecting hardware, multi-task sessions, CLI and web UI
@@ -43,16 +43,15 @@ Layer in the existing settings patch priority: presets apply between INI default
 ## Pending items
 
 ### Task cleanup
-- `_calibration_stage_tower` (done: was `calibrate_stage_tower`) — possibly further rename
-  to `_calibration_stage_move` to clarify it does not run bpod acquisition; `_test_stage_tower`
-  would follow accordingly
 - `homecage_sleep` and `sleep_with_physiology` — both wrap `periodic_trigger_with_video` with
   fixed parameters; consolidate once named-preset feature is done
 - `_test_pyqtgraph_app`, `_test_open_ephys_remote` — remove or move to playground/
 
-### Config migration
-- Remove `configobj` dependency; migrate task.settings INI files → YAML with same key names
-- `logic/config/ini.py` is the isolation boundary — only that file needs changing
+### Config migration (partially done)
+- All `task.yaml` files converted from ConfigObj INI format — done
+- `read_config` in `logic/config/ini.py` is YAML-aware (by extension) — done
+- `configobj` dependency still needed for subject.settings files in msw_configs (INI format)
+- Remaining: migrate subject.settings in msw_configs to YAML, then remove configobj entirely
 
 ### Hook system
 - Design: `docs/work_plans/HOOKS.md`
@@ -69,8 +68,9 @@ Layer in the existing settings patch priority: presets apply between INI default
   pypulsepal 0.0.1's `PARAM_DTYPE_MODEL_*` lookup; verify on hardware before first opto session
 
 ### Readers
-- Validate legacy pkl reader against actual pkl session once one is available
-- `readers/validate.py` — 0% test coverage; add validation tests
+- `readers/validate.py` — tests added (test_readers_validate.py, 8 tests); covers MSW
+  completeness and ValidationResult for both JSONL and PKL fixtures — done
+- Validate legacy pkl reader against actual pkl session — done (fixture_pkl/ added)
 
 ### QueueMonitor Qt decoupling
 - `QueueMonitor` in `online_plotting.py` files uses `QtCore.QThread` — GUI only
@@ -94,6 +94,7 @@ murineshiftwork/
   settings/      default calibration files only (pure data package)
   tasks/         (namespace package — each task is murineshiftwork.tasks.<name>)
                  naming: normal tasks (no underscore), _test_*, _calibration_*
+                 config: task.yaml (YAML, was task.settings INI)
 ```
 
 Planned split (murineshiftwork_suite):

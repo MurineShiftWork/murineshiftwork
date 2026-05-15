@@ -125,7 +125,7 @@ setup.valve_ul_for_ms(port="1", open_ms=20.0)    # → float, ul delivered
 
 ### Stage config write-back
 
-`_calibration_stage_tower` currently saves to `~/.murineshiftwork/calibration.stage.{name}.yaml`.
+`stage_move` currently saves to `~/.murineshiftwork/calibration.stage.{name}.yaml`.
 In v1: reading from setup config, writing back directly to `configs/setups/{name}.yaml`
 (targeted YAML update of `devices.stage.known_positions` only, no full rewrite).
 This is the single source of truth for stage limits.

@@ -2,15 +2,21 @@ import logging
 from pathlib import Path
 from shutil import copyfile
 
-from configobj import ConfigObj
-from rich import get_console
+import yaml
 
 
 def read_config(file=None, unrepr=True):
     if not Path(file).exists():
         raise FileNotFoundError(str(file))
 
-    return ConfigObj(infile=str(file), unrepr=unrepr, list_values=True).dict()
+    path = Path(file)
+    if path.suffix in (".yaml", ".yml"):
+        with open(path) as f:
+            return yaml.safe_load(f) or {}
+
+    # Legacy INI format (subject.settings files in msw_configs)
+    from configobj import ConfigObj
+    return ConfigObj(infile=str(path), unrepr=unrepr, list_values=True).dict()
 
 
 def write_config(
@@ -19,6 +25,7 @@ def write_config(
     do_backup_original=True,
     backup_extension="bak",
 ):
+    from configobj import ConfigObj
     new_config = ConfigObj(in_dict, unrepr=True, list_values=True)
     save_path = str(save_path)
 
