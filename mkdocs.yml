@@ -30,10 +30,13 @@ nav:
     - Visualization: calibration/visualization.md
   - Barcode TTL Sync: barcode_ttl_integration.md
   - Work Plans:
-    - Refactor Status: work_plans/REFACTOR_STATUS.md
+    - Roadmap: work_plans/ROADMAP.md
+    - Hooks Design: work_plans/HOOKS.md
     - CLI Redesign: work_plans/cli_redesign_spec.md
-    - Hooks: work_plans/HOOKS.md
     - Todo: work_plans/TODO.md
+    - Legacy:
+      - Refactor Status: work_plans/legacy/REFACTOR_STATUS.md
+      - Notes: work_plans/legacy/NOTES.md
 
 plugins:
   - search

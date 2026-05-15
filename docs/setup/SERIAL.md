@@ -39,11 +39,11 @@
 ### Water calibration example for setup 4
 
 > Add `-scale` parameter with serial device path  
-> Protocol `-t calibrate_water_with_serial_scale`  
+> Protocol `-t _calibration_water_with_serial_scale`  
 
 ```bash
 
-murineshiftwork run -t calibrate_water_with_serial_scale \
+murineshiftwork run -t _calibration_water_with_serial_scale \
   -b $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:12:1.0) \
   -stage $(realpath /dev/serial/by-path/pci-0000:00:14.0-usb-0:10:1.0-port0) \
   -cs /mnt/maindata/CONFIG_FILES/subject.settings \

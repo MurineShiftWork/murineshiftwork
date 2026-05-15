@@ -39,14 +39,14 @@ def all_session_dirs_with_data():
 # load_trial_data (raw list)
 
 def test_load_trial_data_returns_list(first_session_dir):
-    from murineshiftwork.io.trial_data import load_trial_data
+    from murineshiftwork.logic.io import load_trial_data
     jsonl = list(first_session_dir.glob("*.df.jsonl"))[0]
     trials = load_trial_data(jsonl)
     assert isinstance(trials, list)
 
 
 def test_load_trial_data_skips_version_header(first_session_dir):
-    from murineshiftwork.io.trial_data import load_trial_data
+    from murineshiftwork.logic.io import load_trial_data
     jsonl = list(first_session_dir.glob("*.df.jsonl"))[0]
     trials = load_trial_data(jsonl)
     # No trial dict should have the version header key
@@ -54,7 +54,7 @@ def test_load_trial_data_skips_version_header(first_session_dir):
 
 
 def test_load_trial_data_nonempty_session(all_session_dirs_with_data):
-    from murineshiftwork.io.trial_data import load_trial_data
+    from murineshiftwork.logic.io import load_trial_data
     # Find a session with trials (not just header + 0 trials)
     found = False
     for sdir in all_session_dirs_with_data:
@@ -103,7 +103,7 @@ def test_read_session_data_with_real_trials():
     import pandas as pd
 
     for sdir in _session_dirs_with_jsonl():
-        from murineshiftwork.io.trial_data import load_trial_data
+        from murineshiftwork.logic.io import load_trial_data
         jsonl = list(sdir.glob("*.df.jsonl"))[0]
         if len(load_trial_data(jsonl)) > 5:
             d = read_session_data(str(sdir))

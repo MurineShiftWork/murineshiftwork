@@ -15,7 +15,7 @@ opening time loaded into state machine output actions.
 ### Valve selection (current limitation — needs improvement)
 
 The task currently hard-codes `VALVES_TO_CALIBRATE = [1, 3]` in
-`tasks/calibrate_water_with_serial_scale/calibrate_water_with_serial_scale.py`.
+`tasks/_calibration_water_with_serial_scale/_calibration_water_with_serial_scale.py`.
 
 **Required: add CLI / task-settings input for valve selection:**
 

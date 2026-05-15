@@ -8,7 +8,7 @@ Calibration data lives in `msw_configs/setups/<setup>.yaml` under `calibrations.
 ## Running a calibration
 
 ```bash
-msw run -t calibrate_water_with_serial_scale -s _test_subject --setup setup-1
+msw run -t _calibration_water_with_serial_scale -s _test_subject --setup setup-1
 ```
 
 This records (valve_opening_time, water_weight_g, n_drops) rows and saves them to
