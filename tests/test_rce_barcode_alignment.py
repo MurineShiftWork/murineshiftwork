@@ -37,7 +37,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from murine_shift_work.readers.alignment import verify_rpi_barcode_decoding
+from murineshiftwork.readers.alignment import verify_rpi_barcode_decoding
 from ttl_barcoder.core.config import BarcodeConfig
 
 

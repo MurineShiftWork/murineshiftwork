@@ -77,7 +77,22 @@ Key functions:
    trial-onset pulse is never mistaken for a barcode bit. Verify this in the decoded output.
 6. **PulsePal shutdown bug (FIXED)**: all optotagging tasks now call stimulation.disconnect()
    in a try/finally block. Previously stimulation was not explicitly disconnected on exit.
-7. **Encoder init bug (FIXED 2026-05-04)**: The start init was LOW-HIGH-LOW but BNC idles at
+7. **iti_post_barcode BNC hold bug (FIXED 2026-05-06)**: `iti_post_barcode` had
+   `output_actions=[]`, so Bpod holds BNC at the last barcode bit's level. When the last
+   bit=1 (HIGH), BNC stays HIGH through all of `iti_post_barcode`, then the SMA exits and
+   Bpod resets BNC to LOW — producing a HIGH→LOW edge at SMA-exit time, only ~300ms before
+   the session-end (or next-trial) barcode's first edge. 300ms < 500ms segmentation threshold
+   → decoder merges the SMA-exit edge with the following barcode → decode fails ~50% of
+   sessions (whenever last barcode bit of preceding trial happens to be 1).
+   Fix: `output_actions=[(bnc_channel, 0)]` in `iti_post_barcode`. This drives BNC LOW at
+   the START of `iti_post_barcode` (creating any HIGH→LOW edge there, >> 500ms before next
+   SMA), so SMA exit produces no new edge and the gap to the next barcode is always clean.
+   Observed as unmatched session-end barcode (value `128711851193`, recovered timestamp
+   ≈ 212s after session start in 209.4s session) on first real-task test, identical across
+   all 4 RPIs (confirming hardware never received the barcode cleanly, not a decode error).
+   Camera lifecycle is NOT the cause — cameras stop after `Task.run()` returns via QThread,
+   which is after session-end SMA completes and data is saved to MSW.
+8. **Encoder init bug (FIXED 2026-05-04)**: The start init was LOW-HIGH-LOW but BNC idles at
    LOW between trials. The first LOW segment produced no edge, leaving only 1 detectable init
    gap (between edges at t=10ms and t=20ms). Init validation requires ≥2 gaps in [7.5,12.5ms].
    For barcodes where bit[0]=0 (LSB=0, ~50% of values), no data edge appears at t=30ms either,
@@ -140,12 +155,16 @@ processor upstream. Use this column for alignment — it's in the global ephys c
 
 ### probabilistic_switching_fixedsubjects
 ```
-Session-start barcode (trial 0) + session-end barcode (after loop)
-    barcode_value matched by value in ephys decode
-    bpod_anchor = barcode_rows["Trial start timestamp"] + state_start_offset
-        ↕ linear fit (2 anchors → slope + intercept for clock drift)
+Session-start barcode (trial 0) + per-trial ITI barcode + session-end barcode
+    Trial structure: ttl_on → ttl_off → center_ready → ... → final → barcode_start →
+                     [barcode segs] → iti_post_barcode → exit
+    barcode fires at ITI start (end of each task trial), after stage moves back
+    ITI = [3, 5, 0.5]s; barcode ~1355ms; iti_post_barcode = max(0.05, ITI - 1.355)s
+
+    barcode_value matched by value in ephys decode (N anchors, one per trial)
+    bpod_anchor = barcode_rows["Trial start timestamp"] + barcode_start state offset
     ephys_anchor = OE events first edge of matched barcode
-        ↓
+        ↓ linear fit across all N trial barcodes
 bpod_to_ephys(t) = slope * t + intercept
 df["trial_start_ephys"] = bpod_to_ephys(df["Trial start timestamp"])
 ```
@@ -178,15 +197,17 @@ Confirmed on `_test_subject__20260504_120312___test_barcode_iti_with_video`:
 - 4 RPIs: 20/20 decode/match, wall-time error mean 4.8–6.7ms
 - Ephys: 20/20 decode/match, alignment residuals mean=0.01ms max=0.02ms
 
-### Step 2: probabilistic_switching_fixedsubjects — DONE (2026-05-04)
-Session-start barcode (trial 0) + session-end barcode (after trial loop, fires on Ctrl+C too).
-- Uses `prepare_barcode` + `inject_barcode_states` from `logic/barcode.py`
-- `barcode_value`, `barcode_wall_time` stored in `trial_data["info"]`
-- `trial_type: "barcode"` (replaces old `"ttl"`)
-- Detection in `task_objects.update()`: checks `first_state == BARCODE_FIRST_STATE_NAME`
-- `switch_block()` still called for trial 0 barcode to initialise block structure
-- BNC1 (`HARDWARE_BNC_TRIAL_START=1`): barcode at start/end + short trial-onset pulse per trial
-- Alignment: start+end barcodes → 2-anchor linear fit → `trial_start_ephys` for all trials
+### Step 2: probabilistic_switching_fixedsubjects — DONE (2026-05-05)
+Session-start barcode (trial 0) + per-trial ITI barcode + session-end barcode.
+- Session-start/end: standalone barcode SMA in the task runner (same as before)
+- Per-trial: barcode injected at ITI start inside `make_state_machine()` in task_objects
+  - `final` → `barcode_start` → [segs] → `iti_post_barcode` → `exit`
+  - `prepare_barcode()` called in `make_state_machine()`; value/wall_time stored as
+    `_pending_barcode_value` / `_pending_barcode_wall_time`, copied into trial info by `update()`
+- `barcode_value`, `barcode_wall_time` in `info` for BOTH barcode-type and task-type trials
+- BNC1 (`HARDWARE_BNC_TRIAL_START=1`): barcode at start/ITI/end + short trial-onset pulse per trial
+- ITI changed to `[3, 5, 0.5]`s; `iti_post_barcode = max(0.05, ITI - barcode_duration_s)`
+- Alignment: N barcodes (one per trial + bookends) → N-anchor linear fit
 - task.settings: `barcode_bits=37, barcode_bit_duration_ms=35.0, barcode_init_duration_ms=10.0`
 
 ### Step 2b: sequence_automated — DONE (2026-05-04)
@@ -199,7 +220,24 @@ Same session-start + session-end barcode structure as switching_fixed.
 - Piecewise alignment: each trial's rising/falling edges in OE events are the direct ephys
   timestamps; no global clock correction needed for trial-level analysis
 
-### Step 3: Extend to other protocols (TODO)
-- optotagging / optotagging_with_video / optotagging_multi_with_video / optotagging_with_power_level
-- airpuff
-- Any other tasks with ITI
+### Step 3: optotagging variants + airpuff — DONE (2026-05-14)
+
+**optotagging / optotagging_with_video / optotagging_multi_with_video / optotagging_with_power_level:**
+- Session-start barcode (trial 0) + session-end barcode (after loop) on BNC1
+- `TRIGGER_ITI=1s` is shorter than barcode duration (~1.355s) → per-ITI barcodes not possible;
+  session-start/end bookends give session identity and a 2-anchor alignment baseline
+- `make_ttl_identifier_sequences` replaced — trial 0 SMA is now a standalone barcode SMA
+- `barcode_value`, `barcode_wall_time` added to all trial info dicts (None for task trials)
+- `trial_type` field updated: `"barcode"` for trial 0 and session-end, `"task"` for opto trials
+- Session-end barcode in `try/except` inside the `try/finally` (stimulation disconnects in finally)
+- task.settings: added `barcode_bits=37, barcode_bit_duration_ms=35.0, barcode_init_duration_ms=10.0`
+  (TTL_IDENTIFIER_SEQUENCE removed — no longer used)
+
+**airpuff:**
+- Session-start barcode (trial 0) + per-ITI barcode in every task trial + session-end barcode
+- Trial structure: `trial_onset_ttl` → `release_puff` → `barcode_start` → [segs] → `iti_post_barcode` → `exit`
+- `iti_post_barcode = max(0.05, iti_this_trial - barcode_duration_s)`
+- `output_actions=[(bnc_channel, 0)]` on `iti_post_barcode` (BNC hold bug fix — same as prob_switching)
+- ITI [4, 6, 0.5]s → `iti_post_barcode` = 2.65–4.65s; barcode fits cleanly
+- `barcode_value`, `barcode_wall_time` in all trial info dicts
+- task.settings: added barcode config; TTL_IDENTIFIER_SEQUENCE removed

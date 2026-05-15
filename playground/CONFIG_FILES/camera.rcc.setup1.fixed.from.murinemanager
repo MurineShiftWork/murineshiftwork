@@ -1,0 +1,109 @@
+# -*- coding: utf-8 -*-
+#
+# Author: Lars B. Rollik <L.B.Rollik@protonmail.com>
+# License: BSD 3-Clause
+
+[general]
+    acquisition_name = "_test_rcc_name_config"     # base name for recording
+    remote_data_path = "/home/pi/data/"              # where to store all recordings on RPi
+    rpi_username = "pi"
+    remote_python_interpreter = "/home/pi/miniconda3/envs/py36/bin/python"      # path to remote python binary
+    remote_python_entrypoint = "rpi_camera_colony.acquisition"                  # module to execute
+    max_acquisition_time = 7200                                                 # seconds
+
+[log]
+    address = "192.168.100.11"
+    port = 55555
+    level = "DEBUG"
+    log_to_console = True
+    log_to_file = True
+    log_file = "/tmp/some_log_file"
+
+[control]
+    address = "192.168.100.11"
+    port = 54545
+
+[controllers]
+    [[camera_21]]
+        description = "setup: 1; view: bottom, tongue;"
+
+        # General config_data
+        address = "192.168.100.21"  # only relevant for dispatching controller start
+
+        stream_video = True
+        stream_ip = "192.168.100.21"
+        stream_port = 9999
+
+        # TTL config_data
+        ttl_in_pin = 16
+        ttl_out_pin = 8
+        ttl_out_duration = .001
+
+        # Camera properties
+        framerate = 60
+        resolution = (960, 720)
+        color_effects = (128, 128)
+
+    [[camera_22]]
+        description = "setup: 1; view: left face;"
+
+        # General config_data
+        address = "192.168.100.22"  # only relevant for dispatching controller start
+
+        stream_video = True
+        stream_ip = "192.168.100.22"
+        stream_port = 9999
+
+        # TTL config_data
+        ttl_in_pin = 16
+        ttl_out_pin = 8
+        ttl_out_duration = .001
+
+        # Camera properties
+        framerate = 60
+        resolution = (960, 720)
+        color_effects = (128, 128)
+
+    [[camera_23]]
+        description = "setup: 1; view: right face;"
+
+        # General config_data
+        address = "192.168.100.23"  # only relevant for dispatching controller start
+
+        stream_video = True
+        stream_ip = "192.168.100.23"
+        stream_port = 9999
+
+        # TTL config_data
+        ttl_in_pin = 16
+        ttl_out_pin = 8
+        ttl_out_duration = .001
+
+        # Camera properties
+        framerate = 60
+        resolution = (960, 720)
+        color_effects = (128, 128)
+
+    [[camera_101]]
+        description = "setup: 1; view: front, top;"
+
+        # General config_data
+        address = "192.168.100.101"  # only relevant for dispatching controller start
+
+        stream_video = True
+        stream_ip = "192.168.100.101"
+        stream_port = 9999
+
+        # TTL config_data
+        ttl_in_pin = 16
+        ttl_out_pin = 8
+        ttl_out_duration = .001
+
+        # Camera properties
+        framerate = 60
+        resolution = (960, 720)
+        color_effects = (128, 128)
+
+        vflip = True
+        hflip = True
+

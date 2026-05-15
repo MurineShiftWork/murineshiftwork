@@ -1,0 +1,28 @@
+_hostname: murinemanager
+axes:
+  x:
+    id: 11
+    operating_mode: OP_POSITION
+    position_max: 999
+    position_min: 1
+    position_raw: 342
+    velocity_max: 0
+  y:
+    id: 12
+    operating_mode: OP_POSITION
+    position_max: 999
+    position_min: 1
+    position_raw: 534
+    velocity_max: 250
+  z:
+    id: 13
+    operating_mode: OP_POSITION
+    position_max: 999
+    position_min: 1
+    position_raw: 372
+    velocity_max: 0
+connection:
+  baudrate: 115200
+  serial_port: /dev/ttyUSB0
+  timeout: 0.1
+known_positions: {}

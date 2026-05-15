@@ -49,7 +49,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from murine_shift_work.readers.alignment import align_session_to_ephys, decode_ephys_barcodes
+from murineshiftwork.readers.alignment import align_session_to_ephys, decode_ephys_barcodes
 from ttl_barcoder.core.config import BarcodeConfig
 
 

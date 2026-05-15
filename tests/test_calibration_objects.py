@@ -1,11 +1,11 @@
-from murine_shift_work.logic.calibration import CalibrationDataSound
-from murine_shift_work.logic.calibration import CalibrationDataWater
+from murineshiftwork.logic.calibration import CalibrationDataSound
+from murineshiftwork.logic.calibration import CalibrationDataWater
 
 cs = CalibrationDataSound(
-    file_path="../murine_shift_work/settings/calibration.sound.default.csv"
+    file_path="../murineshiftwork/settings/calibration.sound.default.csv"
 )
 cw = CalibrationDataWater(
-    file_path="../murine_shift_work/settings/calibration.water.default.csv"
+    file_path="../murineshiftwork/settings/calibration.water.default.csv"
 )
 
 

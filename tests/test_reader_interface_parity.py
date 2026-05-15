@@ -23,7 +23,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from murine_shift_work.readers.session import read_session_data
+from murineshiftwork.readers.session import read_session_data
 
 NEW_DEFAULT = (
     "/mnt/maindata/data/_test_subject"
