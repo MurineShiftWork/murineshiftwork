@@ -290,3 +290,122 @@ def evaluate_water_calibration_curve_y_to_x(
 ):
     x_value = np.interp(y_target, x_continuous, y_continuous)
     return x_value
+
+
+# ---------------------------------------------------------------------------
+# Calibration visualisation
+
+
+def plot_setup_valve_calibrations(
+    config_dir: str | Path | None = None,
+    setup_name: str | None = None,
+    save_fig: bool = False,
+    show: bool = True,
+) -> "plt.Figure":
+    """Plot bpod_valve calibration curves for one or all setups.
+
+    Parameters
+    ----------
+    config_dir:
+        Path to the msw_configs directory.  Resolved via machine config if None.
+    setup_name:
+        If given, plot only that setup.  If None, plot all setups found in
+        ``config_dir/setups/``.
+    save_fig:
+        Save PNG next to each setup YAML when True.
+    show:
+        Call ``plt.show()`` when True (disable for batch/headless use).
+
+    Returns
+    -------
+    matplotlib Figure
+    """
+    import yaml
+    from murineshiftwork.logic.machine_config import resolve_config_dir
+
+    config_dir = Path(config_dir) if config_dir else Path(resolve_config_dir())
+    setups_dir = config_dir / "setups"
+
+    if setup_name:
+        yaml_files = [setups_dir / f"{setup_name}.yaml"]
+    else:
+        yaml_files = sorted(setups_dir.glob("*.yaml"))
+
+    if not yaml_files:
+        raise FileNotFoundError(f"No setup YAMLs found in {setups_dir}")
+
+    # Collect calibration data
+    all_data = {}  # {setup_name: {valve_id: {"open_ms": [...], "volume_ul": [...]}}}
+    for yf in yaml_files:
+        if not yf.exists():
+            logging.warning(f"Setup YAML not found: {yf}")
+            continue
+        with open(yf) as f:
+            raw = yaml.safe_load(f) or {}
+        cal = raw.get("calibrations", {}).get("bpod_valve", {})
+        if not cal:
+            continue
+        sname = raw.get("name", yf.stem)
+        all_data[sname] = {}
+        for valve_id, vdata in cal.items():
+            pts = vdata.get("points", [])
+            if not pts:
+                continue
+            pts_arr = np.array(pts, dtype=float)
+            all_data[sname][str(valve_id)] = {
+                "open_ms": pts_arr[:, 0],
+                "volume_ul": pts_arr[:, 1],
+                "updated": vdata.get("updated", ""),
+            }
+
+    if not all_data:
+        raise ValueError("No bpod_valve calibration data found in selected setups.")
+
+    n_setups = len(all_data)
+    fig, axes = plt.subplots(
+        1, n_setups, figsize=(4 * n_setups, 4), squeeze=False, sharey=False
+    )
+    fig.suptitle("Bpod valve calibration", fontsize=12)
+
+    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+
+    for col_idx, (sname, valves) in enumerate(all_data.items()):
+        ax = axes[0, col_idx]
+        for v_idx, (valve_id, vdata) in enumerate(valves.items()):
+            x = vdata["open_ms"]
+            y = vdata["volume_ul"]
+            color = colors[v_idx % len(colors)]
+            ax.scatter(x, y, color=color, zorder=3, label=f"valve {valve_id}")
+
+            # Fit curve if enough points
+            if len(x) >= 3:
+                try:
+                    popt, _ = curve_fit(
+                        _exponential_function, x, y,
+                        p0=[0.01, 0.02, 0.0], maxfev=5000,
+                    )
+                    x_fit = np.linspace(x.min() * 0.9, x.max() * 1.1, 200)
+                    y_fit = _exponential_function(x_fit, *popt)
+                    ax.plot(x_fit, y_fit, color=color, linewidth=1.2, alpha=0.7)
+                except Exception:
+                    pass
+
+        ax.set_title(sname, fontsize=10)
+        ax.set_xlabel("Valve open time (ms)")
+        ax.set_ylabel("Volume (µL)")
+        ax.legend(fontsize=8)
+        ax.grid(True, alpha=0.3)
+
+    fig.tight_layout()
+
+    if save_fig:
+        for sname in all_data:
+            out = setups_dir / f"{sname}.calibration_plot.png"
+            fig.savefig(out, dpi=150)
+            logging.info(f"Saved calibration plot: {out}")
+
+    if show:
+        plt.show()
+
+    return fig
+    return x_value
