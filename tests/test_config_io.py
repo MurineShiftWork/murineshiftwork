@@ -3,8 +3,8 @@ import pytest
 import yaml
 from pathlib import Path
 
-from murineshiftwork.logic.config_models import SubjectConfig, SetupConfig, ValveCalibration
-from murineshiftwork.logic.config_io import (
+from murineshiftwork.logic.config import SubjectConfig, SetupConfig, ValveCalibration
+from murineshiftwork.logic.config import (
     load_setup_config,
     load_subject_config,
     update_valve_calibration,

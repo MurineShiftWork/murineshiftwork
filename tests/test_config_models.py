@@ -2,7 +2,7 @@
 import pytest
 import numpy as np
 
-from murineshiftwork.logic.config_models import (
+from murineshiftwork.logic.config import (
     AxisConfig,
     BpodDevice,
     Calibrations,
