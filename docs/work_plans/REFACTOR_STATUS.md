@@ -1,6 +1,6 @@
 # MSW Refactor Status
 
-Last updated: 2026-05-04 (session 2)
+Last updated: 2026-05-14
 
 Overview of all active upgrade/refactor workstreams and their current state.
 
@@ -87,7 +87,36 @@ for camera frame alignment to Bpod/ephys at ~10ms absolute accuracy.
 
 ---
 
-## 4. CLI redesign  DESIGN COMPLETE, NOT IMPLEMENTED
+## 4. Package structure upgrade  DONE (2026-05-14)
+
+**`src/` layout**: Package moved to `src/murineshiftwork/`; `setup.cfg` uses
+`package_dir = = src` and `find: where = src`. Prevents accidental shadowing of the
+installed package by the source directory. `.bumpversion.cfg` paths updated.
+
+**Namespace subpackage**: `murineshiftwork.namespace` added at
+`src/murineshiftwork/namespace/`. Handles path generation and validation only — no config
+models. Two namespace versions:
+- `NAMESPACE_V1` (`%Y%m%d_%H%M%S_%f`, 22-char datetime field, microsecond precision)
+- `NAMESPACE_LEGACY` (`%Y%m%d_%H%M%S`, 15-char field, second precision)
+
+`parse_session_basename()` identifies version from datetime field width.
+`build_data_paths()` (used everywhere) is a shim into `generate_session_paths(version=V1)`.
+22 unit tests in `tests/test_namespace.py`.
+
+**Config models**: `SetupConfig`, `SubjectConfig`, `ExecutionConfig` and device models
+(`BpodDevice`, `StageTowerDevice`, etc.) added to `src/murineshiftwork/logic/config_models.py`.
+Silent load in `cli/evaluate.py` via `logic/config_io.py` — no-op if YAML files absent.
+Old flat-flag CLI path unchanged.
+
+**License**: Replaced BSD 3-Clause with PolyForm Internal Use License 1.0.0. Allows
+internal use and modification; prohibits redistribution, forking, sublicensing.
+
+**Optional Qt dependencies**: `PyQt6`, `pyqtgraph`, `myterial` moved from `install_requires`
+to `[extras_require] qt`. Install with `pip install murineshiftwork[qt]`.
+
+---
+
+## 5. CLI redesign  DESIGN COMPLETE, NOT IMPLEMENTED
 
 **Spec:** `docs/cli_redesign_spec.md`
 
@@ -133,7 +162,35 @@ set save path, etc.) from the acquisition machine. Scaffolding committed, integr
 
 ---
 
-## 8. Pending / deferred
+## 8. Task hook system  DESIGN COMPLETE, NOT IMPLEMENTED
+
+**Spec:** `docs/HOOKS.md`
+
+**Rationale:** Per-subject state (training level, history) needs to be fetched before task
+start and pushed after session end without the task protocol or `TaskProcess` knowing the
+source. Future goal: fetch level from LabWatch API so subjects can move between setups.
+
+**Architecture:**
+- `HookContext` dataclass: subject, task_name, task_settings (writable), session_paths, output
+- `TaskHook` base class: `pre_run(ctx)` / `post_run(ctx)`, both no-op by default
+- Registration: global hooks in `SetupConfig` YAML; task-specific in `task.settings`
+  `HOOKS_PRE_TASK` / `HOOKS_POST_TASK` lists (dotted import paths)
+- Execution: global pre → task pre → **task runs** → task post → global post
+- Pre-hooks mutate `ctx.task_settings`; `TaskProcess` patches back before `init_task()`
+- Failing hook logs WARNING, does not abort session
+
+**Process logic cleanup needed in the same pass** (see `docs/HOOKS.md`):
+- Replace `exec()` in `init_task()` with `importlib.import_module()`
+- Fix class-level mutable `input_kwargs = {}` default
+- Remove `__del__` (context manager handles cleanup)
+- `TaskRunner` inherits `QThread` → hardwires Qt into all tasks; defer to Phase 1
+
+**Files to create:** `logic/hooks.py`; wire into `logic/task_process.py` and
+`logic/config_models.py` (`SetupConfig.hooks` field)
+
+---
+
+## 9. Pending / deferred
 
 - **`collate_data2.sh`**: remove `--exclude='tests'`, investigate RPI data save path issue
 - **`msw register` / CLI v1**: first step of CLI redesign — no timeline set
@@ -141,3 +198,10 @@ set save path, etc.) from the acquisition machine. Scaffolding committed, integr
 - **Alignment script for `sequence_automated`**: piecewise per-trial using long-pulse TTL edges —
   script not yet written; design documented in `barcode_ttl_integration.md`
 - **Reader unification test**: verify legacy vs new session data interface is identical
+- **Hook system implementation**: `logic/hooks.py` not yet created; process logic cleanup deferred
+- **`tasks/__init__.py` namespace boundary**: must be removed before `msw-tasks-sequence` /
+  `msw-tasks-private` split (Phase 1)
+- **Serial scale startup fix**: reduce `STABILIZING_TIME` 2000→500 ms in firmware; add Python
+  `time.sleep(2.5)` + remove duplicate `is_ready` loop; see `docs/CALIBRATION.md`
+- **Water calibration valve selection**: hardcoded `[1, 3]`; needs CLI/task-settings input;
+  see `docs/CALIBRATION.md`
