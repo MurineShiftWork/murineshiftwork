@@ -66,7 +66,14 @@ def _evaluate_log_level(args_dict=None):
 
 def _evaluate_task(args_dict=None):
     if args_dict["task"]:
-        args_dict["task"] = find_task_by_name(task_name=args_dict["task"])
+        requested = args_dict["task"]
+        args_dict["task"] = find_task_by_name(task_name=requested)
+        if args_dict["task"] is None:
+            from murineshiftwork.logic.misc import list_available_tasks
+            raise ValueError(
+                f"Unknown task '{requested}'. Available tasks:\n"
+                + "\n".join(f"  {t}" for t in sorted(list_available_tasks()))
+            )
         args_dict["task_dir"] = get_task_dir(task=args_dict["task"])
     else:
         if not args_dict["command"] == "register":
@@ -134,6 +141,27 @@ def _evaluate_and_load_configs(args_dict=None):
     )
 
     return args_dict
+
+
+def _stage_device_to_controller_config(device) -> dict:
+    """Convert a StageTowerDevice to the dict format StageController.from_config() expects."""
+    return {
+        "connection": {
+            "baudrate": device.baudrate,
+            "timeout": device.timeout,
+        },
+        "axes": {
+            name: {
+                "motor_id": ax.motor_id,
+                "position_min": ax.position_min,
+                "position_max": ax.position_max,
+                "velocity_max": ax.velocity_max,
+                "operating_mode": ax.operating_mode,
+            }
+            for name, ax in device.axes.items()
+        },
+        "known_positions": device.known_positions,
+    }
 
 
 def evaluate_args(args_dict=None):
@@ -220,6 +248,20 @@ def evaluate_args(args_dict=None):
                 f"SetupConfig bpod port resolution failed ({exc}); "
                 f"using CLI value {args_dict['serial_port_bpod']!r}"
             )
+
+    if setup_config and "stage" in setup_config.devices:
+        stage_dev = setup_config.devices["stage"]
+        try:
+            resolved_stage = setup_config.device_port("stage")
+            args_dict["serial_port_stage"] = resolved_stage
+            patched["serial_port_stage"] = resolved_stage
+            logging.debug(f"Resolved stage port from SetupConfig: {resolved_stage}")
+        except ValueError as exc:
+            logging.warning(f"SetupConfig stage port resolution failed ({exc})")
+        if not args_dict.get("settings.stage"):
+            args_dict["settings.stage"] = _stage_device_to_controller_config(stage_dev)
+            patched["settings.stage"] = args_dict["settings.stage"]
+            logging.debug("Built settings.stage from SetupConfig stage device")
 
     if setup_config and setup_config.cameras:
         cam_path = setup_config.cameras.config

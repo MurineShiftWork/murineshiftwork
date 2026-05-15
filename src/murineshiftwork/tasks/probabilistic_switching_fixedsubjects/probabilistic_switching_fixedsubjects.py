@@ -159,7 +159,7 @@ def run_task(**args_dict):
     # Do not auto start, so that camera can start first
     args_dict.update({"auto_start": False})
 
-    setup_name = args_dict["metadata"].get("setup", "n/a")
+    setup_name = args_dict.get("metadata", {}).get("setup", "n/a")
 
     # Video
     ensemble_cfg_file = args_dict["config_file_camera"]

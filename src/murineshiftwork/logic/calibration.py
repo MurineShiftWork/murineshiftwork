@@ -53,7 +53,7 @@ class CalibrationData:
         if file_path is not None:
             self.file_path = file_path
 
-        if Path(self.file_path).exists():
+        if self.file_path and Path(self.file_path).exists():
             self.calibration_data = pd.read_csv(self.file_path)
             logging.debug(
                 f"Updated calibration data with {self.calibration_data.shape[0]} measurements."
