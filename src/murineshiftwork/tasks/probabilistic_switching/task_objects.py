@@ -89,6 +89,17 @@ class TaskControl(object):
 
         self.task_settings = task_settings
         self.probabilities = self.task_settings["probabilities"]
+
+        # Named lick-port mapping: Bpod port numbers per physical position
+        _p_left   = task_settings.get("HARDWARE_PORT_LEFT",   1)
+        _p_center = task_settings.get("HARDWARE_PORT_CENTER", 2)
+        _p_right  = task_settings.get("HARDWARE_PORT_RIGHT",  3)
+        self._ev_left_in    = eval(f"Bpod.Events.Port{_p_left}In")
+        self._ev_center_in  = eval(f"Bpod.Events.Port{_p_center}In")
+        self._ev_right_in   = eval(f"Bpod.Events.Port{_p_right}In")
+        self._ev_left_out   = eval(f"Bpod.Events.Port{_p_left}Out")
+        self._ev_center_out = eval(f"Bpod.Events.Port{_p_center}Out")
+        self._ev_right_out  = eval(f"Bpod.Events.Port{_p_right}Out")
         self.criterion_contrast_blocks = self.task_settings[
             "criterion_contrast_blocks"
         ]
@@ -414,10 +425,10 @@ class TaskControl(object):
             state_name="final",
             state_timer=self.task_settings["state_duration_final"],
             state_change_conditions={
-                Bpod.Events.Port1Out: "exit",
-                Bpod.Events.Port2Out: "exit",
-                Bpod.Events.Port3Out: "exit",
-                Bpod.Events.Tup: "exit",
+                self._ev_left_out:   "exit",
+                self._ev_center_out: "exit",
+                self._ev_right_out:  "exit",
+                Bpod.Events.Tup:     "exit",
             },
             output_actions=[],
         )
@@ -591,8 +602,8 @@ class TaskControl(object):
             state_name="center_ready",
             state_timer=30,
             state_change_conditions={
-                Bpod.Events.Port2In: "center_initiating"
-            },  # , Bpod.Events.Tup: "exit"},
+                self._ev_center_in: "center_initiating"
+            },
             output_actions=output_actions__center_ready,
         )
         # INIT long enough -> proceed. pulled out too early -> back to center_ready
@@ -600,9 +611,9 @@ class TaskControl(object):
             state_name="center_initiating",
             state_timer=initiation_hold_time,
             state_change_conditions={
-                Bpod.Events.Port2Out: "center_ready",  # ABORTED
-                Bpod.Events.Tup: "side_ready",
-            },  # CONTINUE
+                self._ev_center_out: "center_ready",  # ABORTED
+                Bpod.Events.Tup:     "side_ready",
+            },
             output_actions=output_actions__center_delay,
         )
 
@@ -649,10 +660,9 @@ class TaskControl(object):
                 state_name="side_ready_post_stop",
                 state_timer=delay_until_side_timeout,
                 state_change_conditions={
-                    Bpod.Events.Port1In: "choice_left",
-                    # Bpod.Events.Port2In: "exit",
-                    Bpod.Events.Port3In: "choice_right",
-                    Bpod.Events.Tup: "exit",
+                    self._ev_left_in:  "choice_left",
+                    self._ev_right_in: "choice_right",
+                    Bpod.Events.Tup:   "exit",
                 },
                 output_actions=output_actions__side_ready
                 + [("SoftCode", self.sound_stop)],
@@ -662,9 +672,9 @@ class TaskControl(object):
                 state_name="side_ready",
                 state_timer=self.task_settings["delay_until_side_timeout"],
                 state_change_conditions={
-                    Bpod.Events.Port1In: "choice_left",
-                    Bpod.Events.Port3In: "choice_right",
-                    Bpod.Events.Tup: "exit",
+                    self._ev_left_in:  "choice_left",
+                    self._ev_right_in: "choice_right",
+                    Bpod.Events.Tup:   "exit",
                 },
                 output_actions=output_actions__side_ready,
             )
@@ -743,10 +753,10 @@ class TaskControl(object):
             state_name="final",
             state_timer=self.task_settings["state_duration_final"],
             state_change_conditions={
-                Bpod.Events.Port1Out: "exit",
-                Bpod.Events.Port2Out: "exit",
-                Bpod.Events.Port3Out: "exit",
-                Bpod.Events.Tup: "exit",
+                self._ev_left_out:   "exit",
+                self._ev_center_out: "exit",
+                self._ev_right_out:  "exit",
+                Bpod.Events.Tup:     "exit",
             },
             output_actions=[],
         )

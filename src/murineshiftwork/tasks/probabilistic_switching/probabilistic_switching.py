@@ -1,13 +1,13 @@
 import logging
 import time
 from multiprocessing import Queue
+from pathlib import Path
 
 from pybpodapi.protocol import Bpod  # Used!
-from rpi_camera_colony.control.conductor import Conductor
+from rpi_camera_ensemble.conductor.conductor import Conductor
+from rpi_camera_ensemble.config.acquisition import EnsembleAcquisitionConfig
+from rpi_camera_ensemble.config.conductor import ConductorConfig
 
-from murineshiftwork.logic.specific_state_machines import (
-    make_ttl_identifier_sequences,
-)
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner
 from murineshiftwork.tasks.probabilistic_switching.online_plotting import (
@@ -21,12 +21,6 @@ from murineshiftwork.tasks.probabilistic_switching.task_objects import (
 class Task(TaskRunner):
     def run(self):
         task_settings = self.input_kwargs["settings.task.patched"]
-        task_settings["calibration_file_sound"] = self.input_kwargs[
-            "calibration_file_sound"
-        ]  # fixme: improve handing down args
-        task_settings["calibration_file_water"] = self.input_kwargs[
-            "calibration_file_water"
-        ]  # fixme: improve handing down args
         task_control = TaskControl(bpod=self.bpod, task_settings=task_settings)
         self.bpod.softcode_handler_function = task_control.softcode_handler
 
@@ -36,6 +30,7 @@ class Task(TaskRunner):
             logging.info(f"Trial: {trial_index}")
 
             if trial_index == 0 and not task_settings["testing"]:
+                from murineshiftwork.logic.specific_state_machines import make_ttl_identifier_sequences
                 sma = make_ttl_identifier_sequences(
                     bpod=self.bpod,
                     sequence=task_settings["ttl_identifier_sequence"],
@@ -80,47 +75,49 @@ class Task(TaskRunner):
 
 def run_task(**args_dict):
     """Task: PS."""
-    # Make objects
     dq = Queue()
     kq = Queue()
-    args_dict.update(
-        {
-            "objects": {
-                "data_queue": dq,
-                "kill_queue": kq,
-            },
-        },
-    )
-
-    # Do not auto start, so that camera can start first
+    args_dict.update({"objects": {"data_queue": dq, "kill_queue": kq}})
     args_dict.update({"auto_start": False})
 
-    # Enter behaviour context
+    task_settings = args_dict.get("settings.task.patched", {})
+
     with TaskProcess(**args_dict) as tp:
         # Video
-        conductor_args = {
-            "config_file": args_dict["config_file_camera"],
-            "acquisition_group": args_dict["is_child_session_to"]
-            if args_dict["is_child_session_to"] is not None
-            else tp.session_paths["session_basename"].split("__")[0],
-            "acquisition_name": tp.session_paths["session_basename"],
-        }
-        c = Conductor(**conductor_args)
-        c.start_acquisition()
+        ensemble_cfg_file = args_dict.get("config_file_camera", "")
+        if ensemble_cfg_file and Path(ensemble_cfg_file).exists():
+            ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
+            conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
+            conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
+            conductor.start()
+            conductor.setup_agents()
+            _session = tp.session_paths["session_basename"]
+            _subject = tp.session_paths["subject"]
+            conductor.initialize_acquisition(
+                acquisition_path=(
+                    f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
+                    if args_dict.get("is_child_session_to")
+                    else f"{_subject}/{_session}"
+                ),
+                acquisition_name=_session,
+            )
+            conductor.start_preview()
+            conductor.start_recording()
+            time.sleep(3)
+        else:
+            conductor = None
+            logging.info("No camera config — running without video.")
 
         # Online plotting
-        plotting_process = OnlinePlottingForPS(
-            session_name=tp.session_paths["session_basename"],
-            is_simulation=False,
-            data_queue=dq,
-            kill_queue=kq,
-        )
-        plotting_process.start()
+        if task_settings.get("show_live_plot", True):
+            plotting_process = OnlinePlottingForPS(
+                session_name=tp.session_paths["session_basename"],
+                is_simulation=False,
+                data_queue=dq,
+                kill_queue=kq,
+            )
+            plotting_process.start()
 
-        # Delay for video to start
-        time.sleep(5)
-
-        # Start task
         tp.run_task()
         while tp.is_running():
             try:
@@ -128,14 +125,12 @@ def run_task(**args_dict):
             except KeyboardInterrupt:
                 tp.stop_task()
 
-        # Stop online plotting
         kq.put(True)
 
-        # Stop video
-        c.stop_acquisition()
-        c.cleanup()
-
-        time.sleep(1)
+        if conductor is not None:
+            conductor.stop_acquisition()
+            conductor.stop()
+            time.sleep(1)
 
 
 if __name__ == "__main__":

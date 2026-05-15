@@ -20,6 +20,13 @@ def run_cli(*args):
         args = args + ["-h"]
 
     args_dict = parse_args(args=args)
+
+    # init / setup / subject subcommands bypass evaluate_args (no hardware/subject context)
+    if args_dict.get("command") in ("init", "setup", "subject"):
+        args_dict["func"](**args_dict)
+        logging.debug("EXITING CLI.")
+        return
+
     args_dict = evaluate_args(args_dict=args_dict)
 
     if "exit_flag" in args_dict.keys():

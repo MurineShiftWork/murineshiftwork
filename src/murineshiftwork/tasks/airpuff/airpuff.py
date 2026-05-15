@@ -201,9 +201,12 @@ def run_task(**args_dict):
     args_dict.update({"auto_start": False})
 
     # Video
-    ensemble_cfg_file = args_dict["config_file_camera"]
-    print("DBG:", ensemble_cfg_file)
-    assert Path(ensemble_cfg_file).exists()
+    ensemble_cfg_file = args_dict.get("config_file_camera", "")
+    if not ensemble_cfg_file or not Path(ensemble_cfg_file).exists():
+        raise FileNotFoundError(
+            f"Camera ensemble config not found: {ensemble_cfg_file!r}. "
+            "Set via SetupConfig cameras.config or --config-file-camera."
+        )
     ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
     conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
     conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)

@@ -1,5 +1,6 @@
 import json
 import logging
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -11,6 +12,7 @@ from PyQt6.QtCore import QThread
 
 from murineshiftwork import __version__ as _msw_version
 from murineshiftwork import patch_logging_levels
+from murineshiftwork.hardware.bpod import RobustBpodSession
 from murineshiftwork.logic.log import json_dumps_type_safe
 from murineshiftwork.logic.log import write_json
 from murineshiftwork.logic.misc import find_task_by_name
@@ -18,6 +20,20 @@ from murineshiftwork.logic.misc import print_box
 from murineshiftwork.logic.misc import test_serial_port_is_accessible
 from murineshiftwork.logic.paths import build_data_paths
 from murineshiftwork.logic.paths import test_path_is_writable
+
+
+def _get_git_commit() -> str:
+    """Return the short git commit hash of the current HEAD, or '' if unavailable."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=3,
+        )
+        return result.stdout.strip() if result.returncode == 0 else ""
+    except Exception:
+        return ""
 
 
 class TaskRunner(QThread):
@@ -187,9 +203,8 @@ class TaskProcess(object):
 
     def exit_safely(self):
         self.exiting = True
-        if self.serial_is_open and not self.exiting:
-            self.bpod.stop_trial()  # same method as in pybpod GUI. see bpod_base class.
-            self.bpod.close()
+        if self.serial_is_open and self.bpod is not None:
+            self.bpod.close_safely()
             self.serial_is_open = False
 
     def connect_bpod(self, max_try=2):
@@ -198,35 +213,25 @@ class TaskProcess(object):
             logging.debug(
                 f"Connecting bpod on serial port: {self.serial_port}"
             )
-
-            current_attempt = 0
-            while current_attempt < max_try:
-                try:
-                    self.bpod = Bpod(
-                        serial_port=self.serial_port,
-                        workspace_path=self.session_paths["session_folder"],
-                        session_name=self.session_paths[
-                            "session_basename_behav"
-                        ],
-                    )
-                    self.bpod.open()
-                    self.serial_is_open = True
-                    break
-                except UnicodeDecodeError:
-                    current_attempt += 1
-                    print_box(
-                        f"\nFailed to open Bpod on attempt {current_attempt}/{max_try}.\n"
-                    )
-
-            if not self.serial_is_open:
-                print_box(
-                    "\nCould not connect to Bpod due to 'UnicodeDecodeError'. "
-                    "Happens randomly. Just run same code again.\n"
-                )
+            self.bpod = RobustBpodSession(
+                serial_port=self.serial_port,
+                workspace_path=self.session_paths["session_folder"],
+                session_name=self.session_paths["session_basename_behav"],
+                connect_retries=max_try,
+            )
+            try:
+                self.bpod.open()
+                self.serial_is_open = True
+            except RuntimeError as exc:
+                print_box(f"\n{exc}\n")
                 sys.exit(1)
 
     def persist_settings(self):
-        data = {**vars(self), "msw_version": _msw_version}
+        data = {
+            **vars(self),
+            "msw_version": _msw_version,
+            "git_commit": _get_git_commit(),
+        }
         write_json(
             data=data,
             save_path=self.session_paths["session_file_path"]

@@ -52,8 +52,12 @@ reward_sound_amplitude = 0.05
 
 # [hardware]
 HARDWARE_BNC_TRIAL_START = 1
-# Port number = valve number (1-to-1 mapping assumed)
-# Each port in the sequence must have a water valve
+# Explicit port-to-function mapping; port number = Bpod port number = valve number
+# Override per-setup via subject task_overrides or -ts HARDWARE_PORT_LEFT=1
+HARDWARE_PORT_LEFT = 1
+HARDWARE_PORT_CENTER = 2
+HARDWARE_PORT_RIGHT = 3
+# Port number = valve number (1-to-1 mapping assumed for multi-port sequences)
 ttl_pulse_duration = 0.01
 
 # [barcode] — must match ttl_barcoder BarcodeConfig used in alignment.py

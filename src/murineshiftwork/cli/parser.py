@@ -8,7 +8,10 @@ from murineshiftwork import __version__
 from murineshiftwork.cli.evaluate import available_tasks
 from murineshiftwork.cli.evaluate import default_config_dir
 from murineshiftwork.cli.evaluate import default_out_path
+from murineshiftwork.cli.execute import run_init
 from murineshiftwork.cli.execute import run_register
+from murineshiftwork.cli.execute import run_setup
+from murineshiftwork.cli.execute import run_subject
 from murineshiftwork.cli.execute import run_task
 from murineshiftwork.logic.log import get_default_log_file_path
 
@@ -259,6 +262,21 @@ Available tasks:
     parser_for_register.set_defaults(func=run_register)
 
 
+def add_args_for_task_settings_override(parser=None):
+    parser.add_argument(
+        "-ts",
+        "--task-settings",
+        metavar="KEY=VALUE",
+        nargs="+",
+        dest="task_settings_overrides",
+        default=[],
+        help=(
+            "Task-settings key-value overrides applied last (highest priority). "
+            "Example: -ts VALVE_OPENING_TIME_MS=80 N_FLUSH_CYCLES=3"
+        ),
+    )
+
+
 def make_subparser_run(sub_parsers):
     description = "Run tasks"
     examples = dedent(
@@ -281,8 +299,65 @@ Available tasks:
     )
     add_args_for_general_use(parser_for_run)
     add_args_for_hardware_and_calibration(parser_for_run)
+    add_args_for_task_settings_override(parser_for_run)
     add_args_for_flow_control(parser_for_run)
     parser_for_run.set_defaults(func=run_task)
+
+
+def make_subparser_init(sub_parsers):
+    p = sub_parsers.add_parser(
+        "init",
+        help="Initialise MSW on this machine (writes ~/.murineshiftwork/msw_machine.yaml)",
+        formatter_class=ArgparseFormatter,
+    )
+    p.add_argument(
+        "config_dir",
+        type=str,
+        help="Path to the shared msw_configs directory (created if absent)",
+    )
+    p.add_argument("--force", action="store_true", default=False)
+    p.set_defaults(func=run_init)
+
+
+def make_subparser_setup(sub_parsers):
+    p = sub_parsers.add_parser(
+        "setup",
+        help="Manage setup config files",
+        formatter_class=ArgparseFormatter,
+    )
+    p.add_argument(
+        "subcommand",
+        choices=["create", "list"],
+        help="create: make a new skeleton YAML; list: show available setups",
+    )
+    p.add_argument("setup_name", nargs="?", default="", help="Setup name (required for create)")
+    p.add_argument("-cd", "--config-dir", type=str, default="", dest="config_dir")
+    p.add_argument("-f", "--filter", type=str, default="", dest="filter",
+                   help="Filter by partial name match (case-insensitive, only for list)")
+    p.add_argument("--force", action="store_true", default=False)
+    p.set_defaults(func=run_setup)
+
+
+def make_subparser_subject(sub_parsers):
+    p = sub_parsers.add_parser(
+        "subject",
+        help="Manage subject YAML config files",
+        formatter_class=ArgparseFormatter,
+    )
+    p.add_argument(
+        "subcommand",
+        choices=["add", "list"],
+        help="add: register a new subject; list: show registered subjects",
+    )
+    p.add_argument("-s", "--subject", type=str, default="", dest="subject")
+    p.add_argument("--project", type=str, default="")
+    p.add_argument("--experiment", type=str, default="")
+    p.add_argument("--comment", type=str, default="")
+    p.add_argument("-cd", "--config-dir", type=str, default="", dest="config_dir")
+    p.add_argument("-f", "--filter", type=str, default="", dest="filter",
+                   help="Filter by partial name match (case-insensitive, only for list)")
+    p.add_argument("--force", action="store_true", default=False)
+    p.set_defaults(func=run_subject)
 
 
 def parse_args(args=None):
@@ -309,8 +384,11 @@ def parse_args(args=None):
     )
     sub_parsers = main_parser.add_subparsers(metavar="command", dest="command")
     sub_parsers.required = True
+    make_subparser_init(sub_parsers)
     make_subparser_register(sub_parsers)
     make_subparser_run(sub_parsers)
+    make_subparser_setup(sub_parsers)
+    make_subparser_subject(sub_parsers)
 
     parsed_args = main_parser.parse_args(args=args)
     return parsed_args.__dict__

@@ -22,10 +22,10 @@ class Task(TaskRunner):
     def run(self):
         task_settings = self.input_kwargs["settings.task.patched"]
 
-        # Inject top-level kwargs that task_objects needs
+        # Inject top-level kwargs that task_objects needs (calibration_file_water
+        # comes via settings.task.patched from evaluate.py — no manual injection needed)
         task_settings["subject"] = self.input_kwargs.get("subject", "unknown")
-        task_settings["calibration_file_water"] = self.input_kwargs["calibration_file_water"]
-        task_settings["session_paths"] = self.input_kwargs.get("session_paths", {})
+        task_settings.setdefault("session_paths", self.input_kwargs.get("session_paths", {}))
 
         barcode_cfg = barcode_config_from_settings(task_settings)
         barcoder = BarcodeTTL(barcode_cfg)
@@ -103,6 +103,7 @@ class Task(TaskRunner):
             except Exception:
                 logging.warning("Session-end barcode failed to send.", exc_info=True)
 
+        task_control.save_session_end()
         self.input_kwargs["objects"]["kill_queue"].put(True)
         logging.debug("Exiting Task.")
 

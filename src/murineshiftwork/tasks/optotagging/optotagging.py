@@ -62,9 +62,9 @@ class Task(TaskRunner):
 
     def run(self) -> None:
         task_settings = self.input_kwargs["settings.task.patched"]
-        serial_port_pulsepal = self.input_kwargs.get(
-            "serial_port_pulsepal",
-            task_settings["hardware"]["serial_port_pulsepal"],
+        serial_port_pulsepal = (
+            task_settings.get("serial_port_pulsepal")
+            or self.input_kwargs.get("serial_port_pulsepal", "/dev/ttyACM1")
         )
         stimulation = Stimulation(
             port=serial_port_pulsepal,

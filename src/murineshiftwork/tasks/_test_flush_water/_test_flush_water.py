@@ -10,27 +10,41 @@ from murineshiftwork.logic.task_process import TaskRunner
 
 class Task(TaskRunner):
     def run(self):
-        valve_opening_time = 50.30
+        s = self.input_kwargs.get("settings.task.patched", {})
 
-        valve_numbers = [1, 3]
+        valve_opening_time_ms = float(s.get("VALVE_OPENING_TIME_MS", 50.0))
+        valve_numbers = list(s.get("VALVE_NUMBERS", [1, 3]))
+        n_flush_cycles = int(s.get("N_FLUSH_CYCLES", 1))
+        inter_flush_interval_s = float(s.get("INTER_FLUSH_INTERVAL_S", 1.0))
 
-        valves_to_open = []
-        for valve in valve_numbers:
-            # FIXME: check that codes 1,2,3,4 work and not requird to use 1,2,4,8
-            valves_to_open.append((Bpod.OutputChannels.Valve, valve))
+        output_actions = [(Bpod.OutputChannels.Valve, v) for v in valve_numbers]
 
-        sma = StateMachine(bpod=self.bpod)
-        sma.add_state(
-            state_name="drop_it_like_its_water",
-            state_timer=valve_opening_time,
-            state_change_conditions={Bpod.Events.Tup: "exit"},
-            output_actions=valves_to_open,
+        logging.info(
+            f"Flush: valves={valve_numbers}, open_time={valve_opening_time_ms}ms, "
+            f"cycles={n_flush_cycles}, interval={inter_flush_interval_s}s"
         )
 
-        self.bpod.send_state_machine(sma)
+        for cycle in range(n_flush_cycles):
+            if not self.continue_task:
+                break
 
-        if not self.bpod.run_state_machine(sma):
-            logging.debug("No data returned")
+            sma = StateMachine(bpod=self.bpod)
+            sma.add_state(
+                state_name="flush_valves",
+                state_timer=valve_opening_time_ms / 1000.0,
+                state_change_conditions={Bpod.Events.Tup: "exit"},
+                output_actions=output_actions,
+            )
+
+            self.bpod.send_state_machine(sma)
+            if not self.bpod.run_state_machine(sma):
+                logging.warning("No data returned from state machine")
+                break
+
+            logging.info(f"Flush cycle {cycle + 1}/{n_flush_cycles} done")
+
+            if cycle < n_flush_cycles - 1:
+                time.sleep(inter_flush_interval_s)
 
 
 def run_task(**kwargs):

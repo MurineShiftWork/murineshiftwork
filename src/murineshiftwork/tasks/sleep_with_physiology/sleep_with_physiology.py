@@ -1,10 +1,7 @@
-from murineshiftwork.remote_ephys import make_parser_remote_ephys
-from murineshiftwork.remote_ephys import run_remote_ephys
-from murineshiftwork.tasks.periodic_trigger_with_video.periodic_trigger_with_video import (
-    run_task as run_task_core,
-)
+# remote_ephys moved to external/msw_remote_ephys — import from there when needed
 from murineshiftwork.tasks.periodic_trigger_with_video.periodic_trigger_with_video import (
     Task,
+    run_task as run_task_core,
 )
 
 

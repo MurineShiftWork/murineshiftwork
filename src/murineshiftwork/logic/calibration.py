@@ -119,6 +119,17 @@ class CalibrationDataWater(CalibrationData):
             }
         )
 
+    def _compute_volumes(self):
+        """Compute weight_per_drop and volume_ul columns in-place. Idempotent."""
+        self.upgrade_calibration_file_field_names()
+        self.calibration_data["weight_per_drop"] = np.round(
+            self.calibration_data["water_weight_g"] / self.calibration_data["n_drops"], 3
+        )
+        self.calibration_data["volume_ul"] = np.round(
+            self.calibration_data["weight_per_drop"] * 1e3, 3
+        )
+        self.calibration_data = self.calibration_data.sort_values(by="valve_opening_time")
+
     def water_volume_to_valve_time(
         self, valves=None, target_volume=None, s_to_ms=1000
     ):
@@ -126,42 +137,28 @@ class CalibrationDataWater(CalibrationData):
             self.calibration_data is not None
             and not self.calibration_data.empty
         ):
-            self.upgrade_calibration_file_field_names()
-
-            # Process calibration data
-            self.calibration_data["weight_per_drop"] = np.round(
-                self.calibration_data["water_weight_g"]
-                / self.calibration_data["n_drops"],
-                3,
-            )
-            self.calibration_data["volume_ul"] = np.round(
-                self.calibration_data["weight_per_drop"] * 1e3, 3
-            )
-            self.calibration_data = self.calibration_data.sort_values(
-                by="valve_opening_time"
-            )
+            self._compute_volumes()
 
             if not hasattr(valves, "__iter__"):
                 valves = [valves]
 
-            print(self.calibration_data)
-            # Get target valve opening times for given volumes
+            # Get target valve opening times for given volumes via exponential fit.
+            # Preferred path: use SetupConfig.valve_ms_for_ul() which calls
+            # ValveCalibration.ms_for_ul() with the same exponential model.
+            # This CSV path is kept for backward compat when SetupConfig is absent.
             calibration_targets = {}
             for this_valve in valves:
                 data_for_valve = self.calibration_data.loc[
                     self.calibration_data["valve_id"] == this_valve
-                ]
+                ].sort_values("valve_opening_time")
 
-                # FIXME: REPLACE INTERP WITH CURVE FIT. SEE FUNCTIONS BELOW
-
-                calibration_targets[this_valve] = (
-                    np.interp(
-                        target_volume,
-                        data_for_valve["volume_ul"],
-                        data_for_valve["valve_opening_time"],
-                    )
-                    / s_to_ms
-                )
+                points = list(zip(
+                    data_for_valve["valve_opening_time"].tolist(),
+                    data_for_valve["volume_ul"].tolist(),
+                ))
+                from murineshiftwork.logic.config_models import ValveCalibration
+                vc = ValveCalibration(points=[[m, u] for m, u in points])
+                calibration_targets[this_valve] = vc.ms_for_ul(target_volume) / s_to_ms
             return calibration_targets
 
     def save_calibration_plot(self):
@@ -170,19 +167,7 @@ class CalibrationDataWater(CalibrationData):
             and self.calibration_data is not None
             and not self.calibration_data.empty
         ):
-            # TODO: move processing block into separate fct that gets called after calibration, before saving as well!
-            # Process calibration data
-            self.calibration_data["weight_per_drop"] = np.round(
-                self.calibration_data["water_weight_g"]
-                / self.calibration_data["n_drops"],
-                3,
-            )
-            self.calibration_data["volume_ul"] = np.round(
-                self.calibration_data["weight_per_drop"] * 1e3, 3
-            )
-            self.calibration_data = self.calibration_data.sort_values(
-                by="valve_opening_time"
-            )
+            self._compute_volumes()
 
             # PLOT
             f = plt.figure(dpi=450)
@@ -196,6 +181,34 @@ class CalibrationDataWater(CalibrationData):
             plt.ylabel("Volume [uL]")
             plt.xlabel("Valve opening time [ms]")
             f.savefig(os.path.splitext(self.file_path)[0] + ".png")
+
+    def to_valve_calibration(self, valve_id: int):
+        """Convert collected measurements for one valve into a ValveCalibration.
+
+        Returns a ValveCalibration with the updated timestamp set to now and
+        points = [[open_time_ms, volume_ul], ...], one entry per calibration
+        measurement, sorted by open time.
+
+        Caller should run .validate() before writing to setup config.
+        """
+        from datetime import datetime
+        from murineshiftwork.logic.config_models import ValveCalibration
+
+        df = self.calibration_data.copy()
+        df = df[df["valve_id"] == valve_id].copy()
+        if df.empty:
+            raise ValueError(f"No calibration data for valve {valve_id}")
+
+        df["_ul"] = np.round((df["water_weight_g"] / df["n_drops"]) * 1e3, 3)
+        df = df.sort_values("valve_opening_time")
+
+        points = [[float(row["valve_opening_time"]), float(row["_ul"])]
+                  for _, row in df.iterrows()]
+
+        return ValveCalibration(
+            updated=datetime.now().isoformat(timespec="seconds"),
+            points=points,
+        )
 
     def upgrade_calibration_file_field_names(self):
         """Ensure compatibility between old calibration data files and new columns format."""

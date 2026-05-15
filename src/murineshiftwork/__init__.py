@@ -8,7 +8,6 @@ __version__ = "1.0.0"
 __author__ = "Lars B. Rollik"
 
 from murineshiftwork.cli import run_cli
-from murineshiftwork.remote_ephys import run_remote_ephys
 from murineshiftwork.logic.log import patch_logging_levels
 from murineshiftwork.logic.pybpod_helpers import patch_user_settings
 from murineshiftwork.readers.session import read_session_data

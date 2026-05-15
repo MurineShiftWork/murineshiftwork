@@ -104,23 +104,67 @@ class TaskControl:
     def _level_file(self, subject: str) -> Path:
         return LEVEL_STORE_DIR / f"{subject}_level.json"
 
-    def _load_level(self, subject: str) -> int:
+    # ---------------------------------------------------------------------- #
+    # Subject state source — swap these two methods for LabWatch API calls  #
+    # when subjects need to roam between setups.                             #
+    # Local contract: level file at LEVEL_STORE_DIR/{subject}_level.json    #
+    # Remote contract (future): GET/POST to LabWatch /subjects/{name}/state #
+    # ---------------------------------------------------------------------- #
+
+    def _fetch_subject_state(self, subject: str) -> dict:
+        """Load per-subject task state from the local store.
+
+        TODO: replace with LabWatch API GET when moving to multi-setup tracking.
+        """
         f = self._level_file(subject)
         if f.exists():
-            data = json.loads(f.read_text())
-            level = int(data.get("level", self.task_settings.get("start_level", 1)))
-            level = max(1, min(level, len(self.levels_df)))
-            return level
-        return int(self.task_settings.get("start_level", 1))
+            return json.loads(f.read_text())
+        return {}
+
+    def _push_subject_state(self, subject: str, state: dict):
+        """Persist per-subject task state to the local store.
+
+        TODO: replace with LabWatch API POST when moving to multi-setup tracking.
+        """
+        LEVEL_STORE_DIR.mkdir(parents=True, exist_ok=True)
+        self._level_file(subject).write_text(json.dumps(state, indent=2))
+
+    # ---------------------------------------------------------------------- #
+
+    def _load_level(self, subject: str) -> int:
+        data = self._fetch_subject_state(subject)
+        level = int(data.get("level", self.task_settings.get("start_level", 1)))
+        return max(1, min(level, len(self.levels_df)))
 
     def _save_level(self):
         subject = self.task_settings["subject"]
-        LEVEL_STORE_DIR.mkdir(parents=True, exist_ok=True)
-        self._level_file(subject).write_text(
-            json.dumps(
-                {"level": self.current_level, "updated": time.strftime("%Y-%m-%dT%H:%M:%S")},
-                indent=2,
-            )
+        existing = self._fetch_subject_state(subject)
+        existing.update(
+            {"level": self.current_level, "updated": time.strftime("%Y-%m-%dT%H:%M:%S")}
+        )
+        self._push_subject_state(subject, existing)
+
+    def save_session_end(self):
+        """Persist final session state regardless of whether the level changed.
+
+        Call this once after the trial loop exits so the local (or remote) store
+        always reflects the most recent session even when performance was flat.
+        """
+        subject = self.task_settings["subject"]
+        existing = self._fetch_subject_state(subject)
+        existing.update(
+            {
+                "level": self.current_level,
+                "updated": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "session_start_level": self._session_start_level,
+                "total_trials": self.trial_index,
+            }
+        )
+        self._push_subject_state(subject, existing)
+        self._register_subject(subject)
+        log.info(
+            f"Session end state saved for '{subject}': level {self.current_level}, "
+            f"trials {self.trial_index}"
         )
 
     def _register_subject(self, subject: str):

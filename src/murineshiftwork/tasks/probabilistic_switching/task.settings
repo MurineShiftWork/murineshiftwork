@@ -66,6 +66,10 @@ HARDWARE_PULSEPAL_TRIGGER_CHANNEL = 1
 HARDWARE_PULSEPAL_OUTPUT_CHANNEL = 1
 HARDWARE_PORT_LIGHT_INTENSITY = 50
 HARDWARE_PORT_LIGHT_PORTS = ["center"]  # "side" - selects the ports to illuminate
+# Lick-port channel mapping: Bpod port numbers for each physical spout position
+HARDWARE_PORT_LEFT = 1
+HARDWARE_PORT_CENTER = 2
+HARDWARE_PORT_RIGHT = 3
 # VALVE indices: [left valve, right valve], - for both water/air
 HARDWARE_VALVES_FOR_WATER = [1, 3]
 HARDWARE_VALVES_FOR_AIR = [2, 4]
