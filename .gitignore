@@ -141,3 +141,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# External packages with own git repos — not tracked by MSW repo
+external/ttl_barcoder/
