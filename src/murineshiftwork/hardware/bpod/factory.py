@@ -2,7 +2,7 @@ import importlib
 import logging
 
 
-class RobustBpodSession:
+class BpodFactory:
     """Context-manager wrapper around pybpodapi Bpod with auto 4/8-port detection.
 
     Handles the UnicodeDecodeError that occurs randomly on initial connection,
@@ -14,8 +14,8 @@ class RobustBpodSession:
     use it as a drop-in replacement for a bare pybpodapi.protocol.Bpod instance.
     """
 
-    _SETTINGS_STANDARD = "murineshiftwork.settings.user_settings"
-    _SETTINGS_8PORT = "murineshiftwork.settings.user_settings_8port"
+    _SETTINGS_STANDARD = "murineshiftwork.hardware.bpod.user_settings"
+    _SETTINGS_8PORT = "murineshiftwork.hardware.bpod.user_settings_8port"
 
     def __init__(
         self,

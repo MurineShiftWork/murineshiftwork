@@ -8,11 +8,9 @@ from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 from pypulsepal import PulsePal as PyPulsePal
 
-from murineshiftwork.io.trial_data import save_trial_data
-from murineshiftwork.logic.specific_state_machines import add_trial_onset_ttl
-from murineshiftwork.logic.specific_state_machines import (
-    make_ttl_identifier_sequences,
-)
+from murineshiftwork.logic.io import save_trial_data
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
+from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
 from murineshiftwork.logic.stimulation import Stimulation
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner

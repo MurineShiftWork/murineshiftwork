@@ -21,10 +21,10 @@ from murineshiftwork.logic.calibration import CalibrationDataSound
 from murineshiftwork.logic.calibration import CalibrationDataWater
 from murineshiftwork.logic.maths import ExponentialMovingAverage
 from murineshiftwork.logic.maths import withprob
-from murineshiftwork.io.trial_data import save_trial_data
+from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.sounds import StereoSound
-from murineshiftwork.logic.specific_state_machines import add_trial_onset_ttl
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.tasks.probabilistic_switching_fixedsubjects.stage_config import (
     config_for_all_stages,
 )

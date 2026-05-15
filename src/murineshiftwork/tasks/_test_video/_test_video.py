@@ -7,9 +7,7 @@ from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 from rpi_camera_colony.control.conductor import Conductor
 
-from murineshiftwork.logic.specific_state_machines import (
-    make_ttl_identifier_sequences,
-)
+from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner
 from murineshiftwork.tasks.probabilistic_switching.online_plotting import (

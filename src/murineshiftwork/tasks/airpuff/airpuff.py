@@ -13,7 +13,7 @@ from rpi_camera_ensemble.config.acquisition import (
 from rpi_camera_ensemble.config.conductor import ConductorConfig
 from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
-from murineshiftwork.io.trial_data import save_trial_data
+from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
     barcode_config_from_settings,
@@ -21,7 +21,7 @@ from murineshiftwork.logic.barcode import (
     prepare_barcode,
 )
 from murineshiftwork.logic.misc import draw_jittered_trial_time
-from murineshiftwork.logic.specific_state_machines import add_trial_onset_ttl
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner
 

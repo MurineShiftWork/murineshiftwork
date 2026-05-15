@@ -14,8 +14,8 @@ from murineshiftwork.logic.calibration import CalibrationDataWater
 from murineshiftwork.logic.maths import ExponentialMovingAverage
 from murineshiftwork.logic.maths import withprob
 from murineshiftwork.logic.sounds import StereoSound
-from murineshiftwork.io.trial_data import save_trial_data
-from murineshiftwork.logic.specific_state_machines import add_trial_onset_ttl
+from murineshiftwork.logic.io import save_trial_data
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 
 
 class TaskControl(object):

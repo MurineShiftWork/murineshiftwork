@@ -3,9 +3,7 @@ import time
 
 from pybpodapi.bpod import Bpod
 
-from murineshiftwork.logic.specific_state_machines import (
-    make_ttl_identifier_sequences,
-)
+from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner
 

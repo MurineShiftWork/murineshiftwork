@@ -12,7 +12,7 @@ from pybpodapi.protocol import StateMachine
 from murineshiftwork.logic.barcode import BARCODE_FIRST_STATE_NAME
 from murineshiftwork.logic.calibration import CalibrationDataWater
 from murineshiftwork.logic.sounds import StereoSound
-from murineshiftwork.io.trial_data import save_trial_data
+from murineshiftwork.logic.io import save_trial_data
 
 log = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ __author__ = "Lars B. Rollik"
 
 from murineshiftwork.cli import run_cli
 from murineshiftwork.logic.log import patch_logging_levels
-from murineshiftwork.logic.pybpod_helpers import patch_user_settings
+from murineshiftwork.hardware.bpod import patch_user_settings
 from murineshiftwork.readers.session import read_session_data
 
 patch_logging_levels()

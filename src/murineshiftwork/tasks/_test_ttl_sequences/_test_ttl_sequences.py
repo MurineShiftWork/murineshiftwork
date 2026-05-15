@@ -5,10 +5,8 @@ from pathlib import Path
 import numpy as np
 from pybpodapi.bpod import Bpod
 
-from murineshiftwork.logic.specific_state_machines import (
-    make_ttl_identifier_sequences,
-)
-from murineshiftwork.io.trial_data import save_trial_data
+from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
+from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner
 

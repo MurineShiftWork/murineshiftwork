@@ -5,14 +5,14 @@ from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
-from murineshiftwork.io.trial_data import save_trial_data
+from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
     barcode_config_from_settings,
     inject_barcode_states,
     prepare_barcode,
 )
-from murineshiftwork.logic.specific_state_machines import add_trial_onset_ttl
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.stimulation import Stimulation
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner

@@ -5,10 +5,8 @@ import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 
-from murineshiftwork.logic.specific_state_machines import add_trial_onset_ttl
-from murineshiftwork.logic.specific_state_machines import (
-    make_ttl_identifier_sequences,
-)
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
+from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner
 

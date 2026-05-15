@@ -33,8 +33,8 @@ from murineshiftwork.logic.barcode import (
     prepare_barcode,
 )
 from murineshiftwork.logic.misc import draw_jittered_trial_time
-from murineshiftwork.logic.specific_state_machines import add_trial_onset_ttl
-from murineshiftwork.io.trial_data import save_trial_data
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
+from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 _DEFAULTS = {

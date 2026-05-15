@@ -12,7 +12,7 @@ from pybpodapi.protocol import StateMachine
 
 from murineshiftwork import __version__ as _msw_version
 from murineshiftwork import patch_logging_levels
-from murineshiftwork.hardware.bpod import RobustBpodSession
+from murineshiftwork.hardware.bpod import BpodFactory
 from murineshiftwork.logic.log import json_dumps_type_safe
 from murineshiftwork.logic.log import write_json
 from murineshiftwork.logic.misc import find_task_by_name
@@ -104,6 +104,14 @@ class ExampleTask(TaskRunner):
 
 
 class TaskProcess(object):
+    """Manages one session: paths, bpod connection, task thread lifecycle.
+
+    Bpod injection: pass a pre-opened ``RobustBpodSession`` via ``bpod=`` to let
+    the caller (controller/hardware manager) own the hardware connection.  When
+    ``bpod`` is None (default), TaskProcess opens the connection itself using
+    ``serial_port_bpod``.
+    """
+
     # Input
     serial_port = None
     task_in = None
@@ -126,66 +134,57 @@ class TaskProcess(object):
         out_path=None,
         subject=None,
         task=None,
+        bpod=None,
         auto_init=True,
         auto_start=True,
         is_child_session_to=None,
         **kwargs,
     ):
         super(TaskProcess, self).__init__()
-        self.serial_port = str(
-            serial_port_bpod
-        )  # TODO: Encapsulate as bpod handler object. Move to inside protocol for when Bpod requested in config.
+        self.serial_port = str(serial_port_bpod) if serial_port_bpod else ""
         self.out_path = str(out_path)
         self.subject = str(subject)
         self.task_in = str(task)
         self.input_kwargs = kwargs
         self.debug = self.input_kwargs.get("debug", False)
 
-        # Make vars
         self.task_name = find_task_by_name(task_name=self.task_in)
-        # basepath_and_child_session_option = (
-        #     Path(self.out_path) / is_child_session_to
-        # )
         self.session_paths = build_data_paths(
             basepath=Path(self.out_path),
             subject=self.subject,
             task=self.task_name,
             is_child_session_to=is_child_session_to,
-            # skip_subject_folder=True if is_child_session_to else False,
         )
         self.input_kwargs["task_name"] = self.task_name
         self.input_kwargs["session_paths"] = self.session_paths
 
-        # Assertions
-        self.serial_port_accessible = test_serial_port_is_accessible(
-            port=self.serial_port, baudrate=self.bpod_baudrate, timeout=1
-        )  # TODO: Encapsulate as bpod handler object. Move to inside protocol for when Bpod requested in config.
-        if not self.serial_port_accessible and not self.debug:
-            raise IOError(f"Serial port not accessible at {self.serial_port}")
-
         if not self.task_name and not self.debug:
             raise ValueError(
-                f"Task to run '{self.task_in}' not found or not specific enough. {self.task_name}"
+                f"Task to run '{self.task_in}' not found or not specific enough."
             )
 
-        Path(self.session_paths["session_folder"]).mkdir(
-            parents=True, exist_ok=False
-        )
-        target_file = (
-            Path(self.session_paths["session_folder"]) / ".write_test"
-        )
+        Path(self.session_paths["session_folder"]).mkdir(parents=True, exist_ok=False)
+        target_file = Path(self.session_paths["session_folder"]) / ".write_test"
         if not test_path_is_writable(target_file) and not self.debug:
-            raise PermissionError(
-                f"Session files not writable at {str(target_file)}"
-            )
+            raise PermissionError(f"Session files not writable at {str(target_file)}")
 
-        # Remove logging output for pybpod components
         patch_logging_levels()
-
-        # Execute
         self.persist_settings()
-        # if not self.debug:
-        self.connect_bpod()  # TODO: Encapsulate as bpod handler object. Move to inside protocol for when Bpod requested in config.
+
+        if bpod is not None:
+            # Injected: controller owns the hardware connection
+            self.bpod = bpod
+            self.serial_is_open = True
+            logging.debug("TaskProcess: using injected Bpod handle")
+        else:
+            # Self-managed: open connection from serial_port_bpod arg
+            if self.serial_port:
+                accessible = test_serial_port_is_accessible(
+                    port=self.serial_port, baudrate=self.bpod_baudrate, timeout=1
+                )
+                if not accessible and not self.debug:
+                    raise IOError(f"Serial port not accessible at {self.serial_port}")
+            self.connect_bpod()
 
         if auto_init:
             self.init_task()
@@ -213,7 +212,7 @@ class TaskProcess(object):
             logging.debug(
                 f"Connecting bpod on serial port: {self.serial_port}"
             )
-            self.bpod = RobustBpodSession(
+            self.bpod = BpodFactory(
                 serial_port=self.serial_port,
                 workspace_path=self.session_paths["session_folder"],
                 session_name=self.session_paths["session_basename_behav"],

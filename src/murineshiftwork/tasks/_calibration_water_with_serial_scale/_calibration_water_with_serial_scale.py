@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from murineshiftwork.logic.calibration import CalibrationDataWater
 from murineshiftwork.logic.config import update_valve_calibration
-from murineshiftwork.logic.specific_state_machines import make_sma_for_drop_of_water
+from murineshiftwork.hardware.bpod.water import make_sma_for_drop_of_water
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner
 
