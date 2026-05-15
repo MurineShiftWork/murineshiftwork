@@ -1,0 +1,47 @@
+site_name: Murine Shift Work
+site_description: Behaviour acquisition framework for murine research
+site_author: Lars B. Rollik
+repo_url: https://github.com/larsrollik/murineshiftwork
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.expand
+    - toc.integrate
+  palette:
+    scheme: default
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting_started/installation.md
+    - Quick Start: getting_started/quickstart.md
+    - New Machine Setup: getting_started/new_machine.md
+  - Setup & Hardware:
+    - Setup Config: setup/setup_config.md
+    - Serial Ports: setup/SERIAL.md
+    - Wiring: setup/WIRING.md
+    - DHCP: setup/DHCP.md
+    - Cameras: setup/CAMERAS_2026.md
+  - Calibration:
+    - Water Calibration: calibration/water.md
+    - Stage Calibration: calibration/stage.md
+    - Visualization: calibration/visualization.md
+  - Barcode TTL Sync: barcode_ttl_integration.md
+  - Work Plans:
+    - Refactor Status: work_plans/REFACTOR_STATUS.md
+    - CLI Redesign: work_plans/cli_redesign_spec.md
+    - Hooks: work_plans/HOOKS.md
+    - Todo: work_plans/TODO.md
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - tables
+  - toc:
+      permalink: true
