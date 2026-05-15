@@ -197,57 +197,22 @@ class KeyHandler:
 
 class Task(TaskRunner):
     def run(self):
-        hostname = socket.gethostname()
-        print(f"HOST: {hostname}")
-        # task_settings = self.input_kwargs["settings.task.patched"]
+        s = self.input_kwargs.get("settings.task.patched", {})
+        serial_port_stage = self.input_kwargs.get("serial_port_stage", "") or s.get("serial_port_stage", "")
+        calibration_file_stage = Path(s.get("calibration_file_stage", "")).expanduser()
 
-        calibration_file_stage = Path(
-            self.input_kwargs["calibration_file_stage"]
-        ).expanduser()
-        print(f"calibration_file_stage: {calibration_file_stage}")
-        if not Path(calibration_file_stage).exists():
-            calibration_stage_dict = DEFAULT_CONFIG
+        if calibration_file_stage.exists():
+            with open(calibration_file_stage) as f:
+                config = yaml.safe_load(f)
+        elif s.get("settings.stage"):
+            config = s["settings.stage"]
+            calibration_file_stage = None  # no file to save back to
         else:
-            with open(calibration_file_stage, "r") as f:
-                calibration_stage_dict = yaml.full_load(f.read())
+            logging.error("No stage config: set calibration_file_stage or configure a stage device in setup YAML")
+            return
 
-        # print("calibration_stage_dict:", calibration_stage_dict)
-        # for axis_name in ["x", "y", "z"]:
-        #     try:
-        #         axis_id = self.input_kwargs["metadata"].get(axis_name, None)
-        #     except KeyError:
-        #         continue
-        #
-        #     print(f"{axis_name}, axis id : {axis_id}")
-        #
-        #     if axis_id is not None:
-        #         print(f"Trying to set new id on axis {axis_name}: {axis_id}")
-        #         calibration_stage_dict["axes"][axis_name]["id"] = int(axis_id)
-
-        # stage_config = calibration_stage_dict.get(hostname, "default")
-        # print(calibration_stage_dict.get(hostname, "default"))
-
-        # axes_names = tuple(
-        #     config_for_all_stages["stage_tower_setup_1"].get("axes").keys()
-        # )
-        # axes_names = tuple(calibration_stage_dict.get("axes").keys())
-        serial_port_stage = self.input_kwargs.get(
-            "serial_port_stage", "XX"
-        )  # "/dev/ttyUSB0")
-        # stage_config = config_for_all_stages[
-        #     "stage_tower_setup_1"
-        # ]  # todo: calibration_file_stage
-
-        # print("calibration stage dict", calibration_stage_dict)
-        #
-        # move_interface = MoveInterface(
-        #     axes_names=axes_names,
-        #     serial_port=serial_port_stage,
-        #     stage_config=calibration_stage_dict,
-        # )
-        calibration_stage_dict["connection"]["serial_port"] = serial_port_stage
-        ctrl = StageController.from_config(calibration_stage_dict)
-        ctrl.save_config(config_file=calibration_file_stage)
+        config.setdefault("connection", {})["serial_port"] = serial_port_stage
+        ctrl = StageController.from_config(config)
         move_interface = MoveInterface(ctrl, small_increment=20, large_increment=40)
 
         kh = KeyHandler(move_interface=move_interface)
@@ -260,17 +225,8 @@ class Task(TaskRunner):
             delay_second_char=0.1,
         )
 
-        ctrl.save_config(calibration_file_stage)
-
-        # new_calibration = move_interface.config_dict()
-        #
-        # overwritten_calibration = ctrl.config.copy()
-        # for name, params in new_calibration["axes"].items():
-        #     overwritten_calibration["axes"][name] = params
-        #
-        # overwritten_calibration["_hostname"] = str(hostname)
-        # with open(calibration_file_stage, "w") as f:
-        #     f.write(yaml.dump(overwritten_calibration))
+        if calibration_file_stage:
+            ctrl.save_config(calibration_file_stage)
 
 
 def run_task(**kwargs):

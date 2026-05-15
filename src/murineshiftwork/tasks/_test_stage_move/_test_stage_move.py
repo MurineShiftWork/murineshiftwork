@@ -64,18 +64,19 @@ class KeyHandler:
 class Task(TaskRunner):
     def run(self):
         s = self.input_kwargs.get("settings.task.patched", {})
-        serial_port_stage = self.input_kwargs.get("serial_port_stage", "")
-        calibration_file_stage = Path(
-            s.get("calibration_file_stage", "")
-        ).expanduser()
+        serial_port_stage = self.input_kwargs.get("serial_port_stage", "") or s.get("serial_port_stage", "")
+        calibration_file_stage = Path(s.get("calibration_file_stage", "")).expanduser()
 
-        if not calibration_file_stage.exists():
-            logging.error(f"Stage calibration file not found: {calibration_file_stage}")
+        if calibration_file_stage.exists():
+            with open(calibration_file_stage) as f:
+                config = yaml.safe_load(f)
+        elif s.get("settings.stage"):
+            config = s["settings.stage"]
+        else:
+            logging.error("No stage config: set calibration_file_stage or configure a stage device in setup YAML")
             return
 
-        with open(calibration_file_stage) as f:
-            config = yaml.safe_load(f)
-        config["connection"]["serial_port"] = serial_port_stage
+        config.setdefault("connection", {})["serial_port"] = serial_port_stage
 
         ctrl = StageController.from_config(config)
         move_interface = MoveInterface(ctrl, small_increment=20, large_increment=40)

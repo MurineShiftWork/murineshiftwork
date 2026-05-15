@@ -34,7 +34,7 @@ class PulsePalDevice(SerialDevice):
 
 
 class AxisConfig(BaseModel):
-    motor_id: int
+    id: int
     position_min: int = 1
     position_max: int = 999
     velocity_max: int = 200
@@ -46,7 +46,7 @@ class StageTowerDevice(SerialDevice):
     baudrate: int = 115200
     timeout: float = 0.1
     axes: dict[str, AxisConfig] = {}
-    known_positions: dict[str, dict[str, int]] = {}
+    known_positions: dict[str, dict[str, Any]] = {}
 
 
 class GenericSerialDevice(SerialDevice):

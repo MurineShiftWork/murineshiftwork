@@ -152,7 +152,7 @@ def _stage_device_to_controller_config(device) -> dict:
         },
         "axes": {
             name: {
-                "motor_id": ax.motor_id,
+                "id": ax.id,
                 "position_min": ax.position_min,
                 "position_max": ax.position_max,
                 "velocity_max": ax.velocity_max,
