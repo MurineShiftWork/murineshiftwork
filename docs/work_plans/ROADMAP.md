@@ -98,6 +98,37 @@ running a full task state machine.
 
 ## Completed (this iteration — 2026-05-15 / 2026-05-16)
 
+### Fixed-subjects task: hardware and logging fixes (2026-05-16)
+- **BpodFactory softcode proxy**: added explicit `softcode_handler_function` property (getter + setter)
+  so pybpodapi's read loop receives the handler — without it, all softcodes were silently dropped
+- **Non-blocking stage movement**: moved `move_to_known_position()` calls into a dedicated worker
+  thread (`_stage_worker`) fed by a `queue.Queue`; softcode handler now just enqueues the command
+  and returns immediately, unblocking pybpodapi's event read loop
+- **Valve timer units**: corrected `water_volume_to_valve_time` to return seconds (was returning ms
+  due to `s_to_ms=1` bug), matching pybpodapi state timer expectations; fallback `valve_ms_for_ul`
+  also fixed with `/1000` conversion
+- **Setup YAML `motor_id` → `id`**: five setup YAMLs (setup-1 through setup-4, npx, npxb) had
+  `motor_id:` in stage axis definitions; Pydantic model requires `id:` — fixed with sed
+
+### Calibration times in seconds (2026-05-16)
+- All `bpod_valve` calibration points in `msw_configs/setups/setup-{1,2,3,4}.yaml` converted from
+  milliseconds to seconds (÷1000): e.g. 10 ms → 0.01 s, 82 ms → 0.082 s
+- `ValveCalibration.ms_for_ul()` renamed → `s_for_ul()`; `ul_for_ms()` → `ul_for_s()`
+- `SetupConfig.valve_ms_for_ul()` renamed → `valve_s_for_ul()`; `valve_ul_for_ms()` → `valve_ul_for_s()`
+- `water_volume_to_valve_time()`: removed `s_to_ms` parameter; returns seconds directly
+- All three task `task_objects.py` files (probabilistic_switching_fixedsubjects, probabilistic_switching,
+  sequence_automated) updated accordingly — no conversion needed anywhere in task code
+
+### Logging cleanup (2026-05-16)
+- Removed all `print()` calls from `task_objects.py` (fixed-subjects task); replaced with
+  appropriate `logging.info` / `logging.debug` levels
+- Trial summary: multiline print → single ~75-char `logging.info` line per trial
+- Softcode received, stage queuing, stage back → `logging.debug`; stage at front → `logging.info`
+- Block draw internals → `logging.debug`; block switch (probabilities) stays `logging.info`
+- Anti-bias and forced-exploration internals → `logging.debug`
+- `online_plotting.py`: `print("unknown option")` → `logging.debug`
+- `calibration.py` base class: `print()` → `logging.debug`/`logging.info`
+
 ### Package structure
 - Namespace package: `tasks/` has no `__init__.py`; filesystem scan replaces `pkgutil.iter_modules`
 - `hardware/bpod/` subpackage: `BpodFactory` (renamed from `RobustBpodSession`), `ttl.py`, `water.py`

@@ -21,7 +21,7 @@ class CalibrationData:
         """ """
         super(CalibrationData, self).__init__(**kwargs)
         self.file_path = file_path or self.file_path
-        print(f"CALIBRATION DATA PATH: {self.file_path}")
+        logging.debug(f"Calibration data path: {self.file_path}")
 
         for k, v in kwargs.items():
             if hasattr(self, k):
@@ -85,7 +85,7 @@ class CalibrationData:
                     f"File exists and not allowed to overwrite. {file_path}"
                 )
             self.calibration_data.to_csv(file_path)
-            print(f"SAVING calibration at: {file_path}")
+            logging.info(f"Saved calibration: {file_path}")
 
 
 class CalibrationDataWater(CalibrationData):
@@ -131,7 +131,7 @@ class CalibrationDataWater(CalibrationData):
         self.calibration_data = self.calibration_data.sort_values(by="valve_opening_time")
 
     def water_volume_to_valve_time(
-        self, valves=None, target_volume=None, s_to_ms=1000
+        self, valves=None, target_volume=None
     ):
         if (
             self.calibration_data is not None
@@ -142,9 +142,9 @@ class CalibrationDataWater(CalibrationData):
             if not hasattr(valves, "__iter__"):
                 valves = [valves]
 
-            # Get target valve opening times for given volumes via exponential fit.
-            # Preferred path: use SetupConfig.valve_ms_for_ul() which calls
-            # ValveCalibration.ms_for_ul() with the same exponential model.
+            # Get target valve opening times (seconds) for given volumes via exponential fit.
+            # Preferred path: use SetupConfig.valve_s_for_ul() which calls
+            # ValveCalibration.s_for_ul() with the same exponential model.
             # This CSV path is kept for backward compat when SetupConfig is absent.
             calibration_targets = {}
             for this_valve in valves:
@@ -157,8 +157,8 @@ class CalibrationDataWater(CalibrationData):
                     data_for_valve["volume_ul"].tolist(),
                 ))
                 from murineshiftwork.logic.config import ValveCalibration
-                vc = ValveCalibration(points=[[m, u] for m, u in points])
-                calibration_targets[this_valve] = vc.ms_for_ul(target_volume) / s_to_ms
+                vc = ValveCalibration(points=[[t, u] for t, u in points])
+                calibration_targets[this_valve] = vc.s_for_ul(target_volume)
             return calibration_targets
 
     def save_calibration_plot(self):
@@ -335,7 +335,7 @@ def plot_setup_valve_calibrations(
         raise FileNotFoundError(f"No setup YAMLs found in {setups_dir}")
 
     # Collect calibration data
-    all_data = {}  # {setup_name: {valve_id: {"open_ms": [...], "volume_ul": [...]}}}
+    all_data = {}  # {setup_name: {valve_id: {"open_s": [...], "volume_ul": [...]}}}
     for yf in yaml_files:
         if not yf.exists():
             logging.warning(f"Setup YAML not found: {yf}")
@@ -353,7 +353,7 @@ def plot_setup_valve_calibrations(
                 continue
             pts_arr = np.array(pts, dtype=float)
             all_data[sname][str(valve_id)] = {
-                "open_ms": pts_arr[:, 0],
+                "open_s": pts_arr[:, 0],
                 "volume_ul": pts_arr[:, 1],
                 "updated": vdata.get("updated", ""),
             }
@@ -372,7 +372,7 @@ def plot_setup_valve_calibrations(
     for col_idx, (sname, valves) in enumerate(all_data.items()):
         ax = axes[0, col_idx]
         for v_idx, (valve_id, vdata) in enumerate(valves.items()):
-            x = vdata["open_ms"]
+            x = vdata["open_s"]
             y = vdata["volume_ul"]
             color = colors[v_idx % len(colors)]
             ax.scatter(x, y, color=color, zorder=3, label=f"valve {valve_id}")
@@ -382,7 +382,7 @@ def plot_setup_valve_calibrations(
                 try:
                     popt, _ = curve_fit(
                         _exponential_function, x, y,
-                        p0=[0.01, 0.02, 0.0], maxfev=5000,
+                        p0=[0.01, 20.0, 0.0], maxfev=5000,
                     )
                     x_fit = np.linspace(x.min() * 0.9, x.max() * 1.1, 200)
                     y_fit = _exponential_function(x_fit, *popt)
@@ -391,7 +391,7 @@ def plot_setup_valve_calibrations(
                     pass
 
         ax.set_title(sname, fontsize=10)
-        ax.set_xlabel("Valve open time (ms)")
+        ax.set_xlabel("Valve open time (s)")
         ax.set_ylabel("Volume (µL)")
         ax.legend(fontsize=8)
         ax.grid(True, alpha=0.3)

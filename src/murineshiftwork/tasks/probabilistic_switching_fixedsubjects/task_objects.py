@@ -104,8 +104,7 @@ class TaskControl(object):
             if not save_path_data
             else save_path_data
         )
-        print(f"Running session: {Path(self.save_path_data).name}")
-        logging.info(self.task_settings)
+        logging.info(f"Session: {Path(self.save_path_data).name}")
 
         self.task_settings = task_settings
         self.barcoder = barcoder
@@ -141,12 +140,11 @@ class TaskControl(object):
         self.valve_times_dict = self.calibration_water.water_volume_to_valve_time(
             valves=valves,
             target_volume=target_vol,
-            s_to_ms=1000,  # returns seconds for pybpodapi state timers
         )
         if self.valve_times_dict is None and execution_config and execution_config.setup:
             setup = execution_config.setup
             self.valve_times_dict = {
-                v: setup.valve_ms_for_ul(v, target_vol) / 1000  # ms → s
+                v: setup.valve_s_for_ul(v, target_vol)
                 for v in valves
             }
             logging.info("Valve times from SetupConfig (no water calibration CSV)")
@@ -170,9 +168,9 @@ class TaskControl(object):
         self.stage.small_increment = 20
         self.stage.large_increment = 40
 
-        print(f"[stage] known_positions at init: {self.stage.known_positions}")
+        logging.debug(f"Stage known_positions at init: {self.stage.known_positions}")
         self.stage.save_as_known_position("front")
-        print(f"[stage] known_positions after save 'front': {self.stage.known_positions}")
+        logging.debug(f"Stage known_positions after save 'front': {self.stage.known_positions}")
         if "front" not in self.stage.known_positions or not self.stage.known_positions["front"]:
             raise RuntimeError(
                 "[stage] save_as_known_position('front') produced empty result — "
@@ -180,7 +178,7 @@ class TaskControl(object):
             )
 
         self.stage.move_to_known_position("back")
-        print("[stage] moved to 'back'")
+        logging.debug("Stage moved to 'back' (init)")
 
         self._stage_queue = queue.Queue()
         self._stage_thread = threading.Thread(target=self._stage_worker, daemon=True)
@@ -223,10 +221,12 @@ class TaskControl(object):
                 break
             try:
                 self.stage.move_to_known_position(cmd)
-                logging.info(f"Stage: reached '{cmd}'")
+                if cmd == "front":
+                    logging.info(f"Stage at front")
+                else:
+                    logging.debug(f"Stage at '{cmd}'")
             except Exception as exc:
                 logging.error(f"Stage move to '{cmd}' failed: {exc}", exc_info=True)
-                print(f"[stage] ERROR move to '{cmd}': {exc}")
             finally:
                 self._stage_queue.task_done()
 
@@ -237,18 +237,17 @@ class TaskControl(object):
             self._stage_thread.join(timeout=10)
 
     def softcode_handler(self, softcode=None):
-        print(f"[softcode] received: {softcode}")
-        logging.info(f"SOFT CODE RECEIVED: {softcode}")
+        logging.debug(f"Softcode received: {softcode}")
 
         self.sound.execute_sound_handler(
             sound_code=softcode, raise_errors=False
         )
 
         if softcode == self.MOVE_TO_FRONT:
-            logging.info("Stage: queuing move to front")
+            logging.debug("Stage: queuing move to front")
             self._stage_queue.put("front")
         elif softcode == self.MOVE_TO_BACK:
-            logging.info("Stage: queuing move to back")
+            logging.debug("Stage: queuing move to back")
             self._stage_queue.put("back")
 
     def switch_block(self):
@@ -271,7 +270,7 @@ class TaskControl(object):
             pdiffs = np.abs(np.diff(self.probabilities))
             pdiffmax = np.max(pdiffs)
             range_for_prob = [i for i, p in enumerate(pdiffs) if p == pdiffmax]
-            print(f"BLOCK 1 drawn as {range_for_prob}")
+            logging.debug(f"Block 1 drawn from range {range_for_prob}")
         elif self.block_number == 2 and self.task_settings["first_block_easy"]:
             pdiffs = np.abs(np.diff(self.probabilities))
             pdiffmax = np.max(pdiffs)
@@ -280,10 +279,10 @@ class TaskControl(object):
                 for i, p in enumerate(pdiffs)
                 if p == pdiffmax and i != self.block_probability_index
             ]
-            print(f"BLOCK 2 drawn as {range_for_prob}")
+            logging.debug(f"Block 2 drawn from range {range_for_prob}")
         else:
             range_for_prob = np.arange(self.probabilities.__len__())
-            print(f"BLOCK 2+ drawn as {range_for_prob}")
+            logging.debug(f"Block {self.block_number} drawn from range {list(range_for_prob)}")
 
         # Exclude current block from choice of __read_next_frame block type
         if self.task_settings["block_switch_to_different_block_type"]:
@@ -377,7 +376,7 @@ class TaskControl(object):
                 self.next_trial_choice_outcome_right < 0
                 and self.last_choice == 1
             ):
-                print("PUNISHED")
+                logging.debug("Punished")
                 self.last_punish = 1
             else:
                 self.last_punish = 0
@@ -421,19 +420,17 @@ class TaskControl(object):
         if self.trial_index < 1:
             return
 
-        item_spacer = " | "
-        print(
-            f"[{round(trial_data['Trial start timestamp'] / 60, 1): >4}min]{item_spacer}"
-            f"T#{self.trial_index: >4}{item_spacer}"
-            f"B#{self.block_number:>2}{item_spacer}"
-            f"BT#{self.block_trial_number:>4}{item_spacer}"
-            f"Choice: {self.last_choice:>3}{item_spacer}"
-            f"Pref: {np.round(self.moving_average(), 2):>5}{item_spacer}"
-            f"Reward: {self.reward_number:>4} "
-            f"({round(self.task_settings['reward_amount_ul'] * self.reward_number, 2):>4}uL).{item_spacer}"
-            f"Crit: {self.trials_post_criterion:>2}{item_spacer}"
-            f"Forced: {self.is_forced_exploration_trial} / "
-            f"T until forced: {self.task_settings['forced_choice_threshold'] - self.block_trial_number}"
+        _extras = (
+            (" [FORCED]" if self.is_forced_exploration_trial else "")
+            + (" [PUNISHED]" if self.last_punish else "")
+            + (" [STOP]" if self.last_stop else "")
+        )
+        logging.info(
+            f"T{self.trial_index:04d} B{self.block_number:02d}.{self.block_trial_number:03d} "
+            f"t={round(trial_data['Trial start timestamp']/60,1):4.1f}min "
+            f"ch:{self.last_choice:+.0f} bias:{self.moving_average():+.2f} "
+            f"r:{self.reward_number}({round(self.task_settings['reward_amount_ul']*self.reward_number,1):.1f}uL) "
+            f"crit:{self.trials_post_criterion}{_extras}"
         )
 
         self.is_forced_exploration_trial = False
@@ -665,7 +662,7 @@ class TaskControl(object):
                         "NEXT SHOULD BE FORCED TRIAL AS IS SUB-OPTIMAL"
                     )
             except TypeError:
-                print("FIX ERROR HERE")
+                logging.debug("Forced trial check: TypeError comparing last_choice")
 
             self.is_forced_exploration_trial = True  # FIXME
             side_dict = {
@@ -681,9 +678,8 @@ class TaskControl(object):
                     f"the next trial enforces a {side_dict[-1 * unique_choices_non_nan[-1]]} choice."
                 )
             except KeyError:
-                print("HERE AGAIN", n_back_crit, unique_choices_non_nan)
+                logging.debug(f"Forced trial KeyError: n_back={n_back_crit} choices={unique_choices_non_nan}")
                 self.is_forced_exploration_trial = False
-                print("ERROR, therefore trying to avoid forced choice now")
 
     def _check_stage_anti_bias(self, choice_vector):
         # n_back_crit_bias = 3
@@ -700,23 +696,23 @@ class TaskControl(object):
             and self.block_trial_number >= self.n_back_crit_bias
         ):
             # only one type of choice AND only evaluate during current block analog to forced-choice trials
-            print("ANTI BIAS")
+            logging.debug("Anti-bias triggered")
             if np.abs(self.stage_bias) <= self.stage_bias_max:
-                print("BIAS NOT MAXED OUT")
+                logging.debug("Anti-bias: adjusting stage position")
                 if self.last_choice == -1:  # LEFT
                     bias_increment = -self.stage.small_increment
                 elif self.last_choice == 1:  # RIGHT
                     bias_increment = self.stage.small_increment
                 else:
-                    print("shouldn't occur!")
+                    logging.debug("Anti-bias: unexpected choice value, skipping")
                     bias_increment = 0
 
                 self.stage.known_positions["front"]["x"][
                     "position_raw"
                 ] += bias_increment
 
-                print(
-                    f"NEW ANTI BIAS position: {bias_increment} -> {self.stage.known_positions}"
+                logging.debug(
+                    f"Anti-bias position: {bias_increment:+d} -> {self.stage.known_positions}"
                 )
 
     def make_state_machine(

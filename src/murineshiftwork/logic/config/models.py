@@ -68,10 +68,10 @@ def _exp_model(x: np.ndarray, a: float, b: float, c: float) -> np.ndarray:
 
 
 class ValveCalibration(BaseModel):
-    """Bpod valve calibration: list of [open_time_ms, delivered_ul] pairs.
+    """Bpod valve calibration: list of [open_time_s, delivered_ul] pairs.
 
     Volume delivered by a solenoid valve grows exponentially with opening time:
-        volume_ul = a * exp(b * open_time_ms) + c
+        volume_ul = a * exp(b * open_time_s) + c
     All lookup methods fit this model to the stored points on demand.
     """
 
@@ -85,19 +85,19 @@ class ValveCalibration(BaseModel):
         even with sparse calibration sets (≥ 3 points).
         """
         pts = sorted(self.points, key=lambda p: p[0])
-        ms = np.array([p[0] for p in pts], dtype=float)
+        s = np.array([p[0] for p in pts], dtype=float)
         ul = np.array([p[1] for p in pts], dtype=float)
 
         ul_min, ul_max = ul.min(), ul.max()
-        ms_span = ms.max() - ms.min()
-        b0 = np.log(ul_max / ul_min) / ms_span if ms_span > 0 and ul_min > 0 else 0.02
+        s_span = s.max() - s.min()
+        b0 = np.log(ul_max / ul_min) / s_span if s_span > 0 and ul_min > 0 else 20.0
         a0 = ul_min
         c0 = 0.0
 
         try:
             popt, _ = _scipy_curve_fit(
                 _exp_model,
-                ms, ul,
+                s, ul,
                 p0=[a0, b0, c0],
                 bounds=([0.0, 0.0, -np.inf], [np.inf, np.inf, np.inf]),
                 maxfev=10_000,
@@ -108,22 +108,22 @@ class ValveCalibration(BaseModel):
                 f"Exponential fit failed — check calibration points for valve.\n{exc}"
             )
 
-    def ul_for_ms(self, open_ms: float) -> float:
+    def ul_for_s(self, open_s: float) -> float:
         a, b, c = self._fit()
-        return float(_exp_model(np.array([open_ms]), a, b, c)[0])
+        return float(_exp_model(np.array([open_s]), a, b, c)[0])
 
-    def ms_for_ul(self, volume_ul: float) -> float:
+    def s_for_ul(self, volume_ul: float) -> float:
         """Invert the exponential fit numerically via dense sampling.
 
         Sampling is used rather than the analytical inverse (ln((v-c)/a)/b) because
         the analytical form is numerically fragile when a or b are near zero.
         """
         pts = sorted(self.points, key=lambda p: p[0])
-        ms_min, ms_max = pts[0][0], pts[-1][0]
-        ms_dense = np.linspace(ms_min, ms_max, 2000)
+        s_min, s_max = pts[0][0], pts[-1][0]
+        s_dense = np.linspace(s_min, s_max, 2000)
         a, b, c = self._fit()
-        ul_dense = _exp_model(ms_dense, a, b, c)
-        return float(np.interp(volume_ul, ul_dense, ms_dense))
+        ul_dense = _exp_model(s_dense, a, b, c)
+        return float(np.interp(volume_ul, ul_dense, s_dense))
 
     def validate(self, r2_threshold: float = 0.95) -> tuple[bool, str]:
         """Return (is_valid, reason).
@@ -139,7 +139,7 @@ class ValveCalibration(BaseModel):
             return False, f"only {len(self.points)} point(s) — need at least 3"
 
         pts = sorted(self.points, key=lambda p: p[0])
-        ms = np.array([p[0] for p in pts], dtype=float)
+        s = np.array([p[0] for p in pts], dtype=float)
         ul = np.array([p[1] for p in pts], dtype=float)
 
         if np.any(ul <= 0):
@@ -155,7 +155,7 @@ class ValveCalibration(BaseModel):
         if b <= 0:
             return False, f"fit parameter b = {b:.4f} ≤ 0 (curve is not exponential growth)"
 
-        ul_pred = _exp_model(ms, a, b, c)
+        ul_pred = _exp_model(s, a, b, c)
         ss_res = float(np.sum((ul - ul_pred) ** 2))
         ss_tot = float(np.sum((ul - ul.mean()) ** 2))
         r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
@@ -191,11 +191,11 @@ class SetupConfig(BaseModel):
             raise KeyError(f"Device '{device_name}' not in setup '{self.name}'")
         return self.devices[device_name].resolve_port()
 
-    def valve_ul_for_ms(self, port: str | int, open_ms: float) -> float:
-        return self.calibrations.bpod_valve[str(port)].ul_for_ms(open_ms)
+    def valve_ul_for_s(self, port: str | int, open_s: float) -> float:
+        return self.calibrations.bpod_valve[str(port)].ul_for_s(open_s)
 
-    def valve_ms_for_ul(self, port: str | int, volume_ul: float) -> float:
-        return self.calibrations.bpod_valve[str(port)].ms_for_ul(volume_ul)
+    def valve_s_for_ul(self, port: str | int, volume_ul: float) -> float:
+        return self.calibrations.bpod_valve[str(port)].s_for_ul(volume_ul)
 
 
 # ---------------------------------------------------------------------------

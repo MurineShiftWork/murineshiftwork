@@ -1,3 +1,4 @@
+import logging
 import socket
 import time
 from multiprocessing import Process
@@ -474,7 +475,7 @@ class OnlinePlottingForPS(Process):
             else:
                 self.data.current_trial_outcome_point = trial_outcomes[3]
         else:
-            print("unknown option")
+            logging.debug(f"Online plot: unknown outcome option for trial {self.trial_index}")
             return
 
         self.data.probability_left[self.trial_index] = dict_for_update[
