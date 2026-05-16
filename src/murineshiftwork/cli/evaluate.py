@@ -258,10 +258,11 @@ def evaluate_args(args_dict=None):
             logging.debug(f"Resolved stage port from SetupConfig: {resolved_stage}")
         except ValueError as exc:
             logging.warning(f"SetupConfig stage port resolution failed ({exc})")
-        if not args_dict.get("settings.stage"):
-            args_dict["settings.stage"] = _stage_device_to_controller_config(stage_dev)
-            patched["settings.stage"] = args_dict["settings.stage"]
-            logging.debug("Built settings.stage from SetupConfig stage device")
+        # Always prefer setup config when it has axes defined — old calibration files
+        # (including empty ones) must not silently override the active setup config.
+        args_dict["settings.stage"] = _stage_device_to_controller_config(stage_dev)
+        patched["settings.stage"] = args_dict["settings.stage"]
+        logging.debug("Built settings.stage from SetupConfig stage device")
 
     if setup_config and setup_config.cameras:
         cam_path = setup_config.cameras.config

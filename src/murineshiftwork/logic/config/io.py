@@ -124,6 +124,43 @@ def save_subject_task_stage_position(
     )
 
 
+def update_stage_config(
+    config_dir: str | Path,
+    setup_name: str,
+    stage_controller_config: dict,
+) -> bool:
+    """Write updated axis limits and known_positions from a StageController config back to the setup YAML.
+
+    Only axis limits (position_min, position_max, velocity_max, operating_mode) and
+    known_positions are written — position_raw is transient hardware state and is skipped.
+    Returns True if the file was written.
+    """
+    path = Path(config_dir) / "setups" / f"{setup_name}.yaml"
+    if not path.exists():
+        raise FileNotFoundError(f"Setup config not found: {path}")
+
+    with open(path) as f:
+        raw = yaml.safe_load(f) or {}
+
+    stage = raw.setdefault("devices", {}).setdefault("stage", {})
+
+    for axis_name, axis_data in stage_controller_config.get("axes", {}).items():
+        axis = stage.setdefault("axes", {}).setdefault(axis_name, {})
+        for key in ("position_min", "position_max", "velocity_max", "operating_mode"):
+            if key in axis_data:
+                axis[key] = axis_data[key]
+
+    known_positions = stage_controller_config.get("known_positions", {})
+    if known_positions:
+        stage["known_positions"] = known_positions
+
+    with open(path, "w") as f:
+        yaml.dump(raw, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+    logging.info(f"Updated stage config in setup '{setup_name}' at {path}")
+    return True
+
+
 def load_subject_config(config_dir: str | Path, subject_name: str) -> Optional[SubjectConfig]:
     """Load SubjectConfig from {config_dir}/subjects/{subject_name}.yaml.
 

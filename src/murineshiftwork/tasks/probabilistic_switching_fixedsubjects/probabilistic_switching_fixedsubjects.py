@@ -148,118 +148,58 @@ class Task(TaskRunner):
 
 
 def run_task(**args_dict):
-    """Task: PS."""
-    # Make objects
+    """Task: PS fixed."""
     dq = Queue()
     kq = Queue()
-    args_dict.update(
-        {
-            "objects": {
-                "data_queue": dq,
-                "kill_queue": kq,
-            },
-        },
-    )
-
-    # Do not auto start, so that camera can start first
+    args_dict.update({"objects": {"data_queue": dq, "kill_queue": kq}})
     args_dict.update({"auto_start": False})
 
     setup_name = args_dict.get("metadata", {}).get("setup", "n/a")
 
-    # Video
     ensemble_cfg_file = args_dict["config_file_camera"]
-    print("DBG:", ensemble_cfg_file)
-    assert Path(ensemble_cfg_file).exists()
+    assert Path(ensemble_cfg_file).exists(), f"Camera config not found: {ensemble_cfg_file}"
     ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
     conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
-    conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
-    conductor.start()
-    conductor.setup_agents()
 
-    # Enter behaviour context
-    with TaskProcess(**args_dict) as tp:
-        # Paths for video
-        _session = tp.session_paths["session_basename"]
-        _subject = tp.session_paths["subject"]
+    # Conductor __exit__ calls stop() — cleans up camera agents on any exception
+    with Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg) as conductor:
+        conductor.setup_agents()
 
-        conductor.initialize_acquisition(
-            acquisition_path=(
-                f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
-                if args_dict["is_child_session_to"] is not None
-                else f"{_subject}/{_session}"
-            ),
-            acquisition_name=_session,
-        )
-        conductor.start_preview()
-        conductor.start_recording()
-        # assert 1 == 0
-        # conductor_args = {
-        #     "config_file": args_dict["config_file_camera"],
-        #     "acquisition_group": args_dict["is_child_session_to"]
-        #     if args_dict["is_child_session_to"] is not None
-        #     else tp.session_paths["session_basename"].split("__")[0],
-        #     "acquisition_name": tp.session_paths["session_basename"],
-        # }
-        # c = Conductor(**conductor_args)
-        # c.start_acquisition()
-        # FIX-ME: video stream config should come from RCC config -> add transpose etc. to 'stream' section in RCC
-        # video_stream_config = args_dict["settings.camera"].get(
-        #     "controllers", {}
-        # )
+        with TaskProcess(**args_dict) as tp:
+            _session = tp.session_paths["session_basename"]
+            _subject = tp.session_paths["subject"]
 
-        # Online plotting
-        plotting_process = OnlinePlottingForPS(
-            window_title=f"[{setup_name}]  {tp.session_paths['session_basename']}",
-            is_simulation=False,
-            data_queue=dq,
-            kill_queue=kq,
-            # video_stream_config=video_stream_config,
-        )
-        plotting_process.start()
+            conductor.initialize_acquisition(
+                acquisition_path=(
+                    f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
+                    if args_dict["is_child_session_to"] is not None
+                    else f"{_subject}/{_session}"
+                ),
+                acquisition_name=_session,
+            )
+            conductor.start_preview()
+            conductor.start_recording()
 
-        # if piezo, then expect params to start intan lick detection
-        # piezo_ip = "192.168.100.19"
-        # use_piezo_lick_detection = tp.input_kwargs["settings.task.patched"].get(
-        #     "use_piezo_lick_detection", False
-        # )
-        # use_piezo_lick_detection = True
-        #
-        # if use_piezo_lick_detection:
-        #     logging.info(f"Starting piezo lick detection on {piezo_ip}")
-        #     run_record(
-        #         ip=piezo_ip,
-        #         local_path="/mnt/fastdata/data",
-        #         remote_path="/home/lbr/data",
-        #         session_extension="ephys_intan_lick",
-        #         subject=args_dict["subject"],
-        #         is_child_session_to=args_dict["is_child_session_to"],
-        #         acquisition_extension="ephys_multi_behavior",
-        #     )
+            plotting_process = OnlinePlottingForPS(
+                window_title=f"[{setup_name}]  {_session}",
+                is_simulation=False,
+                data_queue=dq,
+                kill_queue=kq,
+            )
+            plotting_process.start()
 
-        # Delay for video to start
-        time.sleep(3)
+            time.sleep(3)
 
-        # Start task
-        tp.run_task()
-        while tp.is_running():
-            try:
-                time.sleep(1)
-            except KeyboardInterrupt:
-                tp.stop_task()
+            tp.run_task()
+            while tp.is_running():
+                try:
+                    time.sleep(1)
+                except KeyboardInterrupt:
+                    tp.stop_task()
 
-        # Stop online plotting
-        kq.put(True)
-
-        # Stop video
-        # c.stop_acquisition()
-        # c.cleanup()
-        conductor.stop_acquisition()
-        conductor.stop()
-
-        # # Stop piezo lick detection
-        # if use_piezo_lick_detection:
-        #     run_stop(ip=piezo_ip)
-
+            kq.put(True)
+            conductor.stop_acquisition()
+        # Conductor.stop() called by __exit__
         time.sleep(1)
 
 

@@ -5,6 +5,7 @@ import sys
 import time
 from pathlib import Path
 from threading import Thread
+from PyQt6.QtCore import QThread
 
 import numpy as np
 from pybpodapi.protocol import Bpod
@@ -138,6 +139,7 @@ class TaskProcess(object):
         auto_init=True,
         auto_start=True,
         is_child_session_to=None,
+        require_bpod=True,
         **kwargs,
     ):
         super(TaskProcess, self).__init__()
@@ -176,7 +178,7 @@ class TaskProcess(object):
             self.bpod = bpod
             self.serial_is_open = True
             logging.debug("TaskProcess: using injected Bpod handle")
-        else:
+        elif require_bpod:
             # Self-managed: open connection from serial_port_bpod arg
             if self.serial_port:
                 accessible = test_serial_port_is_accessible(
@@ -212,13 +214,13 @@ class TaskProcess(object):
             logging.debug(
                 f"Connecting bpod on serial port: {self.serial_port}"
             )
-            self.bpod = BpodFactory(
-                serial_port=self.serial_port,
-                workspace_path=self.session_paths["session_folder"],
-                session_name=self.session_paths["session_basename_behav"],
-                connect_retries=max_try,
-            )
             try:
+                self.bpod = BpodFactory(
+                    serial_port=self.serial_port,
+                    workspace_path=self.session_paths["session_folder"],
+                    session_name=self.session_paths["session_basename_behav"],
+                    connect_retries=max_try,
+                )
                 self.bpod.open()
                 self.serial_is_open = True
             except RuntimeError as exc:

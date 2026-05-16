@@ -6,7 +6,7 @@ Central planning document. Completed work is listed below; git history has the f
 
 ## Remaining (next sprint)
 
-### Named task config presets (stages / modes)
+### Named task config presets (stages / modes) ← NEXT WORK ITEM for fixed task
 Each task defines named preset groups in `task.yaml` as top-level keys.
 Selecting a preset applies a batch of overrides — no per-param `-ts` juggling.
 
@@ -20,9 +20,26 @@ stage_90_10:
   REWARD_PROB_LEFT: 0.9
   REWARD_PROB_RIGHT: 0.1
 ```
-CLI: `msw run -t probabilistic_switching -s mouse01 --stage stage_90_10`
-Subject YAML can also pin a preset: `task_overrides: {probabilistic_switching: {stage: stage_90_10}}`
+CLI: `msw run -t probabilistic_switching -s mouse01 --preset stage_90_10`
+Subject YAML can also pin a preset: `task_overrides: {probabilistic_switching: {preset: stage_90_10}}`
 Layer: presets apply between task.yaml defaults and subject overrides.
+
+### Simulation mode (virtual hardware)
+Dummy classes for Bpod, PulsePal, and Stage that accept all commands and log them instead of
+driving hardware. Enables full task dry-runs without any USB devices connected.
+- `hardware/bpod/sim.py` — `SimBpod` mirrors `BpodFactory` API; logs all state-machine calls
+- `hardware/pulsepal/sim.py` — `SimPulsePal`
+- `hardware/stage/sim.py` — `SimStageController`
+- CLI flag: `--simulate` (or `--sim`) injects sim objects instead of real hardware
+- Simulation output logged at DEBUG level with `[SIM]` prefix
+
+### Hardware action API (valve / LED — for web UI)
+Expose discrete one-shot hardware actions callable from CLI or web backend without
+running a full task state machine.
+- `open_valve(valve_id, duration_ms=25)` / `close_valve(valve_id)` — two-state + timed
+- `led_on(port, duration_ms=300)` / `led_off(port)` — two-state + timed
+- Defaults: valve 25 ms, LED 300 ms (override via args)
+- Tied to `BpodFactory` so the caller owns the connection; web UI backend calls these via RPC
 
 ### ControllerSession / hardware-injection layer
 - `TaskProcess` accepts `bpod=` (injected `BpodFactory`) — done
@@ -46,8 +63,8 @@ Layer: presets apply between task.yaml defaults and subject overrides.
 - Migrate `msw_configs/subjects/*.settings` → YAML, then remove configobj dependency entirely
 
 ### PS fixed-subjects lick-port mapping
-- `probabilistic_switching_fixedsubjects/task_objects.py` still has hardcoded Port1/2/3In
-- Apply same `HARDWARE_PORT_LEFT/CENTER/RIGHT` pattern as PS main task
+- `task_objects.py` uses `LICK_EVENT_LEFT/RIGHT` keys from task settings (settable per setup)
+- Remaining: `LICK_EVENT_CENTER` not yet wired; document keys in task.yaml
 
 ### Hardware verification
 - Optotagging / airpuff / PS barcode integration: verify on real hardware after PulsePal swap
@@ -59,9 +76,17 @@ Layer: presets apply between task.yaml defaults and subject overrides.
 - `QueueMonitor` in `online_plotting.py` files uses `QtCore.QThread` — GUI only
 - Decouple when splitting GUI layer; `TaskRunner` is already plain `threading.Thread`
 
+### File-write audit (MSW output control)
+- All session files must be written under `session_folder/` (MSW-managed)
+- Current writes: `settings.process.json`, `settings.task.json`, `settings.stage.yaml`, `.df.jsonl`,
+  pybpodapi `.csv`/`.json` — all within session_folder ✓
+- Exception allowed: `rpi_camera_ensemble` writes its own output files within MSW namespace paths
+- Remove: `~/.murineshiftwork/calibration.stage.default.yaml` write-back replaced by setup YAML ✓
+- Ongoing: audit any new task added for out-of-namespace writes
+
 ---
 
-## Completed (this iteration — 2026-05-15)
+## Completed (this iteration — 2026-05-15 / 2026-05-16)
 
 ### Package structure
 - Namespace package: `tasks/` has no `__init__.py`; filesystem scan replaces `pkgutil.iter_modules`
@@ -89,15 +114,28 @@ Layer: presets apply between task.yaml defaults and subject overrides.
 - Parser default: `task.settings` → `task.yaml`
 
 ### Task naming
-- `calibrate_stage_tower` → `stage_move` (it's a movement protocol, not a calibration)
+- `calibrate_stage_tower` → `stage_move` → deleted; `_test_stage_move` is canonical
 - `_test_stage_tower` → `_test_stage_move`
 - `calibrate_water_with_serial_scale` → `_calibration_water_with_serial_scale`
 - Convention: normal tasks (no underscore prefix), `_test_*`, `_calibration_*`
 
 ### Stage writeback
-- `stage_move` task: saves config back to calibration file after keyboard session (via `ctrl.save_config()`)
+- `_test_stage_move` (formerly `stage_move`): saves axis limits and known_positions back to setup YAML
+  via `update_stage_config(config_dir, setup_name, ctrl.config)` in `logic/config/io.py`
+- `space` key prints full live config (YAML-formatted, positions refreshed from hardware)
+- Setup YAML is always authoritative for axis limits — calibration file no longer overrides it
 - `save_subject_task_stage_position(config_dir, subject, task, position_name)` writes `stage_position`
   into `SubjectConfig.task_overrides[task]`; pre-task auto-move reads it back
+- Calibration mode: `--task-settings calibrate=true` expands limits to 1–999 for free movement;
+  use u/i/o / j/k/l to set new limits, enter saves them to setup YAML
+
+### Task naming (finalised 2026-05-16)
+- `stage_move` deleted — `_test_stage_move` is the canonical keyboard-driven stage tool
+- `_test_stage_move` now has full feature set: set limits, known positions, config dump, write-back
+
+### Stage config priority
+- `evaluate.py`: setup YAML stage device always wins over any saved calibration file
+  (old `cal_has_axes` gate that let stale calibration files shadow setup config removed)
 
 ### Subject config models
 - `SubjectConfig` Pydantic model; `load_subject_config` / `save_subject_task_stage_position` in `logic/config/io.py`

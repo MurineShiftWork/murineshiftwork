@@ -110,15 +110,26 @@ class BpodFactory:
             logging.info(
                 "4-port Bpod config failed (IndexError) — retrying with 8-port settings"
             )
+        except Exception as exc:
+            raise RuntimeError(
+                f"Bpod at {self.serial_port!r} failed to connect: {exc}. "
+                "Power-cycle the Bpod and try again."
+            ) from exc
 
         conf += self._SETTINGS_8PORT
         importlib.reload(bpod_protocol)
 
-        bpod = bpod_protocol.Bpod(
-            serial_port=self.serial_port,
-            workspace_path=self.workspace_path,
-            session_name=self.session_name,
-            **self._bpod_kwargs,
-        )
+        try:
+            bpod = bpod_protocol.Bpod(
+                serial_port=self.serial_port,
+                workspace_path=self.workspace_path,
+                session_name=self.session_name,
+                **self._bpod_kwargs,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"Bpod at {self.serial_port!r} failed to connect (8-port): {exc}. "
+                "Power-cycle the Bpod and try again."
+            ) from exc
         logging.getLogger("pybpodapi").setLevel(logging.WARNING)
         return bpod

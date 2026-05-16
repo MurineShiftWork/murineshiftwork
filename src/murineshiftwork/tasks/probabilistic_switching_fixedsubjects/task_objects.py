@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
-from one_axis_stage.interface import StageController
+from one_axis_stage.controller import StageController
 from one_axis_stage.interface import MoveInterface
 
 from murineshiftwork.logic.barcode import (
@@ -25,9 +25,6 @@ from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.sounds import StereoSound
 from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
-from murineshiftwork.tasks.probabilistic_switching_fixedsubjects.stage_config import (
-    config_for_all_stages,
-)
 
 
 class TaskControl(object):
@@ -155,27 +152,31 @@ class TaskControl(object):
             f"on VALVE IDs: {self.task_settings['HARDWARE_VALVES_FOR_WATER']}"
         )
 
-        # axes_names = tuple(task_settings["settings.stage"].get("axes").keys())
         serial_port_stage = task_settings.get("serial_port_stage")
-        # print("serial_port_stage", serial_port_stage)
-        task_settings["settings.stage"]["connection"][
-            "serial_port"
-        ] = serial_port_stage  # fixme: shouldnt be necessaRY TO OVERWRITE
-        self.stage = StageController.from_config(task_settings["settings.stage"])
-        # self.move_interface = MoveInterface(controller=self.stage)
-        #
+        stage_cfg = task_settings.get("settings.stage")
+        if not stage_cfg or not stage_cfg.get("axes"):
+            raise RuntimeError(
+                f"Stage config missing or has no axes. "
+                f"serial_port_stage={serial_port_stage!r}, "
+                f"settings.stage={stage_cfg!r}. "
+                f"Check setup YAML has a 'stage' device with axes defined."
+            )
+        stage_cfg["connection"]["serial_port"] = serial_port_stage
+        self.stage = StageController.from_config(stage_cfg)
         self.stage.small_increment = 20
         self.stage.large_increment = 40
-        #
-        # self.stage.save_as_known_position("front_center")
-        print(self.stage.known_positions)
-        self.stage.save_as_known_position("front")
-        # fixme: determine front in pre-protocol instead of rely on experimenter's awareness
-        print(self.stage.known_positions)
 
-        self.stage.move_to_known_position(
-            "back"
-        )  # move back before first trial
+        print(f"[stage] known_positions at init: {self.stage.known_positions}")
+        self.stage.save_as_known_position("front")
+        print(f"[stage] known_positions after save 'front': {self.stage.known_positions}")
+        if "front" not in self.stage.known_positions or not self.stage.known_positions["front"]:
+            raise RuntimeError(
+                "[stage] save_as_known_position('front') produced empty result — "
+                "stage axes may not be responding. Check motor IDs and connection."
+            )
+
+        self.stage.move_to_known_position("back")
+        print("[stage] moved to 'back'")
 
         self.stage.save_config(
             config_file=self.save_path_data.parent
@@ -195,9 +196,9 @@ class TaskControl(object):
             "stage_anti_bias_n_back", 5
         )
 
-        print("stage_anti_bias_bool", self.stage_anti_bias_bool)
-        print("stage_bias_max", self.stage_bias_max)
-        print("n_back_crit_bias", self.n_back_crit_bias)
+        # print("stage_anti_bias_bool", self.stage_anti_bias_bool)
+        # print("stage_bias_max", self.stage_bias_max)
+        # print("n_back_crit_bias", self.n_back_crit_bias)
 
         # Persist task settings -> todo: refactor to method
         with open(str(self.save_path_data) + ".settings.task.json", "w") as f:
@@ -207,24 +208,28 @@ class TaskControl(object):
         self.bpod.softcode_handler_function = self.softcode_handler
 
     def softcode_handler(self, softcode=None):
-        logging.debug(f"SOFT CODE RECEIVED: {softcode}")
+        print(f"[softcode] received: {softcode}")
+        logging.info(f"SOFT CODE RECEIVED: {softcode}")
 
         self.sound.execute_sound_handler(
             sound_code=softcode, raise_errors=False
         )
 
         if softcode == self.MOVE_TO_FRONT:
+            print(f"[stage] MOVE_TO_FRONT — known_positions: {self.stage.known_positions}")
             logging.info("Stage: moving to front")
             try:
                 self.stage.move_to_known_position("front")
             except Exception as exc:
                 logging.error(f"Stage move_to_front failed: {exc}", exc_info=True)
+                print(f"[stage] ERROR move_to_front: {exc}")
         if softcode == self.MOVE_TO_BACK:
             logging.info("Stage: moving to back")
             try:
                 self.stage.move_to_known_position("back")
             except Exception as exc:
                 logging.error(f"Stage move_to_back failed: {exc}", exc_info=True)
+                print(f"[stage] ERROR move_to_back: {exc}")
 
     def switch_block(self):
         logging.debug("Resetting block.")
