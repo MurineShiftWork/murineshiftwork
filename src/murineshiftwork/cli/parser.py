@@ -8,6 +8,7 @@ from murineshiftwork import __version__
 from murineshiftwork.cli.defaults import available_tasks
 from murineshiftwork.cli.defaults import default_config_dir
 from murineshiftwork.cli.defaults import default_out_path
+from murineshiftwork.cli.execute import run_calibration
 from murineshiftwork.cli.execute import run_init
 from murineshiftwork.cli.execute import run_register
 from murineshiftwork.cli.execute import run_setup
@@ -378,6 +379,41 @@ def make_subparser_subject(sub_parsers):
     p.set_defaults(func=run_subject)
 
 
+def make_subparser_calibration(sub_parsers):
+    p = sub_parsers.add_parser(
+        "calibration",
+        help="Calibration utilities (plot, inspect)",
+        formatter_class=ArgparseFormatter,
+    )
+    p.add_argument(
+        "action",
+        choices=["plot"],
+        help="plot: save valve calibration curves as PDF",
+    )
+    p.add_argument(
+        "--setup",
+        type=str,
+        default="",
+        help="Setup name to plot (plots all setups if omitted)",
+    )
+    p.add_argument(
+        "--out",
+        dest="output_dir",
+        type=str,
+        default=".",
+        help="Output directory for PDF files (default: current directory)",
+    )
+    p.add_argument(
+        "-cd",
+        "--config-dir",
+        dest="config_dir",
+        type=str,
+        default="",
+        help="Config directory (default: from machine config)",
+    )
+    p.set_defaults(func=run_calibration)
+
+
 def parse_args(args=None):
     """Parser for Murine Shift Work.
     Assumes input is args without first argument as py file path == sys.argv with first argument removed.
@@ -407,6 +443,7 @@ def parse_args(args=None):
     make_subparser_run(sub_parsers)
     make_subparser_setup(sub_parsers)
     make_subparser_subject(sub_parsers)
+    make_subparser_calibration(sub_parsers)
 
     parsed_args = main_parser.parse_args(args=args)
     return parsed_args.__dict__

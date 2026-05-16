@@ -33,23 +33,22 @@ def get_task_dir(task=None):
 
 
 def _evaluate_metadata(args_dict):
+    # Always populate metadata from named args; --metadata KEY=VALUE extends/overrides
+    metadata_dict = {
+        "researcher": args_dict.get("researcher", "unknown_researcher"),
+        "setup": args_dict.get("setup", "unknown_setup"),
+        "experiment": args_dict.get("experiment", "unknown_experiment"),
+    }
     metadata_list = args_dict.get("metadata_list", None)
     if metadata_list is not None:
-        metadata_list = [
-            v.strip(" ").strip("'").strip('"')
-            for v in metadata_list
-            if "=" in v
-        ]
-        metadata_dict = dict(map(lambda s: s.split("="), metadata_list))
-
-        for metadata_key in ["researcher", "setup", "experiment"]:
-            if (
-                not args_dict[metadata_key].startswith("unknown_")
-                or metadata_key not in metadata_dict
-            ):
-                metadata_dict[metadata_key] = args_dict[metadata_key]
-
-        args_dict["metadata"] = metadata_dict
+        kv_list = [v.strip(" ").strip("'").strip('"') for v in metadata_list if "=" in v]
+        kv_dict = dict(map(lambda s: s.split("=", 1), kv_list))
+        # Named args win over --metadata when they carry a real (non-default) value
+        for key in ["researcher", "setup", "experiment"]:
+            if not args_dict.get(key, "unknown").startswith("unknown_") or key not in kv_dict:
+                kv_dict[key] = args_dict[key]
+        metadata_dict.update(kv_dict)
+    args_dict["metadata"] = metadata_dict
     return args_dict
 
 

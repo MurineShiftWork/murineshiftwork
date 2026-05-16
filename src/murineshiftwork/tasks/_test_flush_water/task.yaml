@@ -3,7 +3,7 @@ default:
   VALVE_NUMBERS:
   - 1
   - 3
-  N_FLUSH_CYCLES: 3
+  N_FLUSH_CYCLES: 1
   INTER_FLUSH_INTERVAL_S: 1.0
   FLUSH_VALVES_SEQUENTIALLY: false
 mode: {}

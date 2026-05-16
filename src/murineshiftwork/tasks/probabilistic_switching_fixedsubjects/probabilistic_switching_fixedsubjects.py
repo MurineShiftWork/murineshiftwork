@@ -164,8 +164,9 @@ def run_task(**args_dict):
 
     # Conductor __exit__ calls stop() — cleans up camera agents on any exception
     with Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg) as conductor:
+        suppress_third_party_console_handlers()  # catch handlers from Conductor.__init__
         conductor.setup_agents()
-        suppress_third_party_console_handlers()
+        suppress_third_party_console_handlers()  # catch handlers from setup_agents
 
         with TaskProcess(**args_dict) as tp:
             _session = tp.session_paths["session_basename"]

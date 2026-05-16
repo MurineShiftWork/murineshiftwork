@@ -21,8 +21,8 @@ def run_cli(*args):
 
     args_dict = parse_args(args=args)
 
-    # init / setup / subject subcommands bypass evaluate_args (no hardware/subject context)
-    if args_dict.get("command") in ("init", "setup", "subject"):
+    # These subcommands bypass evaluate_args (no hardware/subject/task context needed)
+    if args_dict.get("command") in ("init", "setup", "subject", "calibration"):
         args_dict["func"](**args_dict)
         logging.debug("EXITING CLI.")
         return

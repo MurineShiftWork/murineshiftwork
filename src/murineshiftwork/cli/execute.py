@@ -136,6 +136,8 @@ def run_task(**args_dict):
     msw run -s subject -t task -p serial_port
     """
     import importlib
+    from murineshiftwork.logic.log import suppress_third_party_console_handlers
+    suppress_third_party_console_handlers()  # catch handlers added at import time
     _apply_stage_position(args_dict)
     task_name = args_dict["task"]
     mod = importlib.import_module(f"murineshiftwork.tasks.{task_name}.{task_name}")
@@ -265,3 +267,30 @@ def run_subject(**args_dict):
 
     else:
         raise ValueError(f"Unknown subject subcommand: {subcommand!r}")
+
+
+# ---------------------------------------------------------------------------
+# murineshiftwork calibration
+
+def run_calibration(**args_dict):
+    """Plot and save calibration charts as PDF."""
+    import logging
+    from murineshiftwork.logic.log import setup_logging
+    from murineshiftwork.logic.calibration import save_calibration_pdfs
+    from murineshiftwork.logic.machine_config import resolve_config_dir
+
+    setup_logging(level="INFO")
+
+    config_dir = resolve_config_dir(args_dict.get("config_dir", ""))
+    output_dir = args_dict.get("output_dir", ".")
+    setup_name = args_dict.get("setup") or None
+
+    saved = save_calibration_pdfs(
+        config_dir=config_dir,
+        setup_name=setup_name,
+        output_dir=output_dir,
+    )
+    for path in saved:
+        print(f"Saved: {path}")
+    if not saved:
+        print("No calibration PDFs saved — check setup YAMLs contain bpod_valve calibration data.")

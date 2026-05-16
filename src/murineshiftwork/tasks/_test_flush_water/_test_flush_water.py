@@ -14,7 +14,7 @@ class Task(TaskRunner):
 
         valve_opening_time_ms = float(s.get("VALVE_OPENING_TIME_MS", 50.0))
         valve_numbers = list(s.get("VALVE_NUMBERS", [1, 3]))
-        n_flush_cycles = int(s.get("N_FLUSH_CYCLES", 3))
+        n_flush_cycles = int(s.get("N_FLUSH_CYCLES", 1))
         inter_flush_interval_s = float(s.get("INTER_FLUSH_INTERVAL_S", 1.0))
         flush_sequentially = bool(s.get("FLUSH_VALVES_SEQUENTIALLY", False))
 

@@ -408,4 +408,69 @@ def plot_setup_valve_calibrations(
         plt.show()
 
     return fig
-    return x_value
+
+
+def save_calibration_pdfs(
+    config_dir: "str | Path | None" = None,
+    setup_name: "str | None" = None,
+    output_dir: "str | Path | None" = None,
+) -> list[str]:
+    """Save one PDF calibration chart per setup to output_dir.
+
+    Parameters
+    ----------
+    config_dir:
+        msw_configs directory.  Resolved from machine config if None.
+    setup_name:
+        Plot only this setup; plots all setups if None or empty.
+    output_dir:
+        Directory for PDFs.  Defaults to the current working directory.
+
+    Returns
+    -------
+    List of absolute paths to saved PDF files.
+    """
+    import yaml
+    from datetime import datetime
+    from murineshiftwork.logic.machine_config import resolve_config_dir
+
+    config_dir = Path(config_dir) if config_dir else Path(resolve_config_dir())
+    output_dir = Path(output_dir or ".").expanduser().resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    setups_dir = config_dir / "setups"
+    yaml_files = (
+        [setups_dir / f"{setup_name}.yaml"]
+        if setup_name
+        else sorted(setups_dir.glob("*.yaml"))
+    )
+
+    dt_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    saved: list[str] = []
+
+    for yf in yaml_files:
+        if not yf.exists():
+            logging.warning(f"Setup YAML not found: {yf}")
+            continue
+        with open(yf) as f:
+            raw = yaml.safe_load(f) or {}
+        sname = raw.get("name", yf.stem)
+        if not raw.get("calibrations", {}).get("bpod_valve"):
+            logging.info(f"No bpod_valve calibration in '{sname}', skipping")
+            continue
+        try:
+            fig = plot_setup_valve_calibrations(
+                config_dir=config_dir,
+                setup_name=sname,
+                save_fig=False,
+                show=False,
+            )
+            out = output_dir / f"{sname}--{dt_str}.pdf"
+            fig.savefig(out, format="pdf", bbox_inches="tight")
+            plt.close(fig)
+            saved.append(str(out))
+            logging.info(f"Saved calibration PDF: {out}")
+        except Exception as exc:
+            logging.warning(f"Failed to plot calibration for '{sname}': {exc}")
+
+    return saved
