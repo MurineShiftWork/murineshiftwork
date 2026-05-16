@@ -141,12 +141,12 @@ class TaskControl(object):
         self.valve_times_dict = self.calibration_water.water_volume_to_valve_time(
             valves=valves,
             target_volume=target_vol,
-            s_to_ms=1,
+            s_to_ms=1000,  # returns seconds for pybpodapi state timers
         )
         if self.valve_times_dict is None and execution_config and execution_config.setup:
             setup = execution_config.setup
             self.valve_times_dict = {
-                v: setup.valve_ms_for_ul(v, target_vol)
+                v: setup.valve_ms_for_ul(v, target_vol) / 1000  # ms → s
                 for v in valves
             }
             logging.info("Valve times from SetupConfig (no water calibration CSV)")

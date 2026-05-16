@@ -6,6 +6,14 @@ Central planning document. Completed work is listed below; git history has the f
 
 ## Remaining (next sprint)
 
+### highest priority items:
+- upgrade for task stage (see docs/roadmap) to move subjects along with default configs. 
+  these default configs should live in the task.yaml files
+- rename sequence task to only sequence. look at the implementation and 
+  whether the task progress of levels is correctly written back to configs / loaded 
+  on next session for continuation. this might need to be implemented together with 
+  the pre/post hook system (see docs hooks.md)
+
 ### Named task config presets (stages / modes) ← NEXT WORK ITEM for fixed task
 Each task defines named preset groups in `task.yaml` as top-level keys.
 Selecting a preset applies a batch of overrides — no per-param `-ts` juggling.
@@ -83,6 +91,8 @@ running a full task state machine.
 - Exception allowed: `rpi_camera_ensemble` writes its own output files within MSW namespace paths
 - Remove: `~/.murineshiftwork/calibration.stage.default.yaml` write-back replaced by setup YAML ✓
 - Ongoing: audit any new task added for out-of-namespace writes
+- consolidate settings* files to the process and evaluated items into one settings file. 
+  this will require a version upgrade for msw with additional reader logic
 
 ---
 
