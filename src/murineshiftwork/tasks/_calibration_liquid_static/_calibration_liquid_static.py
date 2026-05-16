@@ -58,7 +58,9 @@ class Task(TaskRunner):
         random_valve_times = VALVE_TIMES_TO_TEST.copy()
         random.shuffle(random_valve_times)
 
-        scale = make_scale(serial_port=self.input_kwargs["serial_port_scale"])
+        scale = self.input_kwargs.get("scale") or make_scale(
+            serial_port=self.input_kwargs.get("serial_port_scale", ""),
+        )
         scale.start()
         scale.tare()
         logging.info(f"Scale ready. Post-tare: {scale.read_weight_blocking():.4f} g")

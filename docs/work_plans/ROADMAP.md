@@ -28,18 +28,46 @@ driving hardware. Enables full task dry-runs without any USB devices connected.
 - CLI flag: `--simulate` (or `--sim`) injects sim objects instead of real hardware
 - Simulation output logged at DEBUG level with `[SIM]` prefix
 
-### Hardware action API (valve / LED — for web UI)
-Expose discrete one-shot hardware actions callable from CLI or web backend without
-running a full task state machine.
-- `open_valve(valve_id, duration_ms=25)` / `close_valve(valve_id)` — two-state + timed
-- `led_on(port, duration_ms=300)` / `led_off(port)` — two-state + timed
-- Defaults: valve 25 ms, LED 300 ms (override via args)
-- Tied to `BpodFactory` so the caller owns the connection; web UI backend calls these via RPC
+### Hardware action API — Phase 1 DONE, Phase 2 spec below
+
+**Phase 1 (done 2026-05-16)**
+- `msw action --setup <name> <device> <action> [key=value ...]`
+- `ActionRequest(setup, device, action, params)` Pydantic model in `logic/config/models.py`
+- `BpodActionDriver` in `hardware/bpod/actions.py`: `valve_pulse`, `valve_flush`
+- Phase 1 is blocking: opens exclusive Bpod connection, runs action, disconnects
+- `BpodFactory._write_lock` (threading.Lock) added — not contended in Phase 1, is Phase 2 infrastructure
+- CLI warns users not to run while a task session is active
+
+**Phase 2 spec (ControllerSession + in-task override)**
+
+Goal: allow hardware overrides (e.g. manual valve open) during a running state machine,
+matching the MATLAB Bpod behaviour where `OverrideSendByte` injects commands mid-trial.
+
+Architecture:
+- `ControllerSession` owns all hardware handles (BpodFactory, PulsePal, Stage) for the full
+  session lifetime; `TaskProcess` receives them via injection (`bpod=` kwarg already supported)
+- Override path uses Bpod firmware's manual override byte protocol (`bpod.manual_override()`),
+  which operates at a lower level than the state machine and does not interrupt it
+- `BpodFactory._write_lock` gates all serial writes; ControllerSession acquires the lock before
+  calling `manual_override()` so the state machine's serial traffic is not interleaved
+- FastAPI routes (`POST /action`) dispatch to `ControllerSession.dispatch_action(ActionRequest)`
+  using the same `ActionRequest` shape as Phase 1 CLI — no model changes needed
+- CLI `msw action` in Phase 2 sends HTTP POST to the running agent instead of opening a
+  direct connection (detected by checking for a running agent lock file / port)
+
+Implementation steps (not yet started):
+1. `ControllerSession` class in `logic/controller.py` or `hardware/controller.py`
+   - `__init__`: open BpodFactory, PulsePal, Stage once
+   - `start_task(task_name, settings)` → spawns TaskProcess with injected hardware
+   - `stop_task()` → signals TaskProcess, waits, keeps hardware open
+   - `dispatch_action(request: ActionRequest)` → acquires _write_lock, calls firmware override
+2. FastAPI app in `api/app.py`; `POST /action` calls `session.dispatch_action()`
+3. CLI `msw action` auto-detects agent (checks agent socket/port) and switches to HTTP POST
+4. Agent startup: `msw agent start --setup <name>` → ControllerSession + FastAPI in background
 
 ### ControllerSession / hardware-injection layer
 - `TaskProcess` accepts `bpod=` (injected `BpodFactory`) — done
-- Next: `ControllerSession` that owns all hardware handles (Bpod, PulsePal, Stage) across the
-  session and passes them to `TaskProcess`
+- Next: `ControllerSession` as described in Phase 2 spec above
 - Enables: start/stop without reconnecting hardware, multi-task sessions, CLI and web UI
   using the same controller
 
@@ -48,10 +76,66 @@ running a full task state machine.
 - CLI, Qt GUI, and web UI all call the same controller
 - Follows rpi_camera_ensemble agent pattern
 
+### Test coverage
+
+178 tests pass (2026-05-16) — excludes `test_outbound_travel_hist.py` which
+references a hardcoded absolute path from a different machine; needs fixture rewrite.
+
+**Done since last count:**
+- `SimBpod` in `hardware/bpod/sim.py` — full 4-port Bpod hardware mock, logs all
+  SMA calls and manual_override calls; used by action driver + calibration task tests
+- `SimWeighingScale` in `logic/scale.py` — deterministic weight, tare/read counts
+- `make_scale(scale_type="sim")` factory support
+- `hardware/bpod/actions.py` — BpodActionDriver covered: dispatch, valve_pulse open/close
+  sequence, n_pulses repetition, valve_flush defaults, finally-block close-on-error
+- `logic/config/models.py:ActionRequest` — field validation, default params, missing setup
+- `_calibration_liquid_static` Task.run() — sim bpod + sim scale smoke test: CSV saved,
+  SMA count > 0, scale tared >= 2 times
+- `_calibration_liquid_dynamic` Task.run() — same
+- Fixed `CalibrationDataBase.__add__` pandas `_append` → `pd.concat` (removed deprecated API)
+
+**Remaining:**
+- `hardware/bpod/factory.py` — BpodFactory._write_lock type check; open/close_safely path
+- `cli/execute.py:run_action` — integration: parse args, load sim setup YAML, dispatch
+- `cli/parser.py:make_subparser_action` — verify positional args (device, action, params)
+  parse correctly
+- `logic/calibration.py:save_calibration_pdfs` — smoke test with tmp setup YAML +
+  bpod_valve data; verify PDF created
+- `logic/calibration.py:plot_setup_valve_calibrations` — near-linear data (b≈0) edge case
+- `readers/validate.py:validate_session` — add TTL alignment path test
+- Namespace reader (`readers/namespace.py`) — smoke test with fixture files
+
+### Session output file consolidation (NOT done)
+
+Currently each session writes three separate files:
+1. `{session}.msw.settings.process.json` — `TaskProcess.persist_settings()` dumps `vars(self)`:
+   task name, session paths, serial port, msw version, git commit
+2. `{session}.settings.task.json` — written from `task_objects.py` in probabilistic_switching,
+   probabilistic_switching_fixedsubjects, and sequence_automated: full patched task settings dict
+3. `{session}.settings.stage.yaml` — written from probabilistic_switching_fixedsubjects
+   `task_objects.py`: stage controller config at session start
+
+Problems: three writes, three readers, JSON is brittle for human editing, stage config
+is duplicated from setup YAML, no version field.
+
+Proposed consolidation:
+- Single file: `{session}.msw.session.yaml`
+- Sections: `process:` (msw_version, git_commit, task, subject, setup, serial_port),
+  `task_settings:` (full patched settings dict), `stage:` (stage config, if applicable)
+- Remove `.settings.task.json` writes from all `task_objects.py` files
+- Remove `.settings.stage.yaml` write from fixed-subjects `task_objects.py`
+- Update `readers/session.py` to read the new YAML; keep backward-compat reader for
+  old `.json` files (check for legacy keys on load)
+- Add `msw_format_version: 2` to new file for forward-compat reader logic
+- Note: `settings.process` in `TaskProcess.persist_settings` dumps internal Python objects
+  (Path, dict of paths) — needs selective serialization of only stable public fields
+
 ### Task cleanup
-- `homecage_sleep` and `sleep_with_physiology` — both wrap `periodic_trigger_with_video` with
-  fixed parameters; consolidate once named-preset feature is done
-- `_test_pyqtgraph_app`, `_test_open_ephys_remote` — remove or move to `playground/`
+- `homecage_sleep` — wraps `periodic_trigger_with_video` with fixed params; still present.
+  Could be converted to a named mode in `periodic_trigger_with_video/task.yaml` so it's
+  accessible via `--task-mode homecage_sleep` without a separate task dir.
+  `sleep_with_physiology` already removed. `_test_pyqtgraph_app`, `_test_open_ephys_remote`
+  already removed.
 
 ### Config: remove configobj
 - `configobj` still needed for subject.settings files in external `msw_configs` repo (INI format)
@@ -84,6 +168,32 @@ running a full task state machine.
 ---
 
 ## Completed (this iteration — 2026-05-15 / 2026-05-16)
+
+### Simulation hardware / virtual Bpod + scale (2026-05-16)
+- `hardware/bpod/sim.py` — `SimBpod`: pre-populated 4-port Bpod hardware (max_states=255,
+  Valve1-4, PWM1-4, BNC1-2, Tup events); logs all SMA / manual_override calls;
+  `run_state_machine` returns True; `hardware` attribute makes `StateMachine(bpod=sim)` work
+- `logic/scale.py:SimWeighingScale` — deterministic fixed weight, tare/read tracking
+- `make_scale(scale_type="sim")` — factory updated
+- Scale injection: both calibration tasks accept `scale=` kwarg; falls back to `make_scale`
+  when absent; enables testing without patching
+- `tests/test_sim_hardware.py` — 20 tests: SimBpod, SimWeighingScale, make_scale factory,
+  BpodActionDriver (dispatch, valve sequence, n_pulses, flush defaults, finally-close)
+- `tests/test_calibration_tasks_sim.py` — 6 tests: both calibration tasks smoke-tested
+  with sim hardware; verify CSV saved, SMAs fired, scale tared
+- `logic/calibration.py:CalibrationDataBase.__add__` — fixed pandas `_append` →
+  `pd.concat` (deprecated private API removed in current pandas)
+- BpodActionDriver corrected to use `bpod.manual_override()` (firmware byte protocol)
+  instead of SMA — SMA is only appropriate for calibration tasks with timed pulse recording
+
+### Hardware action API Phase 1 (2026-05-16)
+- `msw action --setup <name> <device> <action> [key=value ...]` CLI subcommand
+- `ActionRequest(setup, device, action, params)` Pydantic model in `logic/config/models.py`
+- `BpodActionDriver` in `hardware/bpod/actions.py`: `valve_pulse` and `valve_flush` actions
+- `BpodFactory._write_lock = threading.Lock()` added to `hardware/bpod/factory.py` — not
+  contended in Phase 1 (blocking CLI), is Phase 2 infrastructure for in-task override injection
+- Phase 2 spec written to roadmap: ControllerSession owns hardware, FastAPI `POST /action`,
+  same ActionRequest shape; `bpod.manual_override()` path gated by `_write_lock`
 
 ### Named task config presets / stages (2026-05-16)
 - `task.yaml` restructured to `default:` / `mode:` top-level sections for all 11 tasks

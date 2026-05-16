@@ -8,6 +8,7 @@ from murineshiftwork import __version__
 from murineshiftwork.cli.defaults import available_tasks
 from murineshiftwork.cli.defaults import default_config_dir
 from murineshiftwork.cli.defaults import default_out_path
+from murineshiftwork.cli.execute import run_action
 from murineshiftwork.cli.execute import run_calibration
 from murineshiftwork.cli.execute import run_init
 from murineshiftwork.cli.execute import run_register
@@ -379,6 +380,63 @@ def make_subparser_subject(sub_parsers):
     p.set_defaults(func=run_subject)
 
 
+def make_subparser_action(sub_parsers):
+    p = sub_parsers.add_parser(
+        "action",
+        help="Trigger a one-shot hardware action (valve pulse, LED flash, etc.)",
+        formatter_class=ArgparseFormatter,
+        description=dedent(
+            """\
+            Execute a discrete hardware action on a named setup device.
+
+            Phase 1 (current): opens a fresh exclusive connection — do NOT run while a
+            task session is active on the same hardware.
+
+            Examples:
+              msw action --setup setup-1 bpod valve_pulse valve_id=1 duration_s=0.025
+              msw action --setup setup-1 bpod valve_pulse valve_id=1 n_pulses=5 duration_s=0.05
+              msw action --setup setup-1 bpod valve_flush valve_id=3
+            """
+        ),
+    )
+    p.add_argument(
+        "--setup",
+        type=str,
+        required=True,
+        help="Setup name (must match a YAML in the setups config directory)",
+    )
+    p.add_argument(
+        "-cd", "--config-dir",
+        type=str, default="",
+        dest="config_dir",
+        help="Config directory (default: from machine config)",
+    )
+    p.add_argument(
+        "-b", "--serial-port-bpod",
+        type=str, default="/dev/ttyACM0",
+        dest="serial_port_bpod",
+        help="Serial port for Bpod (used when device type is 'bpod')",
+    )
+    p.add_argument(
+        "device",
+        type=str,
+        help="Device key as defined in the setup YAML (e.g. 'bpod')",
+    )
+    p.add_argument(
+        "action",
+        type=str,
+        help="Action name (e.g. 'valve_pulse', 'valve_flush')",
+    )
+    p.add_argument(
+        "params",
+        nargs="*",
+        metavar="KEY=VALUE",
+        help="Optional action parameters (e.g. valve_id=1 duration_s=0.025 n_pulses=10)",
+    )
+    add_args_for_flow_control(p)
+    p.set_defaults(func=run_action)
+
+
 def make_subparser_calibration(sub_parsers):
     p = sub_parsers.add_parser(
         "calibration",
@@ -444,6 +502,7 @@ def parse_args(args=None):
     make_subparser_setup(sub_parsers)
     make_subparser_subject(sub_parsers)
     make_subparser_calibration(sub_parsers)
+    make_subparser_action(sub_parsers)
 
     parsed_args = main_parser.parse_args(args=args)
     return parsed_args.__dict__

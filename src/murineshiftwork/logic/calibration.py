@@ -32,8 +32,9 @@ class CalibrationData:
     def __add__(self, other):
         assert isinstance(other, dict)
         other.update({"measurement_time": datetime.now()})
-        self.calibration_data = self.calibration_data._append(
-            other, ignore_index=True
+        import pandas as pd
+        self.calibration_data = pd.concat(
+            [self.calibration_data, pd.DataFrame([other])], ignore_index=True
         )
         return self
 

@@ -221,3 +221,18 @@ class ExecutionConfig(BaseModel):
     subject: Optional[SubjectConfig] = None
     task_name: str = ""
     task_settings: dict[str, Any] = {}
+
+
+# ---------------------------------------------------------------------------
+# Hardware action request — same shape used by Phase 1 CLI and Phase 2 RPC
+
+class ActionRequest(BaseModel):
+    """Describes a one-shot hardware action to execute on a named setup device.
+
+    Fields map directly to the Phase 2 FastAPI body so the CLI can slot into
+    the same dispatch path without changes when ControllerSession is introduced.
+    """
+    setup: str
+    device: str
+    action: str
+    params: dict[str, Any] = {}

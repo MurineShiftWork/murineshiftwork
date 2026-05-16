@@ -1,5 +1,6 @@
 import importlib
 import logging
+import threading
 
 
 class BpodFactory:
@@ -12,6 +13,12 @@ class BpodFactory:
 
     Proxies all attribute access to the underlying Bpod object so callers can
     use it as a drop-in replacement for a bare pybpodapi.protocol.Bpod instance.
+
+    _write_lock: threading.Lock
+        Serialises serial writes for Phase 2 ControllerSession override injection.
+        Not contended in Phase 1 (CLI actions are blocking / single-threaded), but
+        is the infrastructure that lets ControllerSession safely inject manual
+        overrides (valve open/close at firmware level) during a running state machine.
     """
 
     _SETTINGS_STANDARD = "murineshiftwork.hardware.bpod.user_settings"
@@ -33,6 +40,7 @@ class BpodFactory:
 
         self._connected = False
         self._exiting = False
+        self._write_lock = threading.Lock()
         self._bpod = self._create_bpod()
 
     # ------------------------------------------------------------------

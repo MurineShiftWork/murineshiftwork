@@ -270,6 +270,77 @@ def run_subject(**args_dict):
 
 
 # ---------------------------------------------------------------------------
+# murineshiftwork action
+
+def _parse_action_param(v: str):
+    """Coerce a KEY=VALUE string value to int, float, or str."""
+    try:
+        return int(v)
+    except ValueError:
+        pass
+    try:
+        return float(v)
+    except ValueError:
+        pass
+    return v
+
+
+def run_action(**args_dict):
+    """msw action --setup <name> <device> <action> [key=value ...]
+
+    Phase 1: opens a fresh Bpod connection, executes the action, disconnects.
+    The connection is exclusive — do not run while a task session is active.
+    """
+    from murineshiftwork.logic.config.models import ActionRequest
+    from murineshiftwork.logic.machine_config import resolve_config_dir
+    from murineshiftwork.logic.config.io import load_setup_config
+    from murineshiftwork.hardware.bpod.factory import BpodFactory
+    from murineshiftwork.hardware.bpod.actions import BpodActionDriver
+
+    setup_name = args_dict["setup"]
+    device_key = args_dict["device"]
+    action = args_dict["action"]
+    params_raw = args_dict.get("params") or []
+
+    params = {}
+    for kv in params_raw:
+        k, _, v = kv.partition("=")
+        params[k.strip()] = _parse_action_param(v.strip())
+
+    request = ActionRequest(
+        setup=setup_name,
+        device=device_key,
+        action=action,
+        params=params,
+    )
+
+    config_dir = resolve_config_dir(args_dict.get("config_dir", ""))
+    setup_cfg = load_setup_config(config_dir, setup_name)
+    if setup_cfg is None:
+        raise ValueError(f"Setup '{setup_name}' not found in {config_dir}/setups/")
+
+    device = setup_cfg.devices.get(device_key)
+    if device is None:
+        raise KeyError(
+            f"Device '{device_key}' not in setup '{setup_name}'. "
+            f"Available devices: {list(setup_cfg.devices)}"
+        )
+
+    serial_port = args_dict.get("serial_port_bpod", "/dev/ttyACM0")
+
+    if device.type == "bpod":
+        with BpodFactory(serial_port=serial_port) as bpod:
+            bpod.open()
+            driver = BpodActionDriver(bpod)
+            driver.dispatch(request)
+    else:
+        raise ValueError(
+            f"No action driver registered for device type '{device.type}'. "
+            f"Supported: 'bpod'"
+        )
+
+
+# ---------------------------------------------------------------------------
 # murineshiftwork calibration
 
 def run_calibration(**args_dict):
