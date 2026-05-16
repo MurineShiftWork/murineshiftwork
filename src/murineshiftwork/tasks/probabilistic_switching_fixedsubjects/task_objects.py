@@ -1,6 +1,8 @@
 import json
 import logging
+import queue
 import random
+import threading
 import time
 from pathlib import Path
 
@@ -29,6 +31,8 @@ from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 
 class TaskControl(object):
     bpod = None
+    _stage_queue = None
+    _stage_thread = None
     sound = None
     sound_delay_correction = 0
     barcoder = None
@@ -178,6 +182,10 @@ class TaskControl(object):
         self.stage.move_to_known_position("back")
         print("[stage] moved to 'back'")
 
+        self._stage_queue = queue.Queue()
+        self._stage_thread = threading.Thread(target=self._stage_worker, daemon=True)
+        self._stage_thread.start()
+
         self.stage.save_config(
             config_file=self.save_path_data.parent
             / ".".join([self.save_path_data.name, "settings", "stage", "yaml"])
@@ -207,6 +215,27 @@ class TaskControl(object):
         logging.debug("Task control class created.")
         self.bpod.softcode_handler_function = self.softcode_handler
 
+    def _stage_worker(self):
+        while True:
+            cmd = self._stage_queue.get()
+            if cmd is None:
+                self._stage_queue.task_done()
+                break
+            try:
+                self.stage.move_to_known_position(cmd)
+                logging.info(f"Stage: reached '{cmd}'")
+            except Exception as exc:
+                logging.error(f"Stage move to '{cmd}' failed: {exc}", exc_info=True)
+                print(f"[stage] ERROR move to '{cmd}': {exc}")
+            finally:
+                self._stage_queue.task_done()
+
+    def _stop_stage_thread(self):
+        if self._stage_queue is not None:
+            self._stage_queue.put(None)
+        if self._stage_thread is not None and self._stage_thread.is_alive():
+            self._stage_thread.join(timeout=10)
+
     def softcode_handler(self, softcode=None):
         print(f"[softcode] received: {softcode}")
         logging.info(f"SOFT CODE RECEIVED: {softcode}")
@@ -216,20 +245,11 @@ class TaskControl(object):
         )
 
         if softcode == self.MOVE_TO_FRONT:
-            print(f"[stage] MOVE_TO_FRONT — known_positions: {self.stage.known_positions}")
-            logging.info("Stage: moving to front")
-            try:
-                self.stage.move_to_known_position("front")
-            except Exception as exc:
-                logging.error(f"Stage move_to_front failed: {exc}", exc_info=True)
-                print(f"[stage] ERROR move_to_front: {exc}")
-        if softcode == self.MOVE_TO_BACK:
-            logging.info("Stage: moving to back")
-            try:
-                self.stage.move_to_known_position("back")
-            except Exception as exc:
-                logging.error(f"Stage move_to_back failed: {exc}", exc_info=True)
-                print(f"[stage] ERROR move_to_back: {exc}")
+            logging.info("Stage: queuing move to front")
+            self._stage_queue.put("front")
+        elif softcode == self.MOVE_TO_BACK:
+            logging.info("Stage: queuing move to back")
+            self._stage_queue.put("back")
 
     def switch_block(self):
         logging.debug("Resetting block.")
@@ -911,13 +931,15 @@ class TaskControl(object):
         self.save()
 
     def __del__(self):
-        self.softcode_handler(softcode=self.MOVE_TO_BACK)
+        if self._stage_queue is not None:
+            self._stage_queue.put("back")
+        self._stop_stage_thread()
         logging.debug("Moved stage BACK on exit")
-
         self.save()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.softcode_handler(softcode=self.MOVE_TO_BACK)
+        if self._stage_queue is not None:
+            self._stage_queue.put("back")
+        self._stop_stage_thread()
         logging.debug("Moved stage BACK on exit")
-
         self.save()

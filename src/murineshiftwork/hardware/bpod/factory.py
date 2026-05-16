@@ -83,6 +83,14 @@ class BpodFactory:
     # ------------------------------------------------------------------
     # Proxy all attribute access to the underlying Bpod object
 
+    @property
+    def softcode_handler_function(self):
+        return self._bpod.softcode_handler_function
+
+    @softcode_handler_function.setter
+    def softcode_handler_function(self, value):
+        self._bpod.softcode_handler_function = value
+
     def __getattr__(self, name):
         return getattr(self._bpod, name)
 

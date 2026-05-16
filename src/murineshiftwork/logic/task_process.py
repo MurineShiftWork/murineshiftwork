@@ -5,7 +5,6 @@ import sys
 import time
 from pathlib import Path
 from threading import Thread
-from PyQt6.QtCore import QThread
 
 import numpy as np
 from pybpodapi.protocol import Bpod
