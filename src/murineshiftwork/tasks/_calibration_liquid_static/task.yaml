@@ -1,0 +1,23 @@
+default:
+  # Valves to calibrate (Bpod port numbers)
+  VALVES_TO_CALIBRATE:
+  - 1
+  - 3
+
+  # Opening time grid (seconds)
+  VALVE_TIME_MIN: 0.010
+  VALVE_TIME_MAX: 0.100
+  VALVE_TIME_STEP: 0.020
+
+  # Fixed pulse count per measurement point
+  N_DROPS: 400
+  INTER_PULSE_INTERVAL: 0.150    # seconds between drops
+  SETTLE_TIME_S: 1.0             # wait after last drop before reading scale
+
+  # Outlier flagging (logged as warnings, does not stop the run)
+  OUTLIER_SIGMA_THRESHOLD: 2.5
+
+  # Write-back to setup YAML (requires --setup <name> on the CLI)
+  force_save_calibration: false
+
+mode: {}

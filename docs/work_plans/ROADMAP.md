@@ -14,23 +14,10 @@ Central planning document. Completed work is listed below; git history has the f
   on next session for continuation. this might need to be implemented together with 
   the pre/post hook system (see docs hooks.md)
 
-### Named task config presets (stages / modes) ← NEXT WORK ITEM for fixed task
-Each task defines named preset groups in `task.yaml` as top-level keys.
-Selecting a preset applies a batch of overrides — no per-param `-ts` juggling.
-
-```yaml
-# task.yaml
-stage_100_100:
-  REWARD_PROB_LEFT: 1.0
-  REWARD_PROB_RIGHT: 1.0
-
-stage_90_10:
-  REWARD_PROB_LEFT: 0.9
-  REWARD_PROB_RIGHT: 0.1
-```
-CLI: `msw run -t probabilistic_switching -s mouse01 --preset stage_90_10`
-Subject YAML can also pin a preset: `task_overrides: {probabilistic_switching: {preset: stage_90_10}}`
-Layer: presets apply between task.yaml defaults and subject overrides.
+### Named task config presets — extend to other tasks  ← DONE for fixed-subjects
+Named modes (`default:` / `mode:` structure) are live for `probabilistic_switching_fixedsubjects`.
+Still to do: propagate the same structure to other tasks that would benefit from named stages
+(e.g. `probabilistic_switching`, `sequence_automated`).
 
 ### Simulation mode (virtual hardware)
 Dummy classes for Bpod, PulsePal, and Stage that accept all commands and log them instead of
@@ -98,6 +85,60 @@ running a full task state machine.
 
 ## Completed (this iteration — 2026-05-15 / 2026-05-16)
 
+### Named task config presets / stages (2026-05-16)
+- `task.yaml` restructured to `default:` / `mode:` top-level sections for all 11 tasks
+- `read_config` returns `raw["default"]` for new format, full dict for legacy flat files
+- `read_task_modes` returns `raw.get("mode", {})` for named override sets
+- `--task-mode <name>` CLI arg wired through parser → evaluate.py → applied after task defaults,
+  before subject YAML overrides and `-ts` CLI overrides (priority chain documented in evaluate.py)
+- `probabilistic_switching_fixedsubjects/task.yaml` modes: `stage00habituation` (100/99),
+  `stage10deterministic` (100/0), `stage20prob9010` (90/10), `stage30prob905010` (full set), `probe`
+
+### Calibration visualisation CLI (2026-05-16)
+- `msw calibration plot [--setup <name>] [--out <dir>]` saves one PDF per setup
+- `plot_setup_valve_calibrations()` in `logic/calibration.py`: exponential fit overlaid on scatter,
+  one subplot per setup; falls back gracefully when fit fails (e.g. near-linear data)
+- `save_calibration_pdfs()`: iterates setup YAMLs, skips those without `bpod_valve` data,
+  names files `{setup}--{datetime}.pdf`
+- `run_calibration()` in `cli/execute.py`; bypasses `evaluate_args` (no hardware context needed)
+
+### Calibration outlier detection (2026-05-16)
+- `flag_outlier_points(times_s, ul_values, sigma_threshold)` in `logic/calibration.py`
+- Uses leave-one-out fitting + MAD-based scale to avoid masking (naive global-fit pulls toward outlier)
+- Called at end of each valve calibration in `_calibration_liquid_dynamic`; logs warnings per flagged point
+- 18 unit tests in `tests/test_calibration_outliers.py`
+
+### Adaptive water-valve calibration protocol (2026-05-16)
+- New task: `_calibration_liquid_dynamic` — does not touch `_calibration_liquid_static`
+- Adaptive pulse count: `n_pulses = ceil(MIN_SNR × SCALE_NOISE_G × 1000 / expected_µL_per_drop)`,
+  clamped to `[MIN_PULSES, MAX_PULSES]`; large drops need far fewer pulses than small ones
+- Adaptive time-point grid: initial evenly-spaced grid, then up to `MAX_ADAPTIVE_ROUNDS` rounds
+  adding new times at range boundaries and sparse interiors until `[min_ul, max_ul]` is covered
+- Tare before each point so sticking from prior measurement doesn't accumulate across points
+- Volume estimate for pulse-count planning uses exponential fit when ≥3 points exist, linear fallback
+- `_compute_n_pulses`, `_estimate_ul`, `_suggest_additional_times` are pure functions (no hardware)
+  with their own unit tests
+
+### Task discovery fix (2026-05-16)
+- `list_available_tasks()` now includes `_calibration_*` dirs alongside `_test_*` and normal tasks;
+  calibration tasks are now runnable via `msw run -t _calibration_liquid_dynamic`
+
+### Logging: duplicate output root cause fixed (2026-05-16)
+- Third-party packages (rpi_camera_ensemble) added `StreamHandler`s to ROOT logger
+- `suppress_third_party_console_handlers()` rewrote: tracks MSW-owned handler IDs in
+  `_MSW_ROOT_HANDLER_IDS`; removes foreign StreamHandlers from root + all child loggers
+  while protecting MSW's own `RichHandler` and `FileHandler`
+
+### Window title metadata fix (2026-05-16)
+- `_evaluate_metadata` now always populates `args_dict["metadata"]` from named args
+  (`--setup`, `--researcher`, `--experiment`) regardless of whether `--metadata` was passed;
+  fixes "n/a" appearing in PyQtGraph window title when `--setup` was provided on CLI
+
+### Test fixes (2026-05-16)
+- `validate_config_file_path`: guard against empty-string input (`Path("").exists()` is True)
+- `read_config`: returns `{}` for non-YAML files instead of implicit `None`
+- Tests updated to use `s_for_ul` / `ul_for_s` API and seconds-based calibration data
+
 ### Fixed-subjects task: hardware and logging fixes (2026-05-16)
 - **BpodFactory softcode proxy**: added explicit `softcode_handler_function` property (getter + setter)
   so pybpodapi's read loop receives the handler — without it, all softcodes were silently dropped
@@ -157,7 +198,7 @@ running a full task state machine.
 ### Task naming
 - `calibrate_stage_tower` → `stage_move` → deleted; `_test_stage_move` is canonical
 - `_test_stage_tower` → `_test_stage_move`
-- `calibrate_water_with_serial_scale` → `_calibration_water_with_serial_scale`
+- `calibrate_water_with_serial_scale` → `_calibration_liquid_static`
 - Convention: normal tasks (no underscore prefix), `_test_*`, `_calibration_*`
 
 ### Stage writeback

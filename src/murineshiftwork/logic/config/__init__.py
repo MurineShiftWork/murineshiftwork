@@ -1,7 +1,7 @@
 """logic.config subpackage.
 
 Submodules:
-  ini    — ConfigObj-based INI reader/writer (task.settings files)
+  ini    — YAML task-config reader (read_config, read_task_modes, validate_config_file_path)
   io     — YAML-based setup/subject config I/O
   models — Pydantic config models (SetupConfig, SubjectConfig, ...)
 
@@ -14,7 +14,6 @@ from murineshiftwork.logic.config.ini import (  # noqa: F401
     read_config,
     read_task_modes,
     validate_config_file_path,
-    write_config,
 )
 from murineshiftwork.logic.config.io import (  # noqa: F401
     load_setup_config,

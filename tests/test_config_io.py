@@ -13,7 +13,7 @@ from murineshiftwork.logic.config import (
 
 
 POINTS_VALID = [
-    [10.0, 0.675], [28.0, 2.075], [46.0, 4.15], [64.0, 6.525], [82.0, 9.05]
+    [0.010, 0.675], [0.028, 2.075], [0.046, 4.15], [0.064, 6.525], [0.082, 9.05]
 ]
 
 
@@ -61,7 +61,7 @@ def test_load_setup_config_with_calibration(tmp_path):
     cfg = load_setup_config(tmp_path, "test_setup")
     vc = cfg.calibrations.bpod_valve["1"]
     assert len(vc.points) == 5
-    assert vc.ul_for_ms(46.0) > 3.0
+    assert vc.ul_for_s(0.046) > 3.0
 
 
 # ---------------------------------------------------------------------------

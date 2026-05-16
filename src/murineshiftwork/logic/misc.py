@@ -39,8 +39,10 @@ def list_available_tasks(detailed=False):
 
     summary = {}
     for item in sorted(tasks_dir.iterdir()):
-        if item.is_dir() and not item.name.startswith("_") or (
-            item.is_dir() and item.name.startswith("_test_")
+        if item.is_dir() and (
+            not item.name.startswith("_")
+            or item.name.startswith("_test_")
+            or item.name.startswith("_calibration_")
         ):
             if (item / f"{item.name}.py").exists():
                 summary[item.name] = item

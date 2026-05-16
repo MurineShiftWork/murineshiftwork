@@ -19,11 +19,11 @@ from murineshiftwork.logic.config import (
 # ValveCalibration — fit and lookup
 
 POINTS_SETUP1_VALVE1 = [
-    [10.0, 0.55], [28.0, 1.15], [46.0, 1.425], [64.0, 1.675], [82.0, 1.925]
+    [0.010, 0.55], [0.028, 1.15], [0.046, 1.425], [0.064, 1.675], [0.082, 1.925]
 ]
 
 POINTS_SETUP3_VALVE1 = [
-    [10.0, 0.675], [28.0, 2.075], [46.0, 4.15], [64.0, 6.525], [82.0, 9.05]
+    [0.010, 0.675], [0.028, 2.075], [0.046, 4.15], [0.064, 6.525], [0.082, 9.05]
 ]
 
 
@@ -47,26 +47,26 @@ def test_valve_calibration_validate_non_monotonic():
     assert "monoton" in reason.lower()
 
 
-def test_valve_calibration_ul_for_ms_increases():
+def test_valve_calibration_ul_for_s_increases():
     vc = ValveCalibration(points=POINTS_SETUP3_VALVE1)
-    v10 = vc.ul_for_ms(10.0)
-    v50 = vc.ul_for_ms(50.0)
-    v80 = vc.ul_for_ms(80.0)
+    v10 = vc.ul_for_s(0.010)
+    v50 = vc.ul_for_s(0.050)
+    v80 = vc.ul_for_s(0.080)
     assert v10 < v50 < v80
 
 
-def test_valve_calibration_ms_for_ul_roundtrip():
+def test_valve_calibration_s_for_ul_roundtrip():
     vc = ValveCalibration(points=POINTS_SETUP3_VALVE1)
     target_ul = 3.0
-    ms = vc.ms_for_ul(target_ul)
-    recovered = vc.ul_for_ms(ms)
+    s = vc.s_for_ul(target_ul)
+    recovered = vc.ul_for_s(s)
     assert abs(recovered - target_ul) < 0.1
 
 
-def test_valve_calibration_ms_for_ul_within_range():
+def test_valve_calibration_s_for_ul_within_range():
     vc = ValveCalibration(points=POINTS_SETUP3_VALVE1)
-    ms = vc.ms_for_ul(2.0)
-    assert 10.0 <= ms <= 82.0
+    s = vc.s_for_ul(2.0)
+    assert 0.010 <= s <= 0.082
 
 
 def test_valve_calibration_updated_preserved():
@@ -96,16 +96,16 @@ def test_setup_config_name():
     assert s.name == "test_setup"
 
 
-def test_setup_valve_ul_for_ms():
+def test_setup_valve_ul_for_s():
     s = _make_setup()
-    ul = s.valve_ul_for_ms(1, 46.0)
+    ul = s.valve_ul_for_s(1, 0.046)
     assert 3.5 < ul < 5.0
 
 
-def test_setup_valve_ms_for_ul():
+def test_setup_valve_s_for_ul():
     s = _make_setup()
-    ms = s.valve_ms_for_ul(1, 4.0)
-    assert 40.0 < ms < 60.0
+    open_s = s.valve_s_for_ul(1, 4.0)
+    assert 0.040 < open_s < 0.060
 
 
 def test_setup_device_port_missing():
