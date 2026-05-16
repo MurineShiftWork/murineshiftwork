@@ -72,6 +72,26 @@ def patch_logging_levels(target_level="WARNING"):
         logger.setLevel(target_level)
 
 
+def suppress_third_party_console_handlers():
+    """Remove StreamHandlers from non-root loggers to eliminate duplicate console output.
+
+    Third-party packages (e.g. rpi_camera_ensemble) add their own StreamHandlers,
+    producing a second plain-format line alongside MSW's RichHandler line for the
+    same record.  Removing those StreamHandlers makes all console output flow through
+    MSW's unified formatter while file handlers (if any) are preserved.
+    Call this after third-party objects have been fully initialised.
+    """
+    for name, logger in logging.Logger.manager.loggerDict.items():
+        if not isinstance(logger, logging.Logger):
+            continue
+        for handler in list(logger.handlers):
+            if isinstance(handler, logging.StreamHandler) and not isinstance(
+                handler, logging.FileHandler
+            ):
+                logger.removeHandler(handler)
+                logging.debug(f"Removed StreamHandler from logger '{name}'")
+
+
 def json_dumps_type_safe(data):
     return json.dumps(
         data,

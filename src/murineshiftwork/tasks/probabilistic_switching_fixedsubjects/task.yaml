@@ -1,88 +1,104 @@
-testing: false
-record_video: true
-show_live_plot: true
-plot_trial_span: 100
-probabilities:
-- - 10
-  - 50
-- - 50
-  - 10
-- - 10
-  - 90
-- - 90
-  - 10
-- - 50
-  - 50
-- - 50
-  - 90
-- - 90
-  - 50
-min_block_length: 20
-min_trials_post_criterion: 5
-mean_neutral_block_length: 25
-max_block_length: 75
-criterion_contrast_blocks: 0.75
-criterion_neutral_blocks: 0.25
-reset_bias_on_block_switch: false
-criterion_tau: 5
-first_block_easy: true
-stage_anti_bias_bool: false
-stage_anti_bias_max: 50
-stage_anti_bias_n_back: 5
-use_piezo_lick_detection: false
-inter_trial_interval:
-- 3
-- 5
-- 0.5
-forced_choice_threshold: 20
-block_switch_to_different_block_type: true
-n_max_trials: 750
-delay_until_center_init:
-- 0.15
-- 0.2
-- 0.005
-delay_until_side_timeout: 10
-delay_until_side_timeout_for_stopping: 1.5
-state_duration_final: 1
-reward_amount_ul: 2.0
-reward_delay: 0
-use_stop_trials: false
-stop_trial_proportion: 0.2
-stop_trial_delay_initial: 0.035
-stop_trial_delay_adaptive_step: 0.01
-stop_trial_min_max:
-- 0.05
-- 0.3
-stop_cue_duration: 0.1
-stop_cue_amplitude: 0.2
-stop_cue_onset_ramp: 0.05
-punish_stop_trials: true
-punish_stop_trials_proportion: 1
-punish_air_duration: 0.02
-use_stimulation: false
-stimulation_trial_proportion: 0.2
-stimulation_timepoint: ACTION_INIT
-stimulation_pulse_frequency: 30
-stimulation_pulse_duration: 0.005
-stimulation_pulse_train: 0.5
-stimulation_pulse_delay: 0
-HARDWARE_BNC_TRIAL_START: 1
-HARDWARE_BNC_STIMULATION: 2
-HARDWARE_PULSEPAL_TRIGGER_CHANNEL: 1
-HARDWARE_PULSEPAL_OUTPUT_CHANNEL: 1
-LICK_EVENT_LEFT: Port1In
-LICK_EVENT_RIGHT: Port3In
-HARDWARE_PORT_LIGHT_INTENSITY: 50
-HARDWARE_PORT_LIGHT_PORTS:
-- center
-HARDWARE_VALVES_FOR_WATER:
-- 1
-- 3
-HARDWARE_VALVES_FOR_AIR:
-- 2
-- 4
-ttl_pulse_duration: 0.01
-barcode_bits: 37
-barcode_bit_duration_ms: 35.0
-barcode_init_duration_ms: 10.0
-barcode_tolerance: 0.25
+default:
+  testing: false
+  record_video: true
+  show_live_plot: true
+  plot_trial_span: 100
+  probabilities:
+  - - 10
+    - 50
+  - - 50
+    - 10
+  - - 10
+    - 90
+  - - 90
+    - 10
+  - - 50
+    - 50
+  - - 50
+    - 90
+  - - 90
+    - 50
+  min_block_length: 20
+  min_trials_post_criterion: 5
+  mean_neutral_block_length: 25
+  max_block_length: 75
+  criterion_contrast_blocks: 0.75
+  criterion_neutral_blocks: 0.25
+  reset_bias_on_block_switch: false
+  criterion_tau: 5
+  first_block_easy: true
+  stage_anti_bias_bool: false
+  stage_anti_bias_max: 50
+  stage_anti_bias_n_back: 5
+  use_piezo_lick_detection: false
+  inter_trial_interval:
+  - 3
+  - 5
+  - 0.5
+  forced_choice_threshold: 20
+  block_switch_to_different_block_type: true
+  n_max_trials: 750
+  delay_until_center_init:
+  - 0.15
+  - 0.2
+  - 0.005
+  delay_until_side_timeout: 10
+  delay_until_side_timeout_for_stopping: 1.5
+  state_duration_final: 1
+  reward_amount_ul: 2.0
+  reward_delay: 0
+  use_stop_trials: false
+  stop_trial_proportion: 0.2
+  stop_trial_delay_initial: 0.035
+  stop_trial_delay_adaptive_step: 0.01
+  stop_trial_min_max:
+  - 0.05
+  - 0.3
+  stop_cue_duration: 0.1
+  stop_cue_amplitude: 0.2
+  stop_cue_onset_ramp: 0.05
+  punish_stop_trials: true
+  punish_stop_trials_proportion: 1
+  punish_air_duration: 0.02
+  use_stimulation: false
+  stimulation_trial_proportion: 0.2
+  stimulation_timepoint: ACTION_INIT
+  stimulation_pulse_frequency: 30
+  stimulation_pulse_duration: 0.005
+  stimulation_pulse_train: 0.5
+  stimulation_pulse_delay: 0
+  HARDWARE_BNC_TRIAL_START: 1
+  HARDWARE_BNC_STIMULATION: 2
+  HARDWARE_PULSEPAL_TRIGGER_CHANNEL: 1
+  HARDWARE_PULSEPAL_OUTPUT_CHANNEL: 1
+  LICK_EVENT_LEFT: Port1In
+  LICK_EVENT_RIGHT: Port3In
+  HARDWARE_PORT_LIGHT_INTENSITY: 50
+  HARDWARE_PORT_LIGHT_PORTS:
+  - center
+  HARDWARE_VALVES_FOR_WATER:
+  - 1
+  - 3
+  HARDWARE_VALVES_FOR_AIR:
+  - 2
+  - 4
+  ttl_pulse_duration: 0.01
+  barcode_bits: 37
+  barcode_bit_duration_ms: 35.0
+  barcode_init_duration_ms: 10.0
+  barcode_tolerance: 0.25
+mode:
+  # Named overrides — select with: msw run ... --task-mode <name>
+  # Only params that differ from 'default:' need to be listed.
+  easy:
+    probabilities:
+    - - 90
+      - 10
+    - - 10
+      - 90
+    reward_amount_ul: 3.0
+    n_max_trials: 300
+  probe:
+    use_stop_trials: true
+    stop_trial_proportion: 0.3
+    n_max_trials: 500

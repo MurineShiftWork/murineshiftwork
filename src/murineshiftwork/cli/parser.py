@@ -264,6 +264,17 @@ Available tasks:
 
 def add_args_for_task_settings_override(parser=None):
     parser.add_argument(
+        "--task-mode",
+        dest="task_mode",
+        type=str,
+        default="",
+        help=(
+            "Named preset from the task.yaml 'mode:' section. "
+            "Overrides task defaults; overridden by subject YAML and -ts. "
+            "Example: --task-mode probe"
+        ),
+    )
+    parser.add_argument(
         "-ts",
         "--task-settings",
         metavar="KEY=VALUE",
@@ -272,7 +283,7 @@ def add_args_for_task_settings_override(parser=None):
         default=[],
         help=(
             "Task-settings key-value overrides applied last (highest priority). "
-            "Example: -ts VALVE_OPENING_TIME_MS=80 N_FLUSH_CYCLES=3"
+            "Example: -ts reward_amount_ul=3 n_max_trials=200"
         ),
     )
 

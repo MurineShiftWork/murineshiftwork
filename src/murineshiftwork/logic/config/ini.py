@@ -12,7 +12,24 @@ def read_config(file=None, unrepr=True):
     path = Path(file)
     if path.suffix in (".yaml", ".yml"):
         with open(path) as f:
-            return yaml.safe_load(f) or {}
+            raw = yaml.safe_load(f) or {}
+        # New format: params live under 'default:'; modes under 'mode:'
+        # Legacy flat format (no 'default' key): return as-is for backward compat
+        if "default" in raw:
+            return raw["default"]
+        return raw
+
+
+def read_task_modes(file=None) -> dict:
+    """Return the 'mode:' section from a task.yaml, or {} if absent or not YAML."""
+    if not file or not Path(file).exists():
+        return {}
+    path = Path(file)
+    if path.suffix not in (".yaml", ".yml"):
+        return {}
+    with open(path) as f:
+        raw = yaml.safe_load(f) or {}
+    return raw.get("mode", {})
 
     # Legacy INI format (subject.settings files in msw_configs)
     from configobj import ConfigObj

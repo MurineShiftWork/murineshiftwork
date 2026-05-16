@@ -1,13 +1,15 @@
-n_max_trials: 20
-ttl_identifier_sequence: sssLss
-ttl_pulse_duration: 0.01
-inter_trial_interval:
-- 2
-- 5
-- 0.5
-wait_duration: 1.0
-HARDWARE_BNC_TRIAL_START: 1
-HARDWARE_BNC_BARCODE: 2
-barcode_bits: 37
-barcode_bit_duration_ms: 35.0
-barcode_init_duration_ms: 10.0
+default:
+  n_max_trials: 20
+  ttl_identifier_sequence: sssLss
+  ttl_pulse_duration: 0.01
+  inter_trial_interval:
+  - 2
+  - 5
+  - 0.5
+  wait_duration: 1.0
+  HARDWARE_BNC_TRIAL_START: 1
+  HARDWARE_BNC_BARCODE: 2
+  barcode_bits: 37
+  barcode_bit_duration_ms: 35.0
+  barcode_init_duration_ms: 10.0
+mode: {}

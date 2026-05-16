@@ -1,13 +1,15 @@
-air_puff_durations:
-- 0.01
-- 0.1
-n_repeats_per_duration: 30
-inter_trial_interval:
-- 4
-- 6
-- 0.5
-HARDWARE_VALVE_FOR_AIR: 2
-barcode_bits: 37
-barcode_bit_duration_ms: 35.0
-barcode_init_duration_ms: 10.0
-barcode_tolerance: 0.25
+default:
+  air_puff_durations:
+  - 0.01
+  - 0.1
+  n_repeats_per_duration: 30
+  inter_trial_interval:
+  - 4
+  - 6
+  - 0.5
+  HARDWARE_VALVE_FOR_AIR: 2
+  barcode_bits: 37
+  barcode_bit_duration_ms: 35.0
+  barcode_init_duration_ms: 10.0
+  barcode_tolerance: 0.25
+mode: {}

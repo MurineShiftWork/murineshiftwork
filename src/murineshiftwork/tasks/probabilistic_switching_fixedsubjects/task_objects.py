@@ -426,7 +426,7 @@ class TaskControl(object):
             + (" [STOP]" if self.last_stop else "")
         )
         logging.info(
-            f"T{self.trial_index:04d} B{self.block_number:02d}.{self.block_trial_number:03d} "
+            f"B{self.block_number:02d}.T{self.trial_index:04d} "
             f"t={round(trial_data['Trial start timestamp']/60,1):4.1f}min "
             f"ch:{self.last_choice:+.0f} bias:{self.moving_average():+.2f} "
             f"r:{self.reward_number}({round(self.task_settings['reward_amount_ul']*self.reward_number,1):.1f}uL) "

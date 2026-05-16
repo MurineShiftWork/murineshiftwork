@@ -12,6 +12,7 @@ continue to work without change.
 """
 from murineshiftwork.logic.config.ini import (  # noqa: F401
     read_config,
+    read_task_modes,
     validate_config_file_path,
     write_config,
 )

@@ -78,7 +78,7 @@ class QueueMonitor(QtCore.QThread):
                 if not self.monitoring_queue.empty():
                     self.update_signal.emit(self.monitoring_queue.get())
 
-        print("Exiting QueueMonitor")
+        logging.debug("Exiting QueueMonitor")
 
 
 class Data:
@@ -187,7 +187,7 @@ class StreamObject:
         while not self.stopped:
             self.next_frame()
 
-        print(f"EXITING STREAM {self}")
+        logging.debug(f"Exiting stream {self}")
 
     def stop(self):
         self.stopped = True
@@ -345,12 +345,12 @@ class OnlinePlottingForPS(Process):
             self.plot_block.addItem(line)
 
         if self.is_simulation:
-            print("Running as simulation.")
+            logging.info("Online plot: running as simulation.")
             timer = QtCore.QTimer()
             timer.timeout.connect(self.update_simulation)
             timer.start(self.simulation_update_interval)
         else:
-            print("Running as live plotting.")
+            logging.info("Online plot: live mode.")
             self.update_listener_thread = QueueMonitor(
                 monitoring_queue=self.data_queue, kill_queue=self.kill_queue
             )
@@ -451,7 +451,6 @@ class OnlinePlottingForPS(Process):
         forced_choice = dict_for_update.get(
             "forced_choice", False
         )  # todo: use to plot red dot at [trial nr, y=0] to indicate forced choice
-        print(choice, rewarded, punished, was_stop, forced_choice)
         self.data.forced_choice[self.trial_index] = forced_choice
 
         if choice == -1:
@@ -572,7 +571,7 @@ if __name__ == "__main__":
 
     if testing:
         time.sleep(10)
-        print("putting kill")
+        logging.debug("Putting kill signal")
         kill_queue.put(True)
 
     main_process.join()

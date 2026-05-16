@@ -7,6 +7,7 @@ import yaml
 from murineshiftwork.cli.defaults import available_tasks, default_config_dir, default_out_path
 from murineshiftwork.cli.preflight import preflight_hardware_check
 from murineshiftwork.logic.config import read_config
+from murineshiftwork.logic.config import read_task_modes
 from murineshiftwork.logic.config import validate_config_file_path
 from murineshiftwork.logic.log import setup_logging
 from murineshiftwork.logic.misc import find_task_by_name
@@ -182,6 +183,7 @@ def evaluate_args(args_dict=None):
     args_dict = _evaluate_and_load_configs(args_dict=args_dict)
 
     settings_task_default = args_dict["settings.task.default"]
+    task_modes = read_task_modes(args_dict.get("config_file_task", ""))
 
     if args_dict["command"] == "register":
         pass
@@ -204,12 +206,25 @@ def evaluate_args(args_dict=None):
         raise ValueError(f"Unknown command: '{args_dict['command']}'")
 
     # Build settings.task.patched — priority (lowest → highest):
-    #   1. task.yaml defaults
-    #   2. SubjectConfig.task_overrides (YAML)
-    #   3. CLI --task-settings KEY=VALUE
+    #   1. task.yaml 'default:' section
+    #   2. task.yaml 'mode:<name>' section (selected via --task-mode)
+    #   3. SubjectConfig.task_overrides (YAML)
+    #   4. CLI --task-settings KEY=VALUE
 
     patched = dict(settings_task_default)
     task_name = args_dict.get("task", "")
+
+    task_mode = args_dict.get("task_mode", "")
+    if task_mode:
+        if task_mode not in task_modes:
+            available = list(task_modes.keys())
+            raise ValueError(
+                f"Task mode '{task_mode}' not found in task.yaml 'mode:' section. "
+                f"Available: {available}"
+            )
+        mode_overrides = task_modes[task_mode]
+        patched.update(mode_overrides)
+        logging.debug(f"Task mode '{task_mode}' applied: {mode_overrides}")
 
     subject_config = args_dict.get("subject_config")
     if subject_config and task_name in subject_config.task_overrides:

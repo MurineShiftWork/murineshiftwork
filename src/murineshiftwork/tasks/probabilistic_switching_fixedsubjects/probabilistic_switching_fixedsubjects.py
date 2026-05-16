@@ -45,6 +45,7 @@ from murineshiftwork.logic.barcode import (
     inject_barcode_states,
     prepare_barcode,
 )
+from murineshiftwork.logic.log import suppress_third_party_console_handlers
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner
 from murineshiftwork.tasks.probabilistic_switching_fixedsubjects.online_plotting import (
@@ -164,6 +165,7 @@ def run_task(**args_dict):
     # Conductor __exit__ calls stop() — cleans up camera agents on any exception
     with Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg) as conductor:
         conductor.setup_agents()
+        suppress_third_party_console_handlers()
 
         with TaskProcess(**args_dict) as tp:
             _session = tp.session_paths["session_basename"]
