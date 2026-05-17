@@ -127,7 +127,7 @@ class ValveCalibration(BaseModel):
         ul_dense = _exp_model(s_dense, a, b, c)
         return float(np.interp(volume_ul, ul_dense, s_dense))
 
-    def validate(self, r2_threshold: float = 0.95) -> tuple[bool, str]:
+    def validate(self, r2_threshold: float = 0.95) -> tuple[bool, str]:  # type: ignore[override]
         """Return (is_valid, reason).
 
         Checks:
