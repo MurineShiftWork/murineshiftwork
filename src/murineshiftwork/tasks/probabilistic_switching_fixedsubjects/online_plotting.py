@@ -1,9 +1,7 @@
 import logging
 import socket
 import time
-from multiprocessing import Process
-from multiprocessing import Queue
-from pathlib import Path
+from multiprocessing import Process, Queue
 from sys import exit
 from threading import Thread
 
@@ -11,8 +9,7 @@ import cv2 as cv
 import myterial as mt
 import numpy as np
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtCore, QtGui
 
 color_rewarded = mt.blue_dark
 color_unrewarded = mt.grey
@@ -240,20 +237,14 @@ class OnlinePlottingForPS(Process):
         self.data_queue = data_queue
         self.kill_queue = kill_queue
         self.max_trials = max_trials if max_trials else self.max_trials
-        self.values_to_show = (
-            values_to_show if values_to_show else self.values_to_show
-        )
+        self.values_to_show = values_to_show if values_to_show else self.values_to_show
         self.data = Data(vector_length=self.max_trials)
-        self.video_stream_config = (
-            video_stream_config or self.video_stream_config
-        )
+        self.video_stream_config = video_stream_config or self.video_stream_config
 
     def run(self) -> None:
         self.app = pg.mkQApp(self.name)
         self.win = pg.GraphicsLayoutWidget(show=True, title=self.name)
-        self.update_window_properties(
-            window_title=self.window_title
-        )
+        self.update_window_properties(window_title=self.window_title)
 
         # Top row: trial outcomes
         self.plot_to = self.win.addPlot(name="top_row", colspan=4)
@@ -364,9 +355,9 @@ class OnlinePlottingForPS(Process):
         self.stream_objects = {}
         for name, params in self.video_stream_config.items():
             if "stream_video" in params and params["stream_video"]:
-                params[
-                    "transpose"
-                ] = True  # fixme: hacky, do better in config, but not RCC as that should stay general
+                params["transpose"] = (
+                    True  # fixme: hacky, do better in config, but not RCC as that should stay general
+                )
                 self.stream_objects[name] = StreamObject(
                     name=name,
                     window_handle=self.win,
@@ -402,18 +393,16 @@ class OnlinePlottingForPS(Process):
         cursor = QtGui.QCursor.pos()
         cursor_screen = None
         for s in screens:
-          if s.geometry().contains(cursor):
-            cursor_screen = s
-            break
+            if s.geometry().contains(cursor):
+                cursor_screen = s
+                break
 
         screen_size_px = cursor_screen.geometry()
         new_top_width_margin = int(screen_size_px.width() * frame_margins)
         new_top_height_margin = int(screen_size_px.height() * frame_margins)
         # new geometry
         pos = QtCore.QPoint(new_top_width_margin, new_top_height_margin)
-        new_w = int(
-            screen_size_px.width() - 2 * frame_margins * screen_size_px.width()
-        )
+        new_w = int(screen_size_px.width() - 2 * frame_margins * screen_size_px.width())
         new_h = int(screen_size_px.height() * window_height)
         # mov window
         self.win.move(pos)
@@ -440,9 +429,7 @@ class OnlinePlottingForPS(Process):
         :return:
         """
         self.trial_index = dict_for_update["trial_index"]
-        self.data.moving_average[self.trial_index] = dict_for_update[
-            "moving_average"
-        ]
+        self.data.moving_average[self.trial_index] = dict_for_update["moving_average"]
 
         choice = dict_for_update["choice"]
         rewarded = dict_for_update["rewarded"]
@@ -474,7 +461,9 @@ class OnlinePlottingForPS(Process):
             else:
                 self.data.current_trial_outcome_point = trial_outcomes[3]
         else:
-            logging.debug(f"Online plot: unknown outcome option for trial {self.trial_index}")
+            logging.debug(
+                f"Online plot: unknown outcome option for trial {self.trial_index}"
+            )
             return
 
         self.data.probability_left[self.trial_index] = dict_for_update[
@@ -541,12 +530,12 @@ class OnlinePlottingForPS(Process):
                 np.random.random(),
             )
 
-        self.data.probability_left[
-            self.trial_index
-        ] = self.data.test__block_probability_tuple[0]
-        self.data.probability_right[
-            self.trial_index
-        ] = self.data.test__block_probability_tuple[1]
+        self.data.probability_left[self.trial_index] = (
+            self.data.test__block_probability_tuple[0]
+        )
+        self.data.probability_right[self.trial_index] = (
+            self.data.test__block_probability_tuple[1]
+        )
 
         self.update_plots()
 

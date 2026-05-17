@@ -1,10 +1,6 @@
-import os
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 
 session_name = "20210417-155526"
 setup_name = "MAIN"

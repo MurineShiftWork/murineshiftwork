@@ -1,6 +1,8 @@
 """Tests for NamespaceBuilder (Pydantic + YAML spec)."""
-import pytest
+
 from pathlib import Path
+
+import pytest
 
 from murineshiftwork.namespace.spec import (
     NamespaceBuilder,
@@ -28,6 +30,7 @@ VALUES_V3 = {
 # ---------------------------------------------------------------------------
 # Spec validation
 
+
 def test_namespace_spec_invalid_regex():
     with pytest.raises(Exception):
         NamespaceLevelSpec(template="{x}", regex="(?P<x>[")
@@ -44,6 +47,7 @@ def test_namespace_spec_missing_hierarchy_level():
 
 # ---------------------------------------------------------------------------
 # Loading YAML spec files
+
 
 @pytest.mark.parametrize("version", ["v1", "v2", "v3"])
 def test_load_yaml_spec(version):
@@ -73,6 +77,7 @@ def test_v1_no_acquisition():
 # ---------------------------------------------------------------------------
 # build_path
 
+
 def test_build_subject():
     b = NamespaceBuilder.from_yaml(_SPEC_DIR / "namespace.v3.yaml")
     result = b.build_path("subject", VALUES_V3)
@@ -101,6 +106,7 @@ def test_build_missing_field_raises():
 # ---------------------------------------------------------------------------
 # generate_path
 
+
 def test_generate_path_to_file():
     b = NamespaceBuilder.from_yaml(_SPEC_DIR / "namespace.v3.yaml")
     path = b.generate_path("file", VALUES_V3)
@@ -126,6 +132,7 @@ def test_generate_path_skip_optional():
 # ---------------------------------------------------------------------------
 # extract_level_values
 
+
 def test_extract_subject_values():
     b = NamespaceBuilder.from_yaml(_SPEC_DIR / "namespace.v3.yaml")
     vals = b.extract_level_values("subject", "s082_tabfixed_m1099615_x")
@@ -149,9 +156,11 @@ def test_extract_no_match_raises():
 # ---------------------------------------------------------------------------
 # validate_path
 
+
 def test_validate_path_stop_at_acquisition():
     b = NamespaceBuilder.from_yaml(_SPEC_DIR / "namespace.v3.yaml")
     from pathlib import Path as P
+
     full = (
         P("s082_tabfixed_m1099615_x")
         / "s082_tabfixed_m1099615_x__20240502_131422__recording"
@@ -172,6 +181,7 @@ def test_validate_path_bad_stop_at_raises():
 # ---------------------------------------------------------------------------
 # round-trip: to_dict → from_dict
 
+
 def test_roundtrip_dict():
     b = NamespaceBuilder.from_yaml(_SPEC_DIR / "namespace.v3.yaml")
     d = b.to_dict()
@@ -182,6 +192,7 @@ def test_roundtrip_dict():
 
 # ---------------------------------------------------------------------------
 # write_yaml round-trip
+
 
 def test_write_and_reload_yaml(tmp_path):
     b = NamespaceBuilder.from_yaml(_SPEC_DIR / "namespace.v3.yaml")

@@ -3,13 +3,11 @@ import time
 from multiprocessing import Queue
 from pathlib import Path
 
-from pybpodapi.protocol import Bpod  # Used!
 from rpi_camera_ensemble.conductor.conductor import Conductor
 from rpi_camera_ensemble.config.acquisition import EnsembleAcquisitionConfig
 from rpi_camera_ensemble.config.conductor import ConductorConfig
 
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 from murineshiftwork.tasks.probabilistic_switching.online_plotting import (
     OnlinePlottingForPS,
 )
@@ -30,7 +28,10 @@ class Task(TaskRunner):
             logging.info(f"Trial: {trial_index}")
 
             if trial_index == 0 and not task_settings["testing"]:
-                from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
+                from murineshiftwork.hardware.bpod.ttl import (
+                    make_ttl_identifier_sequences,
+                )
+
                 sma = make_ttl_identifier_sequences(
                     bpod=self.bpod,
                     sequence=task_settings["ttl_identifier_sequence"],

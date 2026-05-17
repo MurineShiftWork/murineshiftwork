@@ -4,8 +4,7 @@ import time
 from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class Task(TaskRunner):
@@ -19,7 +18,11 @@ class Task(TaskRunner):
         flush_sequentially = bool(s.get("FLUSH_VALVES_SEQUENTIALLY", False))
 
         # When sequential, divide cycle time equally across valves
-        per_valve_time_ms = valve_opening_time_ms / len(valve_numbers) if flush_sequentially else valve_opening_time_ms
+        per_valve_time_ms = (
+            valve_opening_time_ms / len(valve_numbers)
+            if flush_sequentially
+            else valve_opening_time_ms
+        )
 
         logging.info(
             f"Flush: valves={valve_numbers}, cycle_time={valve_opening_time_ms}ms, "
@@ -37,7 +40,9 @@ class Task(TaskRunner):
                     if not self.continue_task:
                         break
                     self._flush_valves([valve], per_valve_time_ms)
-                logging.info(f"Flush cycle {cycle + 1}/{n_flush_cycles} done (sequential: {valve_numbers})")
+                logging.info(
+                    f"Flush cycle {cycle + 1}/{n_flush_cycles} done (sequential: {valve_numbers})"
+                )
             else:
                 self._flush_valves(valve_numbers, valve_opening_time_ms)
                 logging.info(f"Flush cycle {cycle + 1}/{n_flush_cycles} done")

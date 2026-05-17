@@ -191,8 +191,3 @@ end%fct
 function state_name = make_state_name(idx, state_idx)
 state_name = ['pulse_', num2str(idx), '_', num2str(state_idx)];
 end
-
-
-
-
-

@@ -106,5 +106,38 @@ addopts = "--cov=murineshiftwork --durations=0"
 
 [tool.black]
 target-version = ["py310", "py311"]
-line-length = 79
+line-length = 88
 skip-string-normalization = false
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 88
+exclude = ["external", "playground", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+
+[tool.mypy]
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+ignore_missing_imports = true
+exclude = ["external"]
+
+# Legacy modules that pre-date strict typing — suppress until dedicated pass.
+[[tool.mypy.overrides]]
+module = [
+    "murineshiftwork.tasks.*",
+    "murineshiftwork.logic.stimulation",
+    "murineshiftwork.logic.sounds",
+    "murineshiftwork.readers.validate",
+]
+ignore_errors = true

@@ -37,9 +37,9 @@ Three tiers of check:
        - inter-pulse intervals from ttl_out match df ITI column
          (median within 10%, no outliers > 3x median)
 """
+
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -48,10 +48,10 @@ import numpy as np
 
 from murineshiftwork.readers.session import read_session_data
 
-
 # ---------------------------------------------------------------------------
 # Result container
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ValidationResult:
@@ -60,9 +60,9 @@ class ValidationResult:
     is_rce_session: bool = False
 
     passed: bool = True
-    issues: list[str] = field(default_factory=list)       # blocking failures
-    warnings: list[str] = field(default_factory=list)     # non-blocking concerns
-    info: list[str] = field(default_factory=list)         # informational
+    issues: list[str] = field(default_factory=list)  # blocking failures
+    warnings: list[str] = field(default_factory=list)  # non-blocking concerns
+    info: list[str] = field(default_factory=list)  # informational
 
     # Per-agent alignment results (agent_id → dict)
     agent_alignment: dict[str, dict] = field(default_factory=dict)
@@ -79,7 +79,7 @@ class ValidationResult:
 
     def print_summary(self) -> None:
         status = "PASS" if self.passed else "FAIL"
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Session validation: {status}")
         print(f"  dir        : {self.session_dir.name}")
         print(f"  msw_version: {self.msw_version}")
@@ -97,14 +97,17 @@ class ValidationResult:
             for aid, res in self.agent_alignment.items():
                 ok = "OK" if res.get("passed") else "FAIL"
                 print(f"    [{ok}] {aid}: {res.get('summary', '')}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
 
 # ---------------------------------------------------------------------------
 # MSW file completeness
 # ---------------------------------------------------------------------------
 
-def _check_msw_completeness(session_dir: Path, result: ValidationResult) -> Optional[dict]:
+
+def _check_msw_completeness(
+    session_dir: Path, result: ValidationResult
+) -> Optional[dict]:
     try:
         sd = read_session_data(session_dir=session_dir, load_raw=False)
     except Exception as e:
@@ -132,7 +135,10 @@ def _check_msw_completeness(session_dir: Path, result: ValidationResult) -> Opti
 # RCE file completeness
 # ---------------------------------------------------------------------------
 
-def _check_rce_completeness(session_dir: Path, result: ValidationResult) -> Optional[object]:
+
+def _check_rce_completeness(
+    session_dir: Path, result: ValidationResult
+) -> Optional[object]:
     try:
         from rpi_camera_ensemble.io.session import RCESession
     except ImportError:
@@ -181,6 +187,7 @@ def _check_rce_completeness(session_dir: Path, result: ValidationResult) -> Opti
 # TTL alignment — new sessions (barcode)
 # ---------------------------------------------------------------------------
 
+
 def _check_barcode_alignment(
     session_dir: Path,
     rce,
@@ -196,7 +203,10 @@ def _check_barcode_alignment(
 
     for aid, agent in sorted(rce.agents.items()):
         if not agent.ttl_in.is_present:
-            result.agent_alignment[aid] = {"passed": False, "summary": "ttl_in missing"}
+            result.agent_alignment[aid] = {
+                "passed": False,
+                "summary": "ttl_in missing",
+            }
             continue
 
         try:
@@ -205,7 +215,10 @@ def _check_barcode_alignment(
                 ttl_in_npz=agent.ttl_in.available,
             )
         except Exception as e:
-            result.agent_alignment[aid] = {"passed": False, "summary": f"error: {e}"}
+            result.agent_alignment[aid] = {
+                "passed": False,
+                "summary": f"error: {e}",
+            }
             result._fail(f"{aid}: barcode alignment raised: {e}")
             continue
 
@@ -215,7 +228,11 @@ def _check_barcode_alignment(
             f"match={res.get('match_rate', 0):.2f}  "
             f"wall_err_ms mean={res.get('wall_time_errors_ms', {}).get('mean', float('nan')):.1f}"
         )
-        result.agent_alignment[aid] = {**res, "passed": passed, "summary": summary}
+        result.agent_alignment[aid] = {
+            **res,
+            "passed": passed,
+            "summary": summary,
+        }
         if not passed:
             result._fail(f"{aid}: barcode alignment failed — {summary}")
 
@@ -223,6 +240,7 @@ def _check_barcode_alignment(
 # ---------------------------------------------------------------------------
 # TTL alignment — legacy sessions (ttl_out count + spacing)
 # ---------------------------------------------------------------------------
+
 
 def _check_legacy_ttl_alignment(
     rce,
@@ -248,7 +266,10 @@ def _check_legacy_ttl_alignment(
 
     for aid, agent in sorted(rce.agents.items()):
         if not agent.ttl_in.is_present or not agent.ttl_in.is_loaded:
-            result.agent_alignment[aid] = {"passed": False, "summary": "ttl_in missing/unloaded"}
+            result.agent_alignment[aid] = {
+                "passed": False,
+                "summary": "ttl_in missing/unloaded",
+            }
             continue
 
         ttl = agent.ttl_in.loaded
@@ -276,26 +297,35 @@ def _check_legacy_ttl_alignment(
                 # iti column contains list-like [[start, end]] pairs
                 try:
                     iti_durations = (
-                        df["iti"].dropna()
-                        .apply(lambda x: x[0][1] - x[0][0] if x and len(x[0]) == 2 else np.nan)
+                        df["iti"]
+                        .dropna()
+                        .apply(
+                            lambda x: x[0][1] - x[0][0]
+                            if x and len(x[0]) == 2
+                            else np.nan
+                        )
                     )
                     expected_median = float(iti_durations.median())
                     rel_err = abs(median_ipi - expected_median) / expected_median
                     if rel_err > 0.10:
                         passed = False
                         notes.append(
-                            f"IPI median {median_ipi*1000:.0f}ms vs "
-                            f"expected {expected_median*1000:.0f}ms (>{10:.0f}% off)"
+                            f"IPI median {median_ipi * 1000:.0f}ms vs "
+                            f"expected {expected_median * 1000:.0f}ms (>{10:.0f}% off)"
                         )
                     else:
-                        notes.append(f"spacing OK (median IPI {median_ipi*1000:.0f}ms)")
+                        notes.append(
+                            f"spacing OK (median IPI {median_ipi * 1000:.0f}ms)"
+                        )
                 except Exception:
                     pass
 
             # Outlier check: pulses > 3× median IPI suggest missed triggers
             n_outliers = int((ipi > 3 * median_ipi).sum())
             if n_outliers:
-                result._warn(f"{aid}: {n_outliers} inter-pulse gaps > 3× median — possible missed triggers")
+                result._warn(
+                    f"{aid}: {n_outliers} inter-pulse gaps > 3× median — possible missed triggers"
+                )
 
         summary = "  ".join(notes)
         result.agent_alignment[aid] = {"passed": passed, "summary": summary}
@@ -306,6 +336,7 @@ def _check_legacy_ttl_alignment(
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
+
 
 def validate_session(
     session_dir: str | Path,

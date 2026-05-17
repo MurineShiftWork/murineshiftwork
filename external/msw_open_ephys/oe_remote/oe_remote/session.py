@@ -92,15 +92,15 @@ class Session:
             self.local_path_full = (
                 self.local_path / self.subject / self.acquisition_name
             )
-            self.base_text = f"{self.subject}/{self.acquisition_name}/{self.session_name}"
+            self.base_text = (
+                f"{self.subject}/{self.acquisition_name}/{self.session_name}"
+            )
             self.main_session_folder = self.base_text
             self._cache_path = self.acquisition_name
 
         else:
             # Case 1 – standalone
-            self.local_path_full = (
-                self.local_path / self.subject / self.session_name
-            )
+            self.local_path_full = self.local_path / self.subject / self.session_name
             self.base_text = f"{self.subject}/{self.session_name}"
             self.main_session_folder = self.session_name
             self._cache_path = self.session_name
@@ -118,16 +118,16 @@ class Session:
         return {
             # --- Version ---
             "metadata_version": METADATA_VERSION,
-            "version": METADATA_VERSION,              # legacy key (was 2)
+            "version": METADATA_VERSION,  # legacy key (was 2)
             # --- Identity ---
             "subject": self.subject,
             "datetime": self.dt,
             "acquisition_extension": self.acquisition_extension,
             "session_extension": self.session_extension,
             "acquisition_name": self.acquisition_name,
-            "session_name": self.session_extension,       # legacy: stored extension string
-            "full_session_name": self.session_name,       # full subject__dt__ext string
-            "full_acquisition_name": self.main_session_folder,   # legacy alias
+            "session_name": self.session_extension,  # legacy: stored extension string
+            "full_session_name": self.session_name,  # full subject__dt__ext string
+            "full_acquisition_name": self.main_session_folder,  # legacy alias
             "main_session_folder": self.main_session_folder,
             "acquisition_task_name": self.acquisition_extension,  # legacy alias
             "is_child_session_to": self.is_child_session_to,

@@ -2,10 +2,10 @@ import sys
 
 from murineshiftwork.cli import run_cli
 
-
 if __name__ == "__main__":
     args = (
-        sys.argv + "run "
+        sys.argv
+        + "run "
         "-t fixedsubjects "
         "-b /dev/ttyACM0 "
         "-stage /dev/ttyUSB0 "

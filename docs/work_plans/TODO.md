@@ -63,7 +63,7 @@ tests for behavior setups
 - [x] soy milk use + cleaning
 
 test stage
-- arduino: pci-0000:00:14.0-usb-0:1:1.0 
+- arduino: pci-0000:00:14.0-usb-0:1:1.0
 - usb controller: pci-0000:00:14.0-usb-0:4:1.0-port0
 
 stage API

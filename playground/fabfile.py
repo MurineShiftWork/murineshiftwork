@@ -1,10 +1,3 @@
-import os
-from pathlib import Path
-
-from fabric import task
-from patchwork import files
-
-
 setups_msw = ["setup1", "setup2", "setup3", "setup4", "setup5", "setup-npxb"]
 
 setups_rcc = [f"rpi-{id}" for id in [40, 41, 43, 50, 51, 60, 61, 62]]

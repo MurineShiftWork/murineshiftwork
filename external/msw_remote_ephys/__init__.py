@@ -12,9 +12,7 @@ def _evaluate_metadata(args_dict):
     metadata_list = args_dict.get("metadata_list", None)
     if metadata_list is not None:
         metadata_list = [
-            v.strip(" ").strip("'").strip('"')
-            for v in metadata_list
-            if "=" in v
+            v.strip(" ").strip("'").strip('"') for v in metadata_list if "=" in v
         ]
         metadata_dict = dict(map(lambda s: s.split("="), metadata_list))
         #

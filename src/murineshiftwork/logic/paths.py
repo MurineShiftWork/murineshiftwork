@@ -1,14 +1,16 @@
 import socket
 from pathlib import Path
 
-from murineshiftwork.namespace.paths import CURRENT_NAMESPACE_VERSION
-from murineshiftwork.namespace.paths import MSW_DATETIME_FORMAT
-from murineshiftwork.namespace.paths import NAMESPACE_LEGACY
-from murineshiftwork.namespace.paths import NAMESPACE_V1
-from murineshiftwork.namespace.paths import _FORBIDDEN_PATH_CHARS
-from murineshiftwork.namespace.paths import build_data_paths
-from murineshiftwork.namespace.paths import generate_session_paths
-from murineshiftwork.namespace.paths import parse_session_basename
+from murineshiftwork.namespace.paths import (
+    _FORBIDDEN_PATH_CHARS,
+    CURRENT_NAMESPACE_VERSION,
+    MSW_DATETIME_FORMAT,
+    NAMESPACE_LEGACY,
+    NAMESPACE_V1,
+    build_data_paths,
+    generate_session_paths,
+    parse_session_basename,
+)
 
 __all__ = [
     "CURRENT_NAMESPACE_VERSION",

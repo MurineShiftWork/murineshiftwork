@@ -2,9 +2,12 @@ import logging
 from pathlib import Path
 
 import yaml
-from murineshiftwork.logic.machine_config import get_machine_config_path
-from murineshiftwork.logic.machine_config import resolve_config_dir
-from murineshiftwork.logic.machine_config import write_machine_config
+
+from murineshiftwork.logic.machine_config import (
+    get_machine_config_path,
+    resolve_config_dir,
+    write_machine_config,
+)
 from murineshiftwork.logic.misc import print_box
 
 
@@ -51,6 +54,7 @@ def run_task(**args_dict):
     msw run -s subject -t task -p serial_port
     """
     import importlib
+
     from murineshiftwork.logic.log import suppress_third_party_console_handlers
 
     suppress_third_party_console_handlers()  # catch handlers added at import time
@@ -276,11 +280,11 @@ def run_action(**args_dict):
     Phase 1: opens a fresh Bpod connection, executes the action, disconnects.
     The connection is exclusive — do not run while a task session is active.
     """
+    from murineshiftwork.hardware.bpod.actions import BpodActionDriver
+    from murineshiftwork.hardware.bpod.factory import BpodFactory
+    from murineshiftwork.logic.config.io import load_setup_config
     from murineshiftwork.logic.config.models import ActionRequest
     from murineshiftwork.logic.machine_config import resolve_config_dir
-    from murineshiftwork.logic.config.io import load_setup_config
-    from murineshiftwork.hardware.bpod.factory import BpodFactory
-    from murineshiftwork.hardware.bpod.actions import BpodActionDriver
 
     setup_name = args_dict["setup"]
     device_key = args_dict["device"]
@@ -331,8 +335,8 @@ def run_action(**args_dict):
 
 def run_calibration(**args_dict):
     """Plot and save calibration charts as PDF."""
-    from murineshiftwork.logic.log import setup_logging
     from murineshiftwork.logic.calibration import save_calibration_pdfs
+    from murineshiftwork.logic.log import setup_logging
     from murineshiftwork.logic.machine_config import resolve_config_dir
 
     setup_logging(level="INFO")

@@ -4,12 +4,16 @@ from pathlib import Path
 
 import yaml
 
-from murineshiftwork.readers.files import read_json
-from murineshiftwork.readers.files import read_pybpod_csv
-from murineshiftwork.readers.files import read_settings_py
-from murineshiftwork.readers.files import read_trial_df
-from murineshiftwork.readers.namespace import test_is_legacy_format
-from murineshiftwork.readers.namespace import test_is_recognized_msw_file
+from murineshiftwork.readers.files import (
+    read_json,
+    read_pybpod_csv,
+    read_settings_py,
+    read_trial_df,
+)
+from murineshiftwork.readers.namespace import (
+    test_is_legacy_format,
+    test_is_recognized_msw_file,
+)
 
 
 def read_session_data(
@@ -47,9 +51,7 @@ def read_session_data(
         return s.split(".msw.")[-1].replace("msw", "").strip(".")
 
     session_files_dict = {
-        _prepare_key(v): v
-        for v in files_in_dir
-        if test_is_recognized_msw_file(v)
+        _prepare_key(v): v for v in files_in_dir if test_is_recognized_msw_file(v)
     }
     is_legacy_session = test_is_legacy_format(session_dir=session_dir)
 
@@ -93,10 +95,7 @@ def read_session_data(
 
     # Check for legacy files
     for k, v in session_files_dict.items():
-        if (
-            k.endswith("settings.json")
-            and "settings.process" not in session_data
-        ):
+        if k.endswith("settings.json") and "settings.process" not in session_data:
             session_data["settings.process"] = read_json(v)
 
         elif k.endswith("settings") and "settings.task" not in session_data:

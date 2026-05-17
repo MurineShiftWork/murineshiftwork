@@ -73,5 +73,3 @@
         framerate = 60
         resolution = (960, 720)
         color_effects = (128, 128)
-
-

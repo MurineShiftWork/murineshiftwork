@@ -3,7 +3,6 @@ import logging
 import numpy as np
 import sounddevice as sd
 
-
 sample_rate_dict = {
     "sysdefault": 44100,
     "XONAR SOUND CARD": 192000,
@@ -21,16 +20,14 @@ def get_sample_rate(target_device_name=None):
 def find_sound_device(target_device=None, return_first=True):
     devices = sd.query_devices()
 
-    found_device = [
-        (i, d) for i, d in enumerate(devices) if target_device in d["name"]
-    ]
+    found_device = [(i, d) for i, d in enumerate(devices) if target_device in d["name"]]
     if len(found_device) > 0 and return_first:
         found_device = found_device[0]
     return found_device
 
 
 class StereoSound(object):
-    _sounds = {}
+    _sounds: dict = {}
 
     default_sound_device = "XONAR SOUND CARD"
     default_ttl_channel = 1  # choices: 0 or 1 -> idx of position on
@@ -137,9 +134,7 @@ class StereoSound(object):
 
         tone = tone * win
         ttl = np.ones(len(tone)) * 0.99
-        one_ms = np.array(
-            (self.sample_rate / 1000) * self.ttl_duration
-        ).astype(int)
+        one_ms = np.array((self.sample_rate / 1000) * self.ttl_duration).astype(int)
         ttl[one_ms:] = 0
         null = np.zeros(len(tone))
 

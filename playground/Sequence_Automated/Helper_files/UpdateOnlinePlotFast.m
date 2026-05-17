@@ -1,10 +1,10 @@
 
-% Online plotting Helper function for Sequence  
+% Online plotting Helper function for Sequence
 % Emmett Thompson
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
+%
 function UpdateOnlinePlotFast(Data,SubjectName,TrialType,Action,Figurehandle)
-% 
+%
 global BpodSystem
 % CurrentTrial
 i = BpodSystem.Data.nTrials;
@@ -30,7 +30,7 @@ i = BpodSystem.Data.nTrials;
         BpodSystem.Data.OnlinePlotParams.Fifthstatetime = zeros(1,BpodSystem.Data.MaxTrials);
         BpodSystem.Data.OnlinePlotParams.PlotColour = {};
     end
-    
+
     % Determine if last was incorrect and if so change params
     if isnan(Data.RawEvents.Trial{1, i}.States.Punish(1)) == 0
         BpodSystem.Data.OnlinePlotParams.WrongCount = BpodSystem.Data.OnlinePlotParams.WrongCount + 1;
@@ -51,25 +51,25 @@ i = BpodSystem.Data.nTrials;
         %Find within trial event time
         BpodSystem.Data.OnlinePlotParams.WithinTrialEventTime(i) = Data.RawEvents.Trial{1, i}.States.Reward(1);
     end
-    
-    
-    
+
+
+
     %Determine Prct correct and update params
 %     BpodSystem.Data.OnlinePlotParams.PrcntCorrect(i) = BpodSystem.Data.OnlinePlotParams.CorrectCount/i;
 
     BpodSystem.Data.OnlinePlotParams.drink_time_mins((sum(BpodSystem.Data.OnlinePlotParams.drink_time_mins>0)+1)) = (BpodSystem.Data.OnlinePlotParams.RewardEventTimes(i))/60;
     BpodSystem.Data.OnlinePlotParams.wrong_time_mins((sum(BpodSystem.Data.OnlinePlotParams.wrong_time_mins>0)+1)) = (BpodSystem.Data.OnlinePlotParams.WrongEventTimes(i))/60;
     BpodSystem.Data.OnlinePlotParams.cumtrialcount(i) = i;
-    
+
     %Determine port(state) in times:
     BpodSystem.Data.OnlinePlotParams.Initialstatetime(i) = Data.RawEvents.Trial{1, i}.States.InitialPokeValve(1);
     BpodSystem.Data.OnlinePlotParams.Secondstatetime(i) = Data.RawEvents.Trial{1, i}.States.SecondPokeValve(1) - Data.RawEvents.Trial{1, i}.States.InitialPokeValve(1);
     BpodSystem.Data.OnlinePlotParams.Thirdstatetime(i) = Data.RawEvents.Trial{1, i}.States.ThirdPokeValve(1) - Data.RawEvents.Trial{1, i}.States.SecondPokeValve(1);
     BpodSystem.Data.OnlinePlotParams.Fourthstatetime(i) = Data.RawEvents.Trial{1, i}.States.FourthPokeValve(1) - Data.RawEvents.Trial{1, i}.States.ThirdPokeValve(1);
     BpodSystem.Data.OnlinePlotParams.Fifthstatetime(i) = Data.RawEvents.Trial{1, i}.States.Reward(1) - Data.RawEvents.Trial{1, i}.States.FourthPokeValve(1);
-    
-    
-    
+
+
+
     switch Action
         case('Init')
             figure(Figurehandle);
@@ -83,7 +83,7 @@ i = BpodSystem.Data.nTrials;
             set(BpodSystem.GUIHandles.CC,'LineWidth',2)
             xlabel('Time (mins)','FontSize',12,'FontWeight','bold');
             ylabel('Counts','FontSize',12,'FontWeight','bold');
-             
+
             %Plot histogram of time taken between pokes
             subplot(2,4,[2 4])
             BpodSystem.GUIHandles.T1 = histogram(BpodSystem.Data.OnlinePlotParams.Secondstatetime(1:i));
@@ -105,7 +105,7 @@ i = BpodSystem.Data.nTrials;
             BpodSystem.GUIHandles.T4.NumBins = 20;
             BpodSystem.GUIHandles.T4.BinLimits = [0 3];
             BpodSystem.GUIHandles.T4.FaceColor = 'Y';
-            
+
             BpodSystem.GUIHandles.lgd1 = legend([BpodSystem.GUIHandles.T1 BpodSystem.GUIHandles.T2 BpodSystem.GUIHandles.T3 BpodSystem.GUIHandles.T4],{'1 > 2','2 > 3','3 > 4', '4 > 5'});
 
 
@@ -143,7 +143,7 @@ i = BpodSystem.Data.nTrials;
 
 
         case('Update')
-            
+
                 set(BpodSystem.GUIHandles.CI,'XData',BpodSystem.Data.OnlinePlotParams.wrong_time_mins(1:(sum(BpodSystem.Data.OnlinePlotParams.wrong_time_mins>0))),'YData',BpodSystem.Data.OnlinePlotParams.WrongTrials(1:(sum(BpodSystem.Data.OnlinePlotParams.WrongTrials>0))));
                 set(BpodSystem.GUIHandles.CC,'XData',BpodSystem.Data.OnlinePlotParams.drink_time_mins(1:(sum(BpodSystem.Data.OnlinePlotParams.drink_time_mins>0))),'YData',BpodSystem.Data.OnlinePlotParams.CorrectTrials(1:(sum(BpodSystem.Data.OnlinePlotParams.CorrectTrials>0))));
 

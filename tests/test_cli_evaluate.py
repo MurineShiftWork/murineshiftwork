@@ -1,14 +1,13 @@
 """Tests for CLI evaluate layer: settings patching, subject lookup, _parse_key_value_list."""
+
 import pytest
 import yaml
-from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 from murineshiftwork.cli.evaluate import _parse_key_value_list
 
-
 # ---------------------------------------------------------------------------
 # _parse_key_value_list
+
 
 def test_parse_kv_basic():
     result = _parse_key_value_list(["VALVE_OPENING_TIME_MS=80"])
@@ -48,6 +47,7 @@ def test_parse_kv_no_equals_skipped():
 
 # ---------------------------------------------------------------------------
 # Helpers
+
 
 def _base_args(tmp_path, subject, task="_test_flush_water", **overrides):
     """Return a minimal valid args_dict for evaluate_args testing."""
@@ -95,12 +95,15 @@ def _write_subject_yaml(tmp_path, name, **fields):
 # ---------------------------------------------------------------------------
 # Settings patching: SubjectConfig.task_overrides applied
 
+
 def test_subject_yaml_task_overrides_applied(tmp_path):
     """SubjectConfig.task_overrides are merged into settings.task.patched."""
     from murineshiftwork.cli.evaluate import evaluate_args
+
     subject = "s082_tabfixed_m1000001"
     _write_subject_yaml(
-        tmp_path, subject,
+        tmp_path,
+        subject,
         task_overrides={"_test_flush_water": {"VALVE_OPENING_TIME_MS": 77}},
     )
     args = _base_args(tmp_path, subject)
@@ -111,13 +114,16 @@ def test_subject_yaml_task_overrides_applied(tmp_path):
 def test_cli_task_settings_override_highest_priority(tmp_path):
     """CLI --task-settings KEY=VALUE beats subject YAML task_overrides."""
     from murineshiftwork.cli.evaluate import evaluate_args
+
     subject = "s082_tabfixed_m1000002"
     _write_subject_yaml(
-        tmp_path, subject,
+        tmp_path,
+        subject,
         task_overrides={"_test_flush_water": {"VALVE_OPENING_TIME_MS": 77}},
     )
-    args = _base_args(tmp_path, subject,
-                      task_settings_overrides=["VALVE_OPENING_TIME_MS=90"])
+    args = _base_args(
+        tmp_path, subject, task_settings_overrides=["VALVE_OPENING_TIME_MS=90"]
+    )
     result = evaluate_args(args_dict=args)
     assert result["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 90
 
@@ -125,6 +131,7 @@ def test_cli_task_settings_override_highest_priority(tmp_path):
 def test_unknown_subject_raises_without_yaml(tmp_path):
     """Unknown subject not in INI and no YAML raises ValueError."""
     from murineshiftwork.cli.evaluate import evaluate_args
+
     (tmp_path / "subjects").mkdir()
     args = _base_args(tmp_path, "s999_unknown_m9999999")
     with pytest.raises(ValueError, match="Unknown subject"):
@@ -134,6 +141,7 @@ def test_unknown_subject_raises_without_yaml(tmp_path):
 def test_yaml_subject_accepted_without_ini(tmp_path):
     """A subject with only a YAML config (not in INI) is accepted."""
     from murineshiftwork.cli.evaluate import evaluate_args
+
     subject = "s082_tabfixed_m1000003"
     _write_subject_yaml(tmp_path, subject)
     args = _base_args(tmp_path, subject)

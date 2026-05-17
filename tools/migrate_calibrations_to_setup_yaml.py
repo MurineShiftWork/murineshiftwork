@@ -4,10 +4,10 @@ into /mnt/maindata/msw_configs/setups/*.yaml.
 Run once from the repo root:
     python tools/migrate_calibrations_to_setup_yaml.py
 """
+
 from __future__ import annotations
 
 import sys
-from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -42,15 +42,16 @@ STAGE_YAML = {
 }
 
 CAMERA_RCE = {
-    "setup-1":    HOME_MSW / "setup1-rce.yaml",
-    "setup-2":    HOME_MSW / "setup2-rce.yaml",
-    "setup-3":    HOME_MSW / "setup3-rce.yaml",
-    "setup-4":    HOME_MSW / "setup4-rce.yaml",
+    "setup-1": HOME_MSW / "setup1-rce.yaml",
+    "setup-2": HOME_MSW / "setup2-rce.yaml",
+    "setup-3": HOME_MSW / "setup3-rce.yaml",
+    "setup-4": HOME_MSW / "setup4-rce.yaml",
     "setup-npxb": HOME_MSW / "setup-npxb-rce.yaml",
 }
 
 
 # ---------------------------------------------------------------------------
+
 
 def _water_cal_for_setup(csv_path: Path) -> dict[str, dict]:
     """Return {valve_id_str: {updated, points}} for the most-recent session in the CSV."""
@@ -74,8 +75,10 @@ def _water_cal_for_setup(csv_path: Path) -> dict[str, dict]:
     result = {}
     for valve_id, group in df.groupby("valve_id"):
         group = group.sort_values("open_ms")
-        points = [[round(float(r["open_ms"]), 3), float(r["volume_ul"])]
-                  for _, r in group.iterrows()]
+        points = [
+            [round(float(r["open_ms"]), 3), float(r["volume_ul"])]
+            for _, r in group.iterrows()
+        ]
         vc = ValveCalibration(updated=session_ts, points=points)
         is_valid, reason = vc.validate()
         status = "PASS" if is_valid else "FAIL"
@@ -102,7 +105,7 @@ def _stage_axes_and_positions(stage_path: Path) -> tuple[dict, dict]:
         }
 
     # Legacy format: known_positions.back.y.position_raw → flatten to .back.y = int
-    known_positions = {}
+    known_positions: dict = {}
     for pos_name, pos_axes in s.get("known_positions", {}).items():
         known_positions[pos_name] = {}
         for ax_name, ax_val in pos_axes.items():
@@ -114,6 +117,7 @@ def _stage_axes_and_positions(stage_path: Path) -> tuple[dict, dict]:
 
 
 # ---------------------------------------------------------------------------
+
 
 def migrate_setup(setup_name: str) -> None:
     yaml_path = CONFIGS_DIR / f"{setup_name}.yaml"
@@ -157,11 +161,24 @@ def migrate_setup(setup_name: str) -> None:
         print(f"  Camera: no RCE config for {setup_name}, skipping.")
 
     with open(yaml_path, "w") as f:
-        yaml.dump(raw, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            raw,
+            f,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
     print(f"  Written: {yaml_path}")
 
 
 if __name__ == "__main__":
-    for name in ["setup-1", "setup-2", "setup-3", "setup-4", "setup-npxb", "setup-npx"]:
+    for name in [
+        "setup-1",
+        "setup-2",
+        "setup-3",
+        "setup-4",
+        "setup-npxb",
+        "setup-npx",
+    ]:
         migrate_setup(name)
     print("\nDone.")

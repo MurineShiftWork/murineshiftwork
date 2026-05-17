@@ -1,29 +1,33 @@
 """Tests for config_models: ValveCalibration, SetupConfig, SubjectConfig."""
+
 import pytest
-import numpy as np
 
 from murineshiftwork.logic.config import (
-    AxisConfig,
     BpodDevice,
     Calibrations,
-    CameraConfig,
     ExecutionConfig,
     SetupConfig,
-    StageTowerDevice,
     SubjectConfig,
     ValveCalibration,
 )
-
 
 # ---------------------------------------------------------------------------
 # ValveCalibration — fit and lookup
 
 POINTS_SETUP1_VALVE1 = [
-    [0.010, 0.55], [0.028, 1.15], [0.046, 1.425], [0.064, 1.675], [0.082, 1.925]
+    [0.010, 0.55],
+    [0.028, 1.15],
+    [0.046, 1.425],
+    [0.064, 1.675],
+    [0.082, 1.925],
 ]
 
 POINTS_SETUP3_VALVE1 = [
-    [0.010, 0.675], [0.028, 2.075], [0.046, 4.15], [0.064, 6.525], [0.082, 9.05]
+    [0.010, 0.675],
+    [0.028, 2.075],
+    [0.046, 4.15],
+    [0.064, 6.525],
+    [0.082, 9.05],
 ]
 
 
@@ -41,7 +45,15 @@ def test_valve_calibration_validate_too_few_points():
 
 
 def test_valve_calibration_validate_non_monotonic():
-    vc = ValveCalibration(points=[[10.0, 1.0], [20.0, 0.5], [30.0, 1.5], [40.0, 2.0], [50.0, 2.5]])
+    vc = ValveCalibration(
+        points=[
+            [10.0, 1.0],
+            [20.0, 0.5],
+            [30.0, 1.5],
+            [40.0, 2.0],
+            [50.0, 2.5],
+        ]
+    )
     ok, reason = vc.validate()
     assert not ok
     assert "monoton" in reason.lower()
@@ -76,6 +88,7 @@ def test_valve_calibration_updated_preserved():
 
 # ---------------------------------------------------------------------------
 # SetupConfig
+
 
 def _make_setup():
     return SetupConfig(
@@ -117,6 +130,7 @@ def test_setup_device_port_missing():
 # ---------------------------------------------------------------------------
 # SubjectConfig
 
+
 def test_subject_config_defaults():
     sc = SubjectConfig(name="test_mouse")
     assert sc.registered == ""
@@ -134,6 +148,7 @@ def test_subject_config_task_overrides():
 
 # ---------------------------------------------------------------------------
 # ExecutionConfig
+
 
 def test_execution_config_defaults():
     ec = ExecutionConfig()

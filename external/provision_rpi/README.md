@@ -1,7 +1,7 @@
 # Install of RCE on colony
 
 1. ssh-copy-id:`./ssh-copy-id-all.sh`
-   2. update .ssh.config with host names, then 
+   2. update .ssh.config with host names, then
 3. step through install to test on one setup
     ```
     ansible-playbook -i inventory.ini deploy.yaml --tags checks --limit setup1 --step

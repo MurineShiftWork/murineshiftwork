@@ -3,16 +3,16 @@ import time
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 from rpi_camera_colony.control.conductor import Conductor
 
-from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
-from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
+from murineshiftwork.hardware.bpod.ttl import (
+    add_trial_onset_ttl,
+    make_ttl_identifier_sequences,
+)
 from murineshiftwork.logic.io import save_trial_data
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class TaskData:
@@ -25,9 +25,7 @@ class TaskData:
 
     def append(self, trial_index=None, trial_data=None, **info_dict_extension):
         # If is TTL trial
-        first_state_name = str(
-            list(trial_data["States timestamps"].keys())[0]
-        ).lower()
+        first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
         if trial_index < 1 and first_state_name.startswith("pulse"):
             trial_type = "ttl"
         else:
@@ -73,7 +71,7 @@ class Task(TaskRunner):
         while self.continue_task and trial_index <= n_max_trials:
             logging.info(
                 f"Executing trial {trial_index}/{n_max_trials} "
-                f"[Runtime: {np.round(trial_index*trigger_iti/60,3)}min / {np.round(max_runtime/60,3)}min]"
+                f"[Runtime: {np.round(trial_index * trigger_iti / 60, 3)}min / {np.round(max_runtime / 60, 3)}min]"
             )
 
             if trial_index == 0:

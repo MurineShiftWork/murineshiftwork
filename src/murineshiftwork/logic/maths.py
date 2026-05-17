@@ -10,9 +10,7 @@ def withprob(probability=None):
 class ExponentialMovingAverage:
     avg = None
 
-    def __init__(
-        self, tau=None, init_value=0.0, function=None, decay_missing=True
-    ):
+    def __init__(self, tau=None, init_value=0.0, function=None, decay_missing=True):
         if function:
             self.alpha = function(tau)
         else:
@@ -43,6 +41,4 @@ class ExponentialMovingAverage:
                 )
                 return
         else:
-            self.avg = (self.avg * self.inv_alpha) + (
-                latest_sample * self.alpha
-            )
+            self.avg = (self.avg * self.inv_alpha) + (latest_sample * self.alpha)

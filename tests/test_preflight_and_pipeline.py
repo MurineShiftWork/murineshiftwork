@@ -1,16 +1,18 @@
 """Tests for pre-flight hardware check, data_dir resolution, and settings pipeline."""
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-import yaml
 
+from pathlib import Path
+
+import pytest
+import yaml
 
 # ---------------------------------------------------------------------------
 # resolve_data_dir
 
+
 def test_resolve_data_dir_historical_default(tmp_path, monkeypatch):
     monkeypatch.delenv("MSW_DATA_DIR", raising=False)
     from murineshiftwork.logic import machine_config as mc
+
     # Patch _HISTORICAL_DATA_DEFAULT to tmp_path (which exists)
     monkeypatch.setattr(mc, "_HISTORICAL_DATA_DEFAULT", tmp_path)
     monkeypatch.setattr(mc, "_MACHINE_CONFIG_FILE", tmp_path / "msw_machine.yaml")
@@ -21,18 +23,21 @@ def test_resolve_data_dir_historical_default(tmp_path, monkeypatch):
 def test_resolve_data_dir_env_var(tmp_path, monkeypatch):
     monkeypatch.setenv("MSW_DATA_DIR", str(tmp_path))
     from murineshiftwork.logic.machine_config import resolve_data_dir
+
     assert resolve_data_dir() == str(tmp_path)
 
 
 def test_resolve_data_dir_cli_override(tmp_path, monkeypatch):
     monkeypatch.delenv("MSW_DATA_DIR", raising=False)
     from murineshiftwork.logic.machine_config import resolve_data_dir
+
     assert resolve_data_dir(cli_override=str(tmp_path)) == str(tmp_path)
 
 
 def test_resolve_data_dir_machine_config(tmp_path, monkeypatch):
     monkeypatch.delenv("MSW_DATA_DIR", raising=False)
     from murineshiftwork.logic import machine_config as mc
+
     cfg_file = tmp_path / "msw_machine.yaml"
     cfg_file.write_text(yaml.dump({"data_dir": str(tmp_path / "mydata")}))
     monkeypatch.setattr(mc, "_MACHINE_CONFIG_FILE", cfg_file)
@@ -45,8 +50,10 @@ def test_resolve_data_dir_machine_config(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # task discovery without __init__.py
 
+
 def test_list_available_tasks_nonempty():
     from murineshiftwork.logic.misc import list_available_tasks
+
     tasks = list_available_tasks()
     assert len(tasks) >= 5
     assert "_test_flush_water" in tasks
@@ -55,14 +62,21 @@ def test_list_available_tasks_nonempty():
 
 
 def test_find_task_by_name():
-    from murineshiftwork.logic.misc import find_task_by_name, list_available_tasks
+    from murineshiftwork.logic.misc import (
+        find_task_by_name,
+        list_available_tasks,
+    )
+
     assert find_task_by_name("flush") == "_test_flush_water"
-    assert find_task_by_name("sequence") in list_available_tasks()  # "sequence" substring also matches _test_ttl_sequences
+    assert (
+        find_task_by_name("sequence") in list_available_tasks()
+    )  # "sequence" substring also matches _test_ttl_sequences
     assert find_task_by_name("nonexistent_xyz_task") is None
 
 
 def test_get_task_dir_returns_path():
     from murineshiftwork.cli.evaluate import get_task_dir
+
     d = get_task_dir("_test_flush_water")
     assert d != ""
     assert Path(d).is_dir()
@@ -70,6 +84,7 @@ def test_get_task_dir_returns_path():
 
 # ---------------------------------------------------------------------------
 # settings pipeline: calibration files in patched settings
+
 
 def _write_subject_yaml(path, subject_name, task_overrides=None):
     data = {
@@ -104,6 +119,7 @@ def _write_setup_yaml(path, setup_name):
 def test_calibration_files_in_patched_settings(tmp_path):
     """calibration_file_water injected into settings.task.patched from CLI args."""
     from murineshiftwork.cli.evaluate import evaluate_args
+
     _write_subject_yaml(tmp_path, "subj001")
     _write_setup_yaml(tmp_path, "setup-test")
     fake_cal = tmp_path / "cal.csv"
@@ -145,6 +161,7 @@ def test_calibration_files_in_patched_settings(tmp_path):
 def test_cli_ts_overrides_calibration_file(tmp_path):
     """CLI -ts KEY=VALUE overrides the injected calibration file path."""
     from murineshiftwork.cli.evaluate import evaluate_args
+
     _write_subject_yaml(tmp_path, "subj001")
     _write_setup_yaml(tmp_path, "setup-test")
     fake_cal_default = tmp_path / "default.csv"
@@ -187,8 +204,12 @@ def test_cli_ts_overrides_calibration_file(tmp_path):
 def test_subject_task_overrides_applied(tmp_path):
     """SubjectConfig.task_overrides patches N_FLUSH_CYCLES."""
     from murineshiftwork.cli.evaluate import evaluate_args
-    _write_subject_yaml(tmp_path, "subj001",
-                        task_overrides={"_test_flush_water": {"N_FLUSH_CYCLES": 7}})
+
+    _write_subject_yaml(
+        tmp_path,
+        "subj001",
+        task_overrides={"_test_flush_water": {"N_FLUSH_CYCLES": 7}},
+    )
     _write_setup_yaml(tmp_path, "setup-test")
 
     args = dict(
@@ -226,84 +247,115 @@ def test_subject_task_overrides_applied(tmp_path):
 # ---------------------------------------------------------------------------
 # pre-flight check
 
+
 def test_preflight_passes_for_debug(tmp_path):
     """Preflight is bypassed in debug mode."""
-    from murineshiftwork.cli.preflight import preflight_hardware_check as _preflight_hardware_check
+    from murineshiftwork.cli.preflight import (
+        preflight_hardware_check as _preflight_hardware_check,
+    )
+
     # Should not raise even with non-existent ports
-    _preflight_hardware_check({
-        "debug": True,
-        "out_path": str(tmp_path),
-        "serial_port_bpod": "/dev/nonexistent",
-        "settings.task.patched": {},
-        "setup_config": None,
-    })
+    _preflight_hardware_check(
+        {
+            "debug": True,
+            "out_path": str(tmp_path),
+            "serial_port_bpod": "/dev/nonexistent",
+            "settings.task.patched": {},
+            "setup_config": None,
+        }
+    )
 
 
 def test_preflight_passes_for_test_subject(tmp_path):
-    from murineshiftwork.cli.preflight import preflight_hardware_check as _preflight_hardware_check
-    _preflight_hardware_check({
-        "debug": False,
-        "subject": "_test_subject",
-        "out_path": str(tmp_path),
-        "serial_port_bpod": "/dev/nonexistent",
-        "settings.task.patched": {},
-        "setup_config": None,
-    })
+    from murineshiftwork.cli.preflight import (
+        preflight_hardware_check as _preflight_hardware_check,
+    )
+
+    _preflight_hardware_check(
+        {
+            "debug": False,
+            "subject": "_test_subject",
+            "out_path": str(tmp_path),
+            "serial_port_bpod": "/dev/nonexistent",
+            "settings.task.patched": {},
+            "setup_config": None,
+        }
+    )
 
 
 def test_preflight_fails_on_bad_bpod_port(tmp_path):
-    from murineshiftwork.cli.preflight import preflight_hardware_check as _preflight_hardware_check
+    from murineshiftwork.cli.preflight import (
+        preflight_hardware_check as _preflight_hardware_check,
+    )
+
     with pytest.raises(RuntimeError, match="Bpod serial port not accessible"):
-        _preflight_hardware_check({
-            "debug": False,
-            "subject": "real_subject",
-            "out_path": str(tmp_path),
-            "serial_port_bpod": "/dev/tty_nonexistent_bpod_xyz",
-            "settings.task.patched": {},
-            "setup_config": None,
-        })
+        _preflight_hardware_check(
+            {
+                "debug": False,
+                "subject": "real_subject",
+                "out_path": str(tmp_path),
+                "serial_port_bpod": "/dev/tty_nonexistent_bpod_xyz",
+                "settings.task.patched": {},
+                "setup_config": None,
+            }
+        )
 
 
 def test_preflight_fails_on_missing_camera_config(tmp_path):
-    from murineshiftwork.cli.preflight import preflight_hardware_check as _preflight_hardware_check
+    from murineshiftwork.cli.preflight import (
+        preflight_hardware_check as _preflight_hardware_check,
+    )
+
     with pytest.raises(RuntimeError, match="Camera config not found"):
-        _preflight_hardware_check({
-            "debug": False,
-            "subject": "real_subject",
-            "out_path": str(tmp_path),
-            "serial_port_bpod": "",  # skip bpod check
-            "config_file_camera": "/nonexistent/camera.yaml",
-            "settings.task.patched": {"record_video": True},
-            "setup_config": None,
-        })
+        _preflight_hardware_check(
+            {
+                "debug": False,
+                "subject": "real_subject",
+                "out_path": str(tmp_path),
+                "serial_port_bpod": "",  # skip bpod check
+                "config_file_camera": "/nonexistent/camera.yaml",
+                "settings.task.patched": {"record_video": True},
+                "setup_config": None,
+            }
+        )
 
 
 def test_preflight_fails_on_nonwritable_output():
-    from murineshiftwork.cli.preflight import preflight_hardware_check as _preflight_hardware_check
+    from murineshiftwork.cli.preflight import (
+        preflight_hardware_check as _preflight_hardware_check,
+    )
+
     with pytest.raises(RuntimeError, match="(not writable|Cannot create)"):
-        _preflight_hardware_check({
-            "debug": False,
-            "subject": "real_subject",
-            "out_path": "/root/cannot_write_here_ever",
-            "serial_port_bpod": "",
-            "settings.task.patched": {},
-            "setup_config": None,
-        })
+        _preflight_hardware_check(
+            {
+                "debug": False,
+                "subject": "real_subject",
+                "out_path": "/root/cannot_write_here_ever",
+                "serial_port_bpod": "",
+                "settings.task.patched": {},
+                "setup_config": None,
+            }
+        )
 
 
 def test_preflight_collects_multiple_errors(tmp_path):
     """All failing checks are reported together."""
-    from murineshiftwork.cli.preflight import preflight_hardware_check as _preflight_hardware_check
+    from murineshiftwork.cli.preflight import (
+        preflight_hardware_check as _preflight_hardware_check,
+    )
+
     with pytest.raises(RuntimeError) as exc_info:
-        _preflight_hardware_check({
-            "debug": False,
-            "subject": "real_subject",
-            "out_path": str(tmp_path),
-            "serial_port_bpod": "/dev/tty_bad_bpod",
-            "config_file_camera": "/nonexistent/cam.yaml",
-            "settings.task.patched": {"record_video": True},
-            "setup_config": None,
-        })
+        _preflight_hardware_check(
+            {
+                "debug": False,
+                "subject": "real_subject",
+                "out_path": str(tmp_path),
+                "serial_port_bpod": "/dev/tty_bad_bpod",
+                "config_file_camera": "/nonexistent/cam.yaml",
+                "settings.task.patched": {"record_video": True},
+                "setup_config": None,
+            }
+        )
     msg = str(exc_info.value)
     assert "Bpod" in msg
     assert "Camera" in msg
@@ -312,9 +364,11 @@ def test_preflight_collects_multiple_errors(tmp_path):
 # ---------------------------------------------------------------------------
 # importlib-based task import
 
+
 def test_init_task_uses_importlib():
     """get_task_dir uses importlib, not exec."""
     from murineshiftwork.cli.evaluate import get_task_dir
+
     d = get_task_dir("_test_flush_water")
     assert Path(d).exists()
     # Must not have injected anything into globals via exec

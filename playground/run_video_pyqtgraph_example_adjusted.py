@@ -4,6 +4,7 @@ The speed will generally depend on the type of data being shown, whether
 it is being scaled and/or converted by lookup table, and whether OpenGL
 is used by the view widget
 """
+
 import argparse
 import sys
 from time import perf_counter
@@ -12,9 +13,7 @@ import cv2
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.examples import VideoTemplate_generic as ui_template
-from pyqtgraph.Qt import QtCore
-from pyqtgraph.Qt import QtGui
-from pyqtgraph.Qt import QtWidgets
+from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 pg.setConfigOption("imageAxisOrder", "row-major")
 

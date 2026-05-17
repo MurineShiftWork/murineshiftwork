@@ -6,26 +6,24 @@ import time
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
-from pybpodapi.protocol import Bpod
-from pybpodapi.protocol import StateMachine
 from one_axis_stage.controller import StageController
-from one_axis_stage.interface import MoveInterface
+from pybpodapi.protocol import Bpod, StateMachine
 
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
     barcode_config_from_settings,
     inject_barcode_states,
     prepare_barcode,
 )
-from murineshiftwork.logic.calibration import CalibrationDataSound
-from murineshiftwork.logic.calibration import CalibrationDataWater
-from murineshiftwork.logic.maths import ExponentialMovingAverage
-from murineshiftwork.logic.maths import withprob
+from murineshiftwork.logic.calibration import (
+    CalibrationDataSound,
+    CalibrationDataWater,
+)
 from murineshiftwork.logic.io import save_trial_data
+from murineshiftwork.logic.maths import ExponentialMovingAverage, withprob
 from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.sounds import StereoSound
-from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 
 
 class TaskControl(object):
@@ -57,15 +55,11 @@ class TaskControl(object):
     trials_post_criterion = 0
     max_block_length = 75
 
-    criterion_contrast_blocks = (
-        0.5  # task_settings.CRITERION_CONTRAST_BLOCKS  # 0.6
-    )
+    criterion_contrast_blocks = 0.5  # task_settings.CRITERION_CONTRAST_BLOCKS  # 0.6
     criterion_neutral_blocks = 0.2
     criterion_tau = 5
     criterion_block_switch_reached = False
-    block_switch_hazard_rate = 1 / (
-        mean_neutral_block_length - min_block_length
-    )
+    block_switch_hazard_rate = 1 / (mean_neutral_block_length - min_block_length)
 
     moving_average = ExponentialMovingAverage(
         tau=criterion_tau, init_value=0.0
@@ -91,7 +85,14 @@ class TaskControl(object):
     last_stop = 0
     last_forced_choice = 0
 
-    def __init__(self, bpod=None, save_path_data=None, task_settings=None, barcoder=None, execution_config=None):
+    def __init__(
+        self,
+        bpod=None,
+        save_path_data=None,
+        task_settings=None,
+        barcoder=None,
+        execution_config=None,
+    ):
         super(TaskControl, self).__init__()
 
         if not bpod:
@@ -107,16 +108,18 @@ class TaskControl(object):
 
         self.task_settings = task_settings
         self.barcoder = barcoder
-        self.bnc_channel = eval(f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}")
+        self.bnc_channel = eval(
+            f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}"
+        )
         if barcoder is not None:
-            self.barcode_duration_s = barcode_config_from_settings(task_settings).total_duration_ms / 1000.0
+            self.barcode_duration_s = (
+                barcode_config_from_settings(task_settings).total_duration_ms / 1000.0
+            )
         self.probabilities = self.task_settings["probabilities"]
         self.max_block_length = self.task_settings.get(
             "max_block_length", self.max_block_length
         )
-        self.criterion_contrast_blocks = self.task_settings[
-            "criterion_contrast_blocks"
-        ]
+        self.criterion_contrast_blocks = self.task_settings["criterion_contrast_blocks"]
 
         self.calibration_sound = CalibrationDataSound(
             file_path=self.task_settings["calibration_file_sound"]
@@ -140,11 +143,14 @@ class TaskControl(object):
             valves=valves,
             target_volume=target_vol,
         )
-        if self.valve_times_dict is None and execution_config and execution_config.setup:
+        if (
+            self.valve_times_dict is None
+            and execution_config
+            and execution_config.setup
+        ):
             setup = execution_config.setup
             self.valve_times_dict = {
-                v: setup.valve_s_for_ul(v, target_vol)
-                for v in valves
+                v: setup.valve_s_for_ul(v, target_vol) for v in valves
             }
             logging.info("Valve times from SetupConfig (no water calibration CSV)")
         logging.info(
@@ -169,8 +175,13 @@ class TaskControl(object):
 
         logging.debug(f"Stage known_positions at init: {self.stage.known_positions}")
         self.stage.save_as_known_position("front")
-        logging.debug(f"Stage known_positions after save 'front': {self.stage.known_positions}")
-        if "front" not in self.stage.known_positions or not self.stage.known_positions["front"]:
+        logging.debug(
+            f"Stage known_positions after save 'front': {self.stage.known_positions}"
+        )
+        if (
+            "front" not in self.stage.known_positions
+            or not self.stage.known_positions["front"]
+        ):
             raise RuntimeError(
                 "[stage] save_as_known_position('front') produced empty result — "
                 "stage axes may not be responding. Check motor IDs and connection."
@@ -193,15 +204,14 @@ class TaskControl(object):
         )
         self.stage_bias = 0
         self.stage_bias_max = self.task_settings.get("stage_anti_bias_max", 50)
-        self.n_back_crit_bias = self.task_settings.get(
-            "stage_anti_bias_n_back", 5
-        )
+        self.n_back_crit_bias = self.task_settings.get("stage_anti_bias_n_back", 5)
 
         # print("stage_anti_bias_bool", self.stage_anti_bias_bool)
         # print("stage_bias_max", self.stage_bias_max)
         # print("n_back_crit_bias", self.n_back_crit_bias)
 
         from murineshiftwork.logic.task_process import update_session_yaml
+
         update_session_yaml(
             self.save_path_data,
             task_settings=self.task_settings,
@@ -220,7 +230,7 @@ class TaskControl(object):
             try:
                 self.stage.move_to_known_position(cmd)
                 if cmd == "front":
-                    logging.info(f"Stage at front")
+                    logging.info("Stage at front")
                 else:
                     logging.debug(f"Stage at '{cmd}'")
             except Exception as exc:
@@ -237,9 +247,7 @@ class TaskControl(object):
     def softcode_handler(self, softcode=None):
         logging.debug(f"Softcode received: {softcode}")
 
-        self.sound.execute_sound_handler(
-            sound_code=softcode, raise_errors=False
-        )
+        self.sound.execute_sound_handler(sound_code=softcode, raise_errors=False)
 
         if softcode == self.MOVE_TO_FRONT:
             logging.debug("Stage: queuing move to front")
@@ -280,7 +288,9 @@ class TaskControl(object):
             logging.debug(f"Block 2 drawn from range {range_for_prob}")
         else:
             range_for_prob = np.arange(self.probabilities.__len__())
-            logging.debug(f"Block {self.block_number} drawn from range {list(range_for_prob)}")
+            logging.debug(
+                f"Block {self.block_number} drawn from range {list(range_for_prob)}"
+            )
 
         # Exclude current block from choice of __read_next_frame block type
         if self.task_settings["block_switch_to_different_block_type"]:
@@ -305,9 +315,7 @@ class TaskControl(object):
             logging.debug(
                 f"Given probability proportions {new_prob}. Now converting to percentages (x/100)"
             )
-            self.probability_left, self.probability_right = [
-                x / 100 for x in new_prob
-            ]
+            self.probability_left, self.probability_right = [x / 100 for x in new_prob]
         else:
             self.probability_left, self.probability_right = new_prob
 
@@ -317,7 +325,13 @@ class TaskControl(object):
 
         # TODO: block update rules fixed trials vs criterion
 
-    def update(self, trial_index=None, trial_data=None, barcode_value=None, barcode_wall_time=None):
+    def update(
+        self,
+        trial_index=None,
+        trial_data=None,
+        barcode_value=None,
+        barcode_wall_time=None,
+    ):
         self.trial_index = trial_index
 
         first_state_name = str(list(trial_data["States timestamps"].keys())[0])
@@ -358,21 +372,17 @@ class TaskControl(object):
         # Update last choice
         self.moving_average.update(latest_sample=self.last_choice)
         # Update last outcome: reward/neutral/punish
-        if (
-            self.next_trial_choice_outcome_left and self.last_choice == -1
-        ) or (self.next_trial_choice_outcome_right and self.last_choice == 1):
+        if (self.next_trial_choice_outcome_left and self.last_choice == -1) or (
+            self.next_trial_choice_outcome_right and self.last_choice == 1
+        ):
             self.reward_number += 1
             self.last_rewarded = 1
             self.last_punish = 0
 
         else:
             self.last_rewarded = 0
-            if (
-                self.next_trial_choice_outcome_left < 0
-                and self.last_choice == -1
-            ) or (
-                self.next_trial_choice_outcome_right < 0
-                and self.last_choice == 1
+            if (self.next_trial_choice_outcome_left < 0 and self.last_choice == -1) or (
+                self.next_trial_choice_outcome_right < 0 and self.last_choice == 1
             ):
                 logging.debug("Punished")
                 self.last_punish = 1
@@ -391,9 +401,7 @@ class TaskControl(object):
             "block_trial_number": self.block_trial_number,
             "block_number": self.block_number,
             "block_type_index": self.block_probability_index,
-            "block_type_values": self.probabilities[
-                self.block_probability_index
-            ],
+            "block_type_values": self.probabilities[self.block_probability_index],
             "moving_average": self.moving_average(),
             "choice": self.last_choice,
             "rewarded": self.last_rewarded,  # fixme: this only works as long as no punishments introduced
@@ -425,9 +433,9 @@ class TaskControl(object):
         )
         logging.info(
             f"B{self.block_number:02d}.T{self.trial_index:04d} "
-            f"t={round(trial_data['Trial start timestamp']/60,1):4.1f}min "
+            f"t={round(trial_data['Trial start timestamp'] / 60, 1):4.1f}min "
             f"ch:{self.last_choice:+.0f} bias:{self.moving_average():+.2f} "
-            f"r:{self.reward_number}({round(self.task_settings['reward_amount_ul']*self.reward_number,1):.1f}uL) "
+            f"r:{self.reward_number}({round(self.task_settings['reward_amount_ul'] * self.reward_number, 1):.1f}uL) "
             f"crit:{self.trials_post_criterion}{_extras}"
         )
 
@@ -441,10 +449,7 @@ class TaskControl(object):
         if self.criterion_block_switch_reached:
             self.trials_post_criterion += 1
         elif self.block_trial_number >= self.min_block_length and (
-            (
-                self.probability_left == self.probability_right
-                and neutral_block_bias
-            )
+            (self.probability_left == self.probability_right and neutral_block_bias)
             or (
                 self.probability_left > self.probability_right
                 and self.moving_average() < -self.criterion_contrast_blocks
@@ -554,14 +559,10 @@ class TaskControl(object):
     def draw_next_trial(self):
         n_back_crit = self.task_settings["forced_choice_threshold"]
         key = "choice"
-        td_info = [
-            td["info"] for td in self.trial_data if td and key in td["info"]
-        ]
+        td_info = [td["info"] for td in self.trial_data if td and key in td["info"]]
         choice_vector = [c[key] for c in td_info if key in c.keys()]
         unique_choices = np.unique(choice_vector[-n_back_crit:])
-        unique_choices_non_nan = np.array(unique_choices)[
-            ~np.isnan(unique_choices)
-        ]
+        unique_choices_non_nan = np.array(unique_choices)[~np.isnan(unique_choices)]
         unique_choices_n_back = unique_choices_non_nan.__len__()
 
         if self.block_probability_index is None:
@@ -593,24 +594,18 @@ class TaskControl(object):
             self.next_trial_choice_outcome_left = (
                 -1
                 if self.task_settings["punish_stop_trials"]
-                and withprob(
-                    self.task_settings["punish_stop_trials_proportion"]
-                )
+                and withprob(self.task_settings["punish_stop_trials_proportion"])
                 else 0
             )
             self.next_trial_choice_outcome_right = (
                 -1
                 if self.task_settings["punish_stop_trials"]
-                and withprob(
-                    self.task_settings["punish_stop_trials_proportion"]
-                )
+                and withprob(self.task_settings["punish_stop_trials_proportion"])
                 else 0
             )
 
             if self.stop_signal_delay is None:
-                self.stop_signal_delay = self.task_settings[
-                    "stop_trial_delay_initial"
-                ]
+                self.stop_signal_delay = self.task_settings["stop_trial_delay_initial"]
 
             # TODO: STOP signal adaptive testing here: change of stop signal delay ++ self.sound_delay_correction
 
@@ -638,9 +633,7 @@ class TaskControl(object):
         # make SMA
         sma = self.make_state_machine(
             as_forced_choice_trial=self.is_forced_exploration_trial,
-            forced_choice_side=-1 * unique_choices[-1]
-            if len(unique_choices)
-            else 0,
+            forced_choice_side=-1 * unique_choices[-1] if len(unique_choices) else 0,
         )
         logging.debug("New trial drawn")
         return sma
@@ -649,16 +642,11 @@ class TaskControl(object):
         self, n_back_crit, prob, unique_choices_n_back, unique_choices_non_nan
     ):
         self.is_forced_exploration_trial = False
-        if (
-            self.block_trial_number >= n_back_crit
-            and unique_choices_n_back == 1
-        ):
+        if self.block_trial_number >= n_back_crit and unique_choices_n_back == 1:
             try:
                 if self.last_choice != (np.argmax(prob) - 1):
                     # only intervene if the choice is suboptimal
-                    logging.warning(
-                        "NEXT SHOULD BE FORCED TRIAL AS IS SUB-OPTIMAL"
-                    )
+                    logging.warning("NEXT SHOULD BE FORCED TRIAL AS IS SUB-OPTIMAL")
             except TypeError:
                 logging.debug("Forced trial check: TypeError comparing last_choice")
 
@@ -676,14 +664,14 @@ class TaskControl(object):
                     f"the next trial enforces a {side_dict[-1 * unique_choices_non_nan[-1]]} choice."
                 )
             except KeyError:
-                logging.debug(f"Forced trial KeyError: n_back={n_back_crit} choices={unique_choices_non_nan}")
+                logging.debug(
+                    f"Forced trial KeyError: n_back={n_back_crit} choices={unique_choices_non_nan}"
+                )
                 self.is_forced_exploration_trial = False
 
     def _check_stage_anti_bias(self, choice_vector):
         # n_back_crit_bias = 3
-        bias_unique_choices = np.unique(
-            choice_vector[-self.n_back_crit_bias :]
-        )
+        bias_unique_choices = np.unique(choice_vector[-self.n_back_crit_bias :])
         bias_unique_choices_non_nan = np.array(bias_unique_choices)[
             ~np.isnan(bias_unique_choices)
         ]
@@ -705,17 +693,15 @@ class TaskControl(object):
                     logging.debug("Anti-bias: unexpected choice value, skipping")
                     bias_increment = 0
 
-                self.stage.known_positions["front"]["x"][
-                    "position_raw"
-                ] += bias_increment
+                self.stage.known_positions["front"]["x"]["position_raw"] += (
+                    bias_increment
+                )
 
                 logging.debug(
                     f"Anti-bias position: {bias_increment:+d} -> {self.stage.known_positions}"
                 )
 
-    def make_state_machine(
-        self, as_forced_choice_trial=False, forced_choice_side=-1
-    ):
+    def make_state_machine(self, as_forced_choice_trial=False, forced_choice_side=-1):
         logging.debug(
             f"Making new StateMachine. Outcomes are "
             f"left={self.next_trial_choice_outcome_left}, "
@@ -770,9 +756,7 @@ class TaskControl(object):
         # note: stop signal outcomes set to 0 in __read_next_frame-trial
         if self.next_trial_choice_outcome_left > 0:  # REWARD
             left_valve = self.task_settings["HARDWARE_VALVES_FOR_WATER"][0]
-            output_action_left_valve = [
-                (Bpod.OutputChannels.Valve, left_valve)
-            ]
+            output_action_left_valve = [(Bpod.OutputChannels.Valve, left_valve)]
             valve_left_outcome = self.valve_times_dict[left_valve]
         elif self.next_trial_choice_outcome_left < 0:  # PUNISH
             output_action_left_valve = [
@@ -789,9 +773,7 @@ class TaskControl(object):
         # OUTCOMES: RIGHT  --  Encoding:  0=unrewarded, 1=rewarded, -1=punish with air
         if self.next_trial_choice_outcome_right > 0:  # REWARD
             right_valve = self.task_settings["HARDWARE_VALVES_FOR_WATER"][1]
-            output_action_right_valve = [
-                (Bpod.OutputChannels.Valve, right_valve)
-            ]
+            output_action_right_valve = [(Bpod.OutputChannels.Valve, right_valve)]
             valve_right_outcome = self.valve_times_dict[right_valve]
         elif self.next_trial_choice_outcome_right < 0:  # PUNISH
             output_action_right_valve = [
@@ -806,15 +788,17 @@ class TaskControl(object):
             valve_right_outcome = 0
 
         outcome_codes = {-1: "punish", 0: "neutral", 1: "reward"}
-        outcome_doc_left = f"outcome_left_{outcome_codes[self.next_trial_choice_outcome_left]}"
-        outcome_doc_right = f"outcome_right_{outcome_codes[self.next_trial_choice_outcome_right]}"
+        outcome_doc_left = (
+            f"outcome_left_{outcome_codes[self.next_trial_choice_outcome_left]}"
+        )
+        outcome_doc_right = (
+            f"outcome_right_{outcome_codes[self.next_trial_choice_outcome_right]}"
+        )
 
         # NORMAL TRIAL
         state_change_conditions_left = {Bpod.Events.Tup: outcome_doc_left}
         state_change_conditions_right = {Bpod.Events.Tup: outcome_doc_right}
-        state_change_conditions_side_ready = {
-            Bpod.Events.Tup: state_side_ready
-        }
+        state_change_conditions_side_ready = {Bpod.Events.Tup: state_side_ready}
 
         # DEBUG
         # as_forced_choice_trial = True
@@ -823,14 +807,10 @@ class TaskControl(object):
         # FORCED CHOICE
         if as_forced_choice_trial:
             if forced_choice_side == -1:  # left
-                state_change_conditions_right = (
-                    state_change_conditions_side_ready
-                )
+                state_change_conditions_right = state_change_conditions_side_ready
                 output_action_right_valve = []
             elif forced_choice_side == 1:  # right
-                state_change_conditions_left = (
-                    state_change_conditions_side_ready
-                )
+                state_change_conditions_left = state_change_conditions_side_ready
                 output_action_left_valve = []
             else:
                 logging.warning(
@@ -893,7 +873,9 @@ class TaskControl(object):
             self._pending_barcode_wall_time = bwt
             iti_post_barcode = max(0.05, iti_this_trial - self.barcode_duration_s)
             sma = inject_barcode_states(
-                sma, timing_seq, self.bnc_channel,
+                sma,
+                timing_seq,
+                self.bnc_channel,
                 last_state_name="iti_post_barcode",
             )
             sma.add_state(
@@ -919,7 +901,7 @@ class TaskControl(object):
         logging.debug("Saving task control data..")
         dt = time.time()
         save_trial_data(self.trial_data, str(self.save_path_data) + ".df.jsonl")
-        logging.debug(f"Saved data in {np.round(time.time()-dt,2)}s.")
+        logging.debug(f"Saved data in {np.round(time.time() - dt, 2)}s.")
 
     def on_exit(self):
         self.save()

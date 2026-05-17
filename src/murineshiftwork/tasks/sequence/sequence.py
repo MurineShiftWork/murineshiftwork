@@ -2,18 +2,15 @@ import logging
 import time
 from multiprocessing import Queue
 
-from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
 from murineshiftwork.logic.barcode import (
-    BARCODE_FIRST_STATE_NAME,
     barcode_config_from_settings,
     inject_barcode_states,
     prepare_barcode,
 )
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 from murineshiftwork.tasks.sequence.online_plotting import OnlinePlottingForSA
 from murineshiftwork.tasks.sequence.task_objects import TaskControl
 
@@ -25,11 +22,15 @@ class Task(TaskRunner):
         # Inject top-level kwargs that task_objects needs (calibration_file_water
         # comes via settings.task.patched from evaluate.py — no manual injection needed)
         task_settings["subject"] = self.input_kwargs.get("subject", "unknown")
-        task_settings.setdefault("session_paths", self.input_kwargs.get("session_paths", {}))
+        task_settings.setdefault(
+            "session_paths", self.input_kwargs.get("session_paths", {})
+        )
 
         barcode_cfg = barcode_config_from_settings(task_settings)
         barcoder = BarcodeTTL(barcode_cfg)
-        bnc_channel = eval(f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}")
+        bnc_channel = eval(
+            f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}"
+        )
 
         task_control = TaskControl(bpod=self.bpod, task_settings=task_settings)
         self.bpod.softcode_handler_function = task_control.softcode_handler
@@ -46,16 +47,16 @@ class Task(TaskRunner):
             if trial_index == 0 and not task_settings["testing"]:
                 barcode_value, barcode_wall_time, timing_seq = prepare_barcode(barcoder)
                 sma = StateMachine(bpod=self.bpod)
-                sma = inject_barcode_states(sma, timing_seq, bnc_channel, last_state_name="exit")
+                sma = inject_barcode_states(
+                    sma, timing_seq, bnc_channel, last_state_name="exit"
+                )
             else:
                 sma = task_control.draw_next_trial()
 
             self.bpod.send_state_machine(sma)
 
             if not self.bpod.run_state_machine(sma):
-                logging.warning(
-                    f"No data on trial #{trial_index}. Terminating."
-                )
+                logging.warning(f"No data on trial #{trial_index}. Terminating.")
                 self.input_kwargs["objects"]["kill_queue"].put(True)
                 break
 
@@ -88,7 +89,12 @@ class Task(TaskRunner):
             try:
                 bv_end, bwt_end, timing_seq_end = prepare_barcode(barcoder)
                 sma_end = StateMachine(bpod=self.bpod)
-                sma_end = inject_barcode_states(sma_end, timing_seq_end, bnc_channel, last_state_name="exit")
+                sma_end = inject_barcode_states(
+                    sma_end,
+                    timing_seq_end,
+                    bnc_channel,
+                    last_state_name="exit",
+                )
                 self.bpod.send_state_machine(sma_end)
                 self.bpod.run_state_machine(sma_end)
                 trial_data_end = self.bpod.session.current_trial.export()

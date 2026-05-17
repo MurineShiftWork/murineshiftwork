@@ -6,8 +6,7 @@ from pybpodapi.state_machine import StateMachine
 
 from murineshiftwork.logic.calibration import CalibrationDataSound
 from murineshiftwork.logic.sounds import StereoSound
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class Task(TaskRunner):
@@ -44,9 +43,7 @@ class Task(TaskRunner):
                 state_name="bnc_off",
                 state_timer=0.1,
                 state_change_conditions={"Tup": "leave"},
-                output_actions=[
-                    (self._test_bnc_in_channel, 0)
-                ],  # ("SoftCode", 99),
+                output_actions=[(self._test_bnc_in_channel, 0)],  # ("SoftCode", 99),
             )
             sma.add_state(
                 state_name="leave",
@@ -62,7 +59,7 @@ class Task(TaskRunner):
             if not self.bpod.run_state_machine(sma):
                 logging.warning("nothing returned")
 
-            logging.debug(f"Trial took {time.time()-dt}s")
+            logging.debug(f"Trial took {time.time() - dt}s")
 
             ev = self.bpod.session.current_trial.export()["Events timestamps"]
             delay = dict(ev).get("BNC1High", -1)

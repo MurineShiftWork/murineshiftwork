@@ -1,11 +1,9 @@
 import logging
 import time
 
-from pybpodapi.protocol import Bpod
-from pybpodapi.protocol import StateMachine
+from pybpodapi.protocol import Bpod, StateMachine
 
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class Task(TaskRunner):

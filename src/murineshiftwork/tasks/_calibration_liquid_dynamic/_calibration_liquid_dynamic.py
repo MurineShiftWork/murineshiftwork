@@ -5,6 +5,7 @@ task determines the number of valve pulses per measurement point dynamically
 (based on expected volume and scale noise) and adds new opening-time points
 adaptively until the target delivery range is covered.
 """
+
 import logging
 import math
 import random
@@ -23,9 +24,9 @@ from murineshiftwork.logic.config import update_valve_calibration
 from murineshiftwork.logic.scale import make_scale
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
-
 # ---------------------------------------------------------------------------
 # Pure helper functions (no hardware dependencies — unit-testable)
+
 
 def _compute_n_pulses(
     expected_ul: float,
@@ -69,8 +70,11 @@ def _estimate_ul(
     if len(measured_times) >= 3:
         try:
             popt, _ = curve_fit(
-                _exponential_function, times_arr, ul_arr,
-                p0=[0.01, 20.0, 0.0], maxfev=5000,
+                _exponential_function,
+                times_arr,
+                ul_arr,
+                p0=[0.01, 20.0, 0.0],
+                maxfev=5000,
             )
             return float(max(0.1, _exponential_function(open_s, *popt)))
         except Exception:
@@ -108,13 +112,18 @@ def _suggest_additional_times(
     # Build best-available predictor
     try:
         popt, _ = curve_fit(
-            _exponential_function, times_arr, ul_arr,
-            p0=[0.01, 20.0, 0.0], maxfev=5000,
+            _exponential_function,
+            times_arr,
+            ul_arr,
+            p0=[0.01, 20.0, 0.0],
+            maxfev=5000,
         )
+
         def fit_fn(t):
             return float(_exponential_function(t, *popt))
     except Exception:
         coeffs = np.polyfit(times_arr, ul_arr, 1)
+
         def fit_fn(t):
             return float(np.polyval(coeffs, t))
 
@@ -139,7 +148,8 @@ def _suggest_additional_times(
     # --- Interior density ---
     # Count how many measured points land (by predicted fit) in [min_ul, max_ul]
     in_range = [
-        t for t, u in zip(measured_times, measured_ul)
+        t
+        for t, u in zip(measured_times, measured_ul)
         if min_ul * 0.9 <= u <= max_ul * 1.1
     ]
     if len(in_range) < n_target:
@@ -158,6 +168,7 @@ def _suggest_additional_times(
 
 # ---------------------------------------------------------------------------
 # Task
+
 
 class Task(TaskRunner):
     """Adaptive valve-calibration task."""
@@ -203,7 +214,7 @@ class Task(TaskRunner):
             f"{t:.4f}s(~{n})" for t, n in zip(planned_times, est_pulses)
         )
         logging.info(
-            f"\n{'='*60}\n"
+            f"\n{'=' * 60}\n"
             f"Adaptive calibration plan\n"
             f"  Valves:         {', '.join(str(v) for v in valves)}\n"
             f"  Target range:   {min_ul}–{max_ul} µL\n"
@@ -211,7 +222,7 @@ class Task(TaskRunner):
             f"  (format: open_time(~est_pulses) — pulses adapt per point)\n"
             f"  Settle time:    {settle_s} s | Scale noise: {scale_noise_g} g | SNR target: {min_snr}\n"
             f"  Max rounds:     {max_adaptive_rounds} adaptive\n"
-            f"{'='*60}"
+            f"{'=' * 60}"
         )
 
         scale = self.input_kwargs.get("scale") or make_scale(
@@ -219,7 +230,9 @@ class Task(TaskRunner):
         )
         scale.start()
         scale.tare()
-        logging.info(f"Scale ready. Post-tare weight: {scale.read_weight_blocking():.4f} g")
+        logging.info(
+            f"Scale ready. Post-tare weight: {scale.read_weight_blocking():.4f} g"
+        )
 
         calibration = CalibrationDataWater(
             file_path=self.input_kwargs["calibration_file_water"]
@@ -228,8 +241,10 @@ class Task(TaskRunner):
         for valve_id in valves:
             if not self.continue_task:
                 break
-            logging.info(f"\n{'='*55}\nCalibrating valve {valve_id}"
-                         f"  |  target range: {min_ul}–{max_ul} µL\n{'='*55}")
+            logging.info(
+                f"\n{'=' * 55}\nCalibrating valve {valve_id}"
+                f"  |  target range: {min_ul}–{max_ul} µL\n{'=' * 55}"
+            )
             self._calibrate_valve(
                 valve_id=valve_id,
                 calibration=calibration,
@@ -259,10 +274,14 @@ class Task(TaskRunner):
                 try:
                     new_cal = calibration.to_valve_calibration(valve_id)
                 except ValueError as exc:
-                    logging.warning(f"Valve {valve_id}: cannot build ValveCalibration — {exc}")
+                    logging.warning(
+                        f"Valve {valve_id}: cannot build ValveCalibration — {exc}"
+                    )
                     continue
                 is_valid, reason = new_cal.validate()
-                logging.info(f"Valve {valve_id}: validation {'PASS' if is_valid else 'FAIL'} — {reason}")
+                logging.info(
+                    f"Valve {valve_id}: validation {'PASS' if is_valid else 'FAIL'} — {reason}"
+                )
                 written = update_valve_calibration(
                     config_dir=config_dir,
                     setup_name=setup_name,
@@ -289,11 +308,25 @@ class Task(TaskRunner):
     # ------------------------------------------------------------------
 
     def _calibrate_valve(
-        self, valve_id, calibration, scale,
-        initial_times_s, time_min_s, time_max_s, n_initial,
-        min_ul, max_ul, inter_pulse_s, settle_s,
-        scale_noise_g, min_snr, min_pulses, max_pulses,
-        max_adaptive_rounds, n_target, outlier_sigma,
+        self,
+        valve_id,
+        calibration,
+        scale,
+        initial_times_s,
+        time_min_s,
+        time_max_s,
+        n_initial,
+        min_ul,
+        max_ul,
+        inter_pulse_s,
+        settle_s,
+        scale_noise_g,
+        min_snr,
+        min_pulses,
+        max_pulses,
+        max_adaptive_rounds,
+        n_target,
+        outlier_sigma,
     ) -> None:
         if initial_times_s:
             pending = sorted(set(float(t) for t in initial_times_s))
@@ -314,18 +347,31 @@ class Task(TaskRunner):
                 if not self.continue_task:
                     return
                 ul_per_drop = self._measure_point(
-                    valve_id, open_s, calibration, scale,
-                    measured_times, measured_ul,
-                    inter_pulse_s, settle_s,
-                    scale_noise_g, min_snr, min_pulses, max_pulses,
+                    valve_id,
+                    open_s,
+                    calibration,
+                    scale,
+                    measured_times,
+                    measured_ul,
+                    inter_pulse_s,
+                    settle_s,
+                    scale_noise_g,
+                    min_snr,
+                    min_pulses,
+                    max_pulses,
                 )
                 measured_times.append(open_s)
                 measured_ul.append(ul_per_drop)
 
             if round_idx < max_adaptive_rounds:
                 suggestions = _suggest_additional_times(
-                    measured_times, measured_ul,
-                    min_ul, max_ul, time_min_s, time_max_s, n_target,
+                    measured_times,
+                    measured_ul,
+                    min_ul,
+                    max_ul,
+                    time_min_s,
+                    time_max_s,
+                    n_target,
                 )
                 if not suggestions:
                     logging.info(
@@ -354,16 +400,27 @@ class Task(TaskRunner):
                             f"[Valve {valve_id}] Outlier: open_s={t:.4f}s "
                             f"measured={ul:.3f} µL/drop "
                             f"(residual={res:+.3f} µL, "
-                            f"{abs(res)/sigma_val:.1f}σ) — consider repeating"
+                            f"{abs(res) / sigma_val:.1f}σ) — consider repeating"
                         )
             else:
-                logging.info(f"Valve {valve_id}: no outliers detected (threshold {outlier_sigma}σ).")
+                logging.info(
+                    f"Valve {valve_id}: no outliers detected (threshold {outlier_sigma}σ)."
+                )
 
     def _measure_point(
-        self, valve_id, open_s, calibration, scale,
-        measured_times, measured_ul,
-        inter_pulse_s, settle_s,
-        scale_noise_g, min_snr, min_pulses, max_pulses,
+        self,
+        valve_id,
+        open_s,
+        calibration,
+        scale,
+        measured_times,
+        measured_ul,
+        inter_pulse_s,
+        settle_s,
+        scale_noise_g,
+        min_snr,
+        min_pulses,
+        max_pulses,
     ) -> float:
         expected_ul = _estimate_ul(open_s, measured_times, measured_ul)
         n_pulses = _compute_n_pulses(
@@ -412,6 +469,7 @@ class Task(TaskRunner):
 
 
 # ---------------------------------------------------------------------------
+
 
 def run_task(**kwargs):
     with TaskProcess(**kwargs) as tp:

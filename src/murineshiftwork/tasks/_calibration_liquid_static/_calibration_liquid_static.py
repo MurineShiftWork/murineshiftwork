@@ -5,12 +5,14 @@ import time
 import numpy as np
 from tqdm import tqdm
 
-from murineshiftwork.logic.calibration import CalibrationDataWater, flag_outlier_points
+from murineshiftwork.hardware.bpod.water import make_sma_for_drop_of_water
+from murineshiftwork.logic.calibration import (
+    CalibrationDataWater,
+    flag_outlier_points,
+)
 from murineshiftwork.logic.config import update_valve_calibration
 from murineshiftwork.logic.scale import make_scale
-from murineshiftwork.hardware.bpod.water import make_sma_for_drop_of_water
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class Task(TaskRunner):
@@ -32,7 +34,11 @@ class Task(TaskRunner):
         force_save = bool(s.get("force_save_calibration", False))
 
         VALVE_TIMES_TO_TEST = np.round(
-            np.arange(VALVE_TIME_MIN, VALVE_TIME_MAX + VALVE_TIME_STEP / 2, VALVE_TIME_STEP),
+            np.arange(
+                VALVE_TIME_MIN,
+                VALVE_TIME_MAX + VALVE_TIME_STEP / 2,
+                VALVE_TIME_STEP,
+            ),
             4,
         ).tolist()
 
@@ -40,10 +46,12 @@ class Task(TaskRunner):
         n_conditions = len(VALVES_TO_CALIBRATE) * len(VALVE_TIMES_TO_TEST)
         total_drops = n_conditions * N_DROPS
         est_drop_s = VALVE_TIME_MAX + INTER_PULSE_INTERVAL
-        est_duration_s = total_drops * est_drop_s + len(VALVE_TIMES_TO_TEST) * SETTLE_TIME_S
+        est_duration_s = (
+            total_drops * est_drop_s + len(VALVE_TIMES_TO_TEST) * SETTLE_TIME_S
+        )
         times_str = ", ".join(f"{t:.4f}s" for t in VALVE_TIMES_TO_TEST)
         logging.info(
-            f"\n{'='*60}\n"
+            f"\n{'=' * 60}\n"
             f"Calibration plan\n"
             f"  Valves:        {', '.join(str(v) for v in VALVES_TO_CALIBRATE)}\n"
             f"  Opening times: {times_str}\n"
@@ -51,8 +59,8 @@ class Task(TaskRunner):
             f"  Settle time:   {SETTLE_TIME_S} s\n"
             f"  Conditions:    {len(VALVES_TO_CALIBRATE)} valves × {len(VALVE_TIMES_TO_TEST)} times = {n_conditions}\n"
             f"  Total drops:   {total_drops}\n"
-            f"  Est. duration: ~{est_duration_s/60:.0f} min\n"
-            f"{'='*60}"
+            f"  Est. duration: ~{est_duration_s / 60:.0f} min\n"
+            f"{'=' * 60}"
         )
 
         random_valve_times = VALVE_TIMES_TO_TEST.copy()
@@ -124,15 +132,22 @@ class Task(TaskRunner):
                         f"Valve {valve_id}: {int(outlier_mask.sum())} outlier(s) detected:"
                     )
                     for i, (is_out, t, ul, res) in enumerate(
-                        zip(outlier_mask, valve_times_measured, valve_ul_measured, residuals)
+                        zip(
+                            outlier_mask,
+                            valve_times_measured,
+                            valve_ul_measured,
+                            residuals,
+                        )
                     ):
                         if is_out:
                             logging.warning(
                                 f"  open_s={t:.4f}s | {ul:.3f} µL/drop | "
-                                f"residual={res:+.3f} µL ({abs(res)/sigma_val:.1f}σ) — consider repeating"
+                                f"residual={res:+.3f} µL ({abs(res) / sigma_val:.1f}σ) — consider repeating"
                             )
                 else:
-                    logging.info(f"Valve {valve_id}: no outliers detected ({OUTLIER_SIGMA}σ threshold).")
+                    logging.info(
+                        f"Valve {valve_id}: no outliers detected ({OUTLIER_SIGMA}σ threshold)."
+                    )
 
         logging.debug(f"\n{str(calibration)}\n")
         calibration.save(overwrite=True)
@@ -143,7 +158,9 @@ class Task(TaskRunner):
                 try:
                     new_cal = calibration.to_valve_calibration(valve_id)
                 except ValueError as e:
-                    logging.warning(f"Valve {valve_id}: cannot build ValveCalibration — {e}")
+                    logging.warning(
+                        f"Valve {valve_id}: cannot build ValveCalibration — {e}"
+                    )
                     continue
 
                 is_valid, reason = new_cal.validate()

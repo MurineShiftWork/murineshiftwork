@@ -1,7 +1,6 @@
 import json
 import logging
 import time
-from pathlib import Path
 
 from rich import get_console
 from rich.logging import RichHandler
@@ -13,6 +12,7 @@ from oe_remote.session import Session
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
+
 
 def setup_logging(debug: bool = False) -> None:
     level = "DEBUG" if debug else "INFO"
@@ -34,6 +34,7 @@ def setup_logging(debug: bool = False) -> None:
 # ---------------------------------------------------------------------------
 # Commands
 # ---------------------------------------------------------------------------
+
 
 def cmd_status(ip: str, port: int, debug: bool = False, **_) -> None:
     setup_logging(debug)
@@ -115,5 +116,5 @@ def cmd_record(
 
     # Always cache so --child @last works after any record command
     session.save_to_cache()
-    print(f"\nSESSION PATH (use with --child for further sessions):")
+    print("\nSESSION PATH (use with --child for further sessions):")
     print(f"  {session._cache_path}\n")

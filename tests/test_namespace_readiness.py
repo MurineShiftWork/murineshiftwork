@@ -10,10 +10,10 @@ their own __init__.py files — those are normal sub-packages within the namespa
 
 Both tests now pass: the root __init__.py was removed as part of the CLI refactor.
 """
+
 from pathlib import Path
 
 import murineshiftwork
-import pytest
 
 # Namespace packages have __path__ but no __file__ — use __path__[0]
 _PKG_ROOT = Path(list(murineshiftwork.__path__)[0])  # .../src/murineshiftwork/
@@ -34,6 +34,6 @@ def test_tasks_boundary_has_no_init():
 def test_namespace_root_has_no_init():
     """murineshiftwork/ must not have __init__.py — namespace-split ready."""
     init = _PKG_ROOT / "__init__.py"
-    assert (
-        not init.exists()
-    ), f"{init} exists. It must be removed before the suite namespace split."
+    assert not init.exists(), (
+        f"{init} exists. It must be removed before the suite namespace split."
+    )

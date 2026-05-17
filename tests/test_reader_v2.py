@@ -10,9 +10,8 @@ Files:
   _test_subject__20260516_130611_739182__probabilistic_switching_fixedsubjects.msw.df.jsonl
   _test_subject__20260516_130611_739182__probabilistic_switching_fixedsubjects.msw.csv
 """
-from pathlib import Path
 
-import pytest
+from pathlib import Path
 
 from murineshiftwork.readers.session import read_session_data
 

@@ -10,12 +10,13 @@ python plot_ephys_line_jitter.py --oe_dir /path/to/Record\ Node\ 101
 python plot_ephys_line_jitter.py --oe_dir /path/to/Record\ Node\ 101 --lines 3 4 5 6 --ts_col corrected_timestamps --edge rising
 python plot_ephys_line_jitter.py --oe_dir ... --out jitter.png
 """
+
 import argparse
 import sys
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
 
 
@@ -45,17 +46,41 @@ def get_ipi_ms(events, line: int, ts_col: str, edge: str) -> np.ndarray:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Plot ephys digital line IPI distributions.")
-    parser.add_argument("--oe_dir", required=True, help="Open Ephys Record Node directory")
-    parser.add_argument("--lines", type=int, nargs="+", default=[3, 4, 5, 6],
-                        help="Digital line numbers to plot (default: 3 4 5 6)")
-    parser.add_argument("--ts_col", default="timestamps",
-                        help="Timestamp column: timestamps or corrected_timestamps (default: timestamps)")
-    parser.add_argument("--edge", default="rising", choices=["rising", "falling", "both"],
-                        help="Which edges to use for IPI computation (default: rising)")
-    parser.add_argument("--clip_ms", type=float, default=None,
-                        help="Clip IPIs above this value before plotting (e.g. 100 to ignore dropped frames)")
-    parser.add_argument("--out", default=None, help="Save figure to this path instead of showing")
+    parser = argparse.ArgumentParser(
+        description="Plot ephys digital line IPI distributions."
+    )
+    parser.add_argument(
+        "--oe_dir", required=True, help="Open Ephys Record Node directory"
+    )
+    parser.add_argument(
+        "--lines",
+        type=int,
+        nargs="+",
+        default=[3, 4, 5, 6],
+        help="Digital line numbers to plot (default: 3 4 5 6)",
+    )
+    parser.add_argument(
+        "--ts_col",
+        default="timestamps",
+        help="Timestamp column: timestamps or corrected_timestamps (default: timestamps)",
+    )
+    parser.add_argument(
+        "--edge",
+        default="rising",
+        choices=["rising", "falling", "both"],
+        help="Which edges to use for IPI computation (default: rising)",
+    )
+    parser.add_argument(
+        "--clip_ms",
+        type=float,
+        default=None,
+        help="Clip IPIs above this value before plotting (e.g. 100 to ignore dropped frames)",
+    )
+    parser.add_argument(
+        "--out",
+        default=None,
+        help="Save figure to this path instead of showing",
+    )
     args = parser.parse_args()
 
     oe_dir = Path(args.oe_dir)
@@ -82,7 +107,9 @@ def main():
             ipi = ipi[ipi <= args.clip_ms]
             n_clipped = n_before - len(ipi)
             if n_clipped:
-                print(f"  Line {line}: clipped {n_clipped} IPIs > {args.clip_ms}ms")
+                print(
+                    f"  Line {line}: clipped {n_clipped} IPIs > {args.clip_ms}ms"
+                )
 
         mean_ms = ipi.mean()
         median_ms = np.median(ipi)
@@ -98,23 +125,32 @@ def main():
             f"med={median_ms:.2f}ms  "
             f"std={std_ms:.3f}ms"
         )
-        print(f"  line {line}: {freq_hz:.2f}Hz  mean={mean_ms:.2f}ms  med={median_ms:.2f}ms  std={std_ms:.3f}ms  n={n}")
+        print(
+            f"  line {line}: {freq_hz:.2f}Hz  mean={mean_ms:.2f}ms  med={median_ms:.2f}ms  std={std_ms:.3f}ms  n={n}"
+        )
 
         # Compute KDE manually so we can normalize peak to 1.0.
         # This makes shape comparison across lines independent of n and spread.
         from scipy.stats import gaussian_kde
+
         kde = gaussian_kde(ipi)
         x_grid = np.linspace(ipi.min(), ipi.max(), 1000)
         y_kde = kde(x_grid)
         y_norm = y_kde / y_kde.max()
         ax.plot(x_grid, y_norm, color=color, linewidth=2, label=label)
         ax.fill_between(x_grid, y_norm, alpha=0.25, color=color)
-        ax.axvline(mean_ms,   color=color, linestyle="--", linewidth=1.8, alpha=0.9)
-        ax.axvline(median_ms, color=color, linestyle=":",  linewidth=1.8, alpha=0.9)
+        ax.axvline(
+            mean_ms, color=color, linestyle="--", linewidth=1.8, alpha=0.9
+        )
+        ax.axvline(
+            median_ms, color=color, linestyle=":", linewidth=1.8, alpha=0.9
+        )
         any_data = True
 
     if not any_data:
-        print("No data found on any requested line. Check --lines and --oe_dir.")
+        print(
+            "No data found on any requested line. Check --lines and --oe_dir."
+        )
         sys.exit(1)
 
     # Reference lines for common acquisition frequencies
@@ -122,9 +158,15 @@ def main():
         x_ms = 1000.0 / target_hz
         ax.axvline(x_ms, color="grey", linewidth=1.4, alpha=0.8, zorder=0)
         ax.text(
-            x_ms, 0, f" {label_hz}",
-            color="grey", fontsize=13, alpha=0.9,
-            va="bottom", ha="left", rotation=90,
+            x_ms,
+            0,
+            f" {label_hz}",
+            color="grey",
+            fontsize=13,
+            alpha=0.9,
+            va="bottom",
+            ha="left",
+            rotation=90,
             transform=ax.get_xaxis_transform(),
         )
 

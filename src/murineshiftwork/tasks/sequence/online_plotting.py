@@ -1,11 +1,9 @@
 import time
-from multiprocessing import Process
-from multiprocessing import Queue
+from multiprocessing import Process, Queue
 
 import numpy as np
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtCore, QtGui
 
 
 def _nan_vec(length):
@@ -77,8 +75,12 @@ class OnlinePlottingForSA(Process):
         p_out = win.addPlot(title="Trial outcomes (1=correct, 0=incorrect)")
         p_out.setYRange(-0.1, 1.1)
         p_out.setLabel("left", "Outcome")
-        scatter_correct = pg.ScatterPlotItem(pen=None, symbol="o", size=6, brush=pg.mkBrush(40, 180, 99))
-        scatter_incorrect = pg.ScatterPlotItem(pen=None, symbol="o", size=6, brush=pg.mkBrush(231, 76, 60))
+        scatter_correct = pg.ScatterPlotItem(
+            pen=None, symbol="o", size=6, brush=pg.mkBrush(40, 180, 99)
+        )
+        scatter_incorrect = pg.ScatterPlotItem(
+            pen=None, symbol="o", size=6, brush=pg.mkBrush(231, 76, 60)
+        )
         p_out.addItem(scatter_correct)
         p_out.addItem(scatter_incorrect)
 
@@ -88,9 +90,18 @@ class OnlinePlottingForSA(Process):
         p_perf = win.addPlot(title="Rolling performance")
         p_perf.setYRange(-0.05, 1.05)
         p_perf.setLabel("left", "Fraction correct")
-        p_perf.addLine(y=self.progression_threshold, pen=pg.mkPen("g", width=1, style=QtCore.Qt.DashLine))
-        p_perf.addLine(y=self.progression_threshold_advanced, pen=pg.mkPen("y", width=1, style=QtCore.Qt.DashLine))
-        p_perf.addLine(y=self.regression_threshold, pen=pg.mkPen("r", width=1, style=QtCore.Qt.DashLine))
+        p_perf.addLine(
+            y=self.progression_threshold,
+            pen=pg.mkPen("g", width=1, style=QtCore.Qt.DashLine),
+        )
+        p_perf.addLine(
+            y=self.progression_threshold_advanced,
+            pen=pg.mkPen("y", width=1, style=QtCore.Qt.DashLine),
+        )
+        p_perf.addLine(
+            y=self.regression_threshold,
+            pen=pg.mkPen("r", width=1, style=QtCore.Qt.DashLine),
+        )
         curve_perf = pg.PlotDataItem(pen=pg.mkPen("w", width=2))
         p_perf.addItem(curve_perf)
 
@@ -125,7 +136,10 @@ class OnlinePlottingForSA(Process):
             pt = {
                 "pos": (idx, outcomes[idx]),
                 "size": 6,
-                "pen": {"color": color_c if is_correct else color_i, "width": 1},
+                "pen": {
+                    "color": color_c if is_correct else color_i,
+                    "width": 1,
+                },
                 "brush": QtGui.QBrush(color_c if is_correct else color_i),
             }
             if is_correct:

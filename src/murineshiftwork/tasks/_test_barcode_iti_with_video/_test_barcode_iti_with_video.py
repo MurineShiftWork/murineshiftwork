@@ -14,6 +14,7 @@ After the session:
     python tests/test_rce_barcode_alignment.py --session /data/subject/session_dir
     python tests/test_ephys_barcode_alignment.py --session ... --oe_dir ... --line 1
 """
+
 import logging
 import time
 from pathlib import Path
@@ -23,26 +24,25 @@ from pybpodapi.state_machine import StateMachine
 from rpi_camera_ensemble.conductor.conductor import Conductor
 from rpi_camera_ensemble.config.acquisition import EnsembleAcquisitionConfig
 from rpi_camera_ensemble.config.conductor import ConductorConfig
-
 from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
     barcode_config_from_settings,
     inject_barcode_states,
     prepare_barcode,
 )
-from murineshiftwork.logic.misc import draw_jittered_trial_time
-from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.io import save_trial_data
+from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 _DEFAULTS = {
     "n_max_trials": 20,
     "ttl_pulse_duration": 0.010,
     "inter_trial_interval": [2, 5, 0.5],  # [min_s, max_s, jitter_s]
-    "wait_duration": 1.0,                  # simulated task trial duration
-    "HARDWARE_BNC_CHANNEL": 1,             # BNC1: barcode + trial onset
+    "wait_duration": 1.0,  # simulated task trial duration
+    "HARDWARE_BNC_CHANNEL": 1,  # BNC1: barcode + trial onset
     "barcode_bits": 37,
     "barcode_bit_duration_ms": 35.0,
     "barcode_init_duration_ms": 10.0,
@@ -84,7 +84,9 @@ class Task(TaskRunner):
             )
             iti_post_barcode = max(0.05, iti_this_trial - barcode_duration_s)
 
-            barcode_value, barcode_wall_time, timing_sequence = prepare_barcode(barcoder)
+            barcode_value, barcode_wall_time, timing_sequence = prepare_barcode(
+                barcoder
+            )
 
             logging.info(
                 f"  barcode={barcode_value}  iti={iti_this_trial:.2f}s  "
@@ -157,7 +159,9 @@ def run_task(**args_dict):
     args_dict.update({"auto_start": False})
 
     ensemble_cfg_file = args_dict["config_file_camera"]
-    assert Path(ensemble_cfg_file).exists(), f"Camera config not found: {ensemble_cfg_file}"
+    assert Path(ensemble_cfg_file).exists(), (
+        f"Camera config not found: {ensemble_cfg_file}"
+    )
     ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
     conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
     conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)

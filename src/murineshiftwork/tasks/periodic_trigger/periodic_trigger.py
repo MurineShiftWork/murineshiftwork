@@ -5,10 +5,11 @@ import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 
-from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
-from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.hardware.bpod.ttl import (
+    add_trial_onset_ttl,
+    make_ttl_identifier_sequences,
+)
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class Task(TaskRunner):
@@ -22,7 +23,7 @@ class Task(TaskRunner):
         n_max_trials = 15000
         while self.continue_task and trial_index <= n_max_trials:
             logging.info(
-                f"Executing trial {trial_index} [Runtime: {np.round(trial_index*TRIGGER_ITI/60,3)}min]"
+                f"Executing trial {trial_index} [Runtime: {np.round(trial_index * TRIGGER_ITI / 60, 3)}min]"
             )
 
             if trial_index == 0:

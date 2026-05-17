@@ -1,6 +1,5 @@
 import sys
 
-from murineshiftwork import patch_logging_levels
 from murineshiftwork.cli import run_cli
 
 test_cases = {

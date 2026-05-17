@@ -5,17 +5,15 @@ Tests run without hardware.  They verify that:
 - calibration.save() is called (file is created)
 - outlier reporting fires for the expected conditions
 """
-import tempfile
-from pathlib import Path
 
-import pytest
+from pathlib import Path
 
 from murineshiftwork.hardware.bpod.sim import SimBpod
 from murineshiftwork.logic.scale import SimWeighingScale
 
-
 # ---------------------------------------------------------------------------
 # Helpers
+
 
 def _make_sim_kwargs(tmp_path: Path, valve_id: int = 1) -> dict:
     """Minimal kwargs for both calibration Task classes."""
@@ -54,9 +52,12 @@ def _make_sim_kwargs(tmp_path: Path, valve_id: int = 1) -> dict:
 # ---------------------------------------------------------------------------
 # _calibration_liquid_static
 
+
 class TestCalibrationLiquidStaticSim:
     def test_task_completes_and_saves(self, tmp_path):
-        from murineshiftwork.tasks._calibration_liquid_static._calibration_liquid_static import Task
+        from murineshiftwork.tasks._calibration_liquid_static._calibration_liquid_static import (
+            Task,
+        )
 
         kwargs = _make_sim_kwargs(tmp_path)
         bpod = SimBpod()
@@ -69,7 +70,9 @@ class TestCalibrationLiquidStaticSim:
         assert cal_file.exists(), "calibration CSV must be saved after task completes"
 
     def test_bpod_state_machines_were_fired(self, tmp_path):
-        from murineshiftwork.tasks._calibration_liquid_static._calibration_liquid_static import Task
+        from murineshiftwork.tasks._calibration_liquid_static._calibration_liquid_static import (
+            Task,
+        )
 
         kwargs = _make_sim_kwargs(tmp_path)
         bpod = SimBpod()
@@ -78,10 +81,14 @@ class TestCalibrationLiquidStaticSim:
         task = Task(bpod=bpod, **kwargs)
         task.run()
 
-        assert bpod.sma_run_count() > 0, "at least one SMA run expected for calibration drops"
+        assert bpod.sma_run_count() > 0, (
+            "at least one SMA run expected for calibration drops"
+        )
 
     def test_scale_was_tared_per_point(self, tmp_path):
-        from murineshiftwork.tasks._calibration_liquid_static._calibration_liquid_static import Task
+        from murineshiftwork.tasks._calibration_liquid_static._calibration_liquid_static import (
+            Task,
+        )
 
         kwargs = _make_sim_kwargs(tmp_path)
         scale = SimWeighingScale(weight_g=0.004)
@@ -99,9 +106,12 @@ class TestCalibrationLiquidStaticSim:
 # ---------------------------------------------------------------------------
 # _calibration_liquid_dynamic
 
+
 class TestCalibrationLiquidDynamicSim:
     def test_task_completes_and_saves(self, tmp_path):
-        from murineshiftwork.tasks._calibration_liquid_dynamic._calibration_liquid_dynamic import Task
+        from murineshiftwork.tasks._calibration_liquid_dynamic._calibration_liquid_dynamic import (
+            Task,
+        )
 
         kwargs = _make_sim_kwargs(tmp_path)
         bpod = SimBpod()
@@ -114,7 +124,9 @@ class TestCalibrationLiquidDynamicSim:
         assert cal_file.exists(), "calibration CSV must be saved"
 
     def test_bpod_state_machines_were_fired(self, tmp_path):
-        from murineshiftwork.tasks._calibration_liquid_dynamic._calibration_liquid_dynamic import Task
+        from murineshiftwork.tasks._calibration_liquid_dynamic._calibration_liquid_dynamic import (
+            Task,
+        )
 
         kwargs = _make_sim_kwargs(tmp_path)
         bpod = SimBpod()
@@ -126,7 +138,9 @@ class TestCalibrationLiquidDynamicSim:
         assert bpod.sma_run_count() > 0
 
     def test_scale_was_tared_per_point(self, tmp_path):
-        from murineshiftwork.tasks._calibration_liquid_dynamic._calibration_liquid_dynamic import Task
+        from murineshiftwork.tasks._calibration_liquid_dynamic._calibration_liquid_dynamic import (
+            Task,
+        )
 
         kwargs = _make_sim_kwargs(tmp_path)
         scale = SimWeighingScale(weight_g=0.004)

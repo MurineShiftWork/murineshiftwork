@@ -41,6 +41,7 @@ Expected output (passing):
     residuals_mean_ms  : <5ms
     residuals_max_ms   : <20ms
 """
+
 import argparse
 import sys
 from pathlib import Path
@@ -49,8 +50,12 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from murineshiftwork.readers.alignment import align_session_to_ephys, decode_ephys_barcodes
 from ttl_barcoder.core.config import BarcodeConfig
+
+from murineshiftwork.readers.alignment import (
+    align_session_to_ephys,
+    decode_ephys_barcodes,
+)
 
 
 def load_oe_events(oe_dir: Path, recording_index: int = 0):
@@ -59,8 +64,7 @@ def load_oe_events(oe_dir: Path, recording_index: int = 0):
         from open_ephys.analysis import Session
     except ImportError:
         raise ImportError(
-            "open-ephys-python-tools not installed. "
-            "pip install open-ephys-python-tools"
+            "open-ephys-python-tools not installed. pip install open-ephys-python-tools"
         )
     session = Session(str(oe_dir))
     if hasattr(session, "recordnodes"):
@@ -84,17 +88,21 @@ def inspect_events(events, line: int, ts_col: str):
         return
 
     duration = line_df[ts_col].iloc[-1] - line_df[ts_col].iloc[0]
-    print(f"Time span                   : {duration:.1f}s ({duration/60:.1f}min)")
+    print(f"Time span                   : {duration:.1f}s ({duration / 60:.1f}min)")
 
     inter = np.diff(line_df[ts_col].values)
-    print(f"Inter-edge gaps (ms)        : "
-          f"min={inter.min()*1000:.1f}  "
-          f"median={np.median(inter)*1000:.1f}  "
-          f"max={inter.max()*1000:.0f}")
+    print(
+        f"Inter-edge gaps (ms)        : "
+        f"min={inter.min() * 1000:.1f}  "
+        f"median={np.median(inter) * 1000:.1f}  "
+        f"max={inter.max() * 1000:.0f}"
+    )
 
     short = (inter < 0.5).sum()
     long_ = (inter >= 0.5).sum()
-    print(f"Gaps <500ms (within barcode): {short}   >=500ms (between barcodes): {long_}")
+    print(
+        f"Gaps <500ms (within barcode): {short}   >=500ms (between barcodes): {long_}"
+    )
 
     rising = (line_df["state"] == 1).sum()
     falling = (line_df["state"] == 0).sum()
@@ -102,15 +110,30 @@ def inspect_events(events, line: int, ts_col: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Align MSW session to ephys via barcode TTL.")
+    parser = argparse.ArgumentParser(
+        description="Align MSW session to ephys via barcode TTL."
+    )
     parser.add_argument("--session", required=True, help="MSW session directory")
-    parser.add_argument("--oe_dir", required=True, help="Open Ephys Record Node directory")
-    parser.add_argument("--line", type=int, default=8,
-                        help="Digital line number for barcode channel (default: 8)")
-    parser.add_argument("--ts_col", default="corrected_timestamps",
-                        help="Timestamp column to use: 'timestamps' or 'corrected_timestamps' (default)")
-    parser.add_argument("--recording", type=int, default=0,
-                        help="Recording index within the record node (default: 0)")
+    parser.add_argument(
+        "--oe_dir", required=True, help="Open Ephys Record Node directory"
+    )
+    parser.add_argument(
+        "--line",
+        type=int,
+        default=8,
+        help="Digital line number for barcode channel (default: 8)",
+    )
+    parser.add_argument(
+        "--ts_col",
+        default="corrected_timestamps",
+        help="Timestamp column to use: 'timestamps' or 'corrected_timestamps' (default)",
+    )
+    parser.add_argument(
+        "--recording",
+        type=int,
+        default=0,
+        help="Recording index within the record node (default: 0)",
+    )
     parser.add_argument("--bits", type=int, default=37)
     parser.add_argument("--bit_duration_ms", type=float, default=35.0)
     parser.add_argument("--init_duration_ms", type=float, default=10.0)
@@ -166,8 +189,10 @@ def main():
     # Show a few decoded values and their recovered timestamps
     print("Sample decoded barcodes (ephys_time, barcode_value, recovered_unix_time):")
     from ttl_barcoder.core.barcode_ttl import BarcodeTTL
+
     barcoder = BarcodeTTL(barcode_config)
     import time as _time
+
     for et, bv in ephys_barcodes[:5]:
         try:
             # Use current wall time as reference (bv encodes Unix ms mod 2^37)
@@ -202,18 +227,26 @@ def main():
 
     if result["residuals_ms"]:
         res = result["residuals_ms"]
-        print(f"Residuals (ms)      : mean={float(np.mean(np.abs(res))):.2f}  "
-              f"max={float(max(abs(r) for r in res)):.2f}  "
-              f"std={float(np.std(res)):.2f}")
+        print(
+            f"Residuals (ms)      : mean={float(np.mean(np.abs(res))):.2f}  "
+            f"max={float(max(abs(r) for r in res)):.2f}  "
+            f"std={float(np.std(res)):.2f}"
+        )
 
-    print(f"\nAdded columns to df : trial_start_ephys, barcode_ephys_time, "
-          f"alignment_slope, alignment_intercept, n_barcodes_matched")
+    print(
+        "\nAdded columns to df : trial_start_ephys, barcode_ephys_time, "
+        "alignment_slope, alignment_intercept, n_barcodes_matched"
+    )
     print(f"df shape            : {df.shape}")
 
     # Show first few trial_start_ephys values
     if "trial_start_ephys" in df.columns:
-        task_rows = df[df.get("trial_type", df.index) == "task"] if "trial_type" in df.columns else df
-        print(f"\nSample trial_start_ephys (first 5 task trials):")
+        task_rows = (
+            df[df.get("trial_type", df.index) == "task"]
+            if "trial_type" in df.columns
+            else df
+        )
+        print("\nSample trial_start_ephys (first 5 task trials):")
         sample = task_rows["trial_start_ephys"].dropna().head(5)
         for i, t in sample.items():
             print(f"  trial {i}: {t:.4f}s ephys")
@@ -223,9 +256,12 @@ def main():
         result["n_matched"] == result["n_msw_barcodes"]
         and float(np.mean(np.abs(result["residuals_ms"]))) < 5.0
     )
-    print("PASS" if passed else
-          f"WARN — check residuals or unmatched barcodes "
-          f"(matched {result['n_matched']}/{result['n_msw_barcodes']})")
+    print(
+        "PASS"
+        if passed
+        else f"WARN — check residuals or unmatched barcodes "
+        f"(matched {result['n_matched']}/{result['n_msw_barcodes']})"
+    )
     return 0 if passed else 1
 
 

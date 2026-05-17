@@ -120,7 +120,7 @@
         framerate = 30
         resolution = (1600, 1200)
         color_effects = (128, 128)
-        
+
     [[camera67]]
         description = "top view. behaviour setup #npx"
 
@@ -136,7 +136,7 @@
         framerate = 30
         resolution = (1600, 1200)
         color_effects = (128, 128)
-        
+
     [[camera68]]
         description = "top view. behaviour setup #npx"
 
@@ -152,7 +152,7 @@
         framerate = 30
         resolution = (1600, 1200)
         color_effects = (128, 128)
-        
+
     [[camera69]]
         description = "top view. behaviour setup #npx"
 

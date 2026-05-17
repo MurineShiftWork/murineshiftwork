@@ -5,8 +5,8 @@ manual_override() and SMA calls; SimWeighingScale returns deterministic
 weights.  They are intended to run in CI (GitHub Actions) with no USB
 devices connected.
 """
-import pytest
 
+import pytest
 from pybpodapi.bpod.hardware.channels import ChannelName, ChannelType
 
 from murineshiftwork.hardware.bpod.actions import BpodActionDriver
@@ -14,9 +14,9 @@ from murineshiftwork.hardware.bpod.sim import SimBpod
 from murineshiftwork.logic.config.models import ActionRequest
 from murineshiftwork.logic.scale import SimWeighingScale, make_scale
 
-
 # ---------------------------------------------------------------------------
 # SimBpod
+
 
 class TestSimBpod:
     def test_open_recorded(self):
@@ -41,12 +41,15 @@ class TestSimBpod:
         bpod.manual_override(ChannelType.OUTPUT, ChannelName.VALVE, 1, 0)
         overrides = bpod.override_calls()
         assert len(overrides) == 2
-        assert overrides[0][4] == 1   # value open
-        assert overrides[1][4] == 0   # value close
+        assert overrides[0][4] == 1  # value open
+        assert overrides[1][4] == 0  # value close
 
     def test_softcode_handler_roundtrip(self):
         bpod = SimBpod()
-        handler = lambda x: x
+
+        def handler(x):
+            return x
+
         bpod.softcode_handler_function = handler
         assert bpod.softcode_handler_function is handler
 
@@ -58,6 +61,7 @@ class TestSimBpod:
 
 # ---------------------------------------------------------------------------
 # SimWeighingScale
+
 
 class TestSimWeighingScale:
     def test_returns_fixed_weight(self):
@@ -90,6 +94,7 @@ class TestSimWeighingScale:
 # ---------------------------------------------------------------------------
 # make_scale factory
 
+
 class TestMakeScale:
     def test_sim_type_returns_sim_scale(self):
         scale = make_scale(scale_type="sim")
@@ -102,6 +107,7 @@ class TestMakeScale:
 
 # ---------------------------------------------------------------------------
 # BpodActionDriver — uses SimBpod, no hardware
+
 
 class TestBpodActionDriver:
     def _make_driver(self):
@@ -118,8 +124,15 @@ class TestBpodActionDriver:
     def test_valve_pulse_sends_open_then_close(self):
         driver, bpod = self._make_driver()
         req = ActionRequest(
-            setup="s", device="bpod", action="valve_pulse",
-            params={"valve_id": 2, "duration_s": 0.001, "n_pulses": 1, "inter_pulse_s": 0.001},
+            setup="s",
+            device="bpod",
+            action="valve_pulse",
+            params={
+                "valve_id": 2,
+                "duration_s": 0.001,
+                "n_pulses": 1,
+                "inter_pulse_s": 0.001,
+            },
         )
         driver.dispatch(req)
         overrides = bpod.override_calls()
@@ -131,8 +144,15 @@ class TestBpodActionDriver:
     def test_valve_pulse_repeated_n_times(self):
         driver, bpod = self._make_driver()
         req = ActionRequest(
-            setup="s", device="bpod", action="valve_pulse",
-            params={"valve_id": 1, "duration_s": 0.001, "n_pulses": 3, "inter_pulse_s": 0.001},
+            setup="s",
+            device="bpod",
+            action="valve_pulse",
+            params={
+                "valve_id": 1,
+                "duration_s": 0.001,
+                "n_pulses": 3,
+                "inter_pulse_s": 0.001,
+            },
         )
         driver.dispatch(req)
         overrides = bpod.override_calls()
@@ -143,8 +163,15 @@ class TestBpodActionDriver:
         driver, bpod = self._make_driver()
         # Override n_pulses to 1 to keep the test fast
         req = ActionRequest(
-            setup="s", device="bpod", action="valve_flush",
-            params={"valve_id": 3, "n_pulses": 1, "duration_s": 0.001, "inter_pulse_s": 0.001},
+            setup="s",
+            device="bpod",
+            action="valve_flush",
+            params={
+                "valve_id": 3,
+                "n_pulses": 1,
+                "duration_s": 0.001,
+                "inter_pulse_s": 0.001,
+            },
         )
         driver.dispatch(req)
         overrides = bpod.override_calls()
@@ -155,6 +182,7 @@ class TestBpodActionDriver:
 
     def test_valve_closes_on_interrupt(self):
         """Even if the loop body raises, valve is closed in finally."""
+
         class _FailBpod(SimBpod):
             def manual_override(self, *args):
                 if args[-1] == 1:  # on open, record then raise after first
@@ -168,18 +196,28 @@ class TestBpodActionDriver:
         bpod.open()
         driver = BpodActionDriver(bpod)
         req = ActionRequest(
-            setup="s", device="bpod", action="valve_pulse",
-            params={"valve_id": 1, "duration_s": 0.001, "n_pulses": 1, "inter_pulse_s": 0.001},
+            setup="s",
+            device="bpod",
+            action="valve_pulse",
+            params={
+                "valve_id": 1,
+                "duration_s": 0.001,
+                "n_pulses": 1,
+                "inter_pulse_s": 0.001,
+            },
         )
         with pytest.raises(RuntimeError):
             driver.dispatch(req)
         # The finally block should have attempted a close (value=0)
         close_calls = [o for o in bpod.override_calls() if o[4] == 0]
-        assert len(close_calls) >= 1, "valve must be closed in finally even after exception"
+        assert len(close_calls) >= 1, (
+            "valve must be closed in finally even after exception"
+        )
 
 
 # ---------------------------------------------------------------------------
 # ActionRequest model
+
 
 class TestActionRequest:
     def test_default_params_is_empty_dict(self):
@@ -188,7 +226,9 @@ class TestActionRequest:
 
     def test_params_accepted(self):
         req = ActionRequest(
-            setup="s1", device="bpod", action="valve_pulse",
+            setup="s1",
+            device="bpod",
+            action="valve_pulse",
             params={"valve_id": 2, "duration_s": 0.030},
         )
         assert req.params["valve_id"] == 2

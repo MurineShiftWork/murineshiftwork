@@ -14,11 +14,11 @@ Usage
 python tests/test_reader_interface_parity.py
 python tests/test_reader_interface_parity.py --new /path/new --legacy /path/legacy
 """
+
 import argparse
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -36,6 +36,7 @@ LEGACY_DEFAULT = (
 
 
 # ── helpers ────────────────────────────────────────────────────────────────────
+
 
 def _dtype_class(dtype) -> str:
     """Collapse dtype to a broad class for comparison: numeric / bool / object."""
@@ -55,7 +56,9 @@ def _cell_type(series: pd.Series) -> str:
     return type(first).__name__
 
 
-def compare_dfs(df_new: pd.DataFrame, df_leg: pd.DataFrame) -> tuple[list[str], list[str]]:
+def compare_dfs(
+    df_new: pd.DataFrame, df_leg: pd.DataFrame
+) -> tuple[list[str], list[str]]:
     """Returns (failures, warnings).
 
     Failures: dtype class mismatches on shared columns — these would break computation.
@@ -110,9 +113,15 @@ def compare_dfs(df_new: pd.DataFrame, df_leg: pd.DataFrame) -> tuple[list[str], 
                 )
 
     if dtype_mismatches:
-        failures.append(f"Dtype class mismatches ({len(dtype_mismatches)}):\n" + "\n".join(dtype_mismatches))
+        failures.append(
+            f"Dtype class mismatches ({len(dtype_mismatches)}):\n"
+            + "\n".join(dtype_mismatches)
+        )
     if cell_type_mismatches:
-        failures.append(f"Cell type mismatches ({len(cell_type_mismatches)}):\n" + "\n".join(cell_type_mismatches))
+        failures.append(
+            f"Cell type mismatches ({len(cell_type_mismatches)}):\n"
+            + "\n".join(cell_type_mismatches)
+        )
 
     return failures, warnings
 
@@ -129,6 +138,7 @@ def compare_settings(s_new: dict, s_leg: dict, label: str) -> list[str]:
 
 
 # ── main ───────────────────────────────────────────────────────────────────────
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -173,7 +183,11 @@ def main():
 
     # ── 2. Completeness flags ─────────────────────────────────────────────────
     print("\n[2] Completeness flags")
-    for flag in ("is_complete_session", "is_legacy_session", "is_ephys_session"):
+    for flag in (
+        "is_complete_session",
+        "is_legacy_session",
+        "is_ephys_session",
+    ):
         vn = sd_new.get(flag)
         vl = sd_leg.get(flag)
         match = "OK" if vn == vl else "MISMATCH"
@@ -202,7 +216,9 @@ def main():
         if not df_failures and not df_warnings:
             print("  OK — same columns, same dtype classes, same cell types")
         elif not df_failures:
-            print("  OK — no dtype failures (warnings above are content/version differences)")
+            print(
+                "  OK — no dtype failures (warnings above are content/version differences)"
+            )
 
         # Show dtype summary for shared columns
         shared_cols = sorted(set(df_new.columns) & set(df_leg.columns))
@@ -210,7 +226,11 @@ def main():
         for col in shared_cols:
             dn = str(df_new[col].dtype)
             dl = str(df_leg[col].dtype)
-            flag = "" if _dtype_class(df_new[col].dtype) == _dtype_class(df_leg[col].dtype) else "  *** MISMATCH"
+            flag = (
+                ""
+                if _dtype_class(df_new[col].dtype) == _dtype_class(df_leg[col].dtype)
+                else "  *** MISMATCH"
+            )
             print(f"    {col:<45} {dn:<20} | {dl}{flag}")
 
     # ── 4. settings.task keys ─────────────────────────────────────────────────

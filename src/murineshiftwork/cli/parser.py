@@ -1,18 +1,24 @@
-from argparse import ArgumentDefaultsHelpFormatter
-from argparse import ArgumentParser
-from argparse import RawDescriptionHelpFormatter
+from argparse import (
+    ArgumentDefaultsHelpFormatter,
+    ArgumentParser,
+    RawDescriptionHelpFormatter,
+)
 from importlib.metadata import version as _get_version
 from textwrap import dedent
 
-from murineshiftwork.cli.defaults import available_tasks
-from murineshiftwork.cli.defaults import default_config_dir
-from murineshiftwork.cli.defaults import default_out_path
-from murineshiftwork.cli.execute import run_action
-from murineshiftwork.cli.execute import run_calibration
-from murineshiftwork.cli.execute import run_init
-from murineshiftwork.cli.execute import run_setup
-from murineshiftwork.cli.execute import run_subject
-from murineshiftwork.cli.execute import run_task
+from murineshiftwork.cli.defaults import (
+    available_tasks,
+    default_config_dir,
+    default_out_path,
+)
+from murineshiftwork.cli.execute import (
+    run_action,
+    run_calibration,
+    run_init,
+    run_setup,
+    run_subject,
+    run_task,
+)
 
 try:
     _MSW_VERSION = _get_version("murineshiftwork")

@@ -15,13 +15,13 @@ from pathlib import Path
 # (core logic / CLI) controls which namespace is written.  parse_session_basename()
 # identifies the version of any existing basename from the datetime field width.
 
-NAMESPACE_V1 = "v1"        # current: microsecond precision  e.g. 20260514_143022_123456
-NAMESPACE_LEGACY = "legacy" # pre-v1:  second precision       e.g. 20210718_152153
+NAMESPACE_V1 = "v1"  # current: microsecond precision  e.g. 20260514_143022_123456
+NAMESPACE_LEGACY = "legacy"  # pre-v1:  second precision       e.g. 20210718_152153
 
 CURRENT_NAMESPACE_VERSION = NAMESPACE_V1
 
 _NAMESPACE_FORMATS: dict[str, str] = {
-    NAMESPACE_V1:     "%Y%m%d_%H%M%S_%f",
+    NAMESPACE_V1: "%Y%m%d_%H%M%S_%f",
     NAMESPACE_LEGACY: "%Y%m%d_%H%M%S",
 }
 
@@ -50,6 +50,7 @@ def _validate_path_component(value: str, field: str) -> None:
 
 # ---------------------------------------------------------------------------
 # Generation
+
 
 def generate_session_paths(
     subject: str,
@@ -122,6 +123,7 @@ def generate_session_paths(
 # ---------------------------------------------------------------------------
 # Compatibility shim — existing callers use build_data_paths
 
+
 def build_data_paths(
     basepath=None,
     subject=None,
@@ -144,6 +146,7 @@ def build_data_paths(
 
 # ---------------------------------------------------------------------------
 # Parsing
+
 
 def parse_session_basename(basename: str) -> dict:
     """Parse subject, datetime, task from a session basename.

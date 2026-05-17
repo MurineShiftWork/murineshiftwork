@@ -3,8 +3,10 @@
 Tests run against both JSONL and PKL fixtures. RCE file checks are skipped
 because rpi_camera_ensemble is not installed in the test environment.
 """
-import pytest
+
 from pathlib import Path
+
+import pytest
 
 from murineshiftwork.readers.validate import ValidationResult, validate_session
 
@@ -21,6 +23,7 @@ def _session_dir(variant="jsonl"):
 # ---------------------------------------------------------------------------
 # Return type and structure
 
+
 def test_validate_returns_validation_result_jsonl():
     result = validate_session(_session_dir("jsonl"), verbose=False)
     assert isinstance(result, ValidationResult)
@@ -33,6 +36,7 @@ def test_validate_returns_validation_result_pkl():
 
 # ---------------------------------------------------------------------------
 # MSW completeness (no RCE → no TTL checks; just file presence)
+
 
 def test_validate_jsonl_msw_complete():
     result = validate_session(_session_dir("jsonl"), verbose=False)
@@ -58,6 +62,7 @@ def test_validate_pkl_passes():
 
 # ---------------------------------------------------------------------------
 # Version and metadata
+
 
 def test_validate_jsonl_version_known():
     result = validate_session(_session_dir("jsonl"), verbose=False)

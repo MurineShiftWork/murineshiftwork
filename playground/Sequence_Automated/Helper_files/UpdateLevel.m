@@ -1,4 +1,4 @@
-function [current_level] = UpdateLevel(GUI,Port_1,Port_2,Port_3,Port_4,Port_5,Start_Level)  
+function [current_level] = UpdateLevel(GUI,Port_1,Port_2,Port_3,Port_4,Port_5,Start_Level)
 
 global BpodSystem
 %current trial:
@@ -88,7 +88,7 @@ if BpodSystem.Data.SessionVariables.counter > GUI.Regression_BufferTrials + 1
         else
             floor = 1; % previously this was 14: floor effect. This was removed 19.4.21
         end
-        
+
         if BpodSystem.Data.TLevel > floor
             if mean(BpodSystem.Data.SessionVariables.Perfect_Seqs(i-GUI.Regression_BufferTrials:i)) < GUI.RegressionThreshold
                 BpodSystem.Data.TLevel = BpodSystem.Data.TLevel-1;
@@ -105,10 +105,3 @@ end
 
 
 current_level = BpodSystem.Data.TLevel;
-
-    
-
-
-
-
-

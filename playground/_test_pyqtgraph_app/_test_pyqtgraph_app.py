@@ -1,12 +1,6 @@
-import logging
-import time
-
 import numpy as np
 import pyqtgraph as pg
-from pybpodapi.protocol import Bpod
-from pybpodapi.state_machine import StateMachine
-from pyqtgraph.Qt import QtCore
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtCore, QtGui
 
 app = pg.mkQApp()
 mw = QtGui.QMainWindow()

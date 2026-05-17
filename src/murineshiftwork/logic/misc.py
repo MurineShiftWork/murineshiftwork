@@ -38,12 +38,11 @@ def test_serial_port_is_accessible(port=None, baudrate=115200, timeout=1):
 
 def list_available_tasks(detailed=False):
     from pathlib import Path
+
     import murineshiftwork.tasks as _tasks_pkg
 
     tasks_dir = (
-        Path(_tasks_pkg.__path__[0])
-        if hasattr(_tasks_pkg, "__path__")
-        else None
+        Path(_tasks_pkg.__path__[0]) if hasattr(_tasks_pkg, "__path__") else None
     )
     if tasks_dir is None or not tasks_dir.exists():
         # Namespace-package fallback: locate via installed package __path__
@@ -91,7 +90,7 @@ def print_box(msg=None, indent=2):
     width = max(map(len, lines))
     space = " " * indent
 
-    top = f"+{'-' * (width + 2*indent)}+\n"
+    top = f"+{'-' * (width + 2 * indent)}+\n"
     line_strings = [f"|{space}{line:<{width}}{space}|\n" for line in lines]
     text_body = "".join(line_strings)
 

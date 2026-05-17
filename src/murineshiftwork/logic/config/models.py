@@ -7,9 +7,9 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 from scipy.optimize import curve_fit as _scipy_curve_fit
 
-
 # ---------------------------------------------------------------------------
 # Serial devices
+
 
 class SerialDevice(BaseModel):
     type: str
@@ -62,6 +62,7 @@ DeviceUnion = Annotated[
 # ---------------------------------------------------------------------------
 # Calibrations
 
+
 def _exp_model(x: np.ndarray, a: float, b: float, c: float) -> np.ndarray:
     """a * exp(b * x) + c  — the valve volume-vs-time model."""
     return a * np.exp(b * x) + c
@@ -97,7 +98,8 @@ class ValveCalibration(BaseModel):
         try:
             popt, _ = _scipy_curve_fit(
                 _exp_model,
-                s, ul,
+                s,
+                ul,
                 p0=[a0, b0, c0],
                 bounds=([0.0, 0.0, -np.inf], [np.inf, np.inf, np.inf]),
                 maxfev=10_000,
@@ -145,7 +147,10 @@ class ValveCalibration(BaseModel):
         if np.any(ul <= 0):
             return False, "one or more volume values are ≤ 0"
         if np.any(np.diff(ul) <= 0):
-            return False, "volume is not monotonically increasing with open time"
+            return (
+                False,
+                "volume is not monotonically increasing with open time",
+            )
 
         try:
             a, b, c = self._fit()
@@ -153,14 +158,20 @@ class ValveCalibration(BaseModel):
             return False, str(exc)
 
         if b <= 0:
-            return False, f"fit parameter b = {b:.4f} ≤ 0 (curve is not exponential growth)"
+            return (
+                False,
+                f"fit parameter b = {b:.4f} ≤ 0 (curve is not exponential growth)",
+            )
 
         ul_pred = _exp_model(s, a, b, c)
         ss_res = float(np.sum((ul - ul_pred) ** 2))
         ss_tot = float(np.sum((ul - ul.mean()) ** 2))
         r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
         if r2 < r2_threshold:
-            return False, f"R² = {r2:.3f} < {r2_threshold} (poor exponential fit)"
+            return (
+                False,
+                f"R² = {r2:.3f} < {r2_threshold} (poor exponential fit)",
+            )
 
         return True, f"ok (R² = {r2:.3f}, a={a:.4f}, b={b:.5f}, c={c:.4f})"
 
@@ -172,13 +183,15 @@ class Calibrations(BaseModel):
 # ---------------------------------------------------------------------------
 # Camera config (minimal — full spec in design/camera_acquisition.md)
 
+
 class CameraConfig(BaseModel):
-    backend: str = "rce"    # "rce" | "flir_bonsai"
-    config: str = ""        # path to backend-specific config file
+    backend: str = "rce"  # "rce" | "flir_bonsai"
+    config: str = ""  # path to backend-specific config file
 
 
 # ---------------------------------------------------------------------------
 # Setup config
+
 
 class SetupConfig(BaseModel):
     name: str
@@ -201,6 +214,7 @@ class SetupConfig(BaseModel):
 # ---------------------------------------------------------------------------
 # Subject config
 
+
 class SubjectConfig(BaseModel):
     name: str
     registered: str = ""
@@ -214,6 +228,7 @@ class SubjectConfig(BaseModel):
 # ---------------------------------------------------------------------------
 # Execution config — assembled at session start from setup + subject + task
 
+
 class ExecutionConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -226,12 +241,14 @@ class ExecutionConfig(BaseModel):
 # ---------------------------------------------------------------------------
 # Hardware action request — same shape used by Phase 1 CLI and Phase 2 RPC
 
+
 class ActionRequest(BaseModel):
     """Describes a one-shot hardware action to execute on a named setup device.
 
     Fields map directly to the Phase 2 FastAPI body so the CLI can slot into
     the same dispatch path without changes when ControllerSession is introduced.
     """
+
     setup: str
     device: str
     action: str

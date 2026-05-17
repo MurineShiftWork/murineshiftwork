@@ -20,9 +20,7 @@ if __name__ == "__main__":
 
     local_path = Path("/mnt/fastdata/data")
 
-    local_path_full = (
-        Path(local_path) / subject / main_session_folder / session_name
-    )
+    local_path_full = Path(local_path) / subject / main_session_folder / session_name
     local_path_full.mkdir(parents=True, exist_ok=True)
 
     metadata_file = local_path_full / f"{session_name}.settings.ephys.json"

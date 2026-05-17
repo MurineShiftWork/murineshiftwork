@@ -1,12 +1,17 @@
-from murineshiftwork.hardware.bpod.factory import BpodFactory
+from murineshiftwork.hardware.bpod.factory import BpodFactory as BpodFactory
 from murineshiftwork.hardware.bpod.ttl import (
-    add_trial_onset_ttl,
-    make_ttl_identifier_sequences,
+    add_trial_onset_ttl as add_trial_onset_ttl,
 )
-from murineshiftwork.hardware.bpod.water import make_sma_for_drop_of_water
+from murineshiftwork.hardware.bpod.ttl import (
+    make_ttl_identifier_sequences as make_ttl_identifier_sequences,
+)
+from murineshiftwork.hardware.bpod.water import (
+    make_sma_for_drop_of_water as make_sma_for_drop_of_water,
+)
 
 
 def patch_user_settings():
     """Patch MSW pybpod user settings into the confapp configuration."""
     from confapp import conf
+
     conf += "murineshiftwork.hardware.bpod.user_settings"

@@ -3,24 +3,28 @@ import logging
 from pathlib import Path
 
 import yaml
-from murineshiftwork.cli.defaults import available_tasks
-from murineshiftwork.cli.defaults import DEFAULT_CALIBRATION_FILE_SOUND
-from murineshiftwork.cli.defaults import DEFAULT_CALIBRATION_FILE_STAGE
-from murineshiftwork.cli.defaults import DEFAULT_CALIBRATION_FILE_WATER
-from murineshiftwork.cli.defaults import default_config_dir
-from murineshiftwork.cli.defaults import default_out_path
+
+from murineshiftwork.cli.defaults import (
+    DEFAULT_CALIBRATION_FILE_SOUND,
+    DEFAULT_CALIBRATION_FILE_STAGE,
+    DEFAULT_CALIBRATION_FILE_WATER,
+    available_tasks,
+    default_config_dir,
+    default_out_path,
+)
 from murineshiftwork.cli.preflight import preflight_hardware_check
-from murineshiftwork.logic.config import ExecutionConfig
-from murineshiftwork.logic.config import load_setup_config
-from murineshiftwork.logic.config import load_subject_config
-from murineshiftwork.logic.config import read_config
-from murineshiftwork.logic.config import read_task_modes
-from murineshiftwork.logic.config import validate_config_file_path
+from murineshiftwork.logic.config import (
+    ExecutionConfig,
+    load_setup_config,
+    load_subject_config,
+    read_config,
+    read_task_modes,
+    validate_config_file_path,
+)
 from murineshiftwork.logic.log import setup_logging
 from murineshiftwork.logic.machine_config import resolve_config_dir
 from murineshiftwork.logic.misc import find_task_by_name
-from murineshiftwork.logic.paths import get_host_ip
-from murineshiftwork.logic.paths import get_host_name
+from murineshiftwork.logic.paths import get_host_ip, get_host_name
 
 # Re-export for anything that imported these from here before the split
 __all__ = [
@@ -83,10 +87,9 @@ def _evaluate_task(args_dict=None):
             )
         args_dict["task_dir"] = get_task_dir(task=args_dict["task"])
     else:
-        if not args_dict["command"] == "register":
-            raise ValueError("Task name can only be left out if command is 'register'.")
-        else:
-            logging.debug("No task defined. Command is register.")
+        raise ValueError(
+            "Task name is required. Pass -t <task_name> to the run command."
+        )
     return args_dict
 
 

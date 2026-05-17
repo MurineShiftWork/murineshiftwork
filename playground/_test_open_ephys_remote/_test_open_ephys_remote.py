@@ -1,10 +1,11 @@
 """
-    Test remote acquisition control of Open Ephys GUI via Network Events
+Test remote acquisition control of Open Ephys GUI via Network Events
 
-    https://open-ephys.github.io/gui-docs/User-Manual/Plugins/Network-Events.html
-    https://github.com/open-ephys/plugin-GUI/tree/master/Resources/Python
-    https://github.com/open-ephys/open-ephys-python-tools
+https://open-ephys.github.io/gui-docs/User-Manual/Plugins/Network-Events.html
+https://github.com/open-ephys/plugin-GUI/tree/master/Resources/Python
+https://github.com/open-ephys/open-ephys-python-tools
 """
+
 import os
 import time
 

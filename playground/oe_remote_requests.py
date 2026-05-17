@@ -1,6 +1,7 @@
 if __name__ == "__main__":
-    from pathlib import Path
     from datetime import datetime
+    from pathlib import Path
+
     import requests
 
     dt = datetime.now().strftime("%Y%m%d_%H%M%S")

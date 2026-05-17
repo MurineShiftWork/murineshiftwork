@@ -13,6 +13,7 @@ The SMA approach (make_sma_for_drop_of_water) is only appropriate for calibratio
 tasks where Bpod-timed pulses and trial recording are needed. Here we just want
 firmware-level open/close with host-side sleep for timing.
 """
+
 import logging
 import time
 

@@ -1,14 +1,12 @@
 import time
-from multiprocessing import Process
-from multiprocessing import Queue
+from multiprocessing import Process, Queue
 from pathlib import Path
 from sys import exit
 
 import myterial as mt
 import numpy as np
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtCore, QtGui
 
 color_rewarded = mt.blue_dark
 color_unrewarded = mt.grey
@@ -125,9 +123,7 @@ class OnlinePlottingForPS(Process):
         self.data_queue = data_queue
         self.kill_queue = kill_queue
         self.max_trials = max_trials if max_trials else self.max_trials
-        self.values_to_show = (
-            values_to_show if values_to_show else self.values_to_show
-        )
+        self.values_to_show = values_to_show if values_to_show else self.values_to_show
         self.data = Data(vector_length=self.max_trials)
 
     def run(self) -> None:
@@ -137,9 +133,7 @@ class OnlinePlottingForPS(Process):
 
         self.app = pg.mkQApp(self.name)
         self.win = pg.GraphicsLayoutWidget(show=True, title=self.name)
-        self.update_window_properties(
-            window_title=Path(self.session_name).name
-        )
+        self.update_window_properties(window_title=Path(self.session_name).name)
 
         # Top row: trial outcomes
         self.plot_to = self.win.addPlot(name="top_row")
@@ -270,9 +264,7 @@ class OnlinePlottingForPS(Process):
         new_top_height_margin = int(screen_size_px.height() * frame_margins)
         # new geometry
         pos = QtCore.QPoint(new_top_width_margin, new_top_height_margin)
-        new_w = int(
-            screen_size_px.width() - 2 * frame_margins * screen_size_px.width()
-        )
+        new_w = int(screen_size_px.width() - 2 * frame_margins * screen_size_px.width())
         new_h = int(screen_size_px.height() * window_height)
         # mov window
         self.win.move(pos)
@@ -297,9 +289,7 @@ class OnlinePlottingForPS(Process):
         :return:
         """
         self.trial_index = dict_for_update["trial_index"]
-        self.data.moving_average[self.trial_index] = dict_for_update[
-            "moving_average"
-        ]
+        self.data.moving_average[self.trial_index] = dict_for_update["moving_average"]
 
         choice = dict_for_update["choice"]
         rewarded = dict_for_update["rewarded"]
@@ -381,12 +371,12 @@ class OnlinePlottingForPS(Process):
                 np.random.random(),
             )
 
-        self.data.probability_left[
-            self.trial_index
-        ] = self.data.test__block_probability_tuple[0]
-        self.data.probability_right[
-            self.trial_index
-        ] = self.data.test__block_probability_tuple[1]
+        self.data.probability_left[self.trial_index] = (
+            self.data.test__block_probability_tuple[0]
+        )
+        self.data.probability_right[self.trial_index] = (
+            self.data.test__block_probability_tuple[1]
+        )
 
         self.update_plots()
 

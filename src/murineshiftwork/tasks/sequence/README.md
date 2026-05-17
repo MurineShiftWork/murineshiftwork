@@ -1,7 +1,7 @@
 # Sequence Automated
 
-A 5-port sequential poke task with 50 automated training levels.  
-Ported from `tests/Sequence_Automated/` (MATLAB/Bpod) into the MSW Python framework,  
+A 5-port sequential poke task with 50 automated training levels.
+Ported from `tests/Sequence_Automated/` (MATLAB/Bpod) into the MSW Python framework,
 structured as a freely moving protocol following `probabilistic_switching`.
 
 ---

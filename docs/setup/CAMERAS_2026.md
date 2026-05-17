@@ -24,7 +24,7 @@
 |       | 2            | pink       | dc:a6:32:45:e4:5f | 113    | pink         | right           | x  | x      |               | -              | x           | x               |
 |       | 1            | green      | dc:a6:32:a2:0f:16 | 114    | green/white  | bottom          | x  | x      |               | -              | x           | x               |
 | --    |              |            |                   |        |              |                 |    |        |               |                |             |                 |
-| 2     | 2            | red        | dc:a6:32:a9:61:aa | 121    | red          | top             | x  | x      |               | -              | x           | x               |   
+| 2     | 2            | red        | dc:a6:32:a9:61:aa | 121    | red          | top             | x  | x      |               | -              | x           | x               |
 |       | 3            | green      | dc:a6:32:45:a8:89 | 122    | green        | left            | x  | x      |               | -              | x           | x               |
 |       | 4            | orange     | e4:5f:01:1f:d7:10 | 123    | orange       | right           | x  | x      |               | -              | x           | x               |
 |       | 1            | blue       | dc:a6:32:34:ae:79 | 124    | blue         | bottom          | x  | x      |               | -              | x           | x               |

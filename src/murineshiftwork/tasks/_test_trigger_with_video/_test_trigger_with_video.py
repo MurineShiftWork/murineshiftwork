@@ -1,9 +1,6 @@
 from murineshiftwork.tasks.periodic_trigger_with_video.periodic_trigger_with_video import (
     run_task as run_task_core,
 )
-from murineshiftwork.tasks.periodic_trigger_with_video.periodic_trigger_with_video import (
-    Task,
-)
 
 
 def run_task(**args_dict):

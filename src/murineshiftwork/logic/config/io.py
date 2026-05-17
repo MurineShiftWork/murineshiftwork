@@ -6,7 +6,11 @@ from typing import Optional
 
 import yaml
 
-from murineshiftwork.logic.config.models import SetupConfig, SubjectConfig, ValveCalibration
+from murineshiftwork.logic.config.models import (
+    SetupConfig,
+    SubjectConfig,
+    ValveCalibration,
+)
 
 
 def load_setup_config(config_dir: str | Path, setup_name: str) -> Optional[SetupConfig]:
@@ -19,7 +23,9 @@ def load_setup_config(config_dir: str | Path, setup_name: str) -> Optional[Setup
         return None
     path = Path(config_dir) / "setups" / f"{setup_name}.yaml"
     if not path.exists():
-        logging.warning(f"Setup '{setup_name}' not found at {path} — bpod port from CLI arg only")
+        logging.warning(
+            f"Setup '{setup_name}' not found at {path} — bpod port from CLI arg only"
+        )
         return None
     with open(path) as f:
         data = yaml.safe_load(f)
@@ -76,7 +82,13 @@ def update_valve_calibration(
     }
 
     with open(path, "w") as f:
-        yaml.dump(raw, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            raw,
+            f,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
 
     logging.info(
         f"Wrote calibration for valve {valve_id} of setup '{setup_name}' "
@@ -114,10 +126,18 @@ def save_subject_task_stage_position(
             "task_overrides": {},
         }
 
-    raw.setdefault("task_overrides", {}).setdefault(task_name, {})["stage_position"] = position_name
+    raw.setdefault("task_overrides", {}).setdefault(task_name, {})["stage_position"] = (
+        position_name
+    )
 
     with open(path, "w") as f:
-        yaml.dump(raw, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            raw,
+            f,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
 
     logging.info(
         f"Saved stage_position '{position_name}' for subject '{subject_name}', task '{task_name}' → {path}"
@@ -146,7 +166,12 @@ def update_stage_config(
 
     for axis_name, axis_data in stage_controller_config.get("axes", {}).items():
         axis = stage.setdefault("axes", {}).setdefault(axis_name, {})
-        for key in ("position_min", "position_max", "velocity_max", "operating_mode"):
+        for key in (
+            "position_min",
+            "position_max",
+            "velocity_max",
+            "operating_mode",
+        ):
             if key in axis_data:
                 axis[key] = axis_data[key]
 
@@ -155,13 +180,21 @@ def update_stage_config(
         stage["known_positions"] = known_positions
 
     with open(path, "w") as f:
-        yaml.dump(raw, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            raw,
+            f,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
 
     logging.info(f"Updated stage config in setup '{setup_name}' at {path}")
     return True
 
 
-def load_subject_config(config_dir: str | Path, subject_name: str) -> Optional[SubjectConfig]:
+def load_subject_config(
+    config_dir: str | Path, subject_name: str
+) -> Optional[SubjectConfig]:
     """Load SubjectConfig from {config_dir}/subjects/{subject_name}.yaml.
 
     Returns None silently if the file does not exist; INI-based subject

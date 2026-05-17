@@ -2,11 +2,11 @@
 Demonstrate the use of layouts to control placement of multiple plots / views /
 labels
 """
+
 import cv2 as cv
 import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtCore
-
 
 app = pg.mkQApp("Gradiant Layout Example")
 view = pg.GraphicsView()

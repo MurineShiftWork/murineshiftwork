@@ -1,11 +1,8 @@
 import logging
 import time
 
-from pybpodapi.bpod import Bpod
-
 from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class Task(TaskRunner):
@@ -19,9 +16,7 @@ class Task(TaskRunner):
             sma = make_ttl_identifier_sequences(
                 bpod=self.bpod,
                 sequence=test_sequence,
-                output_chanel_pulse=eval(
-                    f"Bpod.OutputChannels.BNC{bnc_channel}"
-                ),
+                output_chanel_pulse=eval(f"Bpod.OutputChannels.BNC{bnc_channel}"),
             )
 
             self.bpod.send_state_machine(sma)

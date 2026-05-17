@@ -3,8 +3,8 @@ import time
 from pathlib import Path
 
 import numpy as np
-from pybpodapi.protocol import Bpod
-from pybpodapi.protocol import StateMachine
+from pybpodapi.protocol import Bpod, StateMachine
+
 # from rpi_camera_colony.control.conductor import Conductor
 from rpi_camera_ensemble.conductor.conductor import Conductor
 from rpi_camera_ensemble.config.acquisition import (
@@ -13,17 +13,16 @@ from rpi_camera_ensemble.config.acquisition import (
 from rpi_camera_ensemble.config.conductor import ConductorConfig
 from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
-from murineshiftwork.logic.io import save_trial_data
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
     barcode_config_from_settings,
     inject_barcode_states,
     prepare_barcode,
 )
+from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.misc import draw_jittered_trial_time
-from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class AirPuff(object):
@@ -45,9 +44,7 @@ class AirPuff(object):
         barcode_value=None,
         barcode_wall_time=None,
     ):
-        first_state_name = str(
-            list(trial_data["States timestamps"].keys())[0]
-        ).lower()
+        first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
         trial_type = (
             "barcode"
             if first_state_name.startswith(BARCODE_FIRST_STATE_NAME)
@@ -92,7 +89,11 @@ class Task(TaskRunner):
             or not inter_trial_interval
         ):
             raise ValueError(
-                [air_puff_durations, n_repeats_per_duration, inter_trial_interval]
+                [
+                    air_puff_durations,
+                    n_repeats_per_duration,
+                    inter_trial_interval,
+                ]
             )
 
         barcode_cfg = barcode_config_from_settings(task_settings)
@@ -123,7 +124,9 @@ class Task(TaskRunner):
                 iti_this_trial = None
                 barcode_value, barcode_wall_time, timing_seq = prepare_barcode(barcoder)
                 sma = StateMachine(bpod=self.bpod)
-                sma = inject_barcode_states(sma, timing_seq, bnc_channel, last_state_name="exit")
+                sma = inject_barcode_states(
+                    sma, timing_seq, bnc_channel, last_state_name="exit"
+                )
 
             else:
                 air_puff_duration = trial_types[trial_index - 1]
@@ -144,10 +147,17 @@ class Task(TaskRunner):
                     state_name="release_puff",
                     state_timer=air_puff_duration,
                     state_change_conditions={Bpod.Events.Tup: BARCODE_FIRST_STATE_NAME},
-                    output_actions=[(Bpod.OutputChannels.Valve, HARDWARE_VALVE_FOR_AIR)],
+                    output_actions=[
+                        (Bpod.OutputChannels.Valve, HARDWARE_VALVE_FOR_AIR)
+                    ],
                 )
                 # ITI barcode + post-barcode wait
-                sma = inject_barcode_states(sma, timing_seq, bnc_channel, last_state_name="iti_post_barcode")
+                sma = inject_barcode_states(
+                    sma,
+                    timing_seq,
+                    bnc_channel,
+                    last_state_name="iti_post_barcode",
+                )
                 sma.add_state(
                     state_name="iti_post_barcode",
                     state_timer=iti_post_barcode,
@@ -178,7 +188,9 @@ class Task(TaskRunner):
         try:
             bv_end, bwt_end, timing_seq_end = prepare_barcode(barcoder)
             sma_end = StateMachine(bpod=self.bpod)
-            sma_end = inject_barcode_states(sma_end, timing_seq_end, bnc_channel, last_state_name="exit")
+            sma_end = inject_barcode_states(
+                sma_end, timing_seq_end, bnc_channel, last_state_name="exit"
+            )
             self.bpod.send_state_machine(sma_end)
             self.bpod.run_state_machine(sma_end)
             trial_data_end = self.bpod.session.current_trial.export()

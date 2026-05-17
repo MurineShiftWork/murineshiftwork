@@ -30,7 +30,13 @@ OUT_DIR = Path("/mnt/maindata/msw_configs/subjects")
 SKIP_SECTIONS = {"_test_subject"}
 
 # Top-level scalar fields we recognise as SubjectConfig fields
-SUBJECT_SCALAR_FIELDS = {"project", "experiment", "comment", "aliases", "registered"}
+SUBJECT_SCALAR_FIELDS = {
+    "project",
+    "experiment",
+    "comment",
+    "aliases",
+    "registered",
+}
 
 
 def parse_value(raw):
@@ -78,11 +84,19 @@ def build_subject_dict(name: str, section) -> dict:
             subject["task_overrides"][key] = task_overrides
         elif key in SUBJECT_SCALAR_FIELDS:
             if key == "aliases":
-                raw = value.strip('"').strip("'") if isinstance(value, str) else str(value)
+                raw = (
+                    value.strip('"').strip("'")
+                    if isinstance(value, str)
+                    else str(value)
+                )
                 subject["aliases"] = [raw] if raw else []
             else:
                 # Strip surrounding quotes that configobj sometimes preserves
-                cleaned = value.strip('"').strip("'") if isinstance(value, str) else str(value)
+                cleaned = (
+                    value.strip('"').strip("'")
+                    if isinstance(value, str)
+                    else str(value)
+                )
                 subject[key] = cleaned
         # Other unknown scalar keys at subject level are silently ignored
 

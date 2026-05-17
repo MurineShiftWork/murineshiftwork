@@ -21,5 +21,3 @@ TASK
 ---
 
 murineshiftwork run --setup setup-1 --task probabilistic_switching_fixedsubjects --subject t022_acute_m1102629_220
-
-

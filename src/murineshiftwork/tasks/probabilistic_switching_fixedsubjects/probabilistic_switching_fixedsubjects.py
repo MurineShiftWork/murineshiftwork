@@ -25,12 +25,12 @@ TASK STRUCTURE
 
 
 """
+
 import logging
 import time
 from multiprocessing import Queue
 from pathlib import Path
 
-from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 from rpi_camera_ensemble.conductor.conductor import Conductor
 from rpi_camera_ensemble.config.acquisition import (
@@ -40,14 +40,12 @@ from rpi_camera_ensemble.config.conductor import ConductorConfig
 from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
 from murineshiftwork.logic.barcode import (
-    BARCODE_FIRST_STATE_NAME,
     barcode_config_from_settings,
     inject_barcode_states,
     prepare_barcode,
 )
 from murineshiftwork.logic.log import suppress_third_party_console_handlers
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 from murineshiftwork.tasks.probabilistic_switching_fixedsubjects.online_plotting import (
     OnlinePlottingForPS,
 )
@@ -62,7 +60,9 @@ class Task(TaskRunner):
 
         barcode_cfg = barcode_config_from_settings(task_settings)
         barcoder = BarcodeTTL(barcode_cfg)
-        bnc_channel = eval(f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}")
+        bnc_channel = eval(
+            f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}"
+        )
 
         task_control = TaskControl(
             bpod=self.bpod,
@@ -83,7 +83,9 @@ class Task(TaskRunner):
             if trial_index == 0 and not task_settings["testing"]:
                 barcode_value, barcode_wall_time, timing_seq = prepare_barcode(barcoder)
                 sma = StateMachine(bpod=self.bpod)
-                sma = inject_barcode_states(sma, timing_seq, bnc_channel, last_state_name="exit")
+                sma = inject_barcode_states(
+                    sma, timing_seq, bnc_channel, last_state_name="exit"
+                )
             else:
                 sma = task_control.draw_next_trial()
 
@@ -129,7 +131,12 @@ class Task(TaskRunner):
             try:
                 bv_end, bwt_end, timing_seq_end = prepare_barcode(barcoder)
                 sma_end = StateMachine(bpod=self.bpod)
-                sma_end = inject_barcode_states(sma_end, timing_seq_end, bnc_channel, last_state_name="exit")
+                sma_end = inject_barcode_states(
+                    sma_end,
+                    timing_seq_end,
+                    bnc_channel,
+                    last_state_name="exit",
+                )
                 self.bpod.send_state_machine(sma_end)
                 self.bpod.run_state_machine(sma_end)
                 trial_data_end = self.bpod.session.current_trial.export()
@@ -158,7 +165,9 @@ def run_task(**args_dict):
     setup_name = args_dict.get("metadata", {}).get("setup", "n/a")
 
     ensemble_cfg_file = args_dict["config_file_camera"]
-    assert Path(ensemble_cfg_file).exists(), f"Camera config not found: {ensemble_cfg_file}"
+    assert Path(ensemble_cfg_file).exists(), (
+        f"Camera config not found: {ensemble_cfg_file}"
+    )
     ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
     conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
 

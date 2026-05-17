@@ -1,7 +1,5 @@
-import argparse
 import json
 import logging
-import re
 import time
 
 import numpy as np
@@ -44,9 +42,7 @@ NPX2single = [
 ]
 shank_offset_npx2 = 1280
 NPX2multi = [
-    array + shank_offset_npx2 * factor
-    for factor in range(4)
-    for array in NPX2single
+    array + shank_offset_npx2 * factor for factor in range(4) for array in NPX2single
 ]
 
 PROBE_TO_SITES_LIST = {
@@ -79,9 +75,7 @@ def record_all_sites(
     recording_directory_full = f"{recording_directory}\\{recording_name_full}"
     logging.info(f"Recording directory: {recording_directory_full}")
 
-    _ = gui.set_record_path(
-        processor_record_node["id"], recording_directory_full
-    )
+    _ = gui.set_record_path(processor_record_node["id"], recording_directory_full)
 
     # for each probe, record segments of 384 sites for recording_duration
     for probe_info in npx_probes:

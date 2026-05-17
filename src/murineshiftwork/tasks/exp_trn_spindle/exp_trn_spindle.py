@@ -3,17 +3,15 @@ import logging
 import time
 
 import numpy as np
-import pandas as pd
-from pybpodapi.protocol import Bpod
-from pybpodapi.protocol import StateMachine
+from pybpodapi.protocol import Bpod, StateMachine
 from pypulsepal import PulsePal as PyPulsePal
 
+from murineshiftwork.hardware.bpod.ttl import (
+    add_trial_onset_ttl,
+    make_ttl_identifier_sequences,
+)
 from murineshiftwork.logic.io import save_trial_data
-from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
-from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
-from murineshiftwork.logic.stimulation import Stimulation
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 from murineshiftwork.tasks.exp_trn_spindle.param_sets import (
     stimulation_param_sets,
 )
@@ -30,9 +28,7 @@ class ProtocolObject:
         self.input_kwargs = kwargs
 
     def update(self, trial_index=None, trial_data=None):
-        first_state_name = str(
-            list(trial_data["States timestamps"].keys())[0]
-        ).lower()
+        first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
         if trial_index < 1 and first_state_name.startswith("pulse"):
             # IF TTL TRIAL
             trial_data["info"] = {
@@ -72,9 +68,7 @@ class Task(TaskRunner):
 
         raw_out_path = self.input_kwargs["session_paths"]["session_file_path"]
         with open(str(raw_out_path) + ".msw.stimulation.json", "w") as f:
-            out_json = json.dumps(
-                stimulation_param_sets, indent=4, sort_keys=True
-            )
+            out_json = json.dumps(stimulation_param_sets, indent=4, sort_keys=True)
             f.write(out_json)
 
         protocol_data = ProtocolObject(out_path=raw_out_path)
@@ -120,9 +114,7 @@ class Task(TaskRunner):
                     0, len(stimulation_param_sets), dtype=int
                 )
                 trial_stim_settings = stimulation_param_sets.get(stim_set_id)
-                pulse_train_duration = trial_stim_settings.get(
-                    "pulseTrainDuration"
-                )
+                pulse_train_duration = trial_stim_settings.get("pulseTrainDuration")
 
                 print(
                     "Trial",
@@ -194,9 +186,7 @@ class Task(TaskRunner):
                     "stim_set_id": stim_set_id,
                 }
             )
-            protocol_data.update(
-                trial_index=trial_index, trial_data=trial_data
-            )
+            protocol_data.update(trial_index=trial_index, trial_data=trial_data)
             protocol_data.save()
             trial_index += 1
 

@@ -1,9 +1,11 @@
 """Tests for flag_outlier_points — calibration data outlier detection."""
-import numpy as np
-import pytest
 
 from murineshiftwork.logic.calibration import flag_outlier_points
-
+from murineshiftwork.tasks._calibration_liquid_dynamic._calibration_liquid_dynamic import (
+    _compute_n_pulses,
+    _estimate_ul,
+    _suggest_additional_times,
+)
 
 # Realistic setup-3 data: exponential, well-behaved
 TIMES_S = [0.010, 0.028, 0.046, 0.064, 0.082]
@@ -12,7 +14,9 @@ GOOD_UL = [0.675, 2.075, 4.150, 6.525, 9.050]
 
 def test_clean_data_no_outliers():
     mask, residuals = flag_outlier_points(TIMES_S, GOOD_UL, sigma_threshold=2.0)
-    assert not mask.any(), f"Clean exponential data should have no outliers, got mask={mask}"
+    assert not mask.any(), (
+        f"Clean exponential data should have no outliers, got mask={mask}"
+    )
 
 
 def test_injected_outlier_is_flagged():
@@ -33,7 +37,9 @@ def test_injected_high_outlier_is_flagged():
 
 def test_fewer_than_three_points_returns_no_flags():
     """With < 3 points there is not enough data to fit — never flag."""
-    mask, residuals = flag_outlier_points([0.010, 0.046], [0.5, 2.0], sigma_threshold=2.0)
+    mask, residuals = flag_outlier_points(
+        [0.010, 0.046], [0.5, 2.0], sigma_threshold=2.0
+    )
     assert not mask.any()
     assert len(residuals) == 2
 
@@ -66,32 +72,44 @@ def test_outlier_mask_and_residuals_same_length():
 # ---------------------------------------------------------------------------
 # Helper function tests (no hardware)
 
-from murineshiftwork.tasks._calibration_liquid_dynamic._calibration_liquid_dynamic import (
-    _compute_n_pulses,
-    _estimate_ul,
-    _suggest_additional_times,
-)
-
 
 class TestComputeNPulses:
     def test_large_drop_needs_few_pulses(self):
-        n = _compute_n_pulses(8.0, scale_noise_g=0.05, min_snr=10, min_pulses=50, max_pulses=1000)
+        n = _compute_n_pulses(
+            8.0, scale_noise_g=0.05, min_snr=10, min_pulses=50, max_pulses=1000
+        )
         assert n <= 100, f"Expected ≤100 pulses for 8µL/drop, got {n}"
 
     def test_tiny_drop_needs_many_pulses(self):
-        n = _compute_n_pulses(0.5, scale_noise_g=0.05, min_snr=10, min_pulses=50, max_pulses=1000)
+        n = _compute_n_pulses(
+            0.5, scale_noise_g=0.05, min_snr=10, min_pulses=50, max_pulses=1000
+        )
         assert n >= 500, f"Expected ≥500 pulses for 0.5µL/drop, got {n}"
 
     def test_respects_min_pulses(self):
-        n = _compute_n_pulses(100.0, scale_noise_g=0.05, min_snr=10, min_pulses=50, max_pulses=1000)
+        n = _compute_n_pulses(
+            100.0,
+            scale_noise_g=0.05,
+            min_snr=10,
+            min_pulses=50,
+            max_pulses=1000,
+        )
         assert n >= 50
 
     def test_respects_max_pulses(self):
-        n = _compute_n_pulses(0.001, scale_noise_g=0.05, min_snr=10, min_pulses=50, max_pulses=1000)
+        n = _compute_n_pulses(
+            0.001,
+            scale_noise_g=0.05,
+            min_snr=10,
+            min_pulses=50,
+            max_pulses=1000,
+        )
         assert n <= 1000
 
     def test_zero_expected_ul_returns_max(self):
-        n = _compute_n_pulses(0.0, scale_noise_g=0.05, min_snr=10, min_pulses=50, max_pulses=1000)
+        n = _compute_n_pulses(
+            0.0, scale_noise_g=0.05, min_snr=10, min_pulses=50, max_pulses=1000
+        )
         assert n == 1000
 
 
@@ -117,17 +135,29 @@ class TestSuggestAdditionalTimes:
         times = [0.010, 0.028, 0.046, 0.064, 0.082]
         ul = [0.675, 2.075, 4.15, 6.525, 9.05]
         suggestions = _suggest_additional_times(
-            times, ul, min_ul=0.5, max_ul=9.0,
-            time_min_s=0.005, time_max_s=0.150, n_target=5,
+            times,
+            ul,
+            min_ul=0.5,
+            max_ul=9.0,
+            time_min_s=0.005,
+            time_max_s=0.150,
+            n_target=5,
         )
-        assert len(suggestions) == 0, f"Fully covered range should need no extras: {suggestions}"
+        assert len(suggestions) == 0, (
+            f"Fully covered range should need no extras: {suggestions}"
+        )
 
     def test_too_few_points_suggests_more(self):
         times = [0.010, 0.082]
         ul = [0.5, 9.0]
         suggestions = _suggest_additional_times(
-            times, ul, min_ul=0.5, max_ul=9.0,
-            time_min_s=0.005, time_max_s=0.150, n_target=5,
+            times,
+            ul,
+            min_ul=0.5,
+            max_ul=9.0,
+            time_min_s=0.005,
+            time_max_s=0.150,
+            n_target=5,
         )
         assert len(suggestions) > 0
 
@@ -135,8 +165,13 @@ class TestSuggestAdditionalTimes:
         times = [0.010, 0.046, 0.082]
         ul = [0.675, 4.15, 9.05]
         suggestions = _suggest_additional_times(
-            times, ul, min_ul=0.5, max_ul=9.0,
-            time_min_s=0.005, time_max_s=0.150, n_target=5,
+            times,
+            ul,
+            min_ul=0.5,
+            max_ul=9.0,
+            time_min_s=0.005,
+            time_max_s=0.150,
+            n_target=5,
         )
         for s in suggestions:
             assert s not in times, f"Suggested time {s} already measured"

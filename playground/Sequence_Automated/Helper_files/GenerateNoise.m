@@ -1,5 +1,5 @@
 % AudPause Helper function for generating bandfiltered noise of defferent frequency spectra
-% Based on open source work by Hristo Zhivomirov 07/30/13 
+% Based on open source work by Hristo Zhivomirov 07/30/13
 % Emmett Thompson
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

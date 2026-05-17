@@ -75,7 +75,7 @@ def _add_protocol_ttl(
             inter_pulse_duration=ipi,
             exit_state=iti_state_name
             if pulse_index == len(sequence) - 1
-            else f"pulse_{starting_pulse_index+pulse_index+1}_on",
+            else f"pulse_{starting_pulse_index + pulse_index + 1}_on",
         )
 
     sma.add_state(
@@ -121,7 +121,7 @@ def _add_random_identifier(
             inter_pulse_duration=ipi,
             exit_state=iti_state_name
             if bit_index == len(barcode) - 1
-            else f"pulse_{starting_pulse_index+bit_index+1}_on",
+            else f"pulse_{starting_pulse_index + bit_index + 1}_on",
         )
 
     sma.add_state(
@@ -188,9 +188,7 @@ def add_trial_onset_ttl(
             f"bnc_channel variable can only be list, tuple or str, but is {bnc_channel}"
         )
 
-    logging.debug(
-        f"Sending trial onset TTL: {ttl_pulse_duration}s on {bnc_channel}"
-    )
+    logging.debug(f"Sending trial onset TTL: {ttl_pulse_duration}s on {bnc_channel}")
 
     sma.add_state(
         state_name=state_name_tuple[0],

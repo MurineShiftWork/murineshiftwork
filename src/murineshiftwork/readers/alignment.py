@@ -25,13 +25,13 @@ ephys_t = result["bpod_to_ephys"](bpod_t)
 #   barcode_ephys_time  - matched ephys time for each barcode (NaN for non-barcode trials)
 #   alignment_slope, alignment_intercept, n_barcodes_matched
 """
+
 import logging
 from pathlib import Path
 from typing import Optional
 
 import numpy as np
 import pandas as pd
-
 from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 from ttl_barcoder.core.config import BarcodeConfig
 
@@ -205,7 +205,9 @@ def align_session_to_ephys(
     ephys_anchors = []
     matched_indices = []
 
-    for idx, (bpod_t, bv) in zip(barcode_rows.index, zip(bpod_barcode_times, msw_barcode_values)):
+    for idx, (bpod_t, bv) in zip(
+        barcode_rows.index, zip(bpod_barcode_times, msw_barcode_values)
+    ):
         if np.isnan(bpod_t):
             logging.debug(f"  Skipping barcode at index {idx}: NaN bpod time")
             continue
@@ -220,7 +222,9 @@ def align_session_to_ephys(
     n_matched = len(bpod_anchors)
     n_msw = len(barcode_rows)
     n_ephys = len(ephys_barcodes)
-    logging.info(f"Matched {n_matched}/{n_msw} MSW barcodes to {n_ephys} ephys barcodes.")
+    logging.info(
+        f"Matched {n_matched}/{n_msw} MSW barcodes to {n_ephys} ephys barcodes."
+    )
 
     if n_matched < 2:
         raise ValueError(
@@ -403,8 +407,12 @@ def verify_rpi_barcode_decoding(
         "decode_rate": n_rpi / n_msw if n_msw else 0.0,
         "match_rate": n_matched / n_msw if n_msw else 0.0,
         "wall_time_errors_ms": wall_time_errors_ms,
-        "wall_time_error_max_ms": max(abs(e) for e in wall_time_errors_ms) if wall_time_errors_ms else None,
-        "wall_time_error_mean_ms": float(np.mean(np.abs(wall_time_errors_ms))) if wall_time_errors_ms else None,
+        "wall_time_error_max_ms": max(abs(e) for e in wall_time_errors_ms)
+        if wall_time_errors_ms
+        else None,
+        "wall_time_error_mean_ms": float(np.mean(np.abs(wall_time_errors_ms)))
+        if wall_time_errors_ms
+        else None,
         "unmatched_msw_values": unmatched_msw,
         "unmatched_rpi_values": unmatched_rpi,
     }
@@ -414,8 +422,8 @@ def verify_rpi_barcode_decoding(
         f"(decode rate {result['decode_rate']:.1%}, match rate {result['match_rate']:.1%}) | "
         f"wall time error: mean {result['wall_time_error_mean_ms']:.1f}ms "
         f"max {result['wall_time_error_max_ms']:.1f}ms"
-        if wall_time_errors_ms else
-        f"rpi barcode verification: 0/{n_msw} matched — no barcodes decoded from rpi."
+        if wall_time_errors_ms
+        else f"rpi barcode verification: 0/{n_msw} matched — no barcodes decoded from rpi."
     )
 
     return result

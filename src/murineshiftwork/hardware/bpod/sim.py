@@ -18,6 +18,7 @@ Usage:
     # ... use in tasks or BpodActionDriver ...
     assert ("manual_override", ...) in bpod.calls
 """
+
 import logging
 
 
@@ -28,6 +29,7 @@ def _build_sim_hardware():
     BNC, SoftCode, and Tup events all work without a serial connection.
     """
     from pybpodapi.bpod.hardware.hardware import Hardware
+
     h = Hardware()
     h.max_states = 255
     h.n_conditions = 5
@@ -41,7 +43,21 @@ def _build_sim_hardware():
     h.inputs = ["X", "P", "P", "P", "P", "B", "B", "W", "W"]
     h.inputs_enabled = [1] * len(h.inputs)
     # USB (X), 4 PWM ports (P), 4 Valves (V), 2 BNC (B), 2 Wire (W)
-    h.outputs = ["X", "P", "P", "P", "P", "V", "V", "V", "V", "B", "B", "W", "W"]
+    h.outputs = [
+        "X",
+        "P",
+        "P",
+        "P",
+        "P",
+        "V",
+        "V",
+        "V",
+        "V",
+        "B",
+        "B",
+        "W",
+        "W",
+    ]
     h.n_uart_channels = 0
     h.setup(modules=[])
     return h
@@ -114,7 +130,13 @@ class SimBpod:
             f"ch={channel_number}, val={value})"
         )
         self.calls.append(
-            ("manual_override", channel_type, channel_name, channel_number, value)
+            (
+                "manual_override",
+                channel_type,
+                channel_name,
+                channel_number,
+                value,
+            )
         )
 
     # Helpers for test assertions

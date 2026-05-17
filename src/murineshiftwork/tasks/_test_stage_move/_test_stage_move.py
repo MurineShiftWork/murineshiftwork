@@ -1,16 +1,13 @@
 import logging
 import time
-from pathlib import Path
 
 import yaml
-from sshkeyboard import listen_keyboard
-from sshkeyboard import stop_listening
-from one_axis_stage.interface import MoveInterface
 from one_axis_stage.controller import StageController
+from one_axis_stage.interface import MoveInterface
+from sshkeyboard import listen_keyboard, stop_listening
 
 from murineshiftwork.logic.config import update_stage_config
-from murineshiftwork.logic.task_process import TaskProcess
-from murineshiftwork.logic.task_process import TaskRunner
+from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class KeyHandler:
@@ -67,7 +64,9 @@ class KeyHandler:
             )
             print(f"Saved stage config to setup '{self.setup_name}'")
         else:
-            logging.warning("No config_dir/setup_name — cannot write back to setup YAML")
+            logging.warning(
+                "No config_dir/setup_name — cannot write back to setup YAML"
+            )
 
     def press(self, key):
         print(f"KEY: {key}")
@@ -104,9 +103,12 @@ class KeyHandler:
         # SAVE current position as a named known position
         elif key == "n":
             import datetime
+
             name = datetime.datetime.now().strftime("pos_%Y%m%d_%H%M%S")
             self.ctrl.save_as_known_position(position_name=name)
-            print(f"Saved known position '{name}': {self.ctrl.known_positions.get(name)}")
+            print(
+                f"Saved known position '{name}': {self.ctrl.known_positions.get(name)}"
+            )
 
         # PRINT full config (refreshes live positions from hardware first)
         elif key == "space":
@@ -131,7 +133,9 @@ class KeyHandler:
             stop_listening()
 
         else:
-            print("-> Not actionable. [enter]=save+exit  [backspace]=exit  [space]=print config")
+            print(
+                "-> Not actionable. [enter]=save+exit  [backspace]=exit  [space]=print config"
+            )
 
 
 class Task(TaskRunner):
@@ -145,21 +149,27 @@ class Task(TaskRunner):
         setup_name = self.input_kwargs.get("setup", "")
 
         if not config or not config.get("axes"):
-            logging.error("No stage config with axes: configure a stage device with axes in setup YAML")
+            logging.error(
+                "No stage config with axes: configure a stage device with axes in setup YAML"
+            )
             return
 
         if calibrate_mode:
             for axis_cfg in config["axes"].values():
                 axis_cfg["position_min"] = 1
                 axis_cfg["position_max"] = 999
-            print("\n\t[CALIBRATION MODE] Limits set to 1-999. Use u/i/o to set max, j/k/l to set min.\n")
+            print(
+                "\n\t[CALIBRATION MODE] Limits set to 1-999. Use u/i/o to set max, j/k/l to set min.\n"
+            )
 
         config.setdefault("connection", {})["serial_port"] = serial_port_stage
         ctrl = StageController.from_config(config)
         move_interface = MoveInterface(ctrl, small_increment=20, large_increment=40)
 
         print("\n\tREADY FOR INPUTS !")
-        print("\twasd=XY  arrows=Z  +/-=speed  space=config  p=ping  u/i/o=set max  j/k/l=set min")
+        print(
+            "\twasd=XY  arrows=Z  +/-=speed  space=config  p=ping  u/i/o=set max  j/k/l=set min"
+        )
         print("\tn=save position  enter=save+exit  backspace=exit\n")
 
         kh = KeyHandler(

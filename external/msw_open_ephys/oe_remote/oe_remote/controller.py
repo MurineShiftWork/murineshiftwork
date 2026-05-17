@@ -68,11 +68,14 @@ class OEController:
         OE creates all levels in base_text when recording starts.
         """
         # base_text and text fields are global settings
-        self._put("/recording", {
-            "base_text": base_text,
-            "prepend_text": "",
-            "append_text": "",
-        })
+        self._put(
+            "/recording",
+            {
+                "base_text": base_text,
+                "prepend_text": "",
+                "append_text": "",
+            },
+        )
 
         # parent_directory must be set per node for existing Record Nodes
         for node in self.recording.get("record_nodes", []):
@@ -93,6 +96,8 @@ class OEController:
 
     def record(self, poll_interval: float = 0.5) -> None:
         while not self._nodes_synchronized():
-            print(f"[{time.strftime('%H:%M:%S')}] Waiting for streams to synchronize...")
+            print(
+                f"[{time.strftime('%H:%M:%S')}] Waiting for streams to synchronize..."
+            )
             time.sleep(poll_interval)
         self._put("/status", {"mode": self.MODE_RECORD})

@@ -4,6 +4,7 @@ Replaces the configobj/INI-based NamespaceBuilder from the backup codebase.
 Load a spec file:
     builder = NamespaceBuilder.from_yaml("namespace.msw.v3.yaml")
 """
+
 from __future__ import annotations
 
 import json
@@ -17,9 +18,9 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, field_validator
 
-
 # ---------------------------------------------------------------------------
 # Pydantic models for the namespace spec
+
 
 class NamespaceLevelSpec(BaseModel):
     template: str
@@ -45,9 +46,7 @@ class NamespaceSpec(BaseModel):
 
     @field_validator("levels")
     @classmethod
-    def _all_hierarchy_levels_present(
-        cls, v: dict, info: Any
-    ) -> dict:
+    def _all_hierarchy_levels_present(cls, v: dict, info: Any) -> dict:
         if "hierarchy" in (info.data or {}):
             missing = [h for h in info.data["hierarchy"] if h not in v]
             if missing:
@@ -60,6 +59,7 @@ class NamespaceSpec(BaseModel):
 # ---------------------------------------------------------------------------
 # Helper
 
+
 def _template_fields(template: str) -> list[str]:
     return [t[1] for t in string.Formatter().parse(template) if t[1]]
 
@@ -67,14 +67,14 @@ def _template_fields(template: str) -> list[str]:
 # ---------------------------------------------------------------------------
 # NamespaceBuilder
 
+
 class NamespaceBuilder:
     def __init__(self, spec: NamespaceSpec) -> None:
         self.spec = spec
         self.hierarchy: list[str] = spec.hierarchy
         self.optional_levels: list[str] = spec.optional_levels
         self._compiled: dict[str, re.Pattern] = {
-            name: re.compile(level.regex)
-            for name, level in spec.levels.items()
+            name: re.compile(level.regex) for name, level in spec.levels.items()
         }
 
     # ------------------------------------------------------------------
@@ -192,15 +192,11 @@ class NamespaceBuilder:
         if stop_at and stop_at not in self.hierarchy:
             raise ValueError(f"stop_at level {stop_at!r} is not in hierarchy")
         max_depth = (
-            self.hierarchy.index(stop_at) + 1
-            if stop_at
-            else len(self.hierarchy)
+            self.hierarchy.index(stop_at) + 1 if stop_at else len(self.hierarchy)
         )
         segments = Path(path).parts
         result: dict[str, str] = {}
-        for i, (segment, level_name) in enumerate(
-            zip(segments, self.hierarchy)
-        ):
+        for i, (segment, level_name) in enumerate(zip(segments, self.hierarchy)):
             if i >= max_depth:
                 break
             result.update(self._match_level(level_name, segment, result))
@@ -213,8 +209,6 @@ class NamespaceBuilder:
             raise ValueError(f"Unknown level: {level!r}")
         match = self._compiled[level].match(name.strip())
         if not match:
-            raise ValueError(
-                f"Name {name!r} does not match regex for level {level!r}"
-            )
+            raise ValueError(f"Name {name!r} does not match regex for level {level!r}")
         fields = _template_fields(self.spec.levels[level].template)
         return {f: match.groupdict().get(f, "") for f in fields}

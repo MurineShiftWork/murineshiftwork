@@ -170,8 +170,8 @@
         delay_until_center_init = [0.150, 0.200, 0.005]
         reward_amount_ul = 2
         criterion_contrast_blocks = .5
-        
-        
+
+
 [s031_tabnpxon_m1097517_L]
     aliases = "s031_tabnpxon_m1097517_L"
     comment = "UC/PV-cre Ai32"
@@ -198,8 +198,8 @@
 	delay_until_center_init = [0.150, 0.200, 0.005]
         reward_amount_ul = 2
         criterion_contrast_blocks = .5
-        
-        
+
+
 [s034_tabnpxon_m1097524_R]
     aliases = "s034_tabnpxon_m1097524_R"
     comment = "UC/PV-cre Ai32"
@@ -211,16 +211,16 @@
 # ------------------------------------------------------------------
 [s056_tabnpxon_m1097600_L]
     comment = "HM/PV-cre Chr2-EYFP"
-    
+
     [[probabilistic_switching]]
         delay_until_center_init = [0.150, 0.200, 0.005]
         reward_amount_ul = 2
         criterion_contrast_blocks = .5
-        
-        
+
+
 [s057_tabnpxon_m1097601_R]
     comment = "HM/PV-cre Chr2-EYFP"
-    
+
     [[probabilistic_switching]]
         delay_until_center_init = [0.150, 0.200, 0.005]
         reward_amount_ul = 2
@@ -229,7 +229,7 @@
 
 [s058_tabnpxon_m1097602_LR]
     comment = "HM/PV-cre Chr2-EYFP"
-    
+
     [[probabilistic_switching]]
         delay_until_center_init = [0.150, 0.200, 0.005]
         reward_amount_ul = 2
@@ -238,7 +238,7 @@
 
 [s059_tabnpxon_m1097603_LL]
     comment = "HM/PV-cre Chr2-EYFP"
-    
+
     [[probabilistic_switching]]
         delay_until_center_init = [0.150, 0.200, 0.005]
         reward_amount_ul = 2
@@ -249,18 +249,18 @@
 
 [s060_tabnpxon_m1098207_L]
     comment = "HM/PV-cre Chr2-EYFP"
-    
+
     [[probabilistic_switching]]
         delay_until_center_init = [0.150, 0.200, 0.005]
         reward_amount_ul = 2
         criterion_contrast_blocks = .5
-        
+
 # ------------------------------------------------------------------
 
 
 [s061_tabnpxon_m1116533_No]
     comment = "AN/PV-cre"
-    
+
     [[probabilistic_switching]]
         delay_until_center_init = [0.150, 0.200, 0.005]
         reward_amount_ul = 2
@@ -269,7 +269,7 @@
 
 [s062_tabnpxon_m1116534_L]
     comment = "AN/PV-cre"
-    
+
     [[probabilistic_switching]]
         delay_until_center_init = [0.150, 0.200, 0.005]
         reward_amount_ul = 2
@@ -278,7 +278,7 @@
 
 [s063_tabnpxon_m1116535_R]
     comment = "AN/PV-cre"
-    
+
     [[probabilistic_switching]]
         delay_until_center_init = [0.150, 0.200, 0.005]
         reward_amount_ul = 2
@@ -290,7 +290,7 @@
 
 [s071_tabfixedctrl_m1099155_No]
     comment = "wild-type for behavior figure"
-    
+
     [[probabilistic_switching_fixedsubjects]]
         # probabilities = [(90, 10), (10, 90)]
         reward_amount_ul = 2
@@ -300,7 +300,7 @@
 
 [s072_tabfixedctrl_m1099156_L]
     comment = "wild-type for behavior figure"
-    
+
     [[probabilistic_switching_fixedsubjects]]
         # probabilities = [(90, 10), (10, 90)]
         reward_amount_ul = 2
@@ -310,7 +310,7 @@
 
 [s073_tabfixedctrl_m1099157_R]
     comment = "wild-type for behavior figure"
-    
+
     [[probabilistic_switching_fixedsubjects]]
         # probabilities = [(90, 10), (10, 90)]
         reward_amount_ul = 2

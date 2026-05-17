@@ -159,9 +159,7 @@ def run_record(
 
     if oe.status == oe._status_record:
         Path(local_path_full).mkdir(parents=True, exist_ok=True)
-        (Path(local_path_full) / session_name).mkdir(
-            parents=True, exist_ok=True
-        )
+        (Path(local_path_full) / session_name).mkdir(parents=True, exist_ok=True)
 
         with open(metadata_file, "w") as f:
             settings["oe_settings"] = oe.settings
@@ -173,13 +171,9 @@ def run_record(
     logging.info(f"Settings: {json.dumps(settings, indent=4, sort_keys=True)}")
     logging.info(f"Acquisition name:  {acquisition_name}")
     logging.info(f"Session name:  {session_name}")
-    logging.info(
-        f"Children are:  {(Path(subject) / acquisition_name).as_posix()}"
-    )
+    logging.info(f"Children are:  {(Path(subject) / acquisition_name).as_posix()}")
     if settings["is_child_session_to"]:
-        logging.info(
-            f"Is child session to:  {Path(is_child_session_to).as_posix()} "
-        )
+        logging.info(f"Is child session to:  {Path(is_child_session_to).as_posix()} ")
 
 
 def run_stop(ip=None, port=37497, **kwargs):

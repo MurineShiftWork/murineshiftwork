@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 from collections import deque
@@ -5,13 +6,12 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from pybpodapi.protocol import Bpod
-from pybpodapi.protocol import StateMachine
+from pybpodapi.protocol import Bpod, StateMachine
 
 from murineshiftwork.logic.barcode import BARCODE_FIRST_STATE_NAME
 from murineshiftwork.logic.calibration import CalibrationDataWater
-from murineshiftwork.logic.sounds import StereoSound
 from murineshiftwork.logic.io import save_trial_data
+from murineshiftwork.logic.sounds import StereoSound
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +41,9 @@ class TaskControl:
 
         self.sequence = list(task_settings["sequence"])
         self.n_pokes = len(self.sequence)
-        self.bnc_channel = eval(f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}")
+        self.bnc_channel = eval(
+            f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}"
+        )
         subject = task_settings["subject"]
 
         # Training levels table
@@ -53,7 +55,9 @@ class TaskControl:
         # Training level: either reset to start_level or resume from disk
         if task_settings.get("reset_level", False):
             self.current_level = task_settings.get("start_level", 1)
-            log.info(f"{subject}: reset_level=True, starting at level {self.current_level}")
+            log.info(
+                f"{subject}: reset_level=True, starting at level {self.current_level}"
+            )
         else:
             self.current_level = self._load_level(subject)
             log.info(f"{subject}: resuming at level {self.current_level}")
@@ -88,7 +92,12 @@ class TaskControl:
             self.save_path = Path(self.bpod.workspace_path) / self.bpod.session_name
 
         from murineshiftwork.logic.task_process import update_session_yaml
-        settings_to_save = {k: v for k, v in task_settings.items() if isinstance(v, (str, int, float, bool, list, type(None)))}
+
+        settings_to_save = {
+            k: v
+            for k, v in task_settings.items()
+            if isinstance(v, (str, int, float, bool, list, type(None)))
+        }
         update_session_yaml(self.save_path, task_settings=settings_to_save)
 
         # Register subject in the per-protocol registry
@@ -121,7 +130,9 @@ class TaskControl:
         # Migrate from legacy sequence_automated store on first access
         legacy = _LEGACY_LEVEL_STORE_DIR / f"{subject}_level.json"
         if legacy.exists():
-            log.info(f"Migrating level state for {subject} from legacy sequence_automated store.")
+            log.info(
+                f"Migrating level state for {subject} from legacy sequence_automated store."
+            )
             return json.loads(legacy.read_text())
         return {}
 
@@ -144,7 +155,10 @@ class TaskControl:
         subject = self.task_settings["subject"]
         existing = self._fetch_subject_state(subject)
         existing.update(
-            {"level": self.current_level, "updated": time.strftime("%Y-%m-%dT%H:%M:%S")}
+            {
+                "level": self.current_level,
+                "updated": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            }
         )
         self._push_subject_state(subject, existing)
 
@@ -175,7 +189,9 @@ class TaskControl:
         """Keep a JSON registry of all subjects and their last session."""
         LEVEL_STORE_DIR.mkdir(parents=True, exist_ok=True)
         registry_file = LEVEL_STORE_DIR / "subjects.json"
-        registry = json.loads(registry_file.read_text()) if registry_file.exists() else {}
+        registry = (
+            json.loads(registry_file.read_text()) if registry_file.exists() else {}
+        )
         registry[subject] = {
             "last_session": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "level": self.current_level,
@@ -189,8 +205,16 @@ class TaskControl:
     def _load_levels(self, filepath: str) -> pd.DataFrame:
         df = pd.read_csv(filepath, header=None)
         df.columns = [
-            "reward1", "reward2", "reward3", "reward4", "final_reward",
-            "led1", "led2", "led3", "led4", "led5",
+            "reward1",
+            "reward2",
+            "reward3",
+            "reward4",
+            "final_reward",
+            "led1",
+            "led2",
+            "led3",
+            "led4",
+            "led5",
             "response_window_ms",
         ]
         return df
@@ -204,12 +228,18 @@ class TaskControl:
         response_window_s = max(raw_window_s, min_window)
         return {
             "rewards": [
-                float(row["reward1"]), float(row["reward2"]), float(row["reward3"]),
-                float(row["reward4"]), float(row["final_reward"]),
+                float(row["reward1"]),
+                float(row["reward2"]),
+                float(row["reward3"]),
+                float(row["reward4"]),
+                float(row["final_reward"]),
             ],
             "leds": [
-                float(row["led1"]), float(row["led2"]), float(row["led3"]),
-                float(row["led4"]), float(row["led5"]),
+                float(row["led1"]),
+                float(row["led2"]),
+                float(row["led3"]),
+                float(row["led4"]),
+                float(row["led5"]),
             ],
             "response_window_s": response_window_s,
         }
@@ -277,7 +307,8 @@ class TaskControl:
                 state_name=f"wait_poke_{i}",
                 state_timer=response_window,
                 state_change_conditions=wait_conditions,
-                output_actions=bnc_actions + ([(pwm_ch, led_pwm)] if led_pwm > 0 else []),
+                output_actions=bnc_actions
+                + ([(pwm_ch, led_pwm)] if led_pwm > 0 else []),
             )
 
             # Open valve (if reward > 0) and play chirp
@@ -315,7 +346,13 @@ class TaskControl:
     # Trial outcome + level update                                         #
     # ------------------------------------------------------------------ #
 
-    def update(self, trial_index: int, trial_data: dict, barcode_value=None, barcode_wall_time=None):
+    def update(
+        self,
+        trial_index: int,
+        trial_data: dict,
+        barcode_value=None,
+        barcode_wall_time=None,
+    ):
         self.trial_index = trial_index
 
         first_state = str(list(trial_data["States timestamps"].keys())[0])
@@ -367,7 +404,7 @@ class TaskControl:
         print(
             f"[T={round(_t / 60, 1):>5} min] "
             f"Trial {trial_index:>4} | "
-            f"Lvl {trial_level:>2}{'→'+str(self.current_level) if self.current_level != trial_level else '  '} | "
+            f"Lvl {trial_level:>2}{'→' + str(self.current_level) if self.current_level != trial_level else '  '} | "
             f"{'CORRECT  ' if is_correct else 'incorrect'} | "
             f"Perf {perf:.2f} ({len(self.perf_buffer)}/{self.perf_buffer.maxlen})"
         )
@@ -378,7 +415,9 @@ class TaskControl:
 
         # Level 1: need minimum trial count before progression check
         if self.current_level == 1:
-            if self.level_1_trial_count < self.task_settings.get("level_1_min_trials", 50):
+            if self.level_1_trial_count < self.task_settings.get(
+                "level_1_min_trials", 50
+            ):
                 return
             if len(buf) >= buf.maxlen and float(np.mean(buf)) >= 0.9:
                 self._advance_level()

@@ -1,7 +1,4 @@
-import matplotlib.pyplot as plt
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 
 class PandasModel(QtCore.QAbstractTableModel):
@@ -51,8 +48,8 @@ class PandasModel(QtCore.QAbstractTableModel):
 
 
 if __name__ == "__main__":
-    import pandas as pd
     import numpy as np
+    import pandas as pd
 
     df = pd.DataFrame()
     df["Field1"] = np.arange(0, 10, 0.5)

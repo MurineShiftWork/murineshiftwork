@@ -46,9 +46,7 @@ def validate_config_file_path(
         if len(config_file.parts) == 1:
             default_dir = Path(default_dir)
             if (default_dir / config_file).exists():
-                logging.debug(
-                    f"Found config file: {str(default_dir / config_file)}"
-                )
+                logging.debug(f"Found config file: {str(default_dir / config_file)}")
                 return str(default_dir / config_file)
             else:
                 logging.debug(

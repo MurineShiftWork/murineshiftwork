@@ -1,4 +1,5 @@
 """PulsePal stimulation wrapper using pypulsepal."""
+
 import logging
 import time
 
@@ -121,7 +122,8 @@ class Stimulation:
         # Set continuous loop mode
         for channel in self.in_dict["channels_stimulation"]:
             self.pulsePal.set_continuous(
-                channel=channel, state=1 if self.in_dict.get("continuous") else 0
+                channel=channel,
+                state=1 if self.in_dict.get("continuous") else 0,
             )
 
         # Trigger channel links and modes
@@ -172,7 +174,10 @@ class Stimulation:
             self.channels_currently_active = self.channels_inactive
 
     def _check_channels_active_reset(self):
-        if abs(self.time_of_last_activation - time.time()) >= self.in_dict["reset_stimulation_after_sec"]:
+        if (
+            abs(self.time_of_last_activation - time.time())
+            >= self.in_dict["reset_stimulation_after_sec"]
+        ):
             self.channels_currently_active = self.channels_inactive
 
     def trigger_clock(self):

@@ -7,6 +7,7 @@ Usage
 python tests/batch_rce_barcode_decode_rate.py
 python tests/batch_rce_barcode_decode_rate.py --base /ceph/sjones/users/lars/data --date 20260505
 """
+
 import argparse
 import re
 import sys
@@ -17,8 +18,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from murineshiftwork.readers.alignment import verify_rpi_barcode_decoding
 from ttl_barcoder.core.config import BarcodeConfig
+
+from murineshiftwork.readers.alignment import verify_rpi_barcode_decoding
 
 # regex to extract rpi-id from filename, e.g. "...rce.rpi-172.20260505154911.ttl_in.npz"
 _RPI_RE = re.compile(r"\.rce\.(rpi-[\w]+)\.\d+\.ttl_in\.npz$")
@@ -28,7 +30,7 @@ def find_ttl_in_files(base: Path, date_str: str) -> list[Path]:
     # Two fixed-depth globs: direct sessions and child-of-ephys sessions.
     # Much faster than rglob; avoids scanning unrelated subtrees.
     pat_direct = f"t*/t*{date_str}*/*{date_str}*.ttl_in.npz"
-    pat_child  = f"t*/t*{date_str}*/t*{date_str}*/*{date_str}*.ttl_in.npz"
+    pat_child = f"t*/t*{date_str}*/t*{date_str}*/*{date_str}*.ttl_in.npz"
     return sorted(set(base.glob(pat_direct)) | set(base.glob(pat_child)))
 
 
@@ -39,15 +41,23 @@ def rpi_id(path: Path) -> str:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base", default="/ceph/sjones/users/lars/data",
-                        help="Root data directory")
-    parser.add_argument("--date", default="20260505",
-                        help="Date string to match (YYYYMMDD)")
+    parser.add_argument(
+        "--base",
+        default="/ceph/sjones/users/lars/data",
+        help="Root data directory",
+    )
+    parser.add_argument(
+        "--date", default="20260505", help="Date string to match (YYYYMMDD)"
+    )
     parser.add_argument("--bits", type=int, default=37)
     parser.add_argument("--bit_duration_ms", type=float, default=35.0)
     parser.add_argument("--init_duration_ms", type=float, default=10.0)
-    parser.add_argument("--min_barcodes", type=int, default=10,
-                        help="Skip sessions with fewer MSW barcodes than this (default: 10)")
+    parser.add_argument(
+        "--min_barcodes",
+        type=int,
+        default=10,
+        help="Skip sessions with fewer MSW barcodes than this (default: 10)",
+    )
     args = parser.parse_args()
 
     base = Path(args.base)
@@ -85,29 +95,43 @@ def main():
                 barcode_config=barcode_cfg,
             )
         except Exception as exc:
-            print(f"{session_label:<{col_w}}  {rpi:<10}  {'':>5}  {'':>7}  {'':>7}  {'':>8}  {'':>10}  ERROR: {exc}")
+            print(
+                f"{session_label:<{col_w}}  {rpi:<10}  {'':>5}  {'':>7}  {'':>7}  {'':>8}  {'':>10}  ERROR: {exc}"
+            )
             rpi_decode_rates[rpi].append(0.0)
             rpi_match_rates[rpi].append(0.0)
             continue
 
         n_msw = result["n_msw_barcodes"]
         if n_msw < args.min_barcodes:
-            print(f"{session_label:<{col_w}}  {rpi:<10}  {n_msw:>5}  {'':>7}  {'':>7}  {'':>8}  {'':>10}  SKIP (<{args.min_barcodes} barcodes)")
+            print(
+                f"{session_label:<{col_w}}  {rpi:<10}  {n_msw:>5}  {'':>7}  {'':>7}  {'':>8}  {'':>10}  SKIP (<{args.min_barcodes} barcodes)"
+            )
             continue
 
         dr = result["decode_rate"]
         mr = result["match_rate"]
         n_dec = result["n_rpi_decoded"]
         n_mat = result["n_matched"]
-        status = "OK" if dr == 1.0 and mr == 1.0 else "WARN" if dr >= 0.8 else "FAIL"
+        status = (
+            "OK"
+            if dr == 1.0 and mr == 1.0
+            else "WARN"
+            if dr >= 0.8
+            else "FAIL"
+        )
 
-        print(f"{session_label:<{col_w}}  {rpi:<10}  {n_msw:>5}  {n_dec:>7}  {n_mat:>7}  {dr:>8.3f}  {mr:>10.3f}  {status}")
+        print(
+            f"{session_label:<{col_w}}  {rpi:<10}  {n_msw:>5}  {n_dec:>7}  {n_mat:>7}  {dr:>8.3f}  {mr:>10.3f}  {status}"
+        )
         rpi_decode_rates[rpi].append(dr)
         rpi_match_rates[rpi].append(mr)
 
     # Summary by rpi
     print()
-    print("=== Summary by rpi (mean decode_rate / match_rate across sessions) ===")
+    print(
+        "=== Summary by rpi (mean decode_rate / match_rate across sessions) ==="
+    )
     summary_header = f"{'rpi':<12}  {'sessions':>8}  {'mean_dec_rate':>13}  {'mean_match_rate':>15}  {'min_dec_rate':>12}"
     print(summary_header)
     print("-" * len(summary_header))
@@ -118,7 +142,9 @@ def main():
         mean_mr = float(np.mean(mrs))
         min_dr = float(np.min(drs))
         flag = "  <-- CHECK" if mean_dr < 0.95 else ""
-        print(f"{rpi:<12}  {len(drs):>8}  {mean_dr:>13.3f}  {mean_mr:>15.3f}  {min_dr:>12.3f}{flag}")
+        print(
+            f"{rpi:<12}  {len(drs):>8}  {mean_dr:>13.3f}  {mean_mr:>15.3f}  {min_dr:>12.3f}{flag}"
+        )
 
 
 if __name__ == "__main__":

@@ -7,16 +7,19 @@ from pathlib import Path
 from threading import Thread
 
 import yaml
+from pybpodapi.protocol import Bpod, StateMachine
+
 from murineshiftwork.hardware.bpod import BpodFactory
-from murineshiftwork.logic.log import add_session_log_handler
-from murineshiftwork.logic.log import patch_logging_levels
-from murineshiftwork.logic.misc import find_task_by_name
-from murineshiftwork.logic.misc import print_box
-from murineshiftwork.logic.misc import test_serial_port_is_accessible
-from murineshiftwork.logic.paths import build_data_paths
-from murineshiftwork.logic.paths import test_path_is_writable
-from pybpodapi.protocol import Bpod
-from pybpodapi.protocol import StateMachine
+from murineshiftwork.logic.log import (
+    add_session_log_handler,
+    patch_logging_levels,
+)
+from murineshiftwork.logic.misc import (
+    find_task_by_name,
+    print_box,
+    test_serial_port_is_accessible,
+)
+from murineshiftwork.logic.paths import build_data_paths, test_path_is_writable
 
 
 def _get_git_commit() -> str:

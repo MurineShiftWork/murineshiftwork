@@ -3,6 +3,7 @@ import os.path
 import shutil
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,8 +14,8 @@ from scipy.optimize import curve_fit
 
 class CalibrationData:
     file_path = None
-    calibration_data = None
-    columns = []
+    calibration_data: Any = None
+    columns: list = []
     columns_to_drop = ["Unnamed: 0"]
 
     def __init__(self, file_path=None, **kwargs):
@@ -33,6 +34,7 @@ class CalibrationData:
         assert isinstance(other, dict)
         other.update({"measurement_time": datetime.now()})
         import pandas as pd
+
         self.calibration_data = pd.concat(
             [self.calibration_data, pd.DataFrame([other])], ignore_index=True
         )
@@ -75,10 +77,7 @@ class CalibrationData:
             self.file_path = file_path
 
         file_path = Path(self.file_path)
-        if (
-            self.calibration_data is not None
-            and not self.calibration_data.empty
-        ):
+        if self.calibration_data is not None and not self.calibration_data.empty:
             file_path.expanduser().parent.mkdir(exist_ok=True, parents=True)
 
             if file_path.exists() and not overwrite:
@@ -124,20 +123,18 @@ class CalibrationDataWater(CalibrationData):
         """Compute weight_per_drop and volume_ul columns in-place. Idempotent."""
         self.upgrade_calibration_file_field_names()
         self.calibration_data["weight_per_drop"] = np.round(
-            self.calibration_data["water_weight_g"] / self.calibration_data["n_drops"], 3
+            self.calibration_data["water_weight_g"] / self.calibration_data["n_drops"],
+            3,
         )
         self.calibration_data["volume_ul"] = np.round(
             self.calibration_data["weight_per_drop"] * 1e3, 3
         )
-        self.calibration_data = self.calibration_data.sort_values(by="valve_opening_time")
+        self.calibration_data = self.calibration_data.sort_values(
+            by="valve_opening_time"
+        )
 
-    def water_volume_to_valve_time(
-        self, valves=None, target_volume=None
-    ):
-        if (
-            self.calibration_data is not None
-            and not self.calibration_data.empty
-        ):
+    def water_volume_to_valve_time(self, valves=None, target_volume=None):
+        if self.calibration_data is not None and not self.calibration_data.empty:
             self._compute_volumes()
 
             if not hasattr(valves, "__iter__"):
@@ -153,11 +150,14 @@ class CalibrationDataWater(CalibrationData):
                     self.calibration_data["valve_id"] == this_valve
                 ].sort_values("valve_opening_time")
 
-                points = list(zip(
-                    data_for_valve["valve_opening_time"].tolist(),
-                    data_for_valve["volume_ul"].tolist(),
-                ))
+                points = list(
+                    zip(
+                        data_for_valve["valve_opening_time"].tolist(),
+                        data_for_valve["volume_ul"].tolist(),
+                    )
+                )
                 from murineshiftwork.logic.config import ValveCalibration
+
                 vc = ValveCalibration(points=[[t, u] for t, u in points])
                 calibration_targets[this_valve] = vc.s_for_ul(target_volume)
             return calibration_targets
@@ -193,6 +193,7 @@ class CalibrationDataWater(CalibrationData):
         Caller should run .validate() before writing to setup config.
         """
         from datetime import datetime
+
         from murineshiftwork.logic.config import ValveCalibration
 
         df = self.calibration_data.copy()
@@ -203,8 +204,10 @@ class CalibrationDataWater(CalibrationData):
         df["_ul"] = np.round((df["water_weight_g"] / df["n_drops"]) * 1e3, 3)
         df = df.sort_values("valve_opening_time")
 
-        points = [[float(row["valve_opening_time"]), float(row["_ul"])]
-                  for _, row in df.iterrows()]
+        points = [
+            [float(row["valve_opening_time"]), float(row["_ul"])]
+            for _, row in df.iterrows()
+        ]
 
         return ValveCalibration(
             updated=datetime.now().isoformat(timespec="seconds"),
@@ -278,17 +281,13 @@ def fit_water_calibration_exp(x_observed=None, y_observed=None):
     return popt, pcov
 
 
-def evaluate_water_calibration_curve_continuous(
-    popt=None, min=0, max=10, step=0.1
-):
+def evaluate_water_calibration_curve_continuous(popt=None, min=0, max=10, step=0.1):
     x_continuous = np.linspace(min, max, int(max / step), endpoint=True)
     y_continuous = _exponential_function(x_continuous, *popt)
     return x_continuous, y_continuous
 
 
-def evaluate_water_calibration_curve_y_to_x(
-    x_continuous, y_continuous, y_target=None
-):
+def evaluate_water_calibration_curve_y_to_x(x_continuous, y_continuous, y_target=None):
     x_value = np.interp(y_target, x_continuous, y_continuous)
     return x_value
 
@@ -341,8 +340,11 @@ def flag_outlier_points(
         y_loo = ul_values[mask]
         try:
             popt, _ = curve_fit(
-                _exponential_function, x_loo, y_loo,
-                p0=[0.01, 20.0, 0.0], maxfev=5000,
+                _exponential_function,
+                x_loo,
+                y_loo,
+                p0=[0.01, 20.0, 0.0],
+                maxfev=5000,
             )
             predicted_i = _exponential_function(times_s[i], *popt)
         except Exception:
@@ -388,6 +390,7 @@ def plot_setup_valve_calibrations(
     matplotlib Figure
     """
     import yaml
+
     from murineshiftwork.logic.machine_config import resolve_config_dir
 
     config_dir = Path(config_dir) if config_dir else Path(resolve_config_dir())
@@ -402,7 +405,7 @@ def plot_setup_valve_calibrations(
         raise FileNotFoundError(f"No setup YAMLs found in {setups_dir}")
 
     # Collect calibration data
-    all_data = {}  # {setup_name: {valve_id: {"open_s": [...], "volume_ul": [...]}}}
+    all_data: dict = {}  # {setup_name: {valve_id: {"open_s": [...], "volume_ul": [...]}}}
     for yf in yaml_files:
         if not yf.exists():
             logging.warning(f"Setup YAML not found: {yf}")
@@ -448,8 +451,11 @@ def plot_setup_valve_calibrations(
             if len(x) >= 3:
                 try:
                     popt, _ = curve_fit(
-                        _exponential_function, x, y,
-                        p0=[0.01, 20.0, 0.0], maxfev=5000,
+                        _exponential_function,
+                        x,
+                        y,
+                        p0=[0.01, 20.0, 0.0],
+                        maxfev=5000,
                     )
                     x_fit = np.linspace(x.min() * 0.9, x.max() * 1.1, 200)
                     y_fit = _exponential_function(x_fit, *popt)
@@ -497,8 +503,10 @@ def save_calibration_pdfs(
     -------
     List of absolute paths to saved PDF files.
     """
-    import yaml
     from datetime import datetime
+
+    import yaml
+
     from murineshiftwork.logic.machine_config import resolve_config_dir
 
     config_dir = Path(config_dir) if config_dir else Path(resolve_config_dir())

@@ -1,4 +1,3 @@
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -19,9 +18,7 @@ def get_default_log_file_path(path=None):
         path = path / out_name
     else:
         path = path.parent / out_name
-        logging.info(
-            f"Given log file name, but ignoring in favour of: {str(path)}"
-        )
+        logging.info(f"Given log file name, but ignoring in favour of: {str(path)}")
 
     return str(path)
 

@@ -1,11 +1,8 @@
 import time
 import tracemalloc
-from concurrent.futures import as_completed
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
-from multiprocessing import cpu_count
-from multiprocessing import current_process
-from multiprocessing import Process
+from multiprocessing import cpu_count, current_process
 from multiprocessing.managers import SharedMemoryManager
 from multiprocessing.shared_memory import SharedMemory
 
@@ -41,7 +38,7 @@ if __name__ == "__main__":
     np_array = df.to_records(index=False)
     del df
     shape, dtype = np_array.shape, np_array.dtype
-    print(f"np_array's size={np_array.nbytes/1e6}MB")
+    print(f"np_array's size={np_array.nbytes / 1e6}MB")
 
     # With shared memory
     # Start tracking memory usage
@@ -64,8 +61,8 @@ if __name__ == "__main__":
                 pass
     # Check memory usage
     current, peak = tracemalloc.get_traced_memory()
-    print(f"Current memory usage {current/1e6}MB; Peak: {peak/1e6}MB")
-    print(f"Time elapsed: {time.time()-start_time:.2f}s")
+    print(f"Current memory usage {current / 1e6}MB; Peak: {peak / 1e6}MB")
+    print(f"Time elapsed: {time.time() - start_time:.2f}s")
     tracemalloc.stop()
 
     # Without shared memory
@@ -80,6 +77,6 @@ if __name__ == "__main__":
             pass
     # Check memory usage
     current, peak = tracemalloc.get_traced_memory()
-    print(f"Current memory usage {current/1e6}MB; Peak: {peak/1e6}MB")
-    print(f"Time elapsed: {time.time()-start_time:.2f}s")
+    print(f"Current memory usage {current / 1e6}MB; Peak: {peak / 1e6}MB")
+    print(f"Time elapsed: {time.time() - start_time:.2f}s")
     tracemalloc.stop()

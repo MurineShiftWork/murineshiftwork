@@ -38,8 +38,8 @@
 
 ### Water calibration example for setup 4
 
-> Add `-scale` parameter with serial device path  
-> Protocol `-t _calibration_water_with_serial_scale`  
+> Add `-scale` parameter with serial device path
+> Protocol `-t _calibration_water_with_serial_scale`
 
 ```bash
 
@@ -144,4 +144,3 @@ murineshiftwork run -t flush \
 
 
 ```
-

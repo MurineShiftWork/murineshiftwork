@@ -9,12 +9,12 @@ Priority for config_dir resolution (highest wins):
   3. ~/.murineshiftwork/msw_machine.yaml `config_dir` key
   4. /mnt/maindata/msw_configs (historical default, if it exists)
 """
+
 from __future__ import annotations
 
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -29,7 +29,9 @@ def _load_machine_config() -> dict:
             with open(_MACHINE_CONFIG_FILE) as f:
                 return yaml.safe_load(f) or {}
         except Exception as exc:
-            logging.warning(f"Could not read machine config {_MACHINE_CONFIG_FILE}: {exc}")
+            logging.warning(
+                f"Could not read machine config {_MACHINE_CONFIG_FILE}: {exc}"
+            )
     return {}
 
 
@@ -72,7 +74,13 @@ def write_machine_config(config_dir: str | Path, **extra_fields) -> None:
     existing["config_dir"] = str(Path(config_dir).expanduser().resolve())
     existing.update(extra_fields)
     with open(_MACHINE_CONFIG_FILE, "w") as f:
-        yaml.dump(existing, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            existing,
+            f,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
     logging.info(f"Machine config written to {_MACHINE_CONFIG_FILE}")
 
 

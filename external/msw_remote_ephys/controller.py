@@ -1,4 +1,3 @@
-import json
 import logging
 import os.path
 import time
@@ -71,16 +70,12 @@ class RemoteOpenEphysController:
         self.remote_tcp_address = f"tcp://{self.remote_ip}:{self.remote_port}"
         self.timeout = timeout or self.timeout
         self.acquisition_name = acquisition_name or self.acquisition_name
-        self.acquisition_task_name = (
-            acquisition_task or self.acquisition_task_name
-        )
+        self.acquisition_task_name = acquisition_task or self.acquisition_task_name
         self.session_name = session_name or self.session_name
         self.remote_path = str(remote_path).strip("\\") or self.remote_path
         self.local_path = local_path or self.local_path
         self.create_new_dir = create_new_dir or self.create_new_dir
-        self.is_child_session_to = (
-            is_child_session_to or self.is_child_session_to
-        )
+        self.is_child_session_to = is_child_session_to or self.is_child_session_to
 
         self.input_args = args
         self.input_kwargs = kwargs
@@ -108,8 +103,7 @@ class RemoteOpenEphysController:
 
     def __str__(self):
         d = {
-            "Full acquisition name": self.full_acquisition_name
-            or "<NOT_YET_DEFINED>",
+            "Full acquisition name": self.full_acquisition_name or "<NOT_YET_DEFINED>",
             "Full session name": self.session_name or "<NOT_YET_DEFINED>",
             "Acquisition path": self.remote_path,
             "Network address": self.remote_tcp_address,
@@ -132,9 +126,7 @@ class RemoteOpenEphysController:
             if session_name.endswith("__"):
                 session_name = session_name[:-2]
 
-            session_name_for_path = (
-                "" if self.is_child_session_to else session_name
-            )
+            session_name_for_path = "" if self.is_child_session_to else session_name
             self.local_path_full = (
                 Path(self.local_path)
                 / self.acquisition_name
@@ -155,9 +147,7 @@ class RemoteOpenEphysController:
             with context.socket(zmq.REQ) as socket:
                 socket.RCVTIMEO = int(self.timeout * 1000)
 
-                logging.debug(
-                    f"Connecting on address: {self.remote_tcp_address}"
-                )
+                logging.debug(f"Connecting on address: {self.remote_tcp_address}")
                 socket.connect(self.remote_tcp_address)
 
                 logging.debug(f"Sending message: {message}")
@@ -213,9 +203,7 @@ class RemoteOpenEphysController:
         return message
 
     def _send_start_record(self, message):
-        return self.send_message(
-            message=message, expected_return="StartedRecording"
-        )
+        return self.send_message(message=message, expected_return="StartedRecording")
 
     def start_recording(self):
         """
@@ -246,9 +234,7 @@ class RemoteOpenEphysController:
             logging.info(
                 f"Setting up for ephys session:\n\t{full_acquisition_name}/{full_session_name}\n"
             )
-            child_session_path = (
-                Path(self.acquisition_name) / full_acquisition_name
-            )
+            child_session_path = Path(self.acquisition_name) / full_acquisition_name
             logging.info(
                 f"Use as child session path:\n\t{child_session_path.as_posix()}\n"
             )
@@ -260,9 +246,7 @@ class RemoteOpenEphysController:
         else:
             logging.info(f"Cannot start preview. Replied: {is_previewing}")
 
-    def safeguard_path_by_overwrite(
-        self, path_sep="/" if os.path.sep == "/" else "\\"
-    ):
+    def safeguard_path_by_overwrite(self, path_sep="/" if os.path.sep == "/" else "\\"):
         session_name = f"acquisition-{uuid4()}"
         message = self._make_start_message_string(
             create_new_dir=True,

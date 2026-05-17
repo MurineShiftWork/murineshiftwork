@@ -2,6 +2,7 @@
 
 Uses pypulsepal as backend.
 """
+
 import logging
 import time
 
@@ -22,7 +23,7 @@ allowed_trigger_modes = {
 
 # Doric LDFL5: single BNC input, 0-5V analog/TTL combined.
 DORIC_CURRENT_SENSITIVITY = 80.0  # mA per volt (from manual spec)
-DORIC_MAX_CURRENT_MA = 120.0      # mA — specific laser diode max
+DORIC_MAX_CURRENT_MA = 120.0  # mA — specific laser diode max
 DORIC_MAX_VOLTAGE = DORIC_MAX_CURRENT_MA / DORIC_CURRENT_SENSITIVITY
 
 
@@ -173,7 +174,9 @@ class Stimulation:
             if self.pulsePal is not None and sync:
                 for param_name, value in self._channel_params[int(channel)].items():
                     self.pulsePal.program_one_param(
-                        channel=int(channel), param_name=param_name, param_value=value
+                        channel=int(channel),
+                        param_name=param_name,
+                        param_value=value,
                     )
 
     def connect(self):
@@ -189,7 +192,8 @@ class Stimulation:
 
         for channel in self.in_dict["channels_stimulation"]:
             self.pulsePal.set_continuous(
-                channel=channel, state=1 if self.in_dict.get("continuous") else 0
+                channel=channel,
+                state=1 if self.in_dict.get("continuous") else 0,
             )
 
         for trigger_ch in self.in_dict["trigger_channels_for_stimulation"]:
@@ -204,8 +208,13 @@ class Stimulation:
                                 param_value=out_ch,
                             )
                         except Exception as exc:
-                            logging.warning(f"PulsePal: could not set {link_param}: {exc}")
-                if "trigger_mode" in self.in_dict and self.in_dict["trigger_mode"] in allowed_trigger_modes:
+                            logging.warning(
+                                f"PulsePal: could not set {link_param}: {exc}"
+                            )
+                if (
+                    "trigger_mode" in self.in_dict
+                    and self.in_dict["trigger_mode"] in allowed_trigger_modes
+                ):
                     self.pulsePal.program_trigger_channel(
                         trigger_channel=trigger_ch - 1,
                         trigger_mode=self.in_dict["trigger_mode"],
@@ -233,7 +242,10 @@ class Stimulation:
             self.channels_currently_active = self.channels_inactive
 
     def _check_channels_active_reset(self):
-        if abs(self.time_of_last_activation - time.time()) >= self.in_dict["reset_stimulation_after_sec"]:
+        if (
+            abs(self.time_of_last_activation - time.time())
+            >= self.in_dict["reset_stimulation_after_sec"]
+        ):
             self.channels_currently_active = self.channels_inactive
 
     def trigger_clock(self):

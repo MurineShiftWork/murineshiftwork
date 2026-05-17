@@ -1,12 +1,10 @@
-import sys
 import time
 from multiprocessing import Process
 
 import cv2 as cv
 import numpy as np
 import pyqtgraph as pg
-from PyQt5 import QtCore
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 
 class QueueMonitor(QtCore.QThread):
