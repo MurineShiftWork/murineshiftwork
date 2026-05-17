@@ -1,4 +1,3 @@
-import json
 import logging
 import random
 import time
@@ -130,9 +129,8 @@ class TaskControl(object):
             )
         )
 
-        # Persist task settings -> todo: refactor to method
-        with open(str(self.save_path_data) + ".settings.task.json", "w") as f:
-            json.dump(self.task_settings, f, indent=4, sort_keys=True)
+        from murineshiftwork.logic.task_process import update_session_yaml
+        update_session_yaml(self.save_path_data, task_settings=self.task_settings)
 
         logging.debug("Task control class created.")
 

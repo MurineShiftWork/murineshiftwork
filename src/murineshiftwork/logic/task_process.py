@@ -1,4 +1,3 @@
-import json
 import logging
 import subprocess
 import sys
@@ -10,11 +9,11 @@ import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.protocol import StateMachine
 
+import yaml
+
 from murineshiftwork import __version__ as _msw_version
-from murineshiftwork import patch_logging_levels
 from murineshiftwork.hardware.bpod import BpodFactory
-from murineshiftwork.logic.log import json_dumps_type_safe
-from murineshiftwork.logic.log import write_json
+from murineshiftwork.logic.log import patch_logging_levels
 from murineshiftwork.logic.misc import find_task_by_name
 from murineshiftwork.logic.misc import print_box
 from murineshiftwork.logic.misc import test_serial_port_is_accessible
@@ -34,6 +33,23 @@ def _get_git_commit() -> str:
         return result.stdout.strip() if result.returncode == 0 else ""
     except Exception:
         return ""
+
+
+def update_session_yaml(session_file_path, **sections):
+    """Add or update top-level sections in .msw.session.yaml.
+
+    Creates the file with msw_format_version: 2 if it does not exist yet.
+    Typical callers: task_objects writing task_settings or stage after init.
+    """
+    yaml_path = str(session_file_path) + ".msw.session.yaml"
+    p = Path(yaml_path)
+    if p.exists():
+        data = yaml.safe_load(p.read_text()) or {}
+    else:
+        data = {"msw_format_version": 2}
+    data.update(sections)
+    with open(yaml_path, "w") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
 
 class TaskRunner(Thread):
@@ -228,15 +244,23 @@ class TaskProcess(object):
 
     def persist_settings(self):
         data = {
-            **vars(self),
-            "msw_version": _msw_version,
-            "git_commit": _get_git_commit(),
+            "msw_format_version": 2,
+            "process": {
+                "msw_version": _msw_version,
+                "git_commit": _get_git_commit(),
+                "task": self.task_name,
+                "subject": self.subject,
+                "setup": self.input_kwargs.get("setup", ""),
+                "serial_port": self.serial_port,
+                "out_path": self.out_path,
+                "session_folder": str(self.session_paths.get("session_folder", "")),
+                "session_basename": self.session_paths.get("session_basename", ""),
+                "datetime": self.session_paths.get("datetime", ""),
+            },
         }
-        write_json(
-            data=data,
-            save_path=self.session_paths["session_file_path"]
-            + ".msw.settings.process.json",
-        )
+        yaml_path = self.session_paths["session_file_path"] + ".msw.session.yaml"
+        with open(yaml_path, "w") as f:
+            yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
     def init_task(self):
         """Import specific Task and make self.task_runner Thread."""

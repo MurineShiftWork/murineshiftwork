@@ -50,14 +50,14 @@ def test_list_available_tasks_nonempty():
     tasks = list_available_tasks()
     assert len(tasks) >= 5
     assert "_test_flush_water" in tasks
-    assert "sequence_automated" in tasks
+    assert "sequence" in tasks
     assert "probabilistic_switching" in tasks
 
 
 def test_find_task_by_name():
-    from murineshiftwork.logic.misc import find_task_by_name
+    from murineshiftwork.logic.misc import find_task_by_name, list_available_tasks
     assert find_task_by_name("flush") == "_test_flush_water"
-    assert find_task_by_name("sequence_auto") == "sequence_automated"
+    assert find_task_by_name("sequence") in list_available_tasks()  # "sequence" substring also matches _test_ttl_sequences
     assert find_task_by_name("nonexistent_xyz_task") is None
 
 

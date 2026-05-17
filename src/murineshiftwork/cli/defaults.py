@@ -8,4 +8,19 @@ from murineshiftwork.logic.misc import list_available_tasks
 
 default_out_path = resolve_data_dir()
 default_config_dir = resolve_config_dir()
-available_tasks = "\n".join([f"    - {s}" for s in list_available_tasks()])
+def _build_task_list() -> str:
+    all_tasks = list_available_tasks()
+    main = sorted(t for t in all_tasks if not t.startswith("_"))
+    calibration = sorted(t for t in all_tasks if t.startswith("_calibration"))
+    tests = sorted(t for t in all_tasks if t.startswith("_test"))
+    lines = []
+    for heading, group in (
+        ("Tasks", main),
+        ("Calibration", calibration),
+        ("Tests", tests),
+    ):
+        lines.append(f"  {heading}:")
+        lines.extend(f"    - {t}" for t in group)
+    return "\n".join(lines)
+
+available_tasks = _build_task_list()

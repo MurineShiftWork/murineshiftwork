@@ -1,4 +1,3 @@
-import json
 import logging
 import time
 from collections import deque
@@ -20,7 +19,8 @@ log = logging.getLogger(__name__)
 _ALL_PORTS = list(range(1, 9))
 
 # Per-subject level state is stored here
-LEVEL_STORE_DIR = Path("~/.murineshiftwork/sequence_automated").expanduser()
+LEVEL_STORE_DIR = Path("~/.murineshiftwork/sequence").expanduser()
+_LEGACY_LEVEL_STORE_DIR = Path("~/.murineshiftwork/sequence_automated").expanduser()
 
 
 class TaskControl:
@@ -87,10 +87,9 @@ class TaskControl:
         else:
             self.save_path = Path(self.bpod.workspace_path) / self.bpod.session_name
 
-        # Persist task settings alongside data
+        from murineshiftwork.logic.task_process import update_session_yaml
         settings_to_save = {k: v for k, v in task_settings.items() if isinstance(v, (str, int, float, bool, list, type(None)))}
-        with open(str(self.save_path) + ".settings.task.json", "w") as f:
-            json.dump(settings_to_save, f, indent=4, sort_keys=True)
+        update_session_yaml(self.save_path, task_settings=settings_to_save)
 
         # Register subject in the per-protocol registry
         self._register_subject(subject)
@@ -119,6 +118,11 @@ class TaskControl:
         f = self._level_file(subject)
         if f.exists():
             return json.loads(f.read_text())
+        # Migrate from legacy sequence_automated store on first access
+        legacy = _LEGACY_LEVEL_STORE_DIR / f"{subject}_level.json"
+        if legacy.exists():
+            log.info(f"Migrating level state for {subject} from legacy sequence_automated store.")
+            return json.loads(legacy.read_text())
         return {}
 
     def _push_subject_state(self, subject: str, state: dict):

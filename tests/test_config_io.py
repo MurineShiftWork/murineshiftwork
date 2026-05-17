@@ -185,7 +185,7 @@ def test_save_subject_task_stage_position_merge_does_not_overwrite(tmp_path):
     )
     # Second call with a different task — must not overwrite first entry
     save_subject_task_stage_position(
-        tmp_path, "t001", "sequence_automated", "mouse_t001_seq"
+        tmp_path, "t001", "sequence", "mouse_t001_seq"
     )
 
     path = tmp_path / "subjects" / "t001.yaml"
@@ -193,7 +193,7 @@ def test_save_subject_task_stage_position_merge_does_not_overwrite(tmp_path):
         raw = yaml.safe_load(f)
 
     assert raw["task_overrides"]["probabilistic_switching_fixedsubjects"]["stage_position"] == "mouse_t001"
-    assert raw["task_overrides"]["sequence_automated"]["stage_position"] == "mouse_t001_seq"
+    assert raw["task_overrides"]["sequence"]["stage_position"] == "mouse_t001_seq"
 
 
 def test_save_subject_task_stage_position_overwrites_position_in_same_task(tmp_path):

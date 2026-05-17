@@ -14,6 +14,30 @@ Central planning document. Completed work is listed below; git history has the f
   on next session for continuation. this might need to be implemented together with 
   the pre/post hook system (see docs hooks.md)
 
+### FLIR camera subpackage (next larger sprint)
+
+Camera acquisition for the sequence task on Windows 11 acquisition machines.
+Sequence task needs **both** RPi cameras (rce, Linux) and FLIR cameras (Bonsai, Win11),
+potentially running simultaneously.
+
+Architecture:
+- `msw-flir-bonsai` (suite design, partially implemented) → standalone package or
+  `hardware/flir/` in current monolith, depending on whether suite migration is ready
+- Launch Bonsai as a subprocess from the task; Bonsai runs a workflow that saves video
+- Camera start signal: ZMQ message or named-pipe to Bonsai subprocess at trial start
+- Camera stop: clean shutdown on session end
+- Bonsai workflow file path specified in setup YAML under `flir_camera:` device section
+- File naming: `{session_basename}.flir.{camera_id}.{timestamp}.avi` (or `.mp4`)
+- Session validation: extend `readers/validate.py` to check FLIR file existence + duration
+
+Key design decisions needed:
+1. Whether to use `msw-flir-bonsai`'s existing ZMQ → FastAPI → WebSocket stack, or a simpler
+   subprocess-only approach for the Win11 acquisition use case
+2. Whether sequence task uses a camera-start/stop softcode signal or the task process manages
+   the Bonsai subprocess directly (task-process owned is simpler for the single-machine case)
+3. RPI ensemble + FLIR simultaneously: both started at session start, both receive the same
+   trial-onset TTL barcode signal for alignment; RCE stays unchanged
+
 ### Named task config presets — extend to other tasks  ← DONE for fixed-subjects
 Named modes (`default:` / `mode:` structure) are live for `probabilistic_switching_fixedsubjects`.
 Still to do: propagate the same structure to other tasks that would benefit from named stages
@@ -78,8 +102,8 @@ Implementation steps (not yet started):
 
 ### Test coverage
 
-178 tests pass (2026-05-16) — excludes `test_outbound_travel_hist.py` which
-references a hardcoded absolute path from a different machine; needs fixture rewrite.
+193 tests pass (2026-05-17) — `test_outbound_travel_hist.py` moved to `playground/` (was a
+legacy one-off analysis script with a hardcoded absolute path, not a proper test).
 
 **Done since last count:**
 - `SimBpod` in `hardware/bpod/sim.py` — full 4-port Bpod hardware mock, logs all
@@ -105,30 +129,46 @@ references a hardcoded absolute path from a different machine; needs fixture rew
 - `readers/validate.py:validate_session` — add TTL alignment path test
 - Namespace reader (`readers/namespace.py`) — smoke test with fixture files
 
-### Session output file consolidation (NOT done)
+### Namespace package prep / Sprint A (DONE 2026-05-17)
 
-Currently each session writes three separate files:
-1. `{session}.msw.settings.process.json` — `TaskProcess.persist_settings()` dumps `vars(self)`:
-   task name, session paths, serial port, msw version, git commit
-2. `{session}.settings.task.json` — written from `task_objects.py` in probabilistic_switching,
-   probabilistic_switching_fixedsubjects, and sequence_automated: full patched task settings dict
-3. `{session}.settings.stage.yaml` — written from probabilistic_switching_fixedsubjects
-   `task_objects.py`: stage controller config at session start
+- `murineshiftwork/__init__.py` is now minimal and side-effect-free:
+  - `__version__` read from `importlib.metadata.version("murineshiftwork")` — no duplicate string
+  - `__author__` only other field
+  - No imports of `run_cli`, `read_session_data`, `patch_logging_levels`, `patch_user_settings`
+  - No module-level side effects (`patch_logging_levels()` / `patch_user_settings()` removed)
+  - Comment block explains namespace package split pattern and version template for subpackages
+- `cli/__init__.py:run_cli()` now calls `patch_logging_levels()` + `patch_user_settings()` explicitly at
+  CLI startup — the only code path where these side effects are appropriate
+- `logic/task_process.py` imports `patch_logging_levels` from canonical source (`logic.log`) not from `__init__`
+- Entry point updated: `murineshiftwork.__init__:run_cli` → `murineshiftwork.cli:run_cli`
+- Stale `murineshiftwork.egg-info` at repo root removed (was shadowing 1.1.0 with 1.0.0 metadata)
+- Version now correct: `murineshiftwork.__version__ == "1.1.0"` confirmed via importlib.metadata
+- Namespace subpackage version template documented in `__init__.py`:
+  ```python
+  from importlib.metadata import version, PackageNotFoundError
+  try:
+      __version__ = version("msw-namespace")  # pip install name
+  except PackageNotFoundError:
+      __version__ = "unknown"
+  ```
 
-Problems: three writes, three readers, JSON is brittle for human editing, stage config
-is duplicated from setup YAML, no version field.
+### Session output file consolidation (DONE 2026-05-17)
 
-Proposed consolidation:
-- Single file: `{session}.msw.session.yaml`
-- Sections: `process:` (msw_version, git_commit, task, subject, setup, serial_port),
-  `task_settings:` (full patched settings dict), `stage:` (stage config, if applicable)
-- Remove `.settings.task.json` writes from all `task_objects.py` files
-- Remove `.settings.stage.yaml` write from fixed-subjects `task_objects.py`
-- Update `readers/session.py` to read the new YAML; keep backward-compat reader for
-  old `.json` files (check for legacy keys on load)
-- Add `msw_format_version: 2` to new file for forward-compat reader logic
-- Note: `settings.process` in `TaskProcess.persist_settings` dumps internal Python objects
-  (Path, dict of paths) — needs selective serialization of only stable public fields
+Single `.msw.session.yaml` replaces three separate files. Version bump 1.0.0 → 1.1.0.
+
+- `{session}.msw.session.yaml` — `msw_format_version: 2`, sections:
+  `process:` (msw_version, git_commit, task, subject, setup, serial_port, out_path, session_folder),
+  `task_settings:` (patched settings from task_objects), `stage:` (stage config if applicable)
+- `TaskProcess.persist_settings()` writes process section at session start (clean fields only,
+  no Python types); `update_session_yaml(path, **sections)` utility adds task_settings + stage
+  after task init (called from task_objects instead of the old JSON writes)
+- `.settings.task.json` writes removed from probabilistic_switching, probabilistic_switching_fixedsubjects,
+  sequence_automated task_objects; `stage.save_config()` call removed from fixedsubjects
+- `readers/session.py` detects `session.yaml` key from `.msw.session.yaml` filename and
+  dispatches to YAML reader; populates settings.process, settings.task, settings.stage;
+  old `.json` fallback path kept for backward compat
+- `tests/data/fixture_v2/` — minimal v2 session fixture (YAML + jsonl + CSV)
+- `tests/test_reader_v2.py` — 14 tests: v2 format parsing, backward compat with fixture_jsonl
 
 ### Task cleanup
 - `homecage_sleep` — wraps `periodic_trigger_with_video` with fixed params; still present.
@@ -347,6 +387,67 @@ Proposed consolidation:
 - `readers/validate.py`: `validate_session()` with three-tier check (MSW completeness, RCE, TTL alignment)
 - Test fixtures: `tests/data/fixture_jsonl/` (3-trial JSONL session), `tests/data/fixture_pkl/` (pkl child session)
 - **134 tests passing**
+
+---
+
+## Suite Comparison: murineshiftwork vs murineshiftwork_suite (as of 2026-05-17)
+
+Design docs: `/mnt/maindata/code/murineshiftwork_suite/design/`
+
+### Items already done in current monolith (ready to port when suite is active)
+
+| Current package item | Maps to suite component | Status |
+|---|---|---|
+| `BpodFactory` + `_write_lock` | `msw-tasks/bpod/RobustBpodSession` | Done; port when msw-tasks Phase 3 starts |
+| `BpodActionDriver` + `ActionRequest` | `msw-tasks/bpod/` + `msw-server/api/` | Done; ActionRequest shape is final |
+| `SimBpod` + `SimWeighingScale` | `msw-tasks/bpod/sim.py` | Done; copy directly |
+| `SetupConfig` + `SubjectConfig` Pydantic models | `msw-namespace/config/` | Done; validated in production CLI |
+| `logic/io.py` JSONL format + `_NumpyEncoder` | `msw-namespace/io/` or `msw-tasks/io/` | Done; suite data compat contract requires this exact format |
+| `logic/barcode.py` + task integration pattern | `msw-tasks` base task mixin | Done in sequence_automated + PS-fixedsubjects |
+| `readers/session.py:read_session_data()` | `msw-readers` (future) or keep in legacy | Done; v2 YAML format is the contract |
+| `tasks/` namespace (no `__init__.py`) | `msw-tasks` namespace package | Already namespace-compatible |
+| `find_task_by_name()` dynamic task loading | `msw-agent` task registry | Done; replace with `@register_task` decorator |
+| `TaskProcess` (thread lifecycle, bpod inject) | `msw-agent/TaskProcess` | Done; maps 1:1 to backup agent's process_task.py |
+| `update_session_yaml` utility | `msw-namespace/session.py` Session lifecycle | Done; clean hook for session metadata |
+
+### Suite items NOT yet started (sprints to move toward suite)
+
+**Sprint A — Namespace prep in monolith (0.5 day)**
+- Verify `src/murineshiftwork/__init__.py` can be made optional without breaking imports
+- The monolith *cannot* be a proper namespace package while `__init__.py` exists at root
+- Action: document which imports go through `__init__.py` so they can be moved to explicit paths
+  before the suite port. (Currently: `run_cli`, `patch_logging_levels`, `patch_user_settings`,
+  `read_session_data` — all re-exported. These should be importable from their canonical modules.)
+
+**Sprint B — Port `msw-namespace` (1 day)**
+1. Fix `murineshiftwork_suite/msw-namespace/pyproject.toml` from templatepy placeholder
+2. Remove `__init__.py` at `murineshiftwork/` root in msw-namespace repo
+3. Port: `SetupConfig`, `SubjectConfig` → `msw-namespace/murineshiftwork/namespace/config/`
+4. Port: `logic/io.py` JSONL save/load → `msw-namespace/murineshiftwork/namespace/io/`
+5. Port: `logic/paths.py` subject name validation → `msw-namespace/murineshiftwork/namespace/paths/`
+
+**Sprint C — Port `msw-tasks` Phase 3 basics (2 days)**
+1. Fix `murineshiftwork_suite/msw-tasks/pyproject.toml` from templatepy
+2. Remove `__init__.py` at `murineshiftwork/` root in msw-tasks repo
+3. Port `BpodFactory` → `msw-tasks/murineshiftwork/tasks/bpod/factory.py`
+4. Port `SimBpod` → `msw-tasks/murineshiftwork/tasks/bpod/sim.py`
+5. Port `sequence_automated` task as first production task in msw-tasks
+6. Add `@register_task` decorator and `task_registry` dict to `msw-tasks`
+
+**Sprint D — Port `msw-agent` Phase 2 basics (2 days)**
+1. Fix `murineshiftwork_suite/msw-agent/pyproject.toml` from templatepy
+2. Port `backup-msw-repos/murineshiftwork/msw/agent/` → `msw-agent/murineshiftwork/agent/`
+   - `MSWProcess`, `TaskProcess`, `LoggerProcess`, `MSWAgent`
+3. Wire to task registry from Sprint C: `start_task(task_name)` → dynamic import + run
+4. Add `MSWAgent` test: `SimBpod` + `sequence_automated` + in-memory agent lifecycle
+
+**Clean break criteria (from design docs, current status):**
+- [ ] msw-agent stable on acquisition hardware
+- [ ] msw-tasks: sequence_automated + PS-fixedsubjects + optotagging ported
+- [ ] Each ported task barcode-enabled (start/end + relevant TTL)
+- [x] msw-namespace: SetupConfig + SubjectConfig ready (done in monolith, just needs porting)
+- [ ] Suite sessions readable by existing `read_session_data()` (easy: use same JSONL + `.msw.session.yaml`)
+- [ ] msw-server + msw-interface usable (or CLI-only first milestone met)
 
 ---
 

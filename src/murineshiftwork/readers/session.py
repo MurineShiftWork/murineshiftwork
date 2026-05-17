@@ -2,6 +2,8 @@ import logging
 from glob import glob
 from pathlib import Path
 
+import yaml
+
 from murineshiftwork.readers.files import read_json
 from murineshiftwork.readers.files import read_pybpod_csv
 from murineshiftwork.readers.files import read_settings_py
@@ -68,8 +70,19 @@ def read_session_data(
         elif Path(k).name.endswith("pkl") or Path(k).name.endswith("jsonl"):
             session_data["df"] = read_trial_df(filepath=v)
 
+        elif k == "session.yaml" and ".msw." in v:
+            # v2 format: single YAML with process + task_settings (+ optional stage)
+            payload = yaml.safe_load(Path(v).read_text()) or {}
+            if payload.get("msw_format_version", 1) >= 2:
+                if "process" in payload:
+                    session_data["settings.process"] = payload["process"]
+                if "task_settings" in payload:
+                    session_data["settings.task"] = payload["task_settings"]
+                if "stage" in payload:
+                    session_data["settings.stage"] = payload["stage"]
+
         elif k.endswith("json") and ".msw." in v:
-            # 3 files: task & process, optionally: settings.ephys for remote acquisition sessions
+            # v1 format: separate task & process JSON files
             session_data[k.replace(".json", "")] = read_json(file=v)
 
         elif Path(k).name == "task_settings.py" and is_legacy_session:

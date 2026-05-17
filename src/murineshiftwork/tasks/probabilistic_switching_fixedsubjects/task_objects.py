@@ -1,4 +1,3 @@
-import json
 import logging
 import queue
 import random
@@ -184,10 +183,6 @@ class TaskControl(object):
         self._stage_thread = threading.Thread(target=self._stage_worker, daemon=True)
         self._stage_thread.start()
 
-        self.stage.save_config(
-            config_file=self.save_path_data.parent
-            / ".".join([self.save_path_data.name, "settings", "stage", "yaml"])
-        )
         logging.info(self.stage)
 
         self.MOVE_TO_FRONT = 15
@@ -206,9 +201,12 @@ class TaskControl(object):
         # print("stage_bias_max", self.stage_bias_max)
         # print("n_back_crit_bias", self.n_back_crit_bias)
 
-        # Persist task settings -> todo: refactor to method
-        with open(str(self.save_path_data) + ".settings.task.json", "w") as f:
-            json.dump(self.task_settings, f, indent=4, sort_keys=True)
+        from murineshiftwork.logic.task_process import update_session_yaml
+        update_session_yaml(
+            self.save_path_data,
+            task_settings=self.task_settings,
+            stage=stage_cfg,
+        )
 
         logging.debug("Task control class created.")
         self.bpod.softcode_handler_function = self.softcode_handler

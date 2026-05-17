@@ -14,8 +14,8 @@ from murineshiftwork.logic.barcode import (
 )
 from murineshiftwork.logic.task_process import TaskProcess
 from murineshiftwork.logic.task_process import TaskRunner
-from murineshiftwork.tasks.sequence_automated.online_plotting import OnlinePlottingForSA
-from murineshiftwork.tasks.sequence_automated.task_objects import TaskControl
+from murineshiftwork.tasks.sequence.online_plotting import OnlinePlottingForSA
+from murineshiftwork.tasks.sequence.task_objects import TaskControl
 
 
 class Task(TaskRunner):
@@ -109,7 +109,7 @@ class Task(TaskRunner):
 
 
 def run_task(**args_dict):
-    """Entry point called by the MSW CLI: ``msw run -s <subject> -t sequence_automated``."""
+    """Entry point called by the MSW CLI: ``msw run -s <subject> -t sequence``."""
     dq: Queue = Queue()
     kq: Queue = Queue()
     args_dict.update({"objects": {"data_queue": dq, "kill_queue": kq}})

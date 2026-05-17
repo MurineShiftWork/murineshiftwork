@@ -3,10 +3,15 @@ import sys
 
 from murineshiftwork.cli.evaluate import evaluate_args
 from murineshiftwork.cli.parser import parse_args
+from murineshiftwork.hardware.bpod import patch_user_settings
+from murineshiftwork.logic.log import patch_logging_levels
 
 
 def run_cli(*args):
     """Command line interface for Murine Shift Work."""
+    patch_logging_levels()
+    patch_user_settings()
+
     if not args:
         args = sys.argv[1:]
 
