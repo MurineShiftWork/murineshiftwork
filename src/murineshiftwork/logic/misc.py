@@ -24,8 +24,11 @@ def test_serial_port_is_accessible(port=None, baudrate=115200, timeout=1):
         # Toggling DTR resets Arduino-based devices (e.g. Bpod), which causes
         # the subsequent real connection attempt to read a mid-boot response.
         device = serial.Serial(
-            port=port, baudrate=baudrate, timeout=timeout,
-            dsrdtr=False, rtscts=False,
+            port=port,
+            baudrate=baudrate,
+            timeout=timeout,
+            dsrdtr=False,
+            rtscts=False,
         )
         device.close()
     except IOError:
@@ -37,11 +40,16 @@ def list_available_tasks(detailed=False):
     from pathlib import Path
     import murineshiftwork.tasks as _tasks_pkg
 
-    tasks_dir = Path(_tasks_pkg.__path__[0]) if hasattr(_tasks_pkg, "__path__") else None
+    tasks_dir = (
+        Path(_tasks_pkg.__path__[0])
+        if hasattr(_tasks_pkg, "__path__")
+        else None
+    )
     if tasks_dir is None or not tasks_dir.exists():
-        # Namespace-package fallback: locate via installed package file
+        # Namespace-package fallback: locate via installed package __path__
         import murineshiftwork
-        tasks_dir = Path(murineshiftwork.__file__).parent / "tasks"
+
+        tasks_dir = Path(list(murineshiftwork.__path__)[0]) / "tasks"
 
     summary = {}
     for item in sorted(tasks_dir.iterdir()):

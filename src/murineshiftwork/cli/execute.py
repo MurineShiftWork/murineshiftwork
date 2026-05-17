@@ -3,14 +3,11 @@ import logging
 from pathlib import Path
 
 import yaml
-
 from murineshiftwork.logic.config import load_subject_config
-from murineshiftwork.logic.machine_config import (
-    get_machine_config_path,
-    read_machine_config,
-    resolve_config_dir,
-    write_machine_config,
-)
+from murineshiftwork.logic.machine_config import get_machine_config_path
+from murineshiftwork.logic.machine_config import read_machine_config
+from murineshiftwork.logic.machine_config import resolve_config_dir
+from murineshiftwork.logic.machine_config import write_machine_config
 from murineshiftwork.logic.misc import print_box
 
 
@@ -35,15 +32,25 @@ def run_register(**args_dict):
         else:
             data = {
                 "name": subject,
-                "registered": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
+                "registered": __import__("datetime")
+                .datetime.now()
+                .isoformat(timespec="seconds"),
                 "project": args_dict.get("project", ""),
                 "experiment": args_dict.get("experiment", ""),
                 "comment": args_dict.get("comment", ""),
                 "aliases": [],
-                "task_overrides": {args_dict["task"]: {}} if args_dict.get("task") else {},
+                "task_overrides": {args_dict["task"]: {}}
+                if args_dict.get("task")
+                else {},
             }
             with open(subject_path, "w") as f:
-                yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+                yaml.dump(
+                    data,
+                    f,
+                    default_flow_style=False,
+                    allow_unicode=True,
+                    sort_keys=False,
+                )
             print_box(f"Registered subject '{subject}' at {subject_path}.")
 
     elif "remove" in option:
@@ -69,7 +76,13 @@ def run_register(**args_dict):
                 raw = yaml.safe_load(f) or {}
             raw["name"] = new_alias
             with open(new_path, "w") as f:
-                yaml.dump(raw, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+                yaml.dump(
+                    raw,
+                    f,
+                    default_flow_style=False,
+                    allow_unicode=True,
+                    sort_keys=False,
+                )
             print_box(f"Renamed subject '{subject}' to '{new_alias}'.")
 
             if args_dict["move_data"]:
@@ -82,7 +95,9 @@ def run_register(**args_dict):
                             f"Cannot see new folder {str(new)}, but old folder {'' if old.exists() else 'NOT '}exists at {str(old)}"
                         )
                     else:
-                        print_box(f"Moved subject '{subject}' data to {str(new)}.")
+                        print_box(
+                            f"Moved subject '{subject}' data to {str(new)}."
+                        )
                 else:
                     print_box(f"No data to move for subject '{subject}'.")
         else:
@@ -110,6 +125,7 @@ def _apply_stage_position(args_dict: dict) -> None:
         return
 
     from one_axis_stage.controller import StageController
+
     with open(calib_path) as f:
         config = yaml.safe_load(f)
     config["connection"]["serial_port"] = serial_port_stage
@@ -137,16 +153,20 @@ def run_task(**args_dict):
     """
     import importlib
     from murineshiftwork.logic.log import suppress_third_party_console_handlers
+
     suppress_third_party_console_handlers()  # catch handlers added at import time
     _apply_stage_position(args_dict)
     task_name = args_dict["task"]
-    mod = importlib.import_module(f"murineshiftwork.tasks.{task_name}.{task_name}")
+    mod = importlib.import_module(
+        f"murineshiftwork.tasks.{task_name}.{task_name}"
+    )
     mod.run_task(**args_dict)
     logging.debug("Task finished.")
 
 
 # ---------------------------------------------------------------------------
 # murineshiftwork init
+
 
 def run_init(**args_dict):
     """Write ~/.murineshiftwork/msw_machine.yaml with the given config_dir.
@@ -168,7 +188,11 @@ def run_init(**args_dict):
 
     write_machine_config(config_dir, **extra)
 
-    data_line = f"Data dir:   {extra.get('data_dir', '(not set — defaults to ~/data)')}\n" if extra.get("data_dir") else ""
+    data_line = (
+        f"Data dir:   {extra.get('data_dir', '(not set — defaults to ~/data)')}\n"
+        if extra.get("data_dir")
+        else ""
+    )
     print_box(
         f"Initialised MSW on this machine.\n"
         f"Config dir: {config_dir}\n"
@@ -182,6 +206,7 @@ def run_init(**args_dict):
 
 # ---------------------------------------------------------------------------
 # murineshiftwork setup
+
 
 def run_setup(**args_dict):
     """Create or show setup configs."""
@@ -203,13 +228,24 @@ def run_setup(**args_dict):
         skeleton = {
             "name": setup_name,
             "devices": {
-                "bpod": {"type": "bpod", "port_by_path": "FILL_IN_PORT_BY_PATH"},
+                "bpod": {
+                    "type": "bpod",
+                    "port_by_path": "FILL_IN_PORT_BY_PATH",
+                },
             },
             "calibrations": {"bpod_valve": {}},
         }
         with open(path, "w") as f:
-            yaml.dump(skeleton, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-        print_box(f"Created setup config skeleton: {path}\nEdit the file to fill in device port_by_path values.")
+            yaml.dump(
+                skeleton,
+                f,
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False,
+            )
+        print_box(
+            f"Created setup config skeleton: {path}\nEdit the file to fill in device port_by_path values."
+        )
 
     elif subcommand == "list":
         if not setups_dir.exists():
@@ -219,7 +255,10 @@ def run_setup(**args_dict):
         setups = sorted(p.stem for p in setups_dir.glob("*.yaml"))
         if filt:
             setups = [s for s in setups if filt in s.lower()]
-        print_box(f"Available setups in {setups_dir}:\n" + "\n".join(f"  - {s}" for s in setups))
+        print_box(
+            f"Available setups in {setups_dir}:\n"
+            + "\n".join(f"  - {s}" for s in setups)
+        )
 
     else:
         raise ValueError(f"Unknown setup subcommand: {subcommand!r}")
@@ -227,6 +266,7 @@ def run_setup(**args_dict):
 
 # ---------------------------------------------------------------------------
 # murineshiftwork subject
+
 
 def run_subject(**args_dict):
     """Add or list YAML-based subjects."""
@@ -244,7 +284,9 @@ def run_subject(**args_dict):
 
         data = {
             "name": subject_name,
-            "registered": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
+            "registered": __import__("datetime")
+            .datetime.now()
+            .isoformat(timespec="seconds"),
             "project": args_dict.get("project", ""),
             "experiment": args_dict.get("experiment", ""),
             "comment": args_dict.get("comment", ""),
@@ -252,7 +294,13 @@ def run_subject(**args_dict):
             "task_overrides": {},
         }
         with open(path, "w") as f:
-            yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            yaml.dump(
+                data,
+                f,
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False,
+            )
         print_box(f"Registered subject '{subject_name}' at {path}")
 
     elif subcommand == "list":
@@ -265,12 +313,52 @@ def run_subject(**args_dict):
             + "\n".join(f"  - {s}" for s in subjects)
         )
 
+    elif subcommand == "rename":
+        subject_name = args_dict["subject"]
+        new_name = args_dict.get("new_name", "")
+        if not new_name:
+            print_box("--new-name is required for 'rename'.")
+            return
+        old_path = subjects_dir / f"{subject_name}.yaml"
+        new_path = subjects_dir / f"{new_name}.yaml"
+        if not old_path.exists():
+            print_box(f"Subject '{subject_name}' not found at {old_path}.")
+            return
+        if new_path.exists() and not args_dict.get("force", False):
+            print_box(
+                f"Subject '{new_name}' already exists at {new_path}. Use --force to overwrite."
+            )
+            return
+        old_path.rename(new_path)
+        with open(new_path) as f:
+            raw = yaml.safe_load(f) or {}
+        raw["name"] = new_name
+        with open(new_path, "w") as f:
+            yaml.dump(
+                raw,
+                f,
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False,
+            )
+        print_box(f"Renamed subject '{subject_name}' → '{new_name}'.")
+
+    elif subcommand == "remove":
+        subject_name = args_dict["subject"]
+        path = subjects_dir / f"{subject_name}.yaml"
+        if path.exists():
+            path.unlink()
+            print_box(f"Removed subject '{subject_name}' (deleted {path}).")
+        else:
+            print_box(f"Subject '{subject_name}' not found at {path}.")
+
     else:
         raise ValueError(f"Unknown subject subcommand: {subcommand!r}")
 
 
 # ---------------------------------------------------------------------------
 # murineshiftwork action
+
 
 def _parse_action_param(v: str):
     """Coerce a KEY=VALUE string value to int, float, or str."""
@@ -317,7 +405,9 @@ def run_action(**args_dict):
     config_dir = resolve_config_dir(args_dict.get("config_dir", ""))
     setup_cfg = load_setup_config(config_dir, setup_name)
     if setup_cfg is None:
-        raise ValueError(f"Setup '{setup_name}' not found in {config_dir}/setups/")
+        raise ValueError(
+            f"Setup '{setup_name}' not found in {config_dir}/setups/"
+        )
 
     device = setup_cfg.devices.get(device_key)
     if device is None:
@@ -343,6 +433,7 @@ def run_action(**args_dict):
 # ---------------------------------------------------------------------------
 # murineshiftwork calibration
 
+
 def run_calibration(**args_dict):
     """Plot and save calibration charts as PDF."""
     import logging
@@ -364,4 +455,6 @@ def run_calibration(**args_dict):
     for path in saved:
         print(f"Saved: {path}")
     if not saved:
-        print("No calibration PDFs saved — check setup YAMLs contain bpod_valve calibration data.")
+        print(
+            "No calibration PDFs saved — check setup YAMLs contain bpod_valve calibration data."
+        )

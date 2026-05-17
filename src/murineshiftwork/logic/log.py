@@ -4,71 +4,82 @@ from datetime import datetime
 from pathlib import Path
 
 from murineshiftwork.logic.paths import MSW_DATETIME_FORMAT
-
 from rich import get_console
 from rich.logging import RichHandler
 
 # IDs of handlers that MSW owns on the root logger — anything else is third-party.
 _MSW_ROOT_HANDLER_IDS: set[int] = set()
 
+_CENTRAL_LOG_DIR = Path("~/.murineshiftwork/logs").expanduser()
+_MAX_LOG_FILES = 100
+
 
 def get_default_log_file_path(path=None):
-    if path is None:
-        path = "/tmp/"
-
-    path = Path(path)
-
-    dt = datetime.now().strftime(MSW_DATETIME_FORMAT)
-    out_name = f"murineshiftwork.{dt}.log"
-    if path.is_dir():
-        path = path / out_name
-    else:
-        path = path.parent / out_name
-        logging.info(
-            f"Given log file name, but ignoring in favour of: {str(path)}"
-        )
-
-    return str(path)
+    """Kept for backward compatibility — returns central log dir path."""
+    return str(_CENTRAL_LOG_DIR)
 
 
 def setup_logging(level=None, log_file=None):
     if level is None:
         level = "DEBUG"
 
-    if log_file is None:
-        log_file = get_default_log_file_path()
-
     logger = logging.getLogger()
 
-    if not logger.handlers:
-        logger.setLevel(getattr(logging, level))
+    if logger.handlers:
+        return
 
-        formatter = logging.Formatter("%(message)s")
-        formatter.datefmt = "%Y-%m-%d %H:%M:%S.%f"
+    logger.setLevel(getattr(logging, level))
 
-        # To file
-        file_handler = logging.FileHandler(filename=log_file)
-        file_handler.setLevel(getattr(logging, level))
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-        _MSW_ROOT_HANDLER_IDS.add(id(file_handler))
+    formatter = logging.Formatter("%(message)s")
+    formatter.datefmt = "%Y-%m-%d %H:%M:%S.%f"
 
-        # To console
-        logging_handler = RichHandler(
-            console=get_console(),
-            level=level,
-            enable_link_path=False,
-            markup=True,
-            rich_tracebacks=True,
-            tracebacks_show_locals=True,
-        )
-        logging_handler.setFormatter(formatter)
-        logger.addHandler(logging_handler)
-        _MSW_ROOT_HANDLER_IDS.add(id(logging_handler))
+    # Central log: one timestamped file per run; prune to _MAX_LOG_FILES
+    if log_file:
+        central_log_path = Path(log_file).expanduser()
+        central_log_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        _CENTRAL_LOG_DIR.mkdir(parents=True, exist_ok=True)
+        dt = datetime.now().strftime(MSW_DATETIME_FORMAT)
+        central_log_path = _CENTRAL_LOG_DIR / f"msw-{dt}.log"
+        all_logs = sorted(_CENTRAL_LOG_DIR.glob("msw-*.log"))
+        for old in all_logs[:-_MAX_LOG_FILES]:
+            try:
+                old.unlink()
+            except OSError:
+                pass
 
-        logging.info(
-            f"Set up logging for MSW with level {level} and writing to '{log_file}'"
-        )
+    file_handler = logging.FileHandler(filename=str(central_log_path))
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    _MSW_ROOT_HANDLER_IDS.add(id(file_handler))
+
+    logging_handler = RichHandler(
+        console=get_console(),
+        level=level,
+        enable_link_path=False,
+        markup=True,
+        rich_tracebacks=True,
+        tracebacks_show_locals=True,
+    )
+    logging_handler.setFormatter(formatter)
+    logger.addHandler(logging_handler)
+    _MSW_ROOT_HANDLER_IDS.add(id(logging_handler))
+
+    logging.info(f"Logging to {central_log_path}")
+
+
+def add_session_log_handler(session_file_path: str, level: str = "INFO"):
+    """Add a per-session FileHandler writing INFO+ records to the session folder."""
+    log_path = Path(str(session_file_path) + ".msw.log")
+    handler = logging.FileHandler(filename=str(log_path))
+    handler.setLevel(getattr(logging, level.upper()))
+    formatter = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
+    formatter.datefmt = "%Y-%m-%d %H:%M:%S"
+    handler.setFormatter(formatter)
+    logging.getLogger().addHandler(handler)
+    _MSW_ROOT_HANDLER_IDS.add(id(handler))
+    logging.info(f"Session log: {log_path}")
 
 
 def patch_logging_levels(target_level="WARNING"):
@@ -78,32 +89,22 @@ def patch_logging_levels(target_level="WARNING"):
 
 
 def suppress_third_party_console_handlers():
-    """Remove foreign StreamHandlers from all loggers to eliminate duplicate console output.
+    """Remove foreign StreamHandlers from all loggers to eliminate duplicate console output."""
 
-    Third-party packages (rpi_camera_ensemble, one_axis_stage, …) may add their own
-    StreamHandlers — either to named child loggers or directly to the root logger —
-    before or after MSW's RichHandler is set up.  Both produce a line on the console
-    for each record, giving the characteristic double-output.
-
-    This function:
-    - Removes any StreamHandler on the root logger that MSW did not register.
-    - Removes all StreamHandlers from child loggers (they should propagate to root).
-    File handlers are always preserved.  Safe to call multiple times.
-    """
     def _is_foreign_stream_handler(h: logging.Handler) -> bool:
-        return (
-            isinstance(h, logging.StreamHandler)
-            and not isinstance(h, logging.FileHandler)
+        return isinstance(h, logging.StreamHandler) and not isinstance(
+            h, logging.FileHandler
         )
 
-    # Root logger: only remove handlers that MSW did not add
     root = logging.getLogger()
     for handler in list(root.handlers):
-        if _is_foreign_stream_handler(handler) and id(handler) not in _MSW_ROOT_HANDLER_IDS:
+        if (
+            _is_foreign_stream_handler(handler)
+            and id(handler) not in _MSW_ROOT_HANDLER_IDS
+        ):
             root.removeHandler(handler)
             logging.debug("Removed foreign StreamHandler from root logger")
 
-    # Child loggers: remove any console handler (they should let records propagate)
     for name, logger in logging.Logger.manager.loggerDict.items():
         if not isinstance(logger, logging.Logger):
             continue

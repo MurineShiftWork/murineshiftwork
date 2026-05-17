@@ -2,23 +2,22 @@ import logging
 import subprocess
 import sys
 import time
+from importlib.metadata import version as _get_version
 from pathlib import Path
 from threading import Thread
 
 import numpy as np
-from pybpodapi.protocol import Bpod
-from pybpodapi.protocol import StateMachine
-
 import yaml
-
-from murineshiftwork import __version__ as _msw_version
 from murineshiftwork.hardware.bpod import BpodFactory
+from murineshiftwork.logic.log import add_session_log_handler
 from murineshiftwork.logic.log import patch_logging_levels
 from murineshiftwork.logic.misc import find_task_by_name
 from murineshiftwork.logic.misc import print_box
 from murineshiftwork.logic.misc import test_serial_port_is_accessible
 from murineshiftwork.logic.paths import build_data_paths
 from murineshiftwork.logic.paths import test_path_is_writable
+from pybpodapi.protocol import Bpod
+from pybpodapi.protocol import StateMachine
 
 
 def _get_git_commit() -> str:
@@ -49,7 +48,13 @@ def update_session_yaml(session_file_path, **sections):
         data = {"msw_format_version": 2}
     data.update(sections)
     with open(yaml_path, "w") as f:
-        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            data,
+            f,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
 
 
 class TaskRunner(Thread):
@@ -180,12 +185,19 @@ class TaskProcess(object):
                 f"Task to run '{self.task_in}' not found or not specific enough."
             )
 
-        Path(self.session_paths["session_folder"]).mkdir(parents=True, exist_ok=False)
-        target_file = Path(self.session_paths["session_folder"]) / ".write_test"
+        Path(self.session_paths["session_folder"]).mkdir(
+            parents=True, exist_ok=False
+        )
+        target_file = (
+            Path(self.session_paths["session_folder"]) / ".write_test"
+        )
         if not test_path_is_writable(target_file) and not self.debug:
-            raise PermissionError(f"Session files not writable at {str(target_file)}")
+            raise PermissionError(
+                f"Session files not writable at {str(target_file)}"
+            )
 
         patch_logging_levels()
+        add_session_log_handler(self.session_paths["session_file_path"])
         self.persist_settings()
 
         if bpod is not None:
@@ -197,10 +209,14 @@ class TaskProcess(object):
             # Self-managed: open connection from serial_port_bpod arg
             if self.serial_port:
                 accessible = test_serial_port_is_accessible(
-                    port=self.serial_port, baudrate=self.bpod_baudrate, timeout=1
+                    port=self.serial_port,
+                    baudrate=self.bpod_baudrate,
+                    timeout=1,
                 )
                 if not accessible and not self.debug:
-                    raise IOError(f"Serial port not accessible at {self.serial_port}")
+                    raise IOError(
+                        f"Serial port not accessible at {self.serial_port}"
+                    )
             self.connect_bpod()
 
         if auto_init:
@@ -246,25 +262,38 @@ class TaskProcess(object):
         data = {
             "msw_format_version": 2,
             "process": {
-                "msw_version": _msw_version,
+                "msw_version": _get_version("murineshiftwork"),
                 "git_commit": _get_git_commit(),
                 "task": self.task_name,
                 "subject": self.subject,
                 "setup": self.input_kwargs.get("setup", ""),
                 "serial_port": self.serial_port,
                 "out_path": self.out_path,
-                "session_folder": str(self.session_paths.get("session_folder", "")),
-                "session_basename": self.session_paths.get("session_basename", ""),
+                "session_folder": str(
+                    self.session_paths.get("session_folder", "")
+                ),
+                "session_basename": self.session_paths.get(
+                    "session_basename", ""
+                ),
                 "datetime": self.session_paths.get("datetime", ""),
             },
         }
-        yaml_path = self.session_paths["session_file_path"] + ".msw.session.yaml"
+        yaml_path = (
+            self.session_paths["session_file_path"] + ".msw.session.yaml"
+        )
         with open(yaml_path, "w") as f:
-            yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            yaml.dump(
+                data,
+                f,
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False,
+            )
 
     def init_task(self):
         """Import specific Task and make self.task_runner Thread."""
         import importlib
+
         try:
             mod = importlib.import_module(
                 f"murineshiftwork.tasks.{self.task_name}.{self.task_name}"

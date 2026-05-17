@@ -1,10 +1,9 @@
 from argparse import ArgumentDefaultsHelpFormatter
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
-from pathlib import Path
+from importlib.metadata import version as _get_version
 from textwrap import dedent
 
-from murineshiftwork import __version__
 from murineshiftwork.cli.defaults import available_tasks
 from murineshiftwork.cli.defaults import default_config_dir
 from murineshiftwork.cli.defaults import default_out_path
@@ -15,7 +14,11 @@ from murineshiftwork.cli.execute import run_register
 from murineshiftwork.cli.execute import run_setup
 from murineshiftwork.cli.execute import run_subject
 from murineshiftwork.cli.execute import run_task
-from murineshiftwork.logic.log import get_default_log_file_path
+
+try:
+    _MSW_VERSION = _get_version("murineshiftwork")
+except Exception:
+    _MSW_VERSION = "unknown"
 
 
 class ArgparseFormatter(
@@ -24,259 +27,116 @@ class ArgparseFormatter(
     pass
 
 
-CALIBRATION_FILE_PATH = Path("~/.murineshiftwork/")
-
-
-def add_args_for_general_use(parser=None):
-    general_args = parser.add_argument_group("General arguments")
-    general_args.add_argument(
+def _add_session_args(parser):
+    g = parser.add_argument_group("Session")
+    g.add_argument(
         "-s",
         "--subject",
         type=str,
         default="_test_subject",
         help="Subject name",
     )
-    general_args.add_argument(
+    g.add_argument(
         "-t",
         "--task",
         type=str,
         default="",
-        help="Task name or unique part of task name",
+        help="Task name or unique substring of task name",
     )
-    general_args.add_argument(
+    g.add_argument(
         "-o",
         "--out-path",
         type=str,
         default=default_out_path,
-        help="Out path for task data",
+        dest="out_path",
+        help="Output directory for session data",
     )
-    general_args.add_argument(
-        "-child-to",
+    g.add_argument(
+        "--child-of",
         "--is-child-session-to",
         dest="is_child_session_to",
         type=str,
         default="",
-        help="Set if is child session. If not empty, skips subject dir & saves session dir directly in `--out-path`",
+        help="Parent session basename; when set, saves session directly in --out-path (skips subject dir)",
     )
-    metadata_group = parser.add_argument_group("Metadata")
-    metadata_group.add_argument(
-        "-meta",
-        "--metadata",
-        metavar="KEY=VALUE",
-        nargs="+",
-        dest="metadata_list",
-        help="Metadata key-value pairs. Use other named metadata fields or specify any relevant key-value pair",
-    )
-    metadata_group.add_argument(
-        "--researcher",
-        type=str,
-        default="unknown_researcher",
-        help="Name or initials of researcher acquiring the data",
-    )
-    metadata_group.add_argument(
-        "--setup",
-        type=str,
-        default="unknown_setup",
-        help="Name or ID of setup",
-    )
-    metadata_group.add_argument(
-        "--experiment",
-        type=str,
-        default="unknown_experiment",
-        help="Name or ID of experiment",
-    )
-    config_arg_group = parser.add_argument_group(
-        "Configuration & settings files"
-    )
-    config_arg_group.add_argument(
+
+
+def _add_config_args(parser):
+    g = parser.add_argument_group("Configuration")
+    g.add_argument(
         "-cd",
         "--config-dir",
         type=str,
         default=default_config_dir,
-        help="Directory that contains config files. Used if specific config files are only names, not full paths.",
+        dest="config_dir",
+        help="Shared config directory containing setups/, subjects/, tasks/",
     )
-    config_arg_group.add_argument(
-        "-cs",
-        "--config-file-subjects",
-        type=str,
-        default="",
-        help="Settings file name or path (legacy INI; no longer used by default).",
-    )
-    config_arg_group.add_argument(
+    g.add_argument(
         "-ct",
         "--config-file-task",
         type=str,
         default="task.yaml",
-        help="Settings file name or path.",
+        dest="config_file_task",
+        help="Task settings file name or path",
     )
-    config_arg_group.add_argument(
+    g.add_argument(
         "-cc",
         "--config-file-camera",
         type=str,
         default="camera.rcc.config",
-        help="Settings file name or path. (Only relevant for `run`)",
+        dest="config_file_camera",
+        help="Camera settings file name or path",
     )
-    return general_args
 
 
-def add_args_for_hardware_and_calibration(parser=None):
-    hardware_args = parser.add_argument_group("Hardware settings")
-    hardware_args.add_argument(
+def _add_hardware_args(parser):
+    g = parser.add_argument_group("Hardware")
+    g.add_argument(
         "-b",
-        "--serial-port-bpod",
+        "--port-bpod",
         type=str,
         default="/dev/ttyACM0",
-        help="Serial port for bpod. Unix: /dev/ttyACM{no}. Windows: COM{no}.",
+        dest="serial_port_bpod",
+        help="Serial port for Bpod (Unix: /dev/ttyACM{n}, Windows: COM{n})",
     )
-    hardware_args.add_argument(
+    g.add_argument(
         "-p",
-        "--serial-port-pulsepal",
+        "--port-pulsepal",
         type=str,
         default="/dev/ttyACM1",
-        help="Serial port for pulsepal. Unix: /dev/ttyACM{no}. Windows: COM{no}.",
+        dest="serial_port_pulsepal",
+        help="Serial port for PulsePal",
     )
-    hardware_args.add_argument(
-        "-scale",
-        "--serial-port-scale",
-        dest="serial_port_scale",
+    g.add_argument(
+        "--port-scale",
         type=str,
         default="/dev/ttyACM2",
-        help="Serial port for weighing scale (for calibration). Unix: /dev/ttyACM{no}. Windows: COM{no}.",
+        dest="serial_port_scale",
+        help="Serial port for weighing scale (calibration tasks only)",
     )
-    hardware_args.add_argument(
-        "-stage",
-        "--serial-port-stage",
-        dest="serial_port_stage",
+    g.add_argument(
+        "--port-stage",
         type=str,
         default="/dev/ttyUSB0",
-        help="Serial port for stage controller (e.g. for moving spouts). Unix: /dev/ttyACM{no}. Windows: COM{no}.",
-    )
-    calibration_arg_group = parser.add_argument_group("Calibration files")
-    calibration_arg_group.add_argument(
-        "-cwater",
-        "--calibration-file-water",
-        dest="calibration_file_water",
-        type=str,
-        default=CALIBRATION_FILE_PATH / "calibration.water.default.csv",
-        help="Default water calibration file (Only relevant for `run`)",
-    )
-    calibration_arg_group.add_argument(
-        "-csound",
-        "--calibration-file-sound",
-        dest="calibration_file_sound",
-        type=str,
-        default="calibration.sound.default.csv",  # fixme: CALIBRATION_FILE_PATH /
-        help="Default sound calibration file (Only relevant for `run`)",
-    )
-    calibration_arg_group.add_argument(
-        "-cstage",
-        "--calibration-file-stage",
-        dest="calibration_file_stage",
-        type=str,
-        default=CALIBRATION_FILE_PATH / "calibration.stage.default.yaml",
-        help="Default stage calibration file (Only relevant for `run`)",
-    )
-    return hardware_args
-
-
-def add_args_for_flow_control(parser=None):
-    flow_control_options = parser.add_argument_group("Development options.")
-    flow_control_options.add_argument(
-        "-l",
-        "--log-level",
-        dest="log_level",
-        type=str,
-        default="INFO",
-        help="Log level, e.g. 'INFO' or 'DEBUG'",
-    )
-    flow_control_options.add_argument(
-        "-lf",
-        "--log-file",
-        dest="log_file",
-        type=str,
-        default=get_default_log_file_path(),
-        help="Log file path. Filenames are ignored",
-    )
-    flow_control_options.add_argument(
-        "-d",
-        "--debug",
-        dest="debug",
-        action="store_true",
-        default=False,
-        help="Sets log level to DEBUG and enables additional development features",
-    )
-    return flow_control_options
-
-
-def make_subparser_register(sub_parsers):
-    description = "Register subjects"
-    examples = dedent(
-        f"""Examples:
-
-    msw register subject [optional: task]
-
-    msw register add _test_subject
-    msw register add _test_subject probabilistic_switching
-    msw register add _test_subject -t/--task probabilistic_switching
-    msw register remove _test_subject
-    msw register remove _test_subject --task probabilistic_switching
-    msw register rename
-
-Available tasks:
-{available_tasks}
-
-    """
-    )
-    parser_for_register = sub_parsers.add_parser(
-        name="register",
-        description=description,
-        help=description,
-        epilog=examples,
-        formatter_class=ArgparseFormatter,
-    )
-    parser_for_register.add_argument(
-        "subcommand",
-        type=str,
-        choices=["add", "remove", "rename"],
-        help="Choose from: add, remove, rename",
-    )
-    add_args_for_general_use(parser_for_register)
-    add_args_for_flow_control(parser_for_register)
-
-    reg_group = parser_for_register.add_argument_group("Registration options")
-    reg_group.add_argument(
-        "-n",
-        "--new-alias",
-        dest="new_alias",
-        type=str,
-        default="",
-        help="New alias for subject, if subcommand options are 'register move'",
-    )
-    reg_group.add_argument(
-        "-m",
-        "--move-data",
-        dest="move_data",
-        default=True,
-        action="store_true",
-        help="If subcommand is 'move', then tries to move existing acquisitions to new subject name",
+        dest="serial_port_stage",
+        help="Serial port for stage controller",
     )
 
-    parser_for_register.set_defaults(func=run_register)
 
-
-def add_args_for_task_settings_override(parser=None):
-    parser.add_argument(
+def _add_task_mode_args(parser):
+    g = parser.add_argument_group("Task mode")
+    g.add_argument(
         "--task-mode",
         dest="task_mode",
         type=str,
         default="",
         help=(
-            "Named preset from the task.yaml 'mode:' section. "
+            "Named preset from task.yaml 'mode:' section. "
             "Overrides task defaults; overridden by subject YAML and -ts. "
             "Example: --task-mode probe"
         ),
     )
-    parser.add_argument(
+    g.add_argument(
         "-ts",
         "--task-settings",
         metavar="KEY=VALUE",
@@ -284,37 +144,63 @@ def add_args_for_task_settings_override(parser=None):
         dest="task_settings_overrides",
         default=[],
         help=(
-            "Task-settings key-value overrides applied last (highest priority). "
+            "Task-settings key-value overrides (highest priority). "
             "Example: -ts reward_amount_ul=3 n_max_trials=200"
         ),
     )
 
 
-def make_subparser_run(sub_parsers):
-    description = "Run tasks"
-    examples = dedent(
-        f"""Examples:
-
-    msw run -t task_name -s subject_name
-    msw run -t task_name -s subject_name -b serial_port_bpod
-
-Available tasks:
-{available_tasks}
-
-    """
+def _add_meta_args(parser):
+    g = parser.add_argument_group("Metadata")
+    g.add_argument(
+        "--setup",
+        type=str,
+        default="",
+        help="Setup name (must match a YAML in the setups config directory)",
     )
-    parser_for_run = sub_parsers.add_parser(
-        name="run",
-        description=description,
-        help=description,
-        epilog=examples,
-        formatter_class=ArgparseFormatter,
+    g.add_argument(
+        "-m",
+        "--meta",
+        metavar="KEY=VALUE",
+        nargs="+",
+        dest="metadata_list",
+        help="Arbitrary metadata key-value pairs. Example: -m project=myproject cohort=1",
     )
-    add_args_for_general_use(parser_for_run)
-    add_args_for_hardware_and_calibration(parser_for_run)
-    add_args_for_task_settings_override(parser_for_run)
-    add_args_for_flow_control(parser_for_run)
-    parser_for_run.set_defaults(func=run_task)
+    g.add_argument(
+        "--meta-experimenter",
+        type=str,
+        default="",
+        dest="experimenter",
+        help="Experimenter name or initials (convenience shorthand for -m experimenter=NAME)",
+    )
+
+
+def _add_dev_args(parser):
+    g = parser.add_argument_group("Development")
+    g.add_argument(
+        "-l",
+        "--log-level",
+        dest="log_level",
+        type=str,
+        default="INFO",
+        help="Log level (INFO, DEBUG, WARNING, …)",
+    )
+    g.add_argument(
+        "-lf",
+        "--log-file",
+        dest="log_file",
+        type=str,
+        default="",
+        help="Override central log file path (default: auto-rotated in ~/.murineshiftwork/logs/)",
+    )
+    g.add_argument(
+        "-d",
+        "--debug",
+        dest="debug",
+        action="store_true",
+        default=False,
+        help="Enable debug mode (sets log level to DEBUG, relaxes hardware checks)",
+    )
 
 
 def make_subparser_init(sub_parsers):
@@ -350,10 +236,23 @@ def make_subparser_setup(sub_parsers):
         choices=["create", "list"],
         help="create: make a new skeleton YAML; list: show available setups",
     )
-    p.add_argument("setup_name", nargs="?", default="", help="Setup name (required for create)")
-    p.add_argument("-cd", "--config-dir", type=str, default="", dest="config_dir")
-    p.add_argument("-f", "--filter", type=str, default="", dest="filter",
-                   help="Filter by partial name match (case-insensitive, only for list)")
+    p.add_argument(
+        "setup_name",
+        nargs="?",
+        default="",
+        help="Setup name (required for create)",
+    )
+    p.add_argument(
+        "-cd", "--config-dir", type=str, default="", dest="config_dir"
+    )
+    p.add_argument(
+        "-f",
+        "--filter",
+        type=str,
+        default="",
+        dest="filter",
+        help="Filter by partial name match (case-insensitive, list only)",
+    )
     p.add_argument("--force", action="store_true", default=False)
     p.set_defaults(func=run_setup)
 
@@ -366,18 +265,102 @@ def make_subparser_subject(sub_parsers):
     )
     p.add_argument(
         "subcommand",
-        choices=["add", "list"],
-        help="add: register a new subject; list: show registered subjects",
+        choices=["add", "list", "rename", "remove"],
+        help="add / list / rename / remove",
     )
-    p.add_argument("-s", "--subject", type=str, default="", dest="subject")
+    p.add_argument(
+        "-s",
+        "--subject",
+        type=str,
+        default="",
+        dest="subject",
+        help="Subject name",
+    )
+    p.add_argument(
+        "--new-name",
+        type=str,
+        default="",
+        dest="new_name",
+        help="New name (required for rename)",
+    )
     p.add_argument("--project", type=str, default="")
     p.add_argument("--experiment", type=str, default="")
     p.add_argument("--comment", type=str, default="")
-    p.add_argument("-cd", "--config-dir", type=str, default="", dest="config_dir")
-    p.add_argument("-f", "--filter", type=str, default="", dest="filter",
-                   help="Filter by partial name match (case-insensitive, only for list)")
+    p.add_argument(
+        "-cd", "--config-dir", type=str, default="", dest="config_dir"
+    )
+    p.add_argument(
+        "-f",
+        "--filter",
+        type=str,
+        default="",
+        dest="filter",
+        help="Filter by partial name match (case-insensitive, list only)",
+    )
     p.add_argument("--force", action="store_true", default=False)
     p.set_defaults(func=run_subject)
+
+
+def make_subparser_run(sub_parsers):
+    examples = dedent(
+        f"""Examples:
+    msw run -t task_name -s subject_name
+    msw run -t task_name -s subject_name -b /dev/ttyACM0 --setup setup-1
+
+Available tasks:
+{available_tasks}
+
+    """
+    )
+    p = sub_parsers.add_parser(
+        "run",
+        description="Run a behavioural task.",
+        help="Run a task",
+        epilog=examples,
+        formatter_class=ArgparseFormatter,
+    )
+    _add_session_args(p)
+    _add_config_args(p)
+    _add_task_mode_args(p)
+    _add_hardware_args(p)
+    _add_meta_args(p)
+    _add_dev_args(p)
+    p.set_defaults(func=run_task)
+
+
+def make_subparser_calibration(sub_parsers):
+    p = sub_parsers.add_parser(
+        "calibration",
+        help="Calibration utilities (plot, inspect)",
+        formatter_class=ArgparseFormatter,
+    )
+    p.add_argument(
+        "action",
+        choices=["plot"],
+        help="plot: save valve calibration curves as PDF",
+    )
+    p.add_argument(
+        "--setup",
+        type=str,
+        default="",
+        help="Setup name to plot (plots all setups if omitted)",
+    )
+    p.add_argument(
+        "--out",
+        dest="output_dir",
+        type=str,
+        default=".",
+        help="Output directory for PDF files",
+    )
+    p.add_argument(
+        "-cd",
+        "--config-dir",
+        dest="config_dir",
+        type=str,
+        default="",
+        help="Config directory (default: from machine config)",
+    )
+    p.set_defaults(func=run_calibration)
 
 
 def make_subparser_action(sub_parsers):
@@ -406,21 +389,23 @@ def make_subparser_action(sub_parsers):
         help="Setup name (must match a YAML in the setups config directory)",
     )
     p.add_argument(
-        "-cd", "--config-dir",
-        type=str, default="",
+        "-cd",
+        "--config-dir",
+        type=str,
+        default="",
         dest="config_dir",
         help="Config directory (default: from machine config)",
     )
     p.add_argument(
-        "-b", "--serial-port-bpod",
-        type=str, default="/dev/ttyACM0",
+        "-b",
+        "--port-bpod",
+        type=str,
+        default="/dev/ttyACM0",
         dest="serial_port_bpod",
-        help="Serial port for Bpod (used when device type is 'bpod')",
+        help="Serial port for Bpod",
     )
     p.add_argument(
-        "device",
-        type=str,
-        help="Device key as defined in the setup YAML (e.g. 'bpod')",
+        "device", type=str, help="Device key from the setup YAML (e.g. 'bpod')"
     )
     p.add_argument(
         "action",
@@ -431,78 +416,101 @@ def make_subparser_action(sub_parsers):
         "params",
         nargs="*",
         metavar="KEY=VALUE",
-        help="Optional action parameters (e.g. valve_id=1 duration_s=0.025 n_pulses=10)",
+        help="Optional action parameters (e.g. valve_id=1 duration_s=0.025)",
     )
-    add_args_for_flow_control(p)
+    _add_dev_args(p)
     p.set_defaults(func=run_action)
 
 
-def make_subparser_calibration(sub_parsers):
+def make_subparser_register(sub_parsers):
+    """Legacy subject registration subcommand — use 'subject' instead."""
+    examples = dedent(
+        f"""Examples (legacy — prefer: msw subject add/rename/remove):
+
+    msw register add -s _test_subject
+    msw register add -s _test_subject -t probabilistic_switching
+    msw register remove -s _test_subject
+    msw register rename -s _test_subject -n _test_subject_renamed
+
+Available tasks:
+{available_tasks}
+
+    """
+    )
     p = sub_parsers.add_parser(
-        "calibration",
-        help="Calibration utilities (plot, inspect)",
+        "register",
+        description="Legacy subject registration (prefer: msw subject add/rename/remove)",
+        help="[legacy] Register subjects — use 'subject' instead",
+        epilog=examples,
         formatter_class=ArgparseFormatter,
     )
     p.add_argument(
-        "action",
-        choices=["plot"],
-        help="plot: save valve calibration curves as PDF",
+        "subcommand",
+        choices=["add", "remove", "rename"],
+        help="add / remove / rename",
     )
     p.add_argument(
-        "--setup",
+        "-s", "--subject", type=str, default="_test_subject", dest="subject"
+    )
+    p.add_argument("-t", "--task", type=str, default="", dest="task")
+    p.add_argument(
+        "-o", "--out-path", type=str, default=default_out_path, dest="out_path"
+    )
+    p.add_argument(
+        "-cd", "--config-dir", type=str, default="", dest="config_dir"
+    )
+    p.add_argument(
+        "-n",
+        "--new-alias",
+        dest="new_alias",
         type=str,
         default="",
-        help="Setup name to plot (plots all setups if omitted)",
+        help="New alias when subcommand is 'rename'",
     )
     p.add_argument(
-        "--out",
-        dest="output_dir",
-        type=str,
-        default=".",
-        help="Output directory for PDF files (default: current directory)",
+        "-m",
+        "--move-data",
+        dest="move_data",
+        default=True,
+        action="store_true",
+        help="Move existing session data to new subject name when renaming",
     )
-    p.add_argument(
-        "-cd",
-        "--config-dir",
-        dest="config_dir",
-        type=str,
-        default="",
-        help="Config directory (default: from machine config)",
-    )
-    p.set_defaults(func=run_calibration)
+    p.add_argument("--force", action="store_true", default=False)
+    p.set_defaults(func=run_register)
 
 
 def parse_args(args=None):
-    """Parser for Murine Shift Work.
-    Assumes input is args without first argument as py file path == sys.argv with first argument removed.
+    epilog = dedent(
+        """\
+        Source: https://github.com/larsrollik/murineshiftwork
 
-    :param args: List of arguments
-    :return: Dict of parsed arguments
-    """
-    epilog = dedent("""""")
+        """
+    )
     main_parser = ArgumentParser(
-        prog="murineshiftwork",
-        description="Behavior acquisition for murine tasks. "
-        "Options for video acquisition with RPi Camera Colony and stimulation with PulsePal.",
-        epilog=epilog,  # FIXME: add info how to use `register` and `run` subcommands
+        prog="msw",
+        description=(
+            "Murine Shift Work (msw) — behavioural task acquisition with hardware support.\n"
+            f"Version {_MSW_VERSION} | © Lars B. Rollik | PolyForm Internal Use 1.0.0"
+        ),
+        epilog=epilog,
         formatter_class=ArgparseFormatter,
     )
     main_parser.add_argument(
         "-v",
         "--version",
         action="version",
-        version=f"Murine Shift Work: {__version__}",
-        help="Show the version number and exit.",
+        version=f"msw {_MSW_VERSION}",
+        help="Show version and exit",
     )
     sub_parsers = main_parser.add_subparsers(metavar="command", dest="command")
     sub_parsers.required = True
     make_subparser_init(sub_parsers)
-    make_subparser_register(sub_parsers)
-    make_subparser_run(sub_parsers)
     make_subparser_setup(sub_parsers)
     make_subparser_subject(sub_parsers)
+    make_subparser_run(sub_parsers)
     make_subparser_calibration(sub_parsers)
     make_subparser_action(sub_parsers)
+    make_subparser_register(sub_parsers)
 
     parsed_args = main_parser.parse_args(args=args)
     return parsed_args.__dict__

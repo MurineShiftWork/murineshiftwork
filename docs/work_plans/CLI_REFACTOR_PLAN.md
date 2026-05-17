@@ -394,29 +394,51 @@ Available tasks:
 
 ---
 
-## 14. Next action items (MSW general work plan)
+## 14. Completed (2026-05-17)
 
-_In rough priority order based on ROADMAP + session work._
+All CLI refactor steps implemented:
 
-**Immediate (next session):**
-1. CLI refactor — implement steps 1–9 (one PR). Prerequisite: today's setup use is done.
-2. Hook system — implement `logic/hooks.py`, wire into `TaskProcess`, add
+- `setup.cfg`: added `msw` entry point alongside `murineshiftwork`
+- `parser.py`: full rewrite — `prog="msw"`, new description, 6 focused `_add_*` helpers,
+  renamed flags (`--port-bpod`, `--port-pulsepal`, `--port-scale`, `--port-stage`), all `dest=`
+  unchanged so downstream code needs no key renames; removed dead args
+  (`-cs`, `--researcher`, `--experiment`, `-cwater`, `-csound`, `-cstage`);
+  added `--meta-experimenter`; subcommand order: init/setup/subject/run/calibration/action/register;
+  `register` marked legacy; `subject` has all four verbs (add/list/rename/remove)
+- `logic/log.py`: per-run timestamped files in `~/.murineshiftwork/logs/`, pruned to 100 files;
+  added `add_session_log_handler()` (INFO level)
+- `logic/task_process.py`: importlib.metadata for version; session log handler wired in
+- `logic/misc.py`: namespace-package fallback uses `__path__` not `__file__`
+- `cli/__init__.py`: `_print_run_banner()` for `run`; action/register added to bypass list
+- `cli/evaluate.py`: `_evaluate_metadata` now uses experimenter key (not researcher/experiment);
+  `_evaluate_and_load_configs` uses `.get()` with defaults for all removed CLI keys
+- `cli/execute.py`: `run_subject` handles rename and remove
+- `cli/defaults.py`: calibration file path defaults added
+- `src/murineshiftwork/__init__.py`: **deleted** — murineshiftwork is now a proper namespace package
+- `tests/test_namespace_readiness.py`: both tests pass (no xfail); uses `__path__` not `__file__`
+- `.github/workflows/install_and_test.yaml`: namespace checks updated; both must pass
+
+Test result: 195 passed, 0 xfailed, 3 warnings.
+
+---
+
+## 15. Next action items (MSW general work plan)
+
+_In rough priority order._
+
+**Immediate:**
+1. Hook system — implement `logic/hooks.py`, wire into `TaskProcess`, add
    `sequence/hooks.py::FetchSubjectLevel`. Plan in `FLIR_AND_HOOKS_PLAN.md`.
+2. FLIR `BonsaiRunner` — subprocess launcher for Bonsai workflows (both flycap+spinnaker,
+   up to 3 cameras with input index). Plan in `FLIR_AND_HOOKS_PLAN.md`.
 
 **Short term:**
-3. FLIR `BonsaiRunner` — subprocess launcher for Bonsai workflows. Prerequisite: decide
-   Spinnaker-only vs keep Flycap support; decide preview (ZMQ) vs recording-only in production.
-4. Named `mode:` presets — propagate `default:/mode:` task.yaml structure to `sequence` and
-   `probabilistic_switching` (already done for fixedsubjects).
-5. `msw subject remove` / `subject rename` — port logic from `run_register`; then mark `register`
-   as legacy in top-level help.
-
-**Medium term:**
-6. Simulation mode — `SimBpod`, `SimPulsePal`, `SimStageController`; `--simulate` flag; enables
-   dry-run testing without hardware.
-7. Hardware action API Phase 2 — `ControllerSession` owns hardware for full session; override
-   path via `manual_override()` and `_write_lock`; `msw action` sends HTTP POST to running agent.
+3. `logic/misc.py` cleanup — move `test_serial_port_is_accessible` to hardware/preflight module;
+   move `list_available_tasks`/`find_task_by_name` into CLI; move `draw_jittered_trial_time` into
+   task-supplementary module.
+4. Simulation mode — `SimBpod`, `SimPulsePal`, `SimStageController`; `--simulate` flag.
+5. Hardware action API Phase 2 — `ControllerSession` owns hardware for full session.
 
 **Suite migration (longer horizon):**
-8. Namespace package split — remove `__init__.py` at namespace root; split into
-   `msw-logic`, `msw-tasks-*`, `msw-agent` sub-packages per suite design docs.
+6. Suite namespace split — `msw-logic`, `msw-tasks-*`, `msw-agent` sub-packages per
+   suite design docs at `/mnt/maindata/code/murineshiftwork_suite/design/`.

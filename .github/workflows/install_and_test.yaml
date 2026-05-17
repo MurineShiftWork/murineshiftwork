@@ -20,6 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # hatch-vcs needs full history to resolve version from tags
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -54,6 +56,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -68,7 +72,7 @@ jobs:
           python -c "
           from pathlib import Path
           import murineshiftwork
-          tasks_init = Path(murineshiftwork.__file__).parent / 'tasks' / '__init__.py'
+          tasks_init = Path(list(murineshiftwork.__path__)[0]) / 'tasks' / '__init__.py'
           if tasks_init.exists():
               raise SystemExit(
                   f'FAIL: {tasks_init} exists. '
@@ -78,19 +82,17 @@ jobs:
           print(f'OK: tasks/__init__.py absent — namespace boundary clean.')
           "
 
-      - name: Report namespace root status (informational — xfail until Sprint B)
+      - name: Check namespace root has no __init__.py (must pass — namespace-split ready)
         run: |
           python -c "
           from pathlib import Path
           import murineshiftwork
-          root_init = Path(murineshiftwork.__file__).parent / '__init__.py'
+          root_init = Path(list(murineshiftwork.__path__)[0]) / '__init__.py'
           if root_init.exists():
-              print(
-                  'INFO: murineshiftwork/__init__.py present (monolith mode). '
-                  'Sprint B (namespace split) will remove it so msw-logic, '
-                  'msw-tasks-*, and msw-agent can be installed independently '
-                  'as PEP 420 namespace contributors.'
+              raise SystemExit(
+                  f'FAIL: {root_init} exists. '
+                  'Remove it to allow msw-logic, msw-tasks-*, and msw-agent '
+                  'to be installed as separate namespace contributors (PEP 420).'
               )
-          else:
-              print('OK: murineshiftwork/__init__.py absent — namespace-split ready.')
+          print('OK: murineshiftwork/__init__.py absent — namespace-split ready.')
           "

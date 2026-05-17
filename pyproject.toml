@@ -1,24 +1,110 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "murineshiftwork"
+dynamic = ["version"]
+description = "Murine Shift Work — behavioural task acquisition with hardware support."
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { file = "LICENSE" }
+authors = [
+    { name = "Lars B. Rollik", email = "L.B.Rollik@protonmail.com" },
+]
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "tqdm",
+    "rich",
+    "pyyaml",
+    "pyzmq",
+    "numpy",
+    "scipy",
+    "pandas",
+    "pybpod-api",
+    "safe-and-collaborative-architecture",
+    "sounddevice",
+    "opencv-python-headless",
+    "seaborn",
+]
+
+[project.urls]
+Repository = "https://github.com/larsrollik/murineshiftwork"
+"Issue Tracker" = "https://github.com/larsrollik/murineshiftwork/issues"
+
+[project.optional-dependencies]
+dev = [
+    "commitizen",
+    "pytest",
+    "pytest-cov",
+    "pre-commit",
+    "black",
+    "flake8",
+    "mkdocs-material",
+    "mkdocs",
+    "gitpython",
+]
+keyboard = [
+    "sshkeyboard",
+]
+qt = [
+    "PyQt6",
+    "pyqtgraph",
+    "myterial",
+]
+rce = [
+    "rpi_camera_ensemble",
+]
+
+[project.scripts]
+murineshiftwork = "murineshiftwork.cli:run_cli"
+msw = "murineshiftwork.cli:run_cli"
+
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/murineshiftwork"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]
+
+# ---------------------------------------------------------------------------
+# Commitizen
+# ---------------------------------------------------------------------------
+# Bump workflow:
+#   cz bump          → reads conventional commits, determines next semver,
+#                      creates annotated tag v{version}
+#   git push --tags  → triggers release CI
+#
+# Commit types that drive version:
+#   feat:                      → minor  (1.x.0)
+#   fix:                       → patch  (x.x.1)
+#   feat!: / BREAKING CHANGE:  → major  (x.0.0)
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "scm"
+tag_format = "v$version"
+update_changelog_on_bump = false
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=murineshiftwork --durations=0"
+
+# ---------------------------------------------------------------------------
+# Black
+# ---------------------------------------------------------------------------
 
 [tool.black]
-target-version = ['py38', 'py39', 'py310']
-skip-string-normalization = false
+target-version = ["py310", "py311"]
 line-length = 79
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \ .git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-
-[build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
+skip-string-normalization = false
