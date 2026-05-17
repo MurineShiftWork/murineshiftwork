@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import numpy as np
 import sounddevice as sd
@@ -44,8 +45,8 @@ class StereoSound(object):
 
     def __init__(
         self,
-        sound_device: str = None,
-        sample_rate: int = None,
+        sound_device: Optional[str] = None,
+        sample_rate: Optional[int] = None,
         ttl_channel: int = 1,
         ttl_duration: float = 0.001,
         allow_sys_default_device=True,

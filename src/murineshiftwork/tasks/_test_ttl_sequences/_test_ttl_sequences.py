@@ -11,7 +11,7 @@ from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 class TaskData:
     save_path = None
-    data = []
+    data: list = []
 
     def __init__(self, save_path=None):
         super(TaskData, self).__init__()

@@ -24,9 +24,9 @@ _LEGACY_LEVEL_STORE_DIR = Path("~/.murineshiftwork/sequence_automated").expandus
 
 
 class TaskControl:
-    trial_data = []
+    trial_data: list = []
     trial_index = 0
-    last_outcome = None  # "correct" | "incorrect"
+    last_outcome: str | None = None
     current_level = 1
 
     _valve_time_cache: dict

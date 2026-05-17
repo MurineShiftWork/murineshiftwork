@@ -82,7 +82,7 @@ def _estimate_ul(
 
     # Linear fallback
     coeffs = np.polyfit(times_arr, ul_arr, 1)
-    return float(max(0.1, np.polyval(coeffs, open_s)))
+    return float(max(0.1, np.polyval(coeffs, open_s)))  # type: ignore[call-overload]
 
 
 def _suggest_additional_times(

@@ -42,8 +42,8 @@ class OnlinePlottingForSA(Process):
     def __init__(
         self,
         session_name: str = "unnamed",
-        data_queue: Queue = None,
-        kill_queue: Queue = None,
+        data_queue: Queue | None = None,
+        kill_queue: Queue | None = None,
         n_max_trials: int = 1500,
         n_levels: int = 50,
         progression_threshold: float = 0.9,

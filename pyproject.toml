@@ -132,12 +132,10 @@ explicit_package_bases = true
 ignore_missing_imports = true
 exclude = ["external"]
 
-# Legacy modules that pre-date strict typing — suppress until dedicated pass.
+# Both stimulation.py copies are being replaced by pypulsepal in the namespace split.
 [[tool.mypy.overrides]]
 module = [
-    "murineshiftwork.tasks.*",
     "murineshiftwork.logic.stimulation",
-    "murineshiftwork.logic.sounds",
-    "murineshiftwork.readers.validate",
+    "murineshiftwork.tasks.optotagging_with_power_level.stimulation",
 ]
 ignore_errors = true

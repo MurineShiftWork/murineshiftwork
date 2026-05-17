@@ -42,7 +42,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -138,7 +138,7 @@ def _check_msw_completeness(
 
 def _check_rce_completeness(
     session_dir: Path, result: ValidationResult
-) -> Optional[object]:
+) -> Optional[Any]:
     try:
         from rpi_camera_ensemble.io.session import RCESession
     except ImportError:

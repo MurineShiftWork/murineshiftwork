@@ -18,10 +18,10 @@ from murineshiftwork.tasks.exp_trn_spindle.param_sets import (
 
 
 class ProtocolObject:
-    input_kwargs = {}
+    input_kwargs: dict = {}
     out_path = ""
 
-    trial_data = []
+    trial_data: list = []
 
     def __init__(self, out_path=None, **kwargs):
         self.out_path = out_path
@@ -89,7 +89,7 @@ class Task(TaskRunner):
             logging.info(f"Executing trial {trial_index}")
 
             stim_set_id = None
-            trial_stim_settings = {}
+            trial_stim_settings: dict = {}
 
             if trial_index == 0:
                 sma = make_ttl_identifier_sequences(
@@ -113,7 +113,7 @@ class Task(TaskRunner):
                 stim_set_id = np.random.randint(
                     0, len(stimulation_param_sets), dtype=int
                 )
-                trial_stim_settings = stimulation_param_sets.get(stim_set_id)
+                trial_stim_settings = stimulation_param_sets.get(stim_set_id) or {}
                 pulse_train_duration = trial_stim_settings.get("pulseTrainDuration")
 
                 print(

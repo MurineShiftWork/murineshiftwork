@@ -1,7 +1,7 @@
 import logging
 import time
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from one_axis_stage.controller import StageController
 from one_axis_stage.interface import MoveInterface
 from sshkeyboard import listen_keyboard, stop_listening

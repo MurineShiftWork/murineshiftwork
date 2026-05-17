@@ -5,6 +5,7 @@ import time
 from importlib.metadata import version as _get_version
 from pathlib import Path
 from threading import Thread
+from typing import Any
 
 import yaml
 from pybpodapi.protocol import Bpod, StateMachine
@@ -67,8 +68,8 @@ class TaskRunner(Thread):
     can wrap this in a QThread adapter if needed.
     """
 
-    bpod = None
-    input_kwargs = None
+    bpod: Any = None
+    input_kwargs: dict = {}
     continue_task = True
 
     def __init__(self, bpod=None, **kwargs):
@@ -143,7 +144,7 @@ class TaskProcess(object):
     input_kwargs: dict = {}
     # Run task
     session_paths = None
-    bpod = None
+    bpod: Any = None
     bpod_baudrate = 115200
     serial_is_open = False
     task_runner = None

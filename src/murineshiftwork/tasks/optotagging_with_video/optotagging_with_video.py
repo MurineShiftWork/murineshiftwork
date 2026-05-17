@@ -25,10 +25,10 @@ from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class OptoTagging(object):
-    input_kwargs = {}
+    input_kwargs: dict = {}
     out_path = ""
 
-    trial_data = []
+    trial_data: list = []
 
     def __init__(self, out_path=None, **kwargs):
         self.out_path = out_path

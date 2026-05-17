@@ -2,6 +2,7 @@ import logging
 import random
 import time
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from pybpodapi.protocol import Bpod, StateMachine
@@ -17,12 +18,12 @@ from murineshiftwork.logic.sounds import StereoSound
 
 
 class TaskControl(object):
-    bpod = None
+    bpod: Any = None
     sound = None
     sound_delay_correction = 0
 
-    task_settings = {}
-    trial_data = []
+    task_settings: dict = {}
+    trial_data: list = []
     save_path_data = None
 
     # Task progress

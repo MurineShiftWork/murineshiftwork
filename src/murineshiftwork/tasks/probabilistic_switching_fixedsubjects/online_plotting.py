@@ -4,6 +4,7 @@ import time
 from multiprocessing import Process, Queue
 from sys import exit
 from threading import Thread
+from typing import Any
 
 import cv2 as cv
 import myterial as mt
@@ -57,8 +58,8 @@ def nan_vector(length=None):
 class QueueMonitor(QtCore.QThread):
     update_signal = QtCore.pyqtSignal(dict)
     exit_signal = QtCore.pyqtSignal(bool)
-    monitoring_queue = None
-    kill_queue = None
+    monitoring_queue: Any = None
+    kill_queue: Any = None
 
     def __init__(self, monitoring_queue=None, kill_queue=None):
         super(QueueMonitor, self).__init__()
@@ -105,15 +106,15 @@ class StreamObject:
     flip_ud = True
     flip_lr = False
     transpose = False
-    frame: np.ndarray = None
+    frame: np.ndarray | None = None
 
     stopped = False
 
     def __init__(
         self,
-        name: str | int = None,
-        stream_ip: str = None,
-        stream_port: int = None,
+        name: str | int | None = None,
+        stream_ip: str | None = None,
+        stream_port: int | None = None,
         window_handle=None,
         to_grey: bool = True,
         flipud: bool = True,
@@ -224,7 +225,7 @@ class OnlinePlottingForPS(Process):
         name=None,
         values_to_show=None,
         max_trials=None,
-        video_stream_config: dict = None,
+        video_stream_config: dict | None = None,
     ):
         super(OnlinePlottingForPS, self).__init__()
         self.name = self.__class__.__name__ if not name else name
@@ -547,8 +548,8 @@ if __name__ == "__main__":
     testing = True
 
     is_simulation = testing
-    data_queue = Queue()
-    kill_queue = Queue()
+    data_queue: Queue = Queue()
+    kill_queue: Queue = Queue()
 
     main_process = OnlinePlottingForPS(
         is_simulation=is_simulation,

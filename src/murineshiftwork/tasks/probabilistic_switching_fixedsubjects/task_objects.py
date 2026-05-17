@@ -4,6 +4,7 @@ import random
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from one_axis_stage.controller import StageController
@@ -27,7 +28,7 @@ from murineshiftwork.logic.sounds import StereoSound
 
 
 class TaskControl(object):
-    bpod = None
+    bpod: Any = None
     _stage_queue = None
     _stage_thread = None
     sound = None
@@ -38,8 +39,8 @@ class TaskControl(object):
     _pending_barcode_value = None
     _pending_barcode_wall_time = None
 
-    task_settings = {}
-    trial_data = []
+    task_settings: dict = {}
+    trial_data: list = []
     save_path_data = None
 
     # Task progress

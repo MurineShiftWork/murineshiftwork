@@ -2,6 +2,7 @@ import time
 from multiprocessing import Process, Queue
 from pathlib import Path
 from sys import exit
+from typing import Any
 
 import myterial as mt
 import numpy as np
@@ -54,8 +55,8 @@ def nan_vector(length=None):
 class QueueMonitor(QtCore.QThread):
     update_signal = QtCore.pyqtSignal(dict)
     exit_signal = QtCore.pyqtSignal(bool)
-    monitoring_queue = None
-    kill_queue = None
+    monitoring_queue: Any = None
+    kill_queue: Any = None
 
     def __init__(self, monitoring_queue=None, kill_queue=None):
         super(QueueMonitor, self).__init__()
@@ -388,8 +389,8 @@ if __name__ == "__main__":
     testing = True
 
     is_simulation = testing
-    data_queue = Queue()
-    kill_queue = Queue()
+    data_queue: Queue = Queue()
+    kill_queue: Queue = Queue()
 
     main_process = OnlinePlottingForPS(
         is_simulation=is_simulation,
