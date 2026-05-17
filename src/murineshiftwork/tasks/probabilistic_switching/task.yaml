@@ -76,4 +76,18 @@ default:
   - 4
   ttl_identifier_sequence: sssLss
   ttl_pulse_duration: 0.01
-mode: {}
+mode:
+  # Named overrides — select with: msw run ... --task-mode <name>
+  # Only params that differ from 'default:' need to be listed.
+  training:
+    reward_amount_ul: 3.0
+    n_max_trials: 300
+    delay_until_side_timeout: 15
+    forced_choice_threshold: 30
+  probe:
+    use_stop_trials: true
+    stop_trial_proportion: 0.3
+    n_max_trials: 500
+  ephys:
+    use_stimulation: true
+    n_max_trials: 1000

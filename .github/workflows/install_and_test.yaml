@@ -1,0 +1,96 @@
+name: Install and test
+
+on:
+  push:
+    branches: ["main", "ft/**", "fix/**"]
+  pull_request:
+
+jobs:
+  test:
+    name: "Python ${{ matrix.python-version }} · ${{ matrix.install-variant }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
+        install-variant:
+          - "base"       # pip install .
+          - "dev"        # pip install .[dev]
+          - "keyboard"   # pip install .[keyboard]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install (base)
+        if: matrix.install-variant == 'base'
+        run: pip install .
+
+      - name: Install (dev)
+        if: matrix.install-variant == 'dev'
+        run: pip install .[dev]
+
+      - name: Install (keyboard)
+        if: matrix.install-variant == 'keyboard'
+        run: pip install .[keyboard]
+
+      - name: Verify entry points exist
+        run: |
+          murineshiftwork --version
+          msw --version
+
+      - name: Run tests (namespace readiness always included)
+        run: pytest tests/ -v --no-header -q
+        env:
+          # Prevent hardware-dependent tests from failing in CI
+          MSW_CI: "1"
+
+  namespace-check:
+    name: Namespace package readiness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: pip install .
+
+      - name: Check tasks/ boundary (must pass — no __init__.py)
+        run: |
+          python -c "
+          from pathlib import Path
+          import murineshiftwork
+          tasks_init = Path(murineshiftwork.__file__).parent / 'tasks' / '__init__.py'
+          if tasks_init.exists():
+              raise SystemExit(
+                  f'FAIL: {tasks_init} exists. '
+                  'Remove it to allow task sub-packages to contribute to '
+                  'the murineshiftwork.tasks namespace independently.'
+              )
+          print(f'OK: tasks/__init__.py absent — namespace boundary clean.')
+          "
+
+      - name: Report namespace root status (informational — xfail until Sprint B)
+        run: |
+          python -c "
+          from pathlib import Path
+          import murineshiftwork
+          root_init = Path(murineshiftwork.__file__).parent / '__init__.py'
+          if root_init.exists():
+              print(
+                  'INFO: murineshiftwork/__init__.py present (monolith mode). '
+                  'Sprint B (namespace split) will remove it so msw-logic, '
+                  'msw-tasks-*, and msw-agent can be installed independently '
+                  'as PEP 420 namespace contributors.'
+              )
+          else:
+              print('OK: murineshiftwork/__init__.py absent — namespace-split ready.')
+          "

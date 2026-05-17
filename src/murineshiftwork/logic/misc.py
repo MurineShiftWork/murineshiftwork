@@ -20,8 +20,14 @@ def list_submodules(module):
 
 def test_serial_port_is_accessible(port=None, baudrate=115200, timeout=1):
     try:
-        device = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
-        device.isOpen()
+        # dsrdtr=False, rtscts=False: do not toggle DTR/RTS on open.
+        # Toggling DTR resets Arduino-based devices (e.g. Bpod), which causes
+        # the subsequent real connection attempt to read a mid-boot response.
+        device = serial.Serial(
+            port=port, baudrate=baudrate, timeout=timeout,
+            dsrdtr=False, rtscts=False,
+        )
+        device.close()
     except IOError:
         return False
     return True
