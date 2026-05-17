@@ -10,7 +10,6 @@ from murineshiftwork.cli.defaults import default_out_path
 from murineshiftwork.cli.execute import run_action
 from murineshiftwork.cli.execute import run_calibration
 from murineshiftwork.cli.execute import run_init
-from murineshiftwork.cli.execute import run_register
 from murineshiftwork.cli.execute import run_setup
 from murineshiftwork.cli.execute import run_subject
 from murineshiftwork.cli.execute import run_task
@@ -20,10 +19,14 @@ try:
 except Exception:
     _MSW_VERSION = "unknown"
 
+# Appended to every subparser epilog so the credit line appears on all --help pages.
+_CREDIT_EPILOG = (
+    f"\nmsw {_MSW_VERSION} | © Lars B. Rollik | PolyForm Internal Use 1.0.0\n"
+    "Source: https://github.com/larsrollik/murineshiftwork\n\n"
+)
 
-class ArgparseFormatter(
-    ArgumentDefaultsHelpFormatter, RawDescriptionHelpFormatter
-):
+
+class ArgparseFormatter(ArgumentDefaultsHelpFormatter, RawDescriptionHelpFormatter):
     pass
 
 
@@ -57,7 +60,10 @@ def _add_session_args(parser):
         dest="is_child_session_to",
         type=str,
         default="",
-        help="Parent session basename; when set, saves session directly in --out-path (skips subject dir)",
+        help=(
+            "Parent session basename; when set, saves session directly in "
+            "--out-path (skips subject dir)"
+        ),
     )
 
 
@@ -171,7 +177,7 @@ def _add_meta_args(parser):
         type=str,
         default="",
         dest="experimenter",
-        help="Experimenter name or initials (convenience shorthand for -m experimenter=NAME)",
+        help="Experimenter name or initials (shorthand for -m experimenter=NAME)",
     )
 
 
@@ -201,12 +207,23 @@ def _add_dev_args(parser):
         default=False,
         help="Enable debug mode (sets log level to DEBUG, relaxes hardware checks)",
     )
+    g.add_argument(
+        "--simulate",
+        dest="simulate",
+        action="store_true",
+        default=False,
+        help=(
+            "Hardware-free simulation mode: uses SimBpod instead of real hardware, "
+            "skips serial port checks and preflight"
+        ),
+    )
 
 
 def make_subparser_init(sub_parsers):
     p = sub_parsers.add_parser(
         "init",
         help="Initialise MSW on this machine (writes ~/.murineshiftwork/msw_machine.yaml)",
+        epilog=_CREDIT_EPILOG,
         formatter_class=ArgparseFormatter,
     )
     p.add_argument(
@@ -229,6 +246,7 @@ def make_subparser_setup(sub_parsers):
     p = sub_parsers.add_parser(
         "setup",
         help="Manage setup config files",
+        epilog=_CREDIT_EPILOG,
         formatter_class=ArgparseFormatter,
     )
     p.add_argument(
@@ -242,9 +260,7 @@ def make_subparser_setup(sub_parsers):
         default="",
         help="Setup name (required for create)",
     )
-    p.add_argument(
-        "-cd", "--config-dir", type=str, default="", dest="config_dir"
-    )
+    p.add_argument("-cd", "--config-dir", type=str, default="", dest="config_dir")
     p.add_argument(
         "-f",
         "--filter",
@@ -261,6 +277,7 @@ def make_subparser_subject(sub_parsers):
     p = sub_parsers.add_parser(
         "subject",
         help="Manage subject YAML config files",
+        epilog=_CREDIT_EPILOG,
         formatter_class=ArgparseFormatter,
     )
     p.add_argument(
@@ -286,9 +303,7 @@ def make_subparser_subject(sub_parsers):
     p.add_argument("--project", type=str, default="")
     p.add_argument("--experiment", type=str, default="")
     p.add_argument("--comment", type=str, default="")
-    p.add_argument(
-        "-cd", "--config-dir", type=str, default="", dest="config_dir"
-    )
+    p.add_argument("-cd", "--config-dir", type=str, default="", dest="config_dir")
     p.add_argument(
         "-f",
         "--filter",
@@ -306,17 +321,17 @@ def make_subparser_run(sub_parsers):
         f"""Examples:
     msw run -t task_name -s subject_name
     msw run -t task_name -s subject_name -b /dev/ttyACM0 --setup setup-1
+    msw run -t task_name -s subject_name --simulate   (no hardware required)
 
 Available tasks:
 {available_tasks}
-
-    """
+"""
     )
     p = sub_parsers.add_parser(
         "run",
         description="Run a behavioural task.",
         help="Run a task",
-        epilog=examples,
+        epilog=examples + _CREDIT_EPILOG,
         formatter_class=ArgparseFormatter,
     )
     _add_session_args(p)
@@ -332,6 +347,7 @@ def make_subparser_calibration(sub_parsers):
     p = sub_parsers.add_parser(
         "calibration",
         help="Calibration utilities (plot, inspect)",
+        epilog=_CREDIT_EPILOG,
         formatter_class=ArgparseFormatter,
     )
     p.add_argument(
@@ -381,6 +397,7 @@ def make_subparser_action(sub_parsers):
               msw action --setup setup-1 bpod valve_flush valve_id=3
             """
         ),
+        epilog=_CREDIT_EPILOG,
     )
     p.add_argument(
         "--setup",
@@ -422,77 +439,14 @@ def make_subparser_action(sub_parsers):
     p.set_defaults(func=run_action)
 
 
-def make_subparser_register(sub_parsers):
-    """Legacy subject registration subcommand — use 'subject' instead."""
-    examples = dedent(
-        f"""Examples (legacy — prefer: msw subject add/rename/remove):
-
-    msw register add -s _test_subject
-    msw register add -s _test_subject -t probabilistic_switching
-    msw register remove -s _test_subject
-    msw register rename -s _test_subject -n _test_subject_renamed
-
-Available tasks:
-{available_tasks}
-
-    """
-    )
-    p = sub_parsers.add_parser(
-        "register",
-        description="Legacy subject registration (prefer: msw subject add/rename/remove)",
-        help="[legacy] Register subjects — use 'subject' instead",
-        epilog=examples,
-        formatter_class=ArgparseFormatter,
-    )
-    p.add_argument(
-        "subcommand",
-        choices=["add", "remove", "rename"],
-        help="add / remove / rename",
-    )
-    p.add_argument(
-        "-s", "--subject", type=str, default="_test_subject", dest="subject"
-    )
-    p.add_argument("-t", "--task", type=str, default="", dest="task")
-    p.add_argument(
-        "-o", "--out-path", type=str, default=default_out_path, dest="out_path"
-    )
-    p.add_argument(
-        "-cd", "--config-dir", type=str, default="", dest="config_dir"
-    )
-    p.add_argument(
-        "-n",
-        "--new-alias",
-        dest="new_alias",
-        type=str,
-        default="",
-        help="New alias when subcommand is 'rename'",
-    )
-    p.add_argument(
-        "-m",
-        "--move-data",
-        dest="move_data",
-        default=True,
-        action="store_true",
-        help="Move existing session data to new subject name when renaming",
-    )
-    p.add_argument("--force", action="store_true", default=False)
-    p.set_defaults(func=run_register)
-
-
 def parse_args(args=None):
-    epilog = dedent(
-        """\
-        Source: https://github.com/larsrollik/murineshiftwork
-
-        """
-    )
     main_parser = ArgumentParser(
         prog="msw",
         description=(
             "Murine Shift Work (msw) — behavioural task acquisition with hardware support.\n"
             f"Version {_MSW_VERSION} | © Lars B. Rollik | PolyForm Internal Use 1.0.0"
         ),
-        epilog=epilog,
+        epilog=_CREDIT_EPILOG,
         formatter_class=ArgparseFormatter,
     )
     main_parser.add_argument(
@@ -510,7 +464,6 @@ def parse_args(args=None):
     make_subparser_run(sub_parsers)
     make_subparser_calibration(sub_parsers)
     make_subparser_action(sub_parsers)
-    make_subparser_register(sub_parsers)
 
     parsed_args = main_parser.parse_args(args=args)
     return parsed_args.__dict__

@@ -18,9 +18,7 @@ from murineshiftwork.logic.config import read_task_modes
 from murineshiftwork.logic.config import validate_config_file_path
 from murineshiftwork.logic.log import setup_logging
 from murineshiftwork.logic.machine_config import resolve_config_dir
-from murineshiftwork.logic.machine_config import resolve_data_dir
 from murineshiftwork.logic.misc import find_task_by_name
-from murineshiftwork.logic.misc import print_box
 from murineshiftwork.logic.paths import get_host_ip
 from murineshiftwork.logic.paths import get_host_name
 
@@ -86,9 +84,7 @@ def _evaluate_task(args_dict=None):
         args_dict["task_dir"] = get_task_dir(task=args_dict["task"])
     else:
         if not args_dict["command"] == "register":
-            raise ValueError(
-                "Task name can only be left out if command is 'register'."
-            )
+            raise ValueError("Task name can only be left out if command is 'register'.")
         else:
             logging.debug("No task defined. Command is register.")
     return args_dict
@@ -96,9 +92,7 @@ def _evaluate_task(args_dict=None):
 
 def _evaluate_and_load_configs(args_dict=None):
     # Apply priority chain: CLI arg > env var > machine config > defaults
-    config_dir = resolve_config_dir(
-        cli_override=args_dict.get("config_dir", "")
-    )
+    config_dir = resolve_config_dir(cli_override=args_dict.get("config_dir", ""))
     args_dict["config_dir"] = config_dir
     if not Path(config_dir).exists():
         args_dict["config_dir"] = ""
@@ -202,13 +196,9 @@ def _build_task_settings_patch(args_dict, settings_task_default, task_modes):
     if subject_config and task_name in subject_config.task_overrides:
         yaml_patch = subject_config.task_overrides[task_name]
         patched.update(yaml_patch)
-        logging.debug(
-            f"Subject YAML task_overrides for '{task_name}': {yaml_patch}"
-        )
+        logging.debug(f"Subject YAML task_overrides for '{task_name}': {yaml_patch}")
 
-    cli_overrides = _parse_key_value_list(
-        args_dict.get("task_settings_overrides", [])
-    )
+    cli_overrides = _parse_key_value_list(args_dict.get("task_settings_overrides", []))
     patched.update(cli_overrides)
     if cli_overrides:
         logging.debug(f"CLI task-settings overrides applied: {cli_overrides}")
@@ -254,17 +244,11 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
             resolved_stage = setup_config.device_port("stage")
             args_dict["serial_port_stage"] = resolved_stage
             patched["serial_port_stage"] = resolved_stage
-            logging.debug(
-                f"Resolved stage port from SetupConfig: {resolved_stage}"
-            )
+            logging.debug(f"Resolved stage port from SetupConfig: {resolved_stage}")
         except ValueError as exc:
-            logging.warning(
-                f"SetupConfig stage port resolution failed ({exc})"
-            )
+            logging.warning(f"SetupConfig stage port resolution failed ({exc})")
         # Always prefer setup config axes over old calibration files
-        args_dict["settings.stage"] = _stage_device_to_controller_config(
-            stage_dev
-        )
+        args_dict["settings.stage"] = _stage_device_to_controller_config(stage_dev)
         patched["settings.stage"] = args_dict["settings.stage"]
         logging.debug("Built settings.stage from SetupConfig stage device")
 
@@ -275,9 +259,7 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
             or not Path(args_dict.get("config_file_camera", "")).exists()
         ):
             args_dict["config_file_camera"] = cam_path
-            logging.debug(
-                f"Resolved camera config from SetupConfig: {cam_path}"
-            )
+            logging.debug(f"Resolved camera config from SetupConfig: {cam_path}")
 
 
 def evaluate_args(args_dict=None):
@@ -296,17 +278,13 @@ def evaluate_args(args_dict=None):
     settings_task_default = args_dict["settings.task.default"]
     task_modes = read_task_modes(args_dict.get("config_file_task", ""))
 
-    if args_dict["command"] == "register":
-        pass
-    elif args_dict["command"] == "run":
+    if args_dict["command"] == "run":
         subject = args_dict["subject"]
         subject_config = args_dict.get("subject_config")
         if subject_config is None and subject != "_test_subject":
             if args_dict["debug"]:
                 args_dict["subject"] = "_test_subject"
-                logging.debug(
-                    "Overwriting subject to _test_subject for debug mode"
-                )
+                logging.debug("Overwriting subject to _test_subject for debug mode")
             else:
                 raise ValueError(
                     f"\n\n\tUnknown subject '{subject}'. Not found in "
@@ -316,9 +294,7 @@ def evaluate_args(args_dict=None):
     else:
         raise ValueError(f"Unknown command: '{args_dict['command']}'")
 
-    patched = _build_task_settings_patch(
-        args_dict, settings_task_default, task_modes
-    )
+    patched = _build_task_settings_patch(args_dict, settings_task_default, task_modes)
     args_dict["settings.task.patched"] = patched
 
     setup_config = args_dict.get("setup_config")

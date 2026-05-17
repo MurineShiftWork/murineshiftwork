@@ -1,5 +1,5 @@
 """Pre-flight hardware checks run before any session files are created."""
-import logging
+
 from pathlib import Path
 
 from murineshiftwork.logic.misc import test_serial_port_is_accessible
@@ -12,7 +12,11 @@ def preflight_hardware_check(args_dict: dict) -> None:
     Raises RuntimeError listing ALL failing checks so the user can fix them at once.
     Skipped entirely when ``debug=True`` or subject is ``_test_subject``.
     """
-    if args_dict.get("debug") or args_dict.get("subject") == "_test_subject":
+    if (
+        args_dict.get("simulate")
+        or args_dict.get("debug")
+        or args_dict.get("subject") == "_test_subject"
+    ):
         return
 
     errors: list[str] = []
@@ -37,9 +41,13 @@ def preflight_hardware_check(args_dict: dict) -> None:
 
     # --- PulsePal (only if task requests stimulation or setup declares it) ---
     uses_stim = task_settings.get("use_stimulation", False)
-    has_pulsepal_in_setup = setup_config and "pulsepal" in getattr(setup_config, "devices", {})
+    has_pulsepal_in_setup = setup_config and "pulsepal" in getattr(
+        setup_config, "devices", {}
+    )
     if uses_stim or has_pulsepal_in_setup:
-        pp_port = task_settings.get("serial_port_pulsepal") or args_dict.get("serial_port_pulsepal", "")
+        pp_port = task_settings.get("serial_port_pulsepal") or args_dict.get(
+            "serial_port_pulsepal", ""
+        )
         if pp_port and not test_serial_port_is_accessible(pp_port):
             errors.append(f"PulsePal serial port not accessible: {pp_port!r}")
 
@@ -48,7 +56,9 @@ def preflight_hardware_check(args_dict: dict) -> None:
         try:
             stage_port = setup_config.device_port("stage")
         except ValueError:
-            stage_port = task_settings.get("serial_port_stage") or args_dict.get("serial_port_stage", "")
+            stage_port = task_settings.get("serial_port_stage") or args_dict.get(
+                "serial_port_stage", ""
+            )
         if stage_port and not test_serial_port_is_accessible(stage_port):
             errors.append(f"Stage serial port not accessible: {stage_port!r}")
 

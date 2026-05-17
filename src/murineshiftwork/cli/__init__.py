@@ -43,7 +43,6 @@ def run_cli(*args):
         "subject",
         "calibration",
         "action",
-        "register",
     ):
         args_dict["func"](**args_dict)
         logging.debug("EXITING CLI.")
