@@ -245,6 +245,7 @@ class Task(TaskRunner):
 
         scale = self.input_kwargs.get("scale") or make_scale(
             serial_port=self.input_kwargs.get("serial_port_scale", ""),
+            scale_type=self.input_kwargs.get("scale_type", "hx711"),
         )
         scale.start()
         self._tare_verified(scale, max_retries=2, threshold_g=1.0)

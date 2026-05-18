@@ -1,9 +1,8 @@
 """Weighing-scale abstraction layer.
 
-Use `make_scale(serial_port)` to get the default serial-scale adapter.
-Implement `WeighingScaleBase` to plug in any other hardware.
-Pass `scale_type="sim"` (or inject a `SimWeighingScale` directly) for
-hardware-free testing.
+Use `make_scale(serial_port, scale_type)` to get a scale adapter.
+scale_type: "hx711" (Arduino+HX711), "bench" (RS-232 bench scale), "sim" (testing).
+Implement `WeighingScaleBase` to add other hardware.
 """
 
 from __future__ import annotations
@@ -51,7 +50,7 @@ class SerialWeighingScaleAdapter(WeighingScaleBase):
 class BenchScaleAdapter(WeighingScaleBase):
     """Wraps `serial_scale_bench.Scale` (RS-232/USB bench scale) behind the shared interface."""
 
-    def __init__(self, serial_port: str, baudrate: int = 9600) -> None:
+    def __init__(self, serial_port: str, baudrate: int = 4800) -> None:
         from serial_scale_bench import Scale
 
         self._scale = Scale(serial_port=serial_port, baudrate=baudrate)
@@ -119,7 +118,7 @@ def make_scale(
     if scale_type == "hx711":
         return SerialWeighingScaleAdapter(serial_port=serial_port)
     if scale_type == "bench":
-        return BenchScaleAdapter(serial_port=serial_port, baudrate=baudrate or 9600)
+        return BenchScaleAdapter(serial_port=serial_port, baudrate=baudrate or 4800)
     if scale_type == "sim":
         return SimWeighingScale()
     raise ValueError(

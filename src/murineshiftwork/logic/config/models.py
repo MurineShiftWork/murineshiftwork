@@ -162,6 +162,13 @@ class ValveCalibration(BaseModel):
                 f"only {int(mask.sum())} positive-volume point(s) — need at least 3",
             )
 
+        if np.any(np.diff(ul) <= 0):
+            bad = int(np.argmax(np.diff(ul) <= 0)) + 1
+            return (
+                False,
+                f"volume not monotonically increasing: point {bad} breaks order",
+            )
+
         try:
             a, b, c = self._fit()
         except ValueError as exc:
