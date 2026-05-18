@@ -78,11 +78,16 @@ include = ["/src", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]
 # ---------------------------------------------------------------------------
 # Bump workflow:
 #   cz bump          → reads conventional commits, determines next semver,
-#                      creates annotated tag v{version}  (tag_only=true: no bump commit)
-#   git push --tags  → triggers release CI
+#                      creates annotated tag v{version} only (tag_only=true, no bump commit)
+#   git push --tags  → pushes the new tag; triggers release CI
+#
+# cz bump always produces a clean X.Y.Z tag — never dev or rc unless you pass
+# --prerelease explicitly. Do NOT pass --prerelease in normal releases.
+# .devN versions appearing in pip show / __version__ between tags are computed
+# at install time by hatch-vcs and are NOT written as git tags.
 #
 # Commit types that drive version:
-#   feat:                      → minor  (1.x.0)
+#   feat:                      → minor  (x.1.0)
 #   fix:                       → patch  (x.x.1)
 #   feat!: / BREAKING CHANGE:  → major  (x.0.0)
 
