@@ -31,12 +31,12 @@ class WeighingScaleBase(ABC):
 
 
 class SerialWeighingScaleAdapter(WeighingScaleBase):
-    """Wraps `serial_weighing_scale.SerialWeighingScale` behind the shared interface."""
+    """Wraps `serial_scale_hx711.Scale` behind the shared interface."""
 
     def __init__(self, serial_port: str) -> None:
-        from serial_weighing_scale import SerialWeighingScale
+        from serial_scale_hx711 import Scale
 
-        self._scale = SerialWeighingScale(serial_port=serial_port)
+        self._scale = Scale(serial_port=serial_port)
 
     def start(self) -> None:
         self._scale.start()
@@ -46,6 +46,27 @@ class SerialWeighingScaleAdapter(WeighingScaleBase):
 
     def read_weight_blocking(self) -> float:
         return self._scale.read_weight_blocking()
+
+
+class BenchScaleAdapter(WeighingScaleBase):
+    """Wraps `serial_scale_bench.Scale` (RS-232/USB bench scale) behind the shared interface."""
+
+    def __init__(self, serial_port: str, baudrate: int = 9600) -> None:
+        from serial_scale_bench import Scale
+
+        self._scale = Scale(serial_port=serial_port, baudrate=baudrate)
+
+    def start(self) -> None:
+        self._scale.start()
+
+    def tare(self) -> None:
+        self._scale.tare()
+
+    def read_weight_blocking(self) -> float:
+        return self._scale.read_weight_blocking()
+
+    def stop(self) -> None:
+        self._scale.disconnect()
 
 
 class SimWeighingScale(WeighingScaleBase):
@@ -83,15 +104,24 @@ class SimWeighingScale(WeighingScaleBase):
         pass
 
 
-def make_scale(serial_port: str = "", scale_type: str = "serial") -> WeighingScaleBase:
+def make_scale(
+    serial_port: str = "",
+    scale_type: str = "hx711",
+    baudrate: int | None = None,
+) -> WeighingScaleBase:
     """Factory: return the appropriate scale adapter for *scale_type*.
 
     Supported values:
-        ``"serial"`` — :class:`SerialWeighingScaleAdapter` (default, requires hardware)
-        ``"sim"``    — :class:`SimWeighingScale` (hardware-free, for testing)
+        ``"hx711"`` — :class:`SerialWeighingScaleAdapter` (Arduino+HX711, default)
+        ``"bench"`` — :class:`BenchScaleAdapter` (RS-232/USB commercial scale)
+        ``"sim"``   — :class:`SimWeighingScale` (hardware-free, for testing)
     """
-    if scale_type == "serial":
+    if scale_type == "hx711":
         return SerialWeighingScaleAdapter(serial_port=serial_port)
+    if scale_type == "bench":
+        return BenchScaleAdapter(serial_port=serial_port, baudrate=baudrate or 9600)
     if scale_type == "sim":
         return SimWeighingScale()
-    raise ValueError(f"Unknown scale_type {scale_type!r}. Supported: 'serial', 'sim'")
+    raise ValueError(
+        f"Unknown scale_type {scale_type!r}. Supported: 'hx711', 'bench', 'sim'"
+    )
