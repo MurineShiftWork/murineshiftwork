@@ -178,76 +178,24 @@ The task code (`TaskControl`, `sequence_automated.py`) is identical in both case
 
 ---
 
-## Files to create
+## Implementation status — DONE (2026-05-18)
 
-| File | Purpose |
+| File | Status |
 |---|---|
-| `src/murineshiftwork/logic/hooks.py` | `HookContext`, `TaskHook`, `load_hooks()`, `run_hooks_pre/post()` |
-| `src/murineshiftwork/logic/task_process.py` | Wire hook calls into `__init__` and `__exit__` |
-| `src/murineshiftwork/logic/config_models.py` | Add `HooksConfig` field to `SetupConfig` |
+| `src/murineshiftwork/logic/hooks.py` | Done — `HookContext`, `TaskHook(fatal=)`, `SessionAbortError`, `load_hooks()`, `collect_hooks()`, `run_pre/post_hooks()` |
+| `src/murineshiftwork/logic/task_process.py` | Done — pre-hooks after Bpod connect, post-hooks in `__exit__`; fatal hooks close Bpod before re-raise |
+| `src/murineshiftwork/logic/config/models.py` | Done — `HooksConfig(pre_task, post_task)` field on `SetupConfig` |
+
+34 tests in `tests/test_hooks.py`. See `docs/concepts/hook_system.md` for usage.
 
 ---
 
-## Process logic cleanup required before hooks are wired in
+## Deferred TaskProcess cleanup (still outstanding)
 
-The current `TaskProcess` (`logic/task_process.py`) has several design issues that the hook
-system makes harder to ignore. Address these in the same pass:
+These were identified as pre-requisites during design but resolved with minimal changes instead:
 
-### 1. `exec()` for dynamic task import
-
-`init_task()` uses `exec()` to import and instantiate the task class. This is opaque to
-type checkers and IDEs, and silently suppresses `ImportError` if the wrong name is used.
-
-**Replace with:**
-```python
-import importlib
-
-def init_task(self):
-    mod = importlib.import_module(
-        f"murineshiftwork.tasks.{self.task_name}.{self.task_name}"
-    )
-    Task = getattr(mod, "Task")
-    self.task_runner = Task(bpod=self.bpod, **self.input_kwargs)
-```
-
-### 2. `TaskRunner` inherits `QThread`
-
-All task logic runs in a `QThread`, which mandates `PyQt6` for every task — including
-headless acquisition sessions with no GUI. Now that `PyQt6` is in `[extras_require] qt`,
-this is an invisible hard dependency.
-
-**Problem**: the `isRunning()` / `start()` thread API and the Qt signal integration for
-online plotting are conflated in one base class.
-
-**Recommended fix**: make `TaskRunner` inherit from `threading.Thread` with a compatible
-`start()` / `is_alive()` → `isRunning()` shim, and let tasks that need Qt signals opt in
-via a mixin or by the plotting process managing its own Qt context.
-
-This is a larger refactor; defer to Phase 1 once hooks are stable.
-
-### 3. Class-level mutable default `input_kwargs = {}`
-
-```python
-class TaskProcess(object):
-    input_kwargs = {}   # shared across all instances — Python gotcha
-```
-
-**Fix**: initialise in `__init__`:
-```python
-self.input_kwargs = {}
-```
-
-### 4. `__del__` calls `exit_safely()`
-
-`__del__` is not guaranteed to run (interpreter shutdown, circular refs). The `__exit__`
-context manager already handles cleanup. Remove `__del__`.
-
-### 5. `__init__` is monolithic
-
-With hooks, pre-hooks must run after Bpod connects but before `init_task()`. The current
-`__init__` conflates construction + execution. The minimal change: insert the hook call
-between `connect_bpod()` and `if auto_init: init_task()`.
-
-The longer-term fix (Phase 1): split `__init__` into `__init__` (construction only),
-`prepare()` (paths + Bpod + pre-hooks), `run()` (task thread), so the context-manager
-pattern is the only supported usage and `auto_start=True` is removed.
+- **`exec()` → `importlib`**: DONE in an earlier sprint — `init_task()` uses `importlib.import_module`.
+- **`QThread` → `threading.Thread`**: DONE in an earlier sprint.
+- **Class-level mutable `input_kwargs = {}`**: still present — low risk (only one instance per session), defer to ControllerSession sprint.
+- **`__del__` calls `exit_safely()`**: still present — `__exit__` handles cleanup; `__del__` is redundant but harmless, defer.
+- **Monolithic `__init__`**: hooks are wired correctly with the current structure; full split deferred to ControllerSession sprint.

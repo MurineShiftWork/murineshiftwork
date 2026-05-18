@@ -273,9 +273,6 @@ class TaskProcess(object):
         if post_exc is not None:
             raise post_exc
 
-    def __del__(self):
-        self.exit_safely()
-
     def exit_safely(self):
         self.exiting = True
         if self.serial_is_open and self.bpod is not None:
