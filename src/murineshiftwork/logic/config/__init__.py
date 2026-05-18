@@ -20,6 +20,7 @@ from murineshiftwork.logic.config.ini import (  # noqa: F401
 from murineshiftwork.logic.config.io import (  # noqa: F401
     load_setup_config,
     load_subject_config,
+    save_subject_task_overrides,
     save_subject_task_stage_position,
     update_stage_config,
     update_valve_calibration,

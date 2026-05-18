@@ -11,6 +11,13 @@ import yaml
 from pybpodapi.protocol import Bpod, StateMachine
 
 from murineshiftwork.hardware.bpod import BpodFactory
+from murineshiftwork.logic.hooks import (
+    HookContext,
+    SessionAbortError,
+    collect_hooks,
+    run_post_hooks,
+    run_pre_hooks,
+)
 from murineshiftwork.logic.log import (
     add_session_log_handler,
     patch_logging_levels,
@@ -148,6 +155,10 @@ class TaskProcess(object):
     bpod_baudrate = 115200
     serial_is_open = False
     task_runner = None
+    # Hooks
+    _pre_hooks: list = []
+    _post_hooks: list = []
+    _hook_ctx: Any = None
     # Misc
     exiting = False
     debug = False
@@ -223,7 +234,27 @@ class TaskProcess(object):
                     raise IOError(f"Serial port not accessible at {self.serial_port}")
             self.connect_bpod()
 
+        # Build hook context and load hooks (after bpod is connected)
+        _task_settings = self.input_kwargs.get("settings.task.patched", {})
+        _execution_config = self.input_kwargs.get("execution_config")
+        _setup_config = (
+            _execution_config.setup if _execution_config is not None else None
+        )
+        self._hook_ctx = HookContext(
+            subject=self.subject,
+            task_name=self.task_name,
+            task_settings=_task_settings,
+            session_paths=self.session_paths,
+            execution_config=_execution_config,
+        )
+        self._pre_hooks, self._post_hooks = collect_hooks(_setup_config, _task_settings)
+
         if auto_init:
+            try:
+                run_pre_hooks(self._pre_hooks, self._hook_ctx)
+            except SessionAbortError:
+                self.exit_safely()
+                raise
             self.init_task()
         if auto_start:
             self.run_task()
@@ -232,7 +263,15 @@ class TaskProcess(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        post_exc = None
+        if self._hook_ctx is not None:
+            try:
+                run_post_hooks(self._post_hooks, self._hook_ctx)
+            except SessionAbortError as exc:
+                post_exc = exc
         self.exit_safely()
+        if post_exc is not None:
+            raise post_exc
 
     def __del__(self):
         self.exit_safely()

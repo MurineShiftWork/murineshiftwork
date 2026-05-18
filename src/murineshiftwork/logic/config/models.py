@@ -190,6 +190,15 @@ class CameraConfig(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Hook config — lists of dotted import paths for pre/post session hooks
+
+
+class HooksConfig(BaseModel):
+    pre_task: list[str] = []
+    post_task: list[str] = []
+
+
+# ---------------------------------------------------------------------------
 # Setup config
 
 
@@ -198,6 +207,7 @@ class SetupConfig(BaseModel):
     devices: dict[str, DeviceUnion] = {}
     cameras: Optional[CameraConfig] = None
     calibrations: Calibrations = Calibrations()
+    hooks: Optional[HooksConfig] = None
 
     def device_port(self, device_name: str) -> str:
         if device_name not in self.devices:

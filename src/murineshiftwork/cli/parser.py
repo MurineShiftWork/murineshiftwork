@@ -19,6 +19,7 @@ from murineshiftwork.cli.execute import (
     run_subject,
     run_task,
 )
+from murineshiftwork.cli.post import run_post_clean, run_post_run
 
 try:
     _MSW_VERSION = _get_version("murineshiftwork")
@@ -445,6 +446,115 @@ def make_subparser_action(sub_parsers):
     p.set_defaults(func=run_action)
 
 
+def make_subparser_post(sub_parsers):
+    p = sub_parsers.add_parser(
+        "post",
+        help="Post-acquisition data pipeline commands",
+        formatter_class=ArgparseFormatter,
+        description=dedent(
+            """\
+            Post-acquisition pipeline utilities.
+
+            Commands:
+              msw post clean   Remove noise-event rows from .msw.csv files.
+              msw post run     Orchestrate rsync, video conversion, and upload pipeline.
+
+            Examples:
+              msw post clean --data-dir /mnt/maindata/data
+              msw post clean --data-dir /mnt/maindata/data --event Port4 --dry-run
+              msw post run --central-data /mnt/maindata/data --provision-scripts /opt/provision_rpi/scripts
+            """
+        ),
+        epilog=_CREDIT_EPILOG,
+    )
+    sub = p.add_subparsers(metavar="subcommand", dest="subcommand")
+    sub.required = True
+
+    # --- clean ---
+    pc = sub.add_parser(
+        "clean",
+        help="Remove noise-event rows from .msw.csv files",
+        formatter_class=ArgparseFormatter,
+        epilog=_CREDIT_EPILOG,
+    )
+    pc.add_argument(
+        "--data-dir",
+        required=True,
+        dest="data_dir",
+        help="Root directory to search for .msw.csv files",
+    )
+    pc.add_argument(
+        "--event",
+        default="Port4",
+        help="Event name to remove from CSV rows (default: Port4)",
+    )
+    pc.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=False,
+        dest="dry_run",
+        help="Show which files would be modified without changing anything",
+    )
+    pc.set_defaults(func=run_post_clean)
+
+    # --- run ---
+    pr = sub.add_parser(
+        "run",
+        help="Run the full post-acquisition pipeline (rsync, collate, convert, upload)",
+        formatter_class=ArgparseFormatter,
+        epilog=_CREDIT_EPILOG,
+    )
+    pr.add_argument(
+        "--central-data",
+        required=True,
+        dest="central_data",
+        help="Central data directory (rsync destination)",
+    )
+    pr.add_argument(
+        "--provision-scripts",
+        required=True,
+        dest="provision_scripts",
+        help="Path to provision_rpi scripts directory",
+    )
+    pr.add_argument(
+        "--local-data",
+        default="",
+        dest="local_data",
+        help="Local data dir (default: ~/data)",
+    )
+    pr.add_argument(
+        "--rpi-group",
+        default="rpis",
+        dest="rpi_group",
+        help="Ansible group for RPi cameras",
+    )
+    pr.add_argument(
+        "--setup-group",
+        default="",
+        dest="setup_group",
+        help="Ansible group for setup machines",
+    )
+    pr.add_argument(
+        "--target-dir",
+        default="",
+        dest="target_dir",
+        help="Remote upload destination path",
+    )
+    pr.add_argument(
+        "--skip-upload", action="store_true", default=False, dest="skip_upload"
+    )
+    pr.add_argument("--skip-rpi", action="store_true", default=False, dest="skip_rpi")
+    pr.add_argument(
+        "--skip-setups", action="store_true", default=False, dest="skip_setups"
+    )
+    pr.add_argument("--skip-h264", action="store_true", default=False, dest="skip_h264")
+    pr.add_argument(
+        "--skip-msw-clean", action="store_true", default=False, dest="skip_msw_clean"
+    )
+    pr.add_argument("--dry-run", action="store_true", default=False, dest="dry_run")
+    pr.set_defaults(func=run_post_run)
+
+
 def parse_args(args=None):
     main_parser = ArgumentParser(
         prog="msw",
@@ -470,6 +580,7 @@ def parse_args(args=None):
     make_subparser_run(sub_parsers)
     make_subparser_calibration(sub_parsers)
     make_subparser_action(sub_parsers)
+    make_subparser_post(sub_parsers)
 
     parsed_args = main_parser.parse_args(args=args)
     return parsed_args.__dict__

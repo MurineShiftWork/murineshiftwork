@@ -20,6 +20,7 @@ from murineshiftwork.logic.config import (
     load_subject_config,
     read_config,
     read_task_modes,
+    save_subject_task_overrides,
     validate_config_file_path,
 )
 from murineshiftwork.logic.log import setup_logging
@@ -195,26 +196,44 @@ def _stage_device_to_controller_config(device) -> dict:
 
 
 def _build_task_settings_patch(args_dict, settings_task_default, task_modes):
-    """Build settings.task.patched from the 4-level priority chain."""
+    """Build settings.task.patched from the 5-level priority chain.
+
+    Priority (lowest → highest):
+      1. bundled task.yaml default:
+      2. config_dir overlay task.yaml default:
+      3. task_mode from subject YAML task_overrides (sticky mode)
+      4. subject YAML task_overrides (non-mode keys)
+      5. CLI --task-mode (overrides sticky mode from subject YAML)
+      6. CLI -ts KEY=VALUE
+    """
     patched = dict(settings_task_default)
     task_name = args_dict.get("task", "")
 
-    task_mode = args_dict.get("task_mode", "")
-    if task_mode:
-        if task_mode not in task_modes:
+    subject_config = args_dict.get("subject_config")
+    subject_yaml_patch = (
+        dict(subject_config.task_overrides.get(task_name, {})) if subject_config else {}
+    )
+
+    # Sticky task_mode: read from subject YAML unless CLI --task-mode overrides it
+    cli_task_mode = args_dict.get("task_mode", "")
+    sticky_mode = subject_yaml_patch.pop("task_mode", "")
+    effective_mode = cli_task_mode or sticky_mode
+
+    if effective_mode:
+        if effective_mode not in task_modes:
             raise ValueError(
-                f"Task mode '{task_mode}' not found in task.yaml 'mode:' section. "
+                f"Task mode '{effective_mode}' not found in task.yaml 'mode:' section. "
                 f"Available: {list(task_modes.keys())}"
             )
-        mode_overrides = task_modes[task_mode]
+        mode_overrides = task_modes[effective_mode]
         patched = deep_merge(patched, mode_overrides)
-        logging.debug(f"Task mode '{task_mode}' applied: {mode_overrides}")
+        logging.debug(f"Task mode '{effective_mode}' applied: {mode_overrides}")
 
-    subject_config = args_dict.get("subject_config")
-    if subject_config and task_name in subject_config.task_overrides:
-        yaml_patch = subject_config.task_overrides[task_name]
-        patched = deep_merge(patched, yaml_patch)
-        logging.debug(f"Subject YAML task_overrides for '{task_name}': {yaml_patch}")
+    if subject_yaml_patch:
+        patched = deep_merge(patched, subject_yaml_patch)
+        logging.debug(
+            f"Subject YAML task_overrides for '{task_name}': {subject_yaml_patch}"
+        )
 
     cli_overrides = _parse_key_value_list(args_dict.get("task_settings_overrides", []))
     patched.update(cli_overrides)
@@ -239,6 +258,9 @@ def _build_task_settings_patch(args_dict, settings_task_default, task_modes):
             patched[_cal_key] = args_dict[_cal_key]
     if "settings.stage" in args_dict and "settings.stage" not in patched:
         patched["settings.stage"] = args_dict["settings.stage"]
+    # Inject config_dir so tasks can write back state (level progression, etc.)
+    if args_dict.get("config_dir") and "config_dir" not in patched:
+        patched["config_dir"] = args_dict["config_dir"]
 
     return patched
 
@@ -315,13 +337,30 @@ def evaluate_args(args_dict=None):
     else:
         raise ValueError(f"Unknown command: '{args_dict['command']}'")
 
+    task_name = args_dict.get("task", "")
     patched = _build_task_settings_patch(args_dict, settings_task_default, task_modes)
     args_dict["settings.task.patched"] = patched
 
+    # Write task_mode back to subject YAML so next session picks up the same mode
+    # without requiring --task-mode on the CLI again.
+    task_mode = args_dict.get("task_mode", "")
+    subject_config = args_dict.get("subject_config")
+    if task_mode and subject_config and args_dict.get("config_dir") and task_name:
+        try:
+            save_subject_task_overrides(
+                args_dict["config_dir"],
+                args_dict["subject"],
+                task_name,
+                {"task_mode": task_mode},
+            )
+            logging.debug(
+                f"Wrote task_mode '{task_mode}' to subject YAML for task '{task_name}'"
+            )
+        except Exception as exc:
+            logging.warning(f"Could not write task_mode to subject YAML: {exc}")
+
     setup_config = args_dict.get("setup_config")
     _resolve_setup_config_ports(args_dict, setup_config, patched)
-
-    task_name = args_dict.get("task", "")
     subject_config = args_dict.get("subject_config")
     args_dict["execution_config"] = ExecutionConfig(
         setup=setup_config,

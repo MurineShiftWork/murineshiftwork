@@ -97,16 +97,20 @@ def update_valve_calibration(
     return True
 
 
-def save_subject_task_stage_position(
+def save_subject_task_overrides(
     config_dir: str | Path,
     subject_name: str,
     task_name: str,
-    position_name: str,
+    overrides: dict,
 ) -> None:
-    """Write stage_position into subject's task_overrides for the given task.
+    """Merge *overrides* into subject's task_overrides[task_name].
 
     Creates the subjects YAML file if it doesn't exist.
     Merges into existing task_overrides without overwriting other keys.
+    Typical callers:
+      - stage writeback: overrides={"stage_position": "mouse_t001"}
+      - sequence level writeback: overrides={"start_level": 7}
+      - mode writeback: overrides={"task_mode": "stage10deterministic"}
     """
     subjects_dir = Path(config_dir) / "subjects"
     subjects_dir.mkdir(parents=True, exist_ok=True)
@@ -126,9 +130,7 @@ def save_subject_task_stage_position(
             "task_overrides": {},
         }
 
-    raw.setdefault("task_overrides", {}).setdefault(task_name, {})["stage_position"] = (
-        position_name
-    )
+    raw.setdefault("task_overrides", {}).setdefault(task_name, {}).update(overrides)
 
     with open(path, "w") as f:
         yaml.dump(
@@ -140,7 +142,19 @@ def save_subject_task_stage_position(
         )
 
     logging.info(
-        f"Saved stage_position '{position_name}' for subject '{subject_name}', task '{task_name}' → {path}"
+        f"Saved task_overrides {overrides} for subject '{subject_name}', task '{task_name}' → {path}"
+    )
+
+
+def save_subject_task_stage_position(
+    config_dir: str | Path,
+    subject_name: str,
+    task_name: str,
+    position_name: str,
+) -> None:
+    """Write stage_position into subject's task_overrides for the given task."""
+    save_subject_task_overrides(
+        config_dir, subject_name, task_name, {"stage_position": position_name}
     )
 
 

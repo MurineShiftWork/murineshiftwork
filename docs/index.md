@@ -8,7 +8,10 @@ Behaviour acquisition framework for head-fixed and freely moving murine experime
 - **TTL barcode synchronisation**: encodes Unix timestamps as a 37-bit pulse train for offline alignment of Bpod, cameras (RCE), and ephys (Open Ephys / Neuropixels)
 - **Setup configs**: per-setup YAML files in a shared git-tracked directory (`msw_configs/`)
 - **Subject configs**: per-subject YAML with per-task parameter overrides
-- **CLI**: `msw run`, `msw setup`, `msw subject`, `msw init`
+- **CLI**: `msw run`, `msw action`, `msw calibration`, `msw post`, `msw setup`, `msw subject`, `msw tasks`, `msw init`
+- **Config overlay**: site-specific parameter adjustments in `msw_configs/tasks/<name>/task.yaml`; merged on top of bundled defaults without touching the installed package
+- **Named task modes**: `--task-mode <preset>` switches between `mode:` sections in `task.yaml` (e.g. habituation, deterministic, probe); mode is written to subject YAML and persists across sessions
+- **Pre/post session hooks**: custom Python classes registered in setup or task YAML; run before task init and after session end to integrate databases, Slack, LabWatch, etc.
 
 ## Quick start
 
@@ -44,9 +47,20 @@ murineshiftwork/
 └── msw_configs/              # shared setup/subject configs (separate git repo)
 ```
 
+## Documentation structure
+
+| Section | Contents |
+|---|---|
+| [Getting started](getting_started/quickstart.md) | Installation, new machine, quickstart |
+| [Concepts](concepts/architecture.md) | Architecture, config system, hooks, session files |
+| [Tutorials](tutorials/calibration.md) | Calibration, adding setups and subjects |
+| [CLI reference](cli/run.md) | Per-subcommand reference pages |
+| [Hardware setup](setup/SERIAL.md) | Serial ports, wiring, cameras, DHCP |
+| [Work plans](work_plans/ROADMAP.md) | Roadmap and design docs |
+
 ## See also
 
 - [New Machine Setup](getting_started/new_machine.md)
 - [Setup Config reference](setup/setup_config.md)
+- [Hook System](concepts/hook_system.md)
 - [Barcode TTL sync](barcode_ttl_integration.md)
-- [Calibration](calibration/water.md)

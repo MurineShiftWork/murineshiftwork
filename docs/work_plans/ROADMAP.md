@@ -38,19 +38,138 @@ Key design decisions needed:
 3. RPI ensemble + FLIR simultaneously: both started at session start, both receive the same
    trial-onset TTL barcode signal for alignment; RCE stays unchanged
 
+### Subject writeback bundle (next sprint after test coverage is clean)
+
+**All three writeback cases now share `save_subject_task_overrides(config_dir, subject, task, overrides)`.**
+
+**1. Sticky named mode** — DONE (2026-05-18)
+- When `--task-mode X` is passed, `evaluate_args` writes `{"task_mode": X}` to
+  `subject.task_overrides[task]` after the session is set up.
+- Next session: if subject YAML has `task_mode` in task_overrides, it is applied as
+  a sticky mode (CLI `--task-mode` still wins).
+- Mode name is preserved (not expanded params), so subject YAML stays readable.
+- Tests: `test_sticky_task_mode_from_subject_yaml_applied`, `test_cli_task_mode_beats_sticky_subject_yaml_mode`,
+  `test_subject_yaml_overrides_stack_on_top_of_sticky_mode`
+
+**2. Sequence level progression writeback** — PARTIALLY DONE (2026-05-18)
+- `config_dir` is now injected into `settings.task.patched` so tasks can write back state.
+- `task_objects.save_session_end()` calls `save_subject_task_overrides(config_dir, subject, "sequence", {"start_level": N})`
+  at session end, writing the current level to the git-tracked subject YAML.
+- Next session: subject YAML's `start_level` is read as part of `task_overrides["sequence"]`,
+  no longer requiring `--task-settings start_level=N`.
+- Local `~/.murineshiftwork/sequence/` JSON store kept as secondary store (LabWatch future path).
+- **Outstanding**: test for the session-end writeback in an isolated test (needs SimBpod).
+
+**3. Stage position writeback** — DONE (earlier sprint)
+- `save_subject_task_overrides` called from `_test_stage_move` with `{"stage_position": name}`.
+- Already tested in `test_config_io.py`.
+
+**4. Named modes for all tasks** — NOT YET STARTED
+- All task.yaml files already have `mode: {}` structure.
+- Content work: define named modes (e.g. habituation, deterministic, probe) in each task.yaml.
+- Which tasks need modes: `probabilistic_switching`, `sequence`, `airpuff`, opto tasks.
+- `probabilistic_switching_fixedsubjects` already has 5 named modes.
+
+**5. Pre/post hooks — DONE (2026-05-18)**
+- `murineshiftwork.logic.hooks` — full implementation; see `docs/concepts/hook_system.md`
+- Setup YAML `hooks.pre_task` / `hooks.post_task` and task.yaml `HOOKS_PRE_TASK` / `HOOKS_POST_TASK`
+- Wired into `TaskProcess`: pre-hooks after Bpod connects, post-hooks in `__exit__`
+
+### `msw tasks` management CLI (not yet started)
+
+- `msw tasks list` — print all available tasks with one-line description
+- `msw tasks defaults <task_name>` — print the bundled `task.yaml` `default:` section
+- `msw init task-configs` — copy bundled `task.yaml` files into `<config_dir>/tasks/<name>/task.yaml`
+  so the user has a starting point for the config-dir overlay without hand-copying
+- Tied to config-dir overlay system; overlay dir already wired in `evaluate_args`
+
+### Pre/post session hook system — DONE (2026-05-18)
+
+- `murineshiftwork.logic.hooks` — `HookContext`, `TaskHook`, `load_hooks()`, `collect_hooks()`,
+  `run_pre_hooks()`, `run_post_hooks()`
+- `HooksConfig(pre_task, post_task)` added to `SetupConfig` in `config/models.py`
+- `TaskProcess.__init__` builds hook context and loads hooks after Bpod connects, before `init_task()`
+- `TaskProcess.__exit__` runs post-hooks before `exit_safely()`
+- Pre-hooks may mutate `task_settings` (dict is shared by reference); post-hooks may read `output`
+- Failures isolated: a raising hook logs WARNING and is skipped; session continues
+- 25 tests in `tests/test_hooks.py`: context, base hook, run_pre/post, error isolation, load_hooks, collect_hooks, SetupConfig round-trip
+
+### Docs reorganisation — DONE (2026-05-18)
+
+- Legacy docs moved to `docs/legacy/` (user sorts manually):
+  `CLI_REFACTOR_PLAN.md`, `cli_redesign_spec.md`, `FLIR_AND_HOOKS_PLAN.md`,
+  `TODO.md`, `CALIBRATION.md`, `calibration/stage.md`, `calibration/visualization.md`,
+  `calibration/water.md`, `INSTRUCTIONS_MSW_UPGRADE_20260516.md`
+- New docs structure created (skeletons):
+  - `docs/concepts/` — architecture, config_system, hook_system, session_files
+  - `docs/tutorials/` — calibration, adding_setup, adding_subject
+  - `docs/cli/` — run, action, calibration, post, subject, setup, tasks
+- `docs/index.md` updated with new section table
+
+### `msw post` scripts — DONE (2026-05-18)
+
+- `msw post clean --data-dir <path> [--event Port4] [--dry-run]` — pure Python CSV cleaner;
+  backs up originals, recurses subdirs, dry-run mode
+- `msw post run --central-data <path> --provision-scripts <path> [--skip-*] [--dry-run]` —
+  thin Python wrapper calling `scripts/run_post_acquisition_tasks.sh`; orchestrates rsync,
+  RPi collation, h264 conversion, remote upload via provision_rpi scripts
+- Both commands tested in `tests/test_post_and_action.py`
+
+### Opto task consolidation (not yet started — see memory: project_opto_config_design.md)
+
+4 opto tasks (`optotagging`, `optotagging_with_video`, `optotagging_multi_with_video`,
+`optotagging_with_power_level`) → 1 unified task with per-protocol stimulation config.
+
+Protocol loop design:
+- Each protocol dict: `{n_trials, iti, record_video, laser_power, freq_hz, pulse_width_ms}`
+- Execution loop: `video_start (if chosen) → laser loop → video_stop → next protocol / done`
+- `laser_power` is per-protocol and fixed for the duration of that protocol (no within-run changes)
+- Stimulation config lives in `task.yaml` under a `stimulation:` key (deep-mergeable from overlay)
+
+Stimulation consolidation:
+- `optotagging_with_power_level/stimulation.py` → merged into `logic/stimulation.py`
+- Both are pypulsepal wrappers; unify into `StimulationController` with `set_power()`,
+  `trigger_clock()`, `emergency_off()`; will become `msw-stimulation` in suite split
+
 ### Named task config presets — extend to other tasks  ← DONE for fixed-subjects
 Named modes (`default:` / `mode:` structure) are live for `probabilistic_switching_fixedsubjects`.
 Still to do: propagate the same structure to other tasks that would benefit from named stages
 (e.g. `probabilistic_switching`, `sequence_automated`).
 
-### Simulation mode (virtual hardware)
-Dummy classes for Bpod, PulsePal, and Stage that accept all commands and log them instead of
-driving hardware. Enables full task dry-runs without any USB devices connected.
-- `hardware/bpod/sim.py` — `SimBpod` mirrors `BpodFactory` API; logs all state-machine calls
-- `hardware/pulsepal/sim.py` — `SimPulsePal`
-- `hardware/stage/sim.py` — `SimStageController`
-- CLI flag: `--simulate` (or `--sim`) injects sim objects instead of real hardware
-- Simulation output logged at DEBUG level with `[SIM]` prefix
+### Agent runner / code-level entrypoint (not yet started)
+
+**Design issue:** `evaluate_args` is not a thin CLI adapter — it is the business logic for
+building task settings and is tightly coupled to argparse's flat args_dict.  An agent
+runner receiving a structured API request (`{"task": "...", "subject": "...", "overrides": {...}}`)
+cannot call `evaluate_args` cleanly without constructing a fake CLI dict.
+
+**Planned fix:** extract a standalone pure function:
+```python
+def build_task_settings(
+    task_name: str,
+    config_dir: str,
+    setup: str = "",
+    subject: str = "",
+    task_mode: str = "",
+    cli_overrides: dict | None = None,
+) -> tuple[dict, ExecutionConfig]:
+    """Load bundled + overlay configs, apply 5-level priority chain, return patched settings."""
+```
+- `evaluate_args` calls `build_task_settings` internally — no CLI behaviour changes
+- Agent runner also calls `build_task_settings` directly, no fake args_dict needed
+- `TaskProcess` already accepts `bpod=` injection and `simulate=` flag — the constructor
+  interface is already agent-friendly; only the settings-building seam is missing
+
+**Remaining after `build_task_settings` is extracted:**
+- ControllerSession (Phase 2) — owns hardware handles, injects into TaskProcess
+- FastAPI `POST /action` — dispatches ActionRequest to ControllerSession
+- `msw agent start --setup <name>` → ControllerSession + FastAPI in background
+
+### Simulation mode — DONE (2026-05-16)
+- `hardware/bpod/sim.py` — `SimBpod`: logs all SMA and manual_override calls; used by tests
+- `logic/scale.py:SimWeighingScale` — deterministic weight for calibration task tests
+- `make_scale(scale_type="sim")` factory
+- CLI flag `--simulate` wired in parser + TaskProcess: uses SimBpod instead of real hardware
 
 ### Hardware action API — Phase 1 DONE, Phase 2 spec below
 
@@ -102,31 +221,28 @@ Implementation steps (not yet started):
 
 ### Test coverage
 
-193 tests pass (2026-05-17) — `test_outbound_travel_hist.py` moved to `playground/` (was a
-legacy one-off analysis script with a hardcoded absolute path, not a proper test).
+255 tests pass (2026-05-18).
 
-**Done since last count:**
-- `SimBpod` in `hardware/bpod/sim.py` — full 4-port Bpod hardware mock, logs all
-  SMA calls and manual_override calls; used by action driver + calibration task tests
-- `SimWeighingScale` in `logic/scale.py` — deterministic weight, tare/read counts
-- `make_scale(scale_type="sim")` factory support
-- `hardware/bpod/actions.py` — BpodActionDriver covered: dispatch, valve_pulse open/close
-  sequence, n_pulses repetition, valve_flush defaults, finally-block close-on-error
-- `logic/config/models.py:ActionRequest` — field validation, default params, missing setup
-- `_calibration_liquid_static` Task.run() — sim bpod + sim scale smoke test: CSV saved,
-  SMA count > 0, scale tared >= 2 times
-- `_calibration_liquid_dynamic` Task.run() — same
-- Fixed `CalibrationDataBase.__add__` pandas `_append` → `pd.concat` (removed deprecated API)
+**Done since last count (2026-05-18):**
+- `logic/hooks.py` — 25 tests in `test_hooks.py`: HookContext, TaskHook base, run_pre/post_hooks,
+  error isolation, load_hooks by path, collect_hooks from setup config and task settings,
+  SetupConfig HooksConfig round-trip
+
+**Previous batch (2026-05-18):**
+- `cli/execute.py:run_action` — integration tests: dispatch valve_pulse with SimBpod,
+  unknown setup raises, unknown device raises, unsupported device type raises
+- `logic/calibration.py:save_calibration_pdfs` — smoke test: PDF created, empty setup
+  skipped, single-setup filter works
+- `cli/post.py:run_post_clean` — pure Python CSV cleaner: event rows removed,
+  dry-run no-op, backup created, recurses subdirs
+- `logic/config/io.py:save_subject_task_overrides` — multiple keys, multi-task merge,
+  update existing, backward compat via stage_position wrapper
+- `cli/evaluate.py` sticky task_mode — subject YAML task_mode applied, CLI mode
+  beats sticky, non-mode subject keys stack on top of mode
 
 **Remaining:**
 - `hardware/bpod/factory.py` — BpodFactory._write_lock type check; open/close_safely path
-- `cli/execute.py:run_action` — integration: parse args, load sim setup YAML, dispatch
-- `cli/parser.py:make_subparser_action` — verify positional args (device, action, params)
-  parse correctly
-- `logic/calibration.py:save_calibration_pdfs` — smoke test with tmp setup YAML +
-  bpod_valve data; verify PDF created
-- `logic/calibration.py:plot_setup_valve_calibrations` — near-linear data (b≈0) edge case
-- `readers/validate.py:validate_session` — add TTL alignment path test
+- `readers/validate.py:validate_session` — TTL alignment path test
 - Namespace reader (`readers/namespace.py`) — smoke test with fixture files
 
 ### Namespace package prep / Sprint A (DONE 2026-05-17)
@@ -177,9 +293,9 @@ Single `.msw.session.yaml` replaces three separate files. Version bump 1.0.0 →
   `sleep_with_physiology` already removed. `_test_pyqtgraph_app`, `_test_open_ephys_remote`
   already removed.
 
-### Config: remove configobj
-- `configobj` still needed for subject.settings files in external `msw_configs` repo (INI format)
-- Migrate `msw_configs/subjects/*.settings` → YAML, then remove configobj dependency entirely
+### Config: remove configobj — DONE
+- `configobj` has no usage in `src/` and is not listed in `pyproject.toml` dependencies.
+  The only reference is a comment in `namespace/spec.py` saying it was replaced.
 
 ### PS fixed-subjects lick-port mapping
 - `task_objects.py` uses `LICK_EVENT_LEFT/RIGHT` keys from task settings (settable per setup)
@@ -204,6 +320,61 @@ Single `.msw.session.yaml` replaces three separate files. Version bump 1.0.0 →
 - Ongoing: audit any new task added for out-of-namespace writes
 - consolidate settings* files to the process and evaluated items into one settings file.
   this will require a version upgrade for msw with additional reader logic
+
+---
+
+## Completed (2026-05-17 / 2026-05-18)
+
+### mypy: tasks.* fully typed (2026-05-18)
+
+- `tasks.*` broad `ignore_errors` override removed from `pyproject.toml`
+- All 62 suppressed errors fixed across 12 task files:
+  - `TaskRunner.bpod: Any = None` — resolves all `"None" has no attribute …"` cascades in subclasses
+  - `TaskRunner.input_kwargs: dict = {}` — always populated from `**kwargs`, never None
+  - `TaskProcess.bpod: Any = None`
+  - `task_objects.py` files (probabilistic_switching, fixedsubjects, sequence): `bpod: Any`, `task_settings: dict`, `trial_data: list`, `last_outcome: str | None`
+  - `online_plotting.py` files: `monitoring_queue: Any`, `kill_queue: Any`, `Queue | None` annotations, `np.ndarray | None`
+  - Remaining narrow override: only the two `stimulation.py` pypulsepal wrappers (`logic/stimulation.py`, `optotagging_with_power_level/stimulation.py`) — these will move to `msw-stimulation` in the suite split
+
+### Config-dir task overlay (2026-05-18)
+
+- `<config_dir>/tasks/<task_name>/task.yaml` is deep-merged on top of bundled `task.yaml`
+- `deep_merge(base, override)` added to `logic/config/ini.py`: recursive dict merge, lists replaced outright, neither input mutated; re-exported from `logic/config/__init__.py`
+- All three existing merge operations in `_build_task_settings_patch` upgraded from `dict.update()` (shallow) to `deep_merge` so nested dicts (e.g. `stimulation:` sub-config) can be partially overridden
+- Overlay path stored as `config_file_task_overlay` in args_dict for inspection
+- Overlay `mode:` section entries merged into the task mode dict (overlay mode definitions win)
+- Full 5-level priority chain: bundled `task.yaml` → config_dir overlay → `--task-mode` → subject YAML `task_overrides` → CLI `-ts`
+- **Tests:** 9 unit tests for `deep_merge` in `test_config_io.py`; 6 integration tests for overlay in `test_cli_evaluate.py` covering: override wins, unmentioned keys survive, absent overlay uses bundled only, CLI beats overlay, deep merge of nested keys, full priority chain (all 5 levels)
+- **Docs:** `quickstart.md` updated with 5-level chain and overlay workflow; `index.md` feature list updated
+
+### Scripts cleanup (2026-05-18)
+
+- Deleted `scripts/_clean_msw_files.bash`, `_patch_all_setups_config_files.bash`,
+  `run_post_acquisition_tasks.bash`, `push_configs_to_setups.sh` (only one rig; push was unused)
+- Remaining: `clean_msw_files.sh`, `run_post_acquisition_tasks.sh`
+- Roadmap: port remaining scripts to `msw post clean` / `msw post run` Python CLI commands
+
+### `msw tasks` naming decision (2026-05-18)
+
+- `msw tasks` (plural) reserved for task management commands (`msw tasks list`, `msw tasks defaults <name>`, `msw init task-configs`)
+- `msw run` remains the execution entry point — avoids confusion between management and execution
+- See roadmap items for `msw tasks` implementation
+
+### Subject writeback generalization (2026-05-18)
+
+- `save_subject_task_overrides(config_dir, subject, task, overrides: dict)` added to
+  `logic/config/io.py` — generalized version of `save_subject_task_stage_position`;
+  merges any dict of keys into `subject.task_overrides[task]`
+- `save_subject_task_stage_position` kept as thin wrapper for backward compat
+- `config_dir` now injected into `settings.task.patched` so tasks can call writeback functions
+- Sticky `task_mode` writeback: when `--task-mode X` is used with a known subject,
+  `evaluate_args` writes `{"task_mode": X}` to subject YAML after session setup
+- `_build_task_settings_patch` reads `task_mode` from subject YAML task_overrides and
+  applies it before other subject override keys; CLI `--task-mode` wins over sticky YAML value
+- Sequence `task_objects.save_session_end()` writes `start_level=N` to subject YAML if
+  `config_dir` is present in `task_settings` (wired from patched settings)
+- 11 new tests for: `save_subject_task_overrides`, sticky mode applied, CLI mode beats sticky,
+  subject keys stack on top of mode
 
 ---
 

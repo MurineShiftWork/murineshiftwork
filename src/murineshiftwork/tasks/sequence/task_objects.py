@@ -167,6 +167,8 @@ class TaskControl:
 
         Call this once after the trial loop exits so the local (or remote) store
         always reflects the most recent session even when performance was flat.
+        Also writes start_level back to the subject YAML in config_dir so the
+        progression is git-tracked and portable across machines.
         """
         subject = self.task_settings["subject"]
         existing = self._fetch_subject_state(subject)
@@ -184,6 +186,20 @@ class TaskControl:
             f"Session end state saved for '{subject}': level {self.current_level}, "
             f"trials {self.trial_index}"
         )
+
+        config_dir = self.task_settings.get("config_dir", "")
+        if config_dir and subject and not subject.startswith("_test_"):
+            try:
+                from murineshiftwork.logic.config.io import save_subject_task_overrides
+
+                save_subject_task_overrides(
+                    config_dir, subject, "sequence", {"start_level": self.current_level}
+                )
+                log.debug(
+                    f"Wrote start_level={self.current_level} to subject YAML for '{subject}'"
+                )
+            except Exception as exc:
+                log.warning(f"Could not write level to subject YAML: {exc}")
 
     def _register_subject(self, subject: str):
         """Keep a JSON registry of all subjects and their last session."""

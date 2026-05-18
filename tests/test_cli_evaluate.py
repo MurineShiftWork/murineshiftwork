@@ -60,7 +60,7 @@ def _base_args(tmp_path, subject, task="_test_flush_water", **overrides):
         "log_file": str(tmp_path / "test.log"),
         "config_dir": str(tmp_path),
         "config_file_subjects": "",
-        "config_file_task": "",
+        "config_file_task": "task.yaml",
         "config_file_camera": "",
         "calibration_file_water": "",
         "calibration_file_sound": "",
@@ -147,4 +147,206 @@ def test_yaml_subject_accepted_without_ini(tmp_path):
     args = _base_args(tmp_path, subject)
     result = evaluate_args(args_dict=args)
     assert "exit_flag" not in result
+
+
+# ---------------------------------------------------------------------------
+# Config-dir task overlay
+
+
+def _write_task_overlay(tmp_path, task, content: dict):
+    overlay_dir = tmp_path / "tasks" / task
+    overlay_dir.mkdir(parents=True, exist_ok=True)
+    (overlay_dir / "task.yaml").write_text(yaml.dump({"default": content}))
+
+
+def test_task_overlay_overrides_bundled_default(tmp_path):
+    """config_dir/tasks/<task>/task.yaml value wins over bundled task.yaml."""
+    from murineshiftwork.cli.evaluate import evaluate_args
+
+    subject = "s082_tabfixed_m2000001"
+    _write_subject_yaml(tmp_path, subject)
+    _write_task_overlay(tmp_path, "_test_flush_water", {"VALVE_OPENING_TIME_MS": 123.0})
+    args = _base_args(tmp_path, subject)
+    result = evaluate_args(args_dict=args)
+    assert result["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 123.0
+
+
+def test_task_overlay_preserves_unmentioned_bundled_keys(tmp_path):
+    """Overlay only replaces what it declares; bundled keys absent from overlay survive."""
+    from murineshiftwork.cli.evaluate import evaluate_args
+
+    subject = "s082_tabfixed_m2000002"
+    _write_subject_yaml(tmp_path, subject)
+    # Override only VALVE_OPENING_TIME_MS; N_FLUSH_CYCLES should come from bundled defaults
+    _write_task_overlay(tmp_path, "_test_flush_water", {"VALVE_OPENING_TIME_MS": 77.0})
+    args = _base_args(tmp_path, subject)
+    result = evaluate_args(args_dict=args)
+    patched = result["settings.task.patched"]
+    assert patched["VALVE_OPENING_TIME_MS"] == 77.0
+    assert "N_FLUSH_CYCLES" in patched  # from bundled default, not clobbered
+
+
+def test_task_overlay_absent_uses_bundled_only(tmp_path):
+    """When no overlay file exists the bundled default is used unchanged."""
+    from murineshiftwork.cli.evaluate import evaluate_args
+
+    subject = "s082_tabfixed_m2000003"
+    _write_subject_yaml(tmp_path, subject)
+    args = _base_args(tmp_path, subject)
+    result = evaluate_args(args_dict=args)
+    # Bundled _test_flush_water default is 50.0
+    assert result["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 50.0
+    assert result["config_file_task_overlay"] == ""
+
+
+def test_cli_override_beats_task_overlay(tmp_path):
+    """CLI --task-settings-overrides wins over config-dir overlay (highest priority)."""
+    from murineshiftwork.cli.evaluate import evaluate_args
+
+    subject = "s082_tabfixed_m2000004"
+    _write_subject_yaml(tmp_path, subject)
+    _write_task_overlay(tmp_path, "_test_flush_water", {"VALVE_OPENING_TIME_MS": 123.0})
+    args = _base_args(
+        tmp_path, subject, task_settings_overrides=["VALVE_OPENING_TIME_MS=200"]
+    )
+    result = evaluate_args(args_dict=args)
+    assert result["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 200
+
+
+def test_task_overlay_deep_merges_nested_keys(tmp_path):
+    """Overlay merges nested dicts rather than replacing the whole nested block."""
+    from murineshiftwork.cli.evaluate import evaluate_args
+
+    subject = "s082_tabfixed_m2000005"
+    _write_subject_yaml(tmp_path, subject)
+    # _test_flush_water has no nested keys; use a contrived overlay with a nested dict
+    _write_task_overlay(
+        tmp_path,
+        "_test_flush_water",
+        {"hardware": {"port": "/dev/ttyACM9"}, "VALVE_OPENING_TIME_MS": 55.0},
+    )
+    args = _base_args(tmp_path, subject)
+    result = evaluate_args(args_dict=args)
+    patched = result["settings.task.patched"]
+    assert patched["hardware"]["port"] == "/dev/ttyACM9"
+    assert patched["VALVE_OPENING_TIME_MS"] == 55.0
+
+
+# ---------------------------------------------------------------------------
+# Sticky task_mode from subject YAML
+
+
+def _write_task_overlay_with_mode(tmp_path, task, mode_name, mode_params):
+    """Write overlay task.yaml with both default: and mode: sections."""
+    overlay_dir = tmp_path / "tasks" / task
+    overlay_dir.mkdir(parents=True, exist_ok=True)
+    (overlay_dir / "task.yaml").write_text(
+        yaml.dump({"default": {}, "mode": {mode_name: mode_params}})
+    )
+
+
+def test_sticky_task_mode_from_subject_yaml_applied(tmp_path):
+    """task_mode in subject YAML task_overrides is applied like --task-mode."""
+    from murineshiftwork.cli.evaluate import evaluate_args
+
+    subject = "s082_tabfixed_m3000001"
+    _write_subject_yaml(
+        tmp_path,
+        subject,
+        task_overrides={"_test_flush_water": {"task_mode": "low_volume"}},
+    )
+    _write_task_overlay_with_mode(
+        tmp_path, "_test_flush_water", "low_volume", {"VALVE_OPENING_TIME_MS": 25.0}
+    )
+    args = _base_args(tmp_path, subject)
+    result = evaluate_args(args_dict=args)
+    assert result["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 25.0
+
+
+def test_cli_task_mode_beats_sticky_subject_yaml_mode(tmp_path):
+    """CLI --task-mode overrides task_mode stored in subject YAML."""
+    from murineshiftwork.cli.evaluate import evaluate_args
+
+    subject = "s082_tabfixed_m3000002"
+    _write_subject_yaml(
+        tmp_path,
+        subject,
+        task_overrides={"_test_flush_water": {"task_mode": "low_volume"}},
+    )
+    _write_task_overlay_with_mode(
+        tmp_path,
+        "_test_flush_water",
+        "low_volume",
+        {"VALVE_OPENING_TIME_MS": 25.0},
+    )
+    # Add a second mode to select via CLI
+    overlay_dir = tmp_path / "tasks" / "_test_flush_water"
+    (overlay_dir / "task.yaml").write_text(
+        yaml.dump(
+            {
+                "default": {},
+                "mode": {
+                    "low_volume": {"VALVE_OPENING_TIME_MS": 25.0},
+                    "high_volume": {"VALVE_OPENING_TIME_MS": 99.0},
+                },
+            }
+        )
+    )
+    args = _base_args(tmp_path, subject, task_mode="high_volume")
+    result = evaluate_args(args_dict=args)
+    assert result["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 99.0
+
+
+def test_subject_yaml_overrides_stack_on_top_of_sticky_mode(tmp_path):
+    """Non-mode keys in subject YAML override the mode's params."""
+    from murineshiftwork.cli.evaluate import evaluate_args
+
+    subject = "s082_tabfixed_m3000003"
+    _write_subject_yaml(
+        tmp_path,
+        subject,
+        task_overrides={
+            "_test_flush_water": {
+                "task_mode": "low_volume",
+                "N_FLUSH_CYCLES": 7,  # subject key on top of mode
+            }
+        },
+    )
+    _write_task_overlay_with_mode(
+        tmp_path, "_test_flush_water", "low_volume", {"VALVE_OPENING_TIME_MS": 25.0}
+    )
+    args = _base_args(tmp_path, subject)
+    result = evaluate_args(args_dict=args)
+    patched = result["settings.task.patched"]
+    assert patched["VALVE_OPENING_TIME_MS"] == 25.0  # from mode
+    assert patched["N_FLUSH_CYCLES"] == 7  # subject key on top of mode
+
+
+def test_full_priority_chain_order(tmp_path):
+    """Verify full priority chain: bundled < overlay < subject_overrides < CLI."""
+    from murineshiftwork.cli.evaluate import evaluate_args
+
+    subject = "s082_tabfixed_m2000006"
+    # bundled default: VALVE_OPENING_TIME_MS = 50
+    # overlay:         VALVE_OPENING_TIME_MS = 100
+    # subject yaml:    VALVE_OPENING_TIME_MS = 150
+    # CLI:             VALVE_OPENING_TIME_MS = 200
+    _write_subject_yaml(
+        tmp_path,
+        subject,
+        task_overrides={"_test_flush_water": {"VALVE_OPENING_TIME_MS": 150.0}},
+    )
+    _write_task_overlay(tmp_path, "_test_flush_water", {"VALVE_OPENING_TIME_MS": 100.0})
+
+    # Without CLI override: subject yaml (150) wins
+    args = _base_args(tmp_path, subject)
+    result = evaluate_args(args_dict=args)
+    assert result["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 150.0
+
+    # With CLI override: CLI (200) wins
+    args_cli = _base_args(
+        tmp_path, subject, task_settings_overrides=["VALVE_OPENING_TIME_MS=200"]
+    )
+    result_cli = evaluate_args(args_dict=args_cli)
+    assert result_cli["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 200
     assert result["execution_config"].subject.name == subject

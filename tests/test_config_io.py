@@ -1,15 +1,78 @@
-"""Tests for config_io: load/save SetupConfig, SubjectConfig, update_valve_calibration."""
+"""Tests for config_io: load/save SetupConfig, SubjectConfig, update_valve_calibration,
+and deep_merge."""
 
 import pytest
 import yaml
 
 from murineshiftwork.logic.config import (
     ValveCalibration,
+    deep_merge,
     load_setup_config,
     load_subject_config,
+    save_subject_task_overrides,
     save_subject_task_stage_position,
     update_valve_calibration,
 )
+
+# ---------------------------------------------------------------------------
+# deep_merge
+
+
+def test_deep_merge_flat_override():
+    result = deep_merge({"a": 1, "b": 2}, {"b": 99})
+    assert result == {"a": 1, "b": 99}
+
+
+def test_deep_merge_nested_dict_merged_not_replaced():
+    base = {"stim": {"freq": 40, "duration": 0.001, "power": None}}
+    override = {"stim": {"power": 0.8}}
+    result = deep_merge(base, override)
+    assert result["stim"]["freq"] == 40
+    assert result["stim"]["duration"] == 0.001
+    assert result["stim"]["power"] == 0.8
+
+
+def test_deep_merge_nested_new_key_added():
+    base = {"a": {"x": 1}}
+    result = deep_merge(base, {"a": {"y": 2}})
+    assert result["a"] == {"x": 1, "y": 2}
+
+
+def test_deep_merge_list_replaced_not_extended():
+    base = {"valves": [1, 2, 3]}
+    result = deep_merge(base, {"valves": [4]})
+    assert result["valves"] == [4]
+
+
+def test_deep_merge_empty_override_returns_copy_of_base():
+    base = {"a": 1}
+    result = deep_merge(base, {})
+    assert result == {"a": 1}
+
+
+def test_deep_merge_empty_base():
+    result = deep_merge({}, {"a": 1})
+    assert result == {"a": 1}
+
+
+def test_deep_merge_does_not_mutate_base():
+    base = {"a": {"x": 1}}
+    deep_merge(base, {"a": {"x": 99}})
+    assert base["a"]["x"] == 1
+
+
+def test_deep_merge_does_not_mutate_override():
+    override = {"a": {"x": 99}}
+    deep_merge({"a": {}}, override)
+    assert override["a"]["x"] == 99
+
+
+def test_deep_merge_three_levels():
+    base = {"a": {"b": {"c": 1, "d": 2}}}
+    result = deep_merge(base, {"a": {"b": {"c": 99}}})
+    assert result["a"]["b"]["c"] == 99
+    assert result["a"]["b"]["d"] == 2
+
 
 POINTS_VALID = [
     [0.010, 0.675],
@@ -261,3 +324,48 @@ def test_save_subject_task_stage_position_preserves_other_task_override_keys(
     # stage_position updated, other key preserved
     assert raw["task_overrides"]["task_a"]["stage_position"] == "new_pos"
     assert raw["task_overrides"]["task_a"]["VALVE_OPENING_TIME_MS"] == 70
+
+
+# ---------------------------------------------------------------------------
+# save_subject_task_overrides (general)
+
+
+def test_save_subject_task_overrides_multiple_keys(tmp_path):
+    save_subject_task_overrides(
+        tmp_path, "t002", "sequence", {"start_level": 7, "task_mode": "hard"}
+    )
+    path = tmp_path / "subjects" / "t002.yaml"
+    with open(path) as f:
+        raw = yaml.safe_load(f)
+    assert raw["task_overrides"]["sequence"]["start_level"] == 7
+    assert raw["task_overrides"]["sequence"]["task_mode"] == "hard"
+
+
+def test_save_subject_task_overrides_merge_does_not_wipe_other_tasks(tmp_path):
+    save_subject_task_overrides(
+        tmp_path, "t002", "task_a", {"VALVE_OPENING_TIME_MS": 80}
+    )
+    save_subject_task_overrides(tmp_path, "t002", "task_b", {"start_level": 3})
+    path = tmp_path / "subjects" / "t002.yaml"
+    with open(path) as f:
+        raw = yaml.safe_load(f)
+    assert raw["task_overrides"]["task_a"]["VALVE_OPENING_TIME_MS"] == 80
+    assert raw["task_overrides"]["task_b"]["start_level"] == 3
+
+
+def test_save_subject_task_overrides_updates_existing_key(tmp_path):
+    save_subject_task_overrides(tmp_path, "t002", "sequence", {"start_level": 5})
+    save_subject_task_overrides(tmp_path, "t002", "sequence", {"start_level": 9})
+    path = tmp_path / "subjects" / "t002.yaml"
+    with open(path) as f:
+        raw = yaml.safe_load(f)
+    assert raw["task_overrides"]["sequence"]["start_level"] == 9
+
+
+def test_save_subject_task_overrides_stage_position_compat(tmp_path):
+    """save_subject_task_stage_position still works via the thin wrapper."""
+    save_subject_task_stage_position(tmp_path, "t003", "task_a", "front")
+    path = tmp_path / "subjects" / "t003.yaml"
+    with open(path) as f:
+        raw = yaml.safe_load(f)
+    assert raw["task_overrides"]["task_a"]["stage_position"] == "front"
