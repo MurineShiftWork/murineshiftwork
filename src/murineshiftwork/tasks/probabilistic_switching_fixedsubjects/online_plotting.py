@@ -373,9 +373,13 @@ class OnlinePlottingForPS(Process):
         self.app.aboutToQuit.connect(self.add_sig_term)
         self.app.aboutToQuit.connect(self.win.close)
 
-        # RUN
-        if self.app:
-            exit(self.app.exec())
+        # RUN — KeyboardInterrupt from SIGINT (Ctrl+C) is expected on session exit;
+        # suppress the traceback since the main process owns shutdown.
+        try:
+            if self.app:
+                exit(self.app.exec())
+        except KeyboardInterrupt:
+            pass
 
         self.update_listener_thread.quit()
         for _, stream in self.stream_objects.items():

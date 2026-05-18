@@ -1,7 +1,12 @@
-"""PulsePal stimulation wrapper using pypulsepal."""
+"""PulsePal stimulation wrapper using pypulsepal.
+
+Supports optional laser power control via Doric LDFL5 (0-5V analog input).
+Set laser_power=None (default) for fixed 5V TTL output; 0.0-1.0 for Doric power mapping.
+"""
 
 import logging
 import time
+from typing import Any, ClassVar, Optional
 
 from numpy import zeros
 
@@ -19,6 +24,16 @@ allowed_trigger_modes = {
     "gated": 2,
 }
 
+# Doric LDFL5: single BNC input, 0-5V analog/TTL combined.
+DORIC_CURRENT_SENSITIVITY = 80.0  # mA per volt (from manual spec)
+DORIC_MAX_CURRENT_MA = 120.0  # mA — specific laser diode max
+DORIC_MAX_VOLTAGE = DORIC_MAX_CURRENT_MA / DORIC_CURRENT_SENSITIVITY
+
+
+def power_to_voltage(laser_power: float) -> float:
+    """Map 0.0–1.0 power fraction to volts for Doric LDFL5_450_0.75."""
+    return round(float(laser_power) * DORIC_MAX_VOLTAGE, 4)
+
 
 class Stimulation:
     pulsePal = None
@@ -30,7 +45,7 @@ class Stimulation:
 
     time_of_last_activation = 0
 
-    in_dict = {
+    _DEFAULT_IN_DICT: ClassVar[dict[str, Any]] = {
         "pulse_duration": 0.005,
         "pulse_frequency": 30,
         "pulse_train_duration": 10,
@@ -39,20 +54,25 @@ class Stimulation:
         "channels_stimulation": [3],
         "channel_trigger_clock": [4],
         "reset_stimulation_after_sec": 0.005,
+        "laser_power": None,  # None → fixed 5V; 0.0–1.0 → Doric LDFL5 power mapping
     }
 
+    in_dict: dict[str, Any]
     test = 0
-    channels_currently_active = []
+    channels_currently_active: list[Any] = []
     emergency_off_bool = False
 
-    def __init__(self, port=None, in_dict: dict = None, test: bool = False):
+    def __init__(self, port=None, in_dict: Optional[dict] = None, test: bool = False):
         self.test = test
         self.port = port
+        self._channel_params: dict = {}
+        self.in_dict = dict(self._DEFAULT_IN_DICT)
         for k, v in (in_dict or {}).items():
             self.in_dict[k] = v
 
-        # Build PulsePal but don't connect yet — connect() called explicitly
-        self.pulsePal = None
+        laser_power = self.in_dict.get("laser_power")
+        if laser_power is not None:
+            self._validate_power(laser_power)
 
         for channel in self.in_dict["channels_stimulation"]:
             self._set_channel_params(
@@ -61,6 +81,7 @@ class Stimulation:
                 pulse_frequency=round(float(self.in_dict["pulse_frequency"]), 3),
                 pulseTrainDuration=float(self.in_dict["pulse_train_duration"]),
                 pulseTrainDelay=round(float(self.in_dict["pulse_train_delay"]), 3),
+                laser_power=laser_power,
             )
             self.channels_stimulation[int(channel)] = 1
 
@@ -74,27 +95,27 @@ class Stimulation:
             )
             self.channels_clock_trigger[int(channel)] = 1
 
-    # -------------------------------------------------------------------------
-    # Channel parameter storage (populated before connect; uploaded on connect)
-
-    _channel_params: dict = None  # keyed by channel index
-
-    def _ensure_params(self):
-        if self._channel_params is None:
-            self._channel_params = {}
+    @staticmethod
+    def _validate_power(laser_power: float) -> None:
+        if not (0.0 <= laser_power <= 1.0):
+            raise ValueError(
+                f"laser_power must be in [0.0, 1.0], got {laser_power}. "
+                f"Maps to 0–{DORIC_MAX_VOLTAGE:.3f}V (0–{DORIC_MAX_CURRENT_MA}mA) "
+                f"on Doric LDFL5_450_0.75 at {DORIC_CURRENT_SENSITIVITY}mA/V."
+            )
 
     def _set_channel_params(
         self,
         channel=0,
         isBiphasic=0,
-        phase1Voltage=5,
+        laser_power=None,
         restingVoltage=0,
         phase1Duration=0.005,
         pulse_frequency=0.05,
         pulseTrainDuration=3000.0,
         pulseTrainDelay=0.0,
     ):
-        self._ensure_params()
+        phase1Voltage = power_to_voltage(laser_power) if laser_power is not None else 5
         ipi = 1 / float(pulse_frequency)
         self._channel_params[channel] = {
             "isBiphasic": isBiphasic,
@@ -106,11 +127,64 @@ class Stimulation:
             "pulseTrainDelay": round(float(pulseTrainDelay), 3),
         }
 
+    def set_power(self, laser_power: float, sync: bool = True) -> None:
+        """Update laser power (0.0–1.0) without changing timing params."""
+        self._validate_power(laser_power)
+        self.in_dict["laser_power"] = laser_power
+        phase1Voltage = power_to_voltage(laser_power)
+        for channel in self.in_dict["channels_stimulation"]:
+            if self.pulsePal is not None and sync:
+                self.pulsePal.program_one_param(
+                    channel=int(channel),
+                    param_name="phase1Voltage",
+                    param_value=phase1Voltage,
+                )
+            if channel in self._channel_params:
+                self._channel_params[channel]["phase1Voltage"] = phase1Voltage
+            logging.info(
+                f"PulsePal: Ch{channel} power set to {laser_power:.2f} "
+                f"({phase1Voltage:.3f}V on Doric LDFL5 input)"
+            )
+
+    def set_pulse_params(
+        self,
+        pulse_duration: Optional[float] = None,
+        pulse_frequency: Optional[float] = None,
+        pulse_train_duration: Optional[float] = None,
+        laser_power: Optional[float] = None,
+        sync: bool = True,
+    ) -> None:
+        """Update any combination of timing + power params between protocols."""
+        if laser_power is not None:
+            self._validate_power(laser_power)
+            self.in_dict["laser_power"] = laser_power
+        if pulse_duration is not None:
+            self.in_dict["pulse_duration"] = pulse_duration
+        if pulse_frequency is not None:
+            self.in_dict["pulse_frequency"] = pulse_frequency
+        if pulse_train_duration is not None:
+            self.in_dict["pulse_train_duration"] = pulse_train_duration
+
+        for channel in self.in_dict["channels_stimulation"]:
+            self._set_channel_params(
+                channel=int(channel),
+                phase1Duration=round(float(self.in_dict["pulse_duration"]), 3),
+                pulse_frequency=round(float(self.in_dict["pulse_frequency"]), 3),
+                pulseTrainDuration=float(self.in_dict["pulse_train_duration"]),
+                pulseTrainDelay=round(float(self.in_dict["pulse_train_delay"]), 3),
+                laser_power=self.in_dict.get("laser_power"),
+            )
+            if self.pulsePal is not None and sync:
+                for param_name, value in self._channel_params[int(channel)].items():
+                    self.pulsePal.program_one_param(
+                        channel=int(channel),
+                        param_name=param_name,
+                        param_value=value,
+                    )
+
     def connect(self):
         self.pulsePal = _PulsePal(serial_port=self.port)
 
-        # Upload channel parameters
-        self._ensure_params()
         for channel, params in self._channel_params.items():
             for param_name, value in params.items():
                 self.pulsePal.program_one_param(
@@ -119,17 +193,14 @@ class Stimulation:
 
         self.off()
 
-        # Set continuous loop mode
         for channel in self.in_dict["channels_stimulation"]:
             self.pulsePal.set_continuous(
                 channel=channel,
                 state=1 if self.in_dict.get("continuous") else 0,
             )
 
-        # Trigger channel links and modes
         for trigger_ch in self.in_dict["trigger_channels_for_stimulation"]:
             if 0 < trigger_ch < 3:
-                # Link this trigger channel to stimulation output channels
                 link_param = f"linkTriggerChannel{int(trigger_ch)}"
                 for out_ch, active in enumerate(self.channels_stimulation[1:], start=1):
                     if active:
@@ -205,16 +276,15 @@ class Stimulation:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
 
-    def __del__(self):
-        self.disconnect()
-
     def emergency_off(self):
         self.off()
         self.emergency_off_bool = True
 
     def is_open(self) -> bool:
         try:
-            return self.pulsePal._arcom.serial_object.is_open
+            if self.pulsePal is None:
+                return False
+            return self.pulsePal._arcom.serial_object.is_open  # type: ignore[union-attr]
         except Exception:
             logging.debug("Cannot check if PulsePal is connected.")
             return False

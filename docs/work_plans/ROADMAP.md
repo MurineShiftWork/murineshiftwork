@@ -7,8 +7,6 @@ Design details live in memory files or separate docs — not here.
 
 ## TODO
 
-- [ ] opto task consolidation — 4 tasks → 1 unified `optotagging`; design locked in memory/project_opto_config_design.md
-- [ ] opto task consolidation — 4 tasks → 1 unified `optotagging`; design locked in memory/project_opto_config_design.md
 - [ ] `msw tasks` CLI — `list`, `defaults <name>`, `init task-configs`
 
 - [ ] named modes content — define habituation/expert/probe modes in `probabilistic_switching`, `sequence`, `airpuff` task.yaml
@@ -21,6 +19,7 @@ Design details live in memory files or separate docs — not here.
 
 ## DONE
 
+- [x] opto task consolidation — 4 tasks → 1 unified `optotagging`; multi-protocol loop, stimulation_defaults, laser_power merged into logic/stimulation.py · 2026-05-18 · pending
 - [x] sequence level writeback integration test (5 tests, test_sequence_writeback.py) · 2026-05-18 · pending
 - [x] `TaskProcess.__del__` removed — redundant with `__exit__`, hazardous at shutdown · 2026-05-18 · pending
 - [x] auto-bump workflow (bump.yaml, tag_only=true in cz) · 2026-05-18 · 1777835

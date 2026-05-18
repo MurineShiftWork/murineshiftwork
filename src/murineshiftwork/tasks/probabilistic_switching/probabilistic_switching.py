@@ -35,8 +35,9 @@ class Task(TaskRunner):
                 sma = make_ttl_identifier_sequences(
                     bpod=self.bpod,
                     sequence=task_settings["ttl_identifier_sequence"],
-                    output_chanel_pulse=eval(
-                        f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}"
+                    output_chanel_pulse=getattr(
+                        self.bpod.OutputChannels,
+                        f"BNC{task_settings['HARDWARE_BNC_TRIAL_START']}",
                     ),
                 )
             else:

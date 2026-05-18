@@ -137,11 +137,3 @@ namespace_packages = true
 explicit_package_bases = true
 ignore_missing_imports = true
 exclude = ["external"]
-
-# Both stimulation.py copies are being replaced by pypulsepal in the namespace split.
-[[tool.mypy.overrides]]
-module = [
-    "murineshiftwork.logic.stimulation",
-    "murineshiftwork.tasks.optotagging_with_power_level.stimulation",
-]
-ignore_errors = true

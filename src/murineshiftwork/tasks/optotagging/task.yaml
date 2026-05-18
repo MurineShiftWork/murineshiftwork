@@ -1,14 +1,15 @@
 default:
-  N_MAX_TRIALS: 50
-  TRIGGER_ITI: 1
-  RECORD_VIDEO: true
   barcode_bits: 37
   barcode_bit_duration_ms: 35.0
   barcode_init_duration_ms: 10.0
   barcode_tolerance: 0.25
   hardware:
     serial_port_pulsepal: /dev/ttyACM0
-  stimulation:
+  stimulation_defaults:
+    n_trials: 50
+    iti: 1.0
+    record_video: false
+    laser_power: null
     pulse_duration: 0.001
     pulse_frequency: 40
     pulse_train_duration: 1
@@ -22,4 +23,9 @@ default:
     - 4
     reset_stimulation_after_sec: 0.005
     continuous: false
+  stimulation:
+    default_protocol:
+      pulse_duration: 0.001
+      pulse_frequency: 40
+      pulse_train_duration: 1
 mode: {}

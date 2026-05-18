@@ -11,20 +11,16 @@ from murineshiftwork.logic.barcode import (
     inject_barcode_states,
     prepare_barcode,
 )
+from murineshiftwork.logic.config.ini import deep_merge
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.stimulation import Stimulation
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
-class OptoTagging(object):
-    input_kwargs: dict = {}
-    out_path = ""
-
-    trial_data: list = []
-
-    def __init__(self, out_path=None, **kwargs):
+class OptoTaggingRecord:
+    def __init__(self, out_path=None):
         self.out_path = out_path
-        self.input_kwargs = kwargs
+        self.trial_data: list = []
 
     def update(
         self,
@@ -32,6 +28,7 @@ class OptoTagging(object):
         trial_data=None,
         barcode_value=None,
         barcode_wall_time=None,
+        protocol=None,
     ):
         first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
         trial_type = (
@@ -42,19 +39,17 @@ class OptoTagging(object):
         trial_data["info"] = {
             "trial_type": trial_type,
             "trial_index": trial_index,
+            "protocol": protocol,
             "barcode_value": barcode_value,
             "barcode_wall_time": barcode_wall_time,
         }
-        return self.trial_data.append(trial_data)
+        self.trial_data.append(trial_data)
 
     def save(self):
         save_trial_data(self.trial_data, str(self.out_path) + ".msw.jsonl")
-        logging.debug(f"Saved session data to {str(self.out_path)}")
+        logging.debug(f"Saved session data to {self.out_path}")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.save()
-
-    def __del__(self):
         self.save()
 
 
@@ -62,52 +57,100 @@ class Task(TaskRunner):
     _bnc_channel_trial_onset = Bpod.OutputChannels.BNC1
     _bnc_channel_stimulation = Bpod.OutputChannels.BNC2
 
+    def _start_protocol_video(self, conductor, protocol_name: str):
+        """Initialize acquisition path, preview and start recording for one protocol."""
+        session_paths = self.input_kwargs["session_paths"]
+        _session = session_paths["session_basename"]
+        _subject = session_paths["subject"]
+        _is_child = self.input_kwargs.get("_is_child_session_to")
+        base = (
+            f"{_subject}/{_is_child}/{_session}"
+            if _is_child
+            else f"{_subject}/{_session}"
+        )
+        conductor.initialize_acquisition(
+            acquisition_path=f"{base}/{protocol_name}",
+            acquisition_name=f"{_session}_{protocol_name}",
+        )
+        conductor.start_preview()
+        conductor.start_recording()
+        time.sleep(3)
+
     def run(self) -> None:
         task_settings = self.input_kwargs["settings.task.patched"]
-        serial_port_pulsepal = task_settings.get(
+        serial_port_pulsepal = task_settings.get("hardware", {}).get(
             "serial_port_pulsepal"
         ) or self.input_kwargs.get("serial_port_pulsepal", "/dev/ttyACM1")
-        stimulation = Stimulation(
-            port=serial_port_pulsepal,
-            in_dict=task_settings["stimulation"],
-        )
-        stimulation.connect()
-        pulse_train_duration = task_settings["stimulation"]["pulse_train_duration"]
+
+        stimulation_defaults = task_settings.get("stimulation_defaults", {})
+        stimulation_protocols = task_settings.get("stimulation", {})
+        conductor = self.input_kwargs.get("conductor")
 
         barcode_cfg = barcode_config_from_settings(task_settings)
         barcoder = BarcodeTTL(barcode_cfg)
-        bnc_channel = self._bnc_channel_trial_onset
 
-        optotagging = OptoTagging(
+        record = OptoTaggingRecord(
             out_path=self.input_kwargs["session_paths"]["session_file_path"]
         )
 
-        trial_index = 0
-        try:
-            while self.continue_task and trial_index <= task_settings["N_MAX_TRIALS"]:
-                logging.info(f"Executing trial {trial_index}")
+        for protocol_name, protocol_config in stimulation_protocols.items():
+            if not self.continue_task:
+                break
 
-                barcode_value = None
-                barcode_wall_time = None
+            params = deep_merge(stimulation_defaults, protocol_config or {})
+            n_trials = int(params.pop("n_trials", 50))
+            iti = float(params.pop("iti", 1.0))
+            record_video = bool(params.pop("record_video", False))
+            pulse_train_duration = float(params.get("pulse_train_duration", 1))
 
-                if trial_index == 0:
-                    barcode_value, barcode_wall_time, timing_seq = prepare_barcode(
-                        barcoder
-                    )
-                    sma = StateMachine(bpod=self.bpod)
-                    sma = inject_barcode_states(
-                        sma, timing_seq, bnc_channel, last_state_name="exit"
+            logging.info(
+                f"Protocol {protocol_name!r}: {n_trials} trials, iti={iti}s, "
+                f"record_video={record_video}"
+            )
+
+            stim = Stimulation(port=serial_port_pulsepal, in_dict=params)
+            stim.connect()
+
+            if record_video and conductor is not None:
+                self._start_protocol_video(conductor, protocol_name)
+
+            trial_index = 0
+            try:
+                # Protocol-start barcode
+                bv, bwt, timing_seq = prepare_barcode(barcoder)
+                sma = StateMachine(bpod=self.bpod)
+                sma = inject_barcode_states(
+                    sma,
+                    timing_seq,
+                    self._bnc_channel_trial_onset,
+                    last_state_name="exit",
+                )
+                self.bpod.send_state_machine(sma)
+                if not self.bpod.run_state_machine(sma):
+                    logging.warning(
+                        f"Protocol {protocol_name!r}: no data on start barcode."
                     )
                 else:
+                    record.update(
+                        trial_index=trial_index,
+                        trial_data=self.bpod.session.current_trial.export(),
+                        barcode_value=bv,
+                        barcode_wall_time=bwt,
+                        protocol=protocol_name,
+                    )
+                    record.save()
+                trial_index += 1
+
+                while self.continue_task and trial_index <= n_trials:
+                    logging.info(f"Protocol {protocol_name!r} — trial {trial_index}")
+
                     sma = StateMachine(bpod=self.bpod)
-                    # Trial onset
                     sma = add_trial_onset_ttl(
                         sma=sma,
                         ttl_pulse_duration=0.001,
                         bnc_channel=self._bnc_channel_trial_onset,
                         next_state="pulses",
                     )
-                    # Stimulation TTL
                     sma = add_trial_onset_ttl(
                         sma=sma,
                         state_name_tuple=("pulses", "pulse_off"),
@@ -117,65 +160,110 @@ class Task(TaskRunner):
                     )
                     sma.add_state(
                         state_name="iti",
-                        state_timer=task_settings["TRIGGER_ITI"],
+                        state_timer=iti,
                         state_change_conditions={Bpod.Events.Tup: "exit"},
                         output_actions=[],
                     )
 
-                self.bpod.send_state_machine(sma)
+                    self.bpod.send_state_machine(sma)
+                    if not self.bpod.run_state_machine(sma):
+                        logging.warning(
+                            f"Protocol {protocol_name!r}: no data on trial {trial_index}. "
+                            "Terminating protocol."
+                        )
+                        break
 
-                if not self.bpod.run_state_machine(sma):
-                    logging.warning(
-                        f"No data returned on trial #{trial_index}. Terminating protocol."
+                    record.update(
+                        trial_index=trial_index,
+                        trial_data=self.bpod.session.current_trial.export(),
+                        barcode_value=None,
+                        barcode_wall_time=None,
+                        protocol=protocol_name,
                     )
-                    break
+                    record.save()
+                    trial_index += 1
 
-                trial_data = self.bpod.session.current_trial.export()
-                optotagging.update(
-                    trial_index=trial_index,
-                    trial_data=trial_data,
-                    barcode_value=barcode_value,
-                    barcode_wall_time=barcode_wall_time,
-                )
-                optotagging.save()
-                trial_index += 1
+                # Protocol-end barcode
+                try:
+                    bv_end, bwt_end, timing_seq_end = prepare_barcode(barcoder)
+                    sma_end = StateMachine(bpod=self.bpod)
+                    sma_end = inject_barcode_states(
+                        sma_end,
+                        timing_seq_end,
+                        self._bnc_channel_trial_onset,
+                        last_state_name="exit",
+                    )
+                    self.bpod.send_state_machine(sma_end)
+                    self.bpod.run_state_machine(sma_end)
+                    record.update(
+                        trial_index=trial_index,
+                        trial_data=self.bpod.session.current_trial.export(),
+                        barcode_value=bv_end,
+                        barcode_wall_time=bwt_end,
+                        protocol=protocol_name,
+                    )
+                    record.save()
+                    logging.info(f"Protocol {protocol_name!r}: end barcode sent.")
+                except Exception:
+                    logging.warning(
+                        f"Protocol {protocol_name!r}: end barcode failed.",
+                        exc_info=True,
+                    )
+            finally:
+                stim.disconnect()
+                logging.info(f"Protocol {protocol_name!r}: stimulation disconnected.")
 
-            try:
-                bv_end, bwt_end, timing_seq_end = prepare_barcode(barcoder)
-                sma_end = StateMachine(bpod=self.bpod)
-                sma_end = inject_barcode_states(
-                    sma_end,
-                    timing_seq_end,
-                    bnc_channel,
-                    last_state_name="exit",
-                )
-                self.bpod.send_state_machine(sma_end)
-                self.bpod.run_state_machine(sma_end)
-                trial_data_end = self.bpod.session.current_trial.export()
-                optotagging.update(
-                    trial_index=trial_index,
-                    trial_data=trial_data_end,
-                    barcode_value=bv_end,
-                    barcode_wall_time=bwt_end,
-                )
-                optotagging.save()
-                logging.info("Session-end barcode sent.")
-            except Exception:
-                logging.warning("Session-end barcode failed.", exc_info=True)
-        finally:
-            stimulation.disconnect()
-            logging.info("Stimulation disconnected.")
+            if record_video and conductor is not None:
+                conductor.stop_acquisition()
+                time.sleep(1)
 
         logging.debug("Exiting Task.")
 
 
-def run_task(**kwargs):
-    with TaskProcess(**kwargs) as tp:
+def run_task(**args_dict):
+    task_settings = args_dict.get("settings.task.patched", {})
+    stimulation_defaults = task_settings.get("stimulation_defaults", {})
+    stimulation_protocols = task_settings.get("stimulation", {})
+
+    needs_video = stimulation_defaults.get("record_video", False) or any(
+        (p or {}).get("record_video", False) for p in stimulation_protocols.values()
+    )
+
+    conductor = None
+    if needs_video:
+        from pathlib import Path
+
+        from rpi_camera_ensemble.conductor.conductor import Conductor
+        from rpi_camera_ensemble.config.acquisition import EnsembleAcquisitionConfig
+        from rpi_camera_ensemble.config.conductor import ConductorConfig
+
+        ensemble_cfg_file = args_dict.get("config_file_camera", "")
+        assert Path(ensemble_cfg_file).exists(), (
+            f"Camera config not found: {ensemble_cfg_file!r}. "
+            "Pass --config-file-camera or set record_video: false."
+        )
+        ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
+        conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path"))
+        conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
+        conductor.start()
+        conductor.setup_agents()
+
+    # _is_child_session_to passed through as a plain kwarg so Task.run() can build
+    # the per-protocol acquisition path without needing to reconstruct it.
+    args_dict["_is_child_session_to"] = args_dict.get("is_child_session_to")
+    args_dict["conductor"] = conductor
+    args_dict["auto_start"] = False
+
+    with TaskProcess(**args_dict) as tp:
+        tp.run_task()
         while tp.is_running():
             try:
                 time.sleep(1)
             except KeyboardInterrupt:
                 tp.stop_task()
+
+    if conductor is not None:
+        conductor.stop()
 
 
 if __name__ == "__main__":
