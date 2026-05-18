@@ -15,6 +15,7 @@ from murineshiftwork.cli.defaults import (
 from murineshiftwork.cli.preflight import preflight_hardware_check
 from murineshiftwork.logic.config import (
     ExecutionConfig,
+    deep_merge,
     load_setup_config,
     load_subject_config,
     read_config,
@@ -132,6 +133,20 @@ def _evaluate_and_load_configs(args_dict=None):
         else {}
     )
 
+    # Config-dir overlay: deep-merge user edits on top of bundled defaults
+    _overlay_path = (
+        Path(args_dict["config_dir"]) / "tasks" / args_dict["task"] / "task.yaml"
+        if args_dict.get("config_dir") and args_dict.get("task")
+        else None
+    )
+    if _overlay_path and _overlay_path.exists():
+        overlay_defaults = read_config(file=str(_overlay_path))
+        settings_task_default = deep_merge(settings_task_default, overlay_defaults)
+        args_dict["config_file_task_overlay"] = str(_overlay_path)
+        logging.debug(f"Task config overlay applied from {_overlay_path}")
+    else:
+        args_dict["config_file_task_overlay"] = ""
+
     calibration_file_stage = args_dict.get(
         "calibration_file_stage", DEFAULT_CALIBRATION_FILE_STAGE
     )
@@ -192,13 +207,13 @@ def _build_task_settings_patch(args_dict, settings_task_default, task_modes):
                 f"Available: {list(task_modes.keys())}"
             )
         mode_overrides = task_modes[task_mode]
-        patched.update(mode_overrides)
+        patched = deep_merge(patched, mode_overrides)
         logging.debug(f"Task mode '{task_mode}' applied: {mode_overrides}")
 
     subject_config = args_dict.get("subject_config")
     if subject_config and task_name in subject_config.task_overrides:
         yaml_patch = subject_config.task_overrides[task_name]
-        patched.update(yaml_patch)
+        patched = deep_merge(patched, yaml_patch)
         logging.debug(f"Subject YAML task_overrides for '{task_name}': {yaml_patch}")
 
     cli_overrides = _parse_key_value_list(args_dict.get("task_settings_overrides", []))
@@ -280,6 +295,9 @@ def evaluate_args(args_dict=None):
 
     settings_task_default = args_dict["settings.task.default"]
     task_modes = read_task_modes(args_dict.get("config_file_task", ""))
+    overlay_modes = read_task_modes(args_dict.get("config_file_task_overlay", ""))
+    if overlay_modes:
+        task_modes = {**task_modes, **overlay_modes}  # overlay mode definitions win
 
     if args_dict["command"] == "run":
         subject = args_dict["subject"]
