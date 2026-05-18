@@ -1,4 +1,5 @@
 import logging
+import sys
 from pathlib import Path
 
 import yaml
@@ -117,6 +118,12 @@ def run_setup(**args_dict):
 
     if subcommand == "create":
         setup_name = args_dict["setup_name"]
+        if not setup_name or not setup_name.strip():
+            print(
+                "Error: setup name is required. Usage: msw setup create <setup_name>",
+                file=sys.stderr,
+            )
+            sys.exit(1)
         path = setups_dir / f"{setup_name}.yaml"
         if path.exists() and not args_dict.get("force", False):
             print_box(
@@ -178,6 +185,12 @@ def run_subject(**args_dict):
 
     if subcommand == "add":
         subject_name = args_dict["subject"]
+        if not subject_name or not subject_name.strip():
+            print(
+                "Error: subject name is required. Usage: msw subject add -s <name>",
+                file=__import__("sys").stderr,
+            )
+            __import__("sys").exit(1)
         path = subjects_dir / f"{subject_name}.yaml"
         if path.exists() and not args_dict.get("force", False):
             print_box(f"Subject '{subject_name}' already exists at {path}.")

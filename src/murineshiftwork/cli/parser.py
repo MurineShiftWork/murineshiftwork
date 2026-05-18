@@ -20,6 +20,12 @@ from murineshiftwork.cli.execute import (
     run_task,
 )
 from murineshiftwork.cli.post import run_post_clean, run_post_run
+from murineshiftwork.cli.tasks import (
+    run_tasks_defaults,
+    run_tasks_init_configs,
+    run_tasks_list,
+    run_tasks_modes,
+)
 
 try:
     _MSW_VERSION = _get_version("murineshiftwork")
@@ -555,6 +561,92 @@ def make_subparser_post(sub_parsers):
     pr.set_defaults(func=run_post_run)
 
 
+def make_subparser_tasks(sub_parsers):
+    p = sub_parsers.add_parser(
+        "tasks",
+        help="Inspect and initialise task configurations",
+        formatter_class=ArgparseFormatter,
+        description=dedent(
+            """\
+            Task management utilities.
+
+            Commands:
+              msw tasks list                     List available tasks (marks overlay if present)
+              msw tasks defaults <task_name>     Print bundled task.yaml defaults
+              msw tasks modes <task_name>        List named modes and their overridden keys
+              msw tasks init-configs [name ...]  Copy bundled task.yaml(s) to config_dir/tasks/
+
+            Examples:
+              msw tasks list
+              msw tasks list --filter opto
+              msw tasks defaults optotagging
+              msw tasks modes probabilistic_switching_fixedsubjects
+              msw tasks init-configs
+              msw tasks init-configs optotagging sequence --force
+            """
+        ),
+        epilog=_CREDIT_EPILOG,
+    )
+    sub = p.add_subparsers(metavar="subcommand", dest="subcommand")
+    sub.required = True
+
+    # --- list ---
+    pl = sub.add_parser(
+        "list",
+        help="List available tasks",
+        formatter_class=ArgparseFormatter,
+        epilog=_CREDIT_EPILOG,
+    )
+    pl.add_argument(
+        "-f",
+        "--filter",
+        type=str,
+        default="",
+        help="Filter by partial name (case-insensitive)",
+    )
+    pl.add_argument("-cd", "--config-dir", type=str, default="", dest="config_dir")
+    pl.set_defaults(func=run_tasks_list)
+
+    # --- defaults ---
+    pd = sub.add_parser(
+        "defaults",
+        help="Print bundled task.yaml for a task",
+        formatter_class=ArgparseFormatter,
+        epilog=_CREDIT_EPILOG,
+    )
+    pd.add_argument("task", type=str, help="Task name or unique substring")
+    pd.set_defaults(func=run_tasks_defaults)
+
+    # --- modes ---
+    pm = sub.add_parser(
+        "modes",
+        help="List named modes and their overridden keys for a task",
+        formatter_class=ArgparseFormatter,
+        epilog=_CREDIT_EPILOG,
+    )
+    pm.add_argument("task", type=str, help="Task name or unique substring")
+    pm.set_defaults(func=run_tasks_modes)
+
+    # --- init-configs ---
+    pi = sub.add_parser(
+        "init-configs",
+        help="Copy bundled task.yaml(s) to config_dir/tasks/ for local editing",
+        formatter_class=ArgparseFormatter,
+        epilog=_CREDIT_EPILOG,
+    )
+    pi.add_argument(
+        "tasks",
+        nargs="*",
+        metavar="task_name",
+        help="Task names to copy (default: all tasks)",
+    )
+    pi.add_argument("-cd", "--config-dir", type=str, default="", dest="config_dir")
+    pi.add_argument(
+        "--force", action="store_true", default=False, help="Overwrite existing files"
+    )
+    pi.set_defaults(func=run_tasks_init_configs)
+
+
 def parse_args(args=None):
     main_parser = ArgumentParser(
         prog="msw",
@@ -581,6 +673,7 @@ def parse_args(args=None):
     make_subparser_calibration(sub_parsers)
     make_subparser_action(sub_parsers)
     make_subparser_post(sub_parsers)
+    make_subparser_tasks(sub_parsers)
 
     parsed_args = main_parser.parse_args(args=args)
     return parsed_args.__dict__

@@ -41,8 +41,8 @@ class TaskControl:
 
         self.sequence = list(task_settings["sequence"])
         self.n_pokes = len(self.sequence)
-        self.bnc_channel = eval(
-            f"Bpod.OutputChannels.BNC{task_settings['HARDWARE_BNC_TRIAL_START']}"
+        self.bnc_channel = getattr(
+            Bpod.OutputChannels, f"BNC{task_settings['HARDWARE_BNC_TRIAL_START']}"
         )
         subject = task_settings["subject"]
 
@@ -54,13 +54,13 @@ class TaskControl:
 
         # Training level: either reset to start_level or resume from disk
         if task_settings.get("reset_level", False):
-            self.current_level = task_settings.get("start_level", 1)
+            self.current_level = int(task_settings.get("start_level", 1))
             log.info(
                 f"{subject}: reset_level=True, starting at level {self.current_level}"
             )
         else:
             self.current_level = self._load_level(subject)
-            log.info(f"{subject}: resuming at level {self.current_level}")
+            log.info(f"{subject}: starting at level {self.current_level}")
 
         self._session_start_level = self.current_level
 
@@ -71,7 +71,10 @@ class TaskControl:
         self.level_1_trial_count = 0
 
         # Sound: non-blocking chirp played on every correct poke
-        self.sound = StereoSound(sound_device=StereoSound.default_sound_device)
+        sound_device = (
+            task_settings.get("reward_sound_device") or StereoSound.default_sound_device
+        )
+        self.sound = StereoSound(sound_device=sound_device)
         self.sound_reward_code = self.sound.register_new_sound(
             frequency=task_settings.get("reward_sound_frequency", 8000),
             duration=task_settings.get("reward_sound_duration", 0.3),
@@ -147,8 +150,12 @@ class TaskControl:
     # ---------------------------------------------------------------------- #
 
     def _load_level(self, subject: str) -> int:
-        data = self._fetch_subject_state(subject)
-        level = int(data.get("level", self.task_settings.get("start_level", 1)))
+        # task_settings["start_level"] is the authoritative source — it is kept
+        # current by save_session_end() writing the end-of-session level back to
+        # the subject YAML as task_overrides.sequence.start_level.  The JSON store
+        # (_fetch_subject_state) is therefore no longer consulted here; it still
+        # receives writes from _save_level() as a crash-recovery fallback.
+        level = int(self.task_settings.get("start_level", 1))
         return max(1, min(level, len(self.levels_df)))
 
     def _save_level(self):
@@ -291,31 +298,44 @@ class TaskControl:
 
     def draw_next_trial(self) -> StateMachine:
         params = self._get_level_params()
+        # Pad rewards/leds to sequence length so sequences longer than 5 pokes work
         rewards = params["rewards"]
         leds = params["leds"]
+        while len(rewards) < self.n_pokes:
+            rewards.append(rewards[-1])
+        while len(leds) < self.n_pokes:
+            leds.append(leds[-1])
         response_window = params["response_window_s"]
+
+        # strict_sequence=True: any wrong poke immediately triggers punish (strict mode)
+        # strict_sequence=False (default): wrong pokes ignored; only timeout or correct
+        # poke causes a state transition — equivalent to the original MATLAB behaviour
+        strict = self.task_settings.get("strict_sequence", False)
 
         sma = StateMachine(bpod=self.bpod)
 
-        # One wait + reward state pair per poke in the sequence.
-        # Long TTL pulse: BNC goes HIGH entering wait_poke_0 (trial start),
-        # stays HIGH through all intermediate states, goes LOW in exit_seq (ITI start).
-        # Rising edge = trial start, falling edge = sequence complete or punish done.
         for i, (port, reward_ul, led_val) in enumerate(
             zip(self.sequence, rewards, leds)
         ):
             led_pwm = self._scale_led(led_val)
-            pwm_ch = eval(f"Bpod.OutputChannels.PWM{port}")
+            pwm_ch = getattr(Bpod.OutputChannels, f"PWM{port}")
             valve_time = self._get_valve_time(port, reward_ul)
             next_state_after_reward = (
                 f"wait_poke_{i + 1}" if i < self.n_pokes - 1 else "exit_seq"
             )
 
-            # Wrong poke or timeout → punish; correct poke → reward
-            wait_conditions = {Bpod.Events.Tup: "punish"}
-            for p in _ALL_PORTS:
-                event = eval(f"Bpod.Events.Port{p}In")
-                wait_conditions[event] = f"reward_poke_{i}" if p == port else "punish"
+            if strict:
+                wait_conditions = {Bpod.Events.Tup: "punish"}
+                for p in _ALL_PORTS:
+                    event = getattr(Bpod.Events, f"Port{p}In")
+                    wait_conditions[event] = (
+                        f"reward_poke_{i}" if p == port else "punish"
+                    )
+            else:
+                wait_conditions = {
+                    Bpod.Events.Tup: "punish",
+                    getattr(Bpod.Events, f"Port{port}In"): f"reward_poke_{i}",
+                }
 
             # BNC HIGH on first state entry (trial start marker)
             bnc_actions = [(self.bnc_channel, 1)] if i == 0 else []
@@ -336,7 +356,6 @@ class TaskControl:
 
             sma.add_state(
                 state_name=f"reward_poke_{i}",
-                # State must be at least as long as valve time; min 1 ms so state is valid
                 state_timer=max(valve_time, 0.001),
                 state_change_conditions={Bpod.Events.Tup: next_state_after_reward},
                 output_actions=reward_actions,

@@ -7,6 +7,7 @@ from typing import Optional
 import yaml
 
 from murineshiftwork.logic.config.models import (
+    SUBJECT_CONFIG_SCHEMA_VERSION,
     SetupConfig,
     SubjectConfig,
     ValveCalibration,
@@ -119,8 +120,10 @@ def save_subject_task_overrides(
     if path.exists():
         with open(path) as f:
             raw = yaml.safe_load(f) or {}
+        raw = _migrate_subject_config(raw)
     else:
         raw = {
+            "schema_version": SUBJECT_CONFIG_SCHEMA_VERSION,
             "name": subject_name,
             "registered": "",
             "project": "",
@@ -130,6 +133,7 @@ def save_subject_task_overrides(
             "task_overrides": {},
         }
 
+    raw["schema_version"] = SUBJECT_CONFIG_SCHEMA_VERSION
     raw.setdefault("task_overrides", {}).setdefault(task_name, {}).update(overrides)
 
     with open(path, "w") as f:
@@ -206,6 +210,24 @@ def update_stage_config(
     return True
 
 
+def _migrate_subject_config(raw: dict) -> dict:
+    """Upgrade raw subject config dict to SUBJECT_CONFIG_SCHEMA_VERSION in-place.
+
+    Each branch handles one version step so migrations chain automatically.
+    Returns the (possibly modified) dict — always at SUBJECT_CONFIG_SCHEMA_VERSION.
+    """
+    version = raw.get("schema_version", 0)
+
+    # v0 → v1: schema_version field did not exist; structure is identical, just stamp it.
+    if version < 1:
+        raw["schema_version"] = 1
+        version = 1
+
+    # Future: add `if version < 2:` blocks here for each breaking change.
+
+    return raw
+
+
 def load_subject_config(
     config_dir: str | Path, subject_name: str
 ) -> Optional[SubjectConfig]:
@@ -213,6 +235,7 @@ def load_subject_config(
 
     Returns None silently if the file does not exist; INI-based subject
     loading in evaluate.py is the fallback.
+    Migrates legacy configs (no schema_version) transparently.
     """
     if not subject_name or subject_name.startswith("_test_"):
         return None
@@ -221,7 +244,10 @@ def load_subject_config(
         logging.debug(f"No subject config at {path} — using INI fallback")
         return None
     with open(path) as f:
-        data = yaml.safe_load(f)
+        data = yaml.safe_load(f) or {}
+    data = _migrate_subject_config(data)
     cfg = SubjectConfig.model_validate(data)
-    logging.debug(f"Loaded SubjectConfig '{cfg.name}' from {path}")
+    logging.debug(
+        f"Loaded SubjectConfig '{cfg.name}' (schema v{cfg.schema_version}) from {path}"
+    )
     return cfg

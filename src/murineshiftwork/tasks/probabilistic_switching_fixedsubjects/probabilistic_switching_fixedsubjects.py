@@ -211,7 +211,12 @@ def run_task(**args_dict):
                     tp.stop_task()
 
             kq.put(True)
-            conductor.stop_acquisition()
+            try:
+                conductor.stop_acquisition()
+            except Exception as _exc:
+                logging.warning(
+                    f"conductor.stop_acquisition() did not complete cleanly: {_exc}"
+                )
         # Conductor.stop() called by __exit__
         time.sleep(1)
 

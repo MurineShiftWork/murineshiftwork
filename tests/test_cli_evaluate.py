@@ -1,47 +1,47 @@
-"""Tests for CLI evaluate layer: settings patching, subject lookup, _parse_key_value_list."""
+"""Tests for CLI evaluate layer: settings patching, subject lookup, parse_key_value_list."""
 
 import pytest
 import yaml
 
-from murineshiftwork.cli.evaluate import _parse_key_value_list
+from murineshiftwork.logic.task_settings import parse_key_value_list
 
 # ---------------------------------------------------------------------------
-# _parse_key_value_list
+# parse_key_value_list
 
 
 def test_parse_kv_basic():
-    result = _parse_key_value_list(["VALVE_OPENING_TIME_MS=80"])
+    result = parse_key_value_list(["VALVE_OPENING_TIME_MS=80"])
     assert result == {"VALVE_OPENING_TIME_MS": 80}
 
 
 def test_parse_kv_float():
-    result = _parse_key_value_list(["INTER_FLUSH_INTERVAL_S=1.5"])
+    result = parse_key_value_list(["INTER_FLUSH_INTERVAL_S=1.5"])
     assert result == {"INTER_FLUSH_INTERVAL_S": 1.5}
 
 
 def test_parse_kv_list():
-    result = _parse_key_value_list(["VALVE_NUMBERS=[1,3]"])
+    result = parse_key_value_list(["VALVE_NUMBERS=[1,3]"])
     assert result == {"VALVE_NUMBERS": [1, 3]}
 
 
 def test_parse_kv_string_fallback():
-    result = _parse_key_value_list(["NAME=hello_world"])
+    result = parse_key_value_list(["NAME=hello_world"])
     assert result == {"NAME": "hello_world"}
 
 
 def test_parse_kv_multiple():
-    result = _parse_key_value_list(["A=1", "B=2.5", "C=some_string"])
+    result = parse_key_value_list(["A=1", "B=2.5", "C=some_string"])
     assert result["A"] == 1
     assert result["B"] == 2.5
     assert result["C"] == "some_string"
 
 
 def test_parse_kv_empty_list():
-    assert _parse_key_value_list([]) == {}
+    assert parse_key_value_list([]) == {}
 
 
 def test_parse_kv_no_equals_skipped():
-    result = _parse_key_value_list(["NOVALUE"])
+    result = parse_key_value_list(["NOVALUE"])
     assert result == {}
 
 

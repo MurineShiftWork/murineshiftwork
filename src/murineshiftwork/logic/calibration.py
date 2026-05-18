@@ -1,6 +1,7 @@
 import logging
 import os.path
 import shutil
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -9,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.optimize import curve_fit
+from scipy.optimize import OptimizeWarning, curve_fit
 
 
 class CalibrationData:
@@ -202,7 +203,16 @@ class CalibrationDataWater(CalibrationData):
             raise ValueError(f"No calibration data for valve {valve_id}")
 
         df["_ul"] = np.round((df["water_weight_g"] / df["n_drops"]) * 1e3, 3)
-        df = df.sort_values("valve_opening_time")
+        # Average repeated measurements at the same opening time before converting
+        # to points — duplicate times arise when adaptive rounds revisit a time slot.
+        df = (
+            df.groupby("valve_opening_time", as_index=False)["_ul"]
+            .mean()
+            .sort_values("valve_opening_time")
+        )
+        df["_ul"] = np.round(df["_ul"], 3)
+        # Drop dead-zone measurements (valve barely opens, volume ≤ 0 is pure noise).
+        df = df[df["_ul"] > 0]
 
         points = [
             [float(row["valve_opening_time"]), float(row["_ul"])]
@@ -277,7 +287,9 @@ def fit_water_calibration_exp(x_observed=None, y_observed=None):
     # y = _exponential_function(x, 2.5, 1.3, 0.5)
     # yn = y + 0.2 * np.random.normal(size=len(x))
 
-    popt, pcov = curve_fit(_exponential_function, x_observed, y_observed)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", OptimizeWarning)
+        popt, pcov = curve_fit(_exponential_function, x_observed, y_observed)
     return popt, pcov
 
 
@@ -339,13 +351,15 @@ def flag_outlier_points(
         x_loo = times_s[mask]
         y_loo = ul_values[mask]
         try:
-            popt, _ = curve_fit(
-                _exponential_function,
-                x_loo,
-                y_loo,
-                p0=[0.01, 20.0, 0.0],
-                maxfev=5000,
-            )
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", OptimizeWarning)
+                popt, _ = curve_fit(
+                    _exponential_function,
+                    x_loo,
+                    y_loo,
+                    p0=[0.01, 20.0, 0.0],
+                    maxfev=5000,
+                )
             predicted_i = _exponential_function(times_s[i], *popt)
         except Exception:
             coeffs = np.polyfit(x_loo, y_loo, 1)
@@ -450,13 +464,25 @@ def plot_setup_valve_calibrations(
             # Fit curve if enough points
             if len(x) >= 3:
                 try:
-                    popt, _ = curve_fit(
-                        _exponential_function,
-                        x,
-                        y,
-                        p0=[0.01, 20.0, 0.0],
-                        maxfev=5000,
+                    mask = y > 0
+                    xs, ys = x[mask], y[mask]
+                    s_span = float(xs.max() - xs.min()) if len(xs) >= 2 else 1.0
+                    ul_min, ul_max = float(ys.min()), float(ys.max())
+                    b0 = (
+                        np.log(ul_max / ul_min) / s_span
+                        if s_span > 0 and ul_min > 0
+                        else 5.0
                     )
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", OptimizeWarning)
+                        popt, _ = curve_fit(
+                            _exponential_function,
+                            xs,
+                            ys,
+                            p0=[ul_min, b0, 0.0],
+                            bounds=([0.0, 0.0, -np.inf], [np.inf, np.inf, np.inf]),
+                            maxfev=5000,
+                        )
                     x_fit = np.linspace(x.min() * 0.9, x.max() * 1.1, 200)
                     y_fit = _exponential_function(x_fit, *popt)
                     ax.plot(x_fit, y_fit, color=color, linewidth=1.2, alpha=0.7)

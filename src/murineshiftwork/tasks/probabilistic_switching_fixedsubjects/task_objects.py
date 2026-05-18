@@ -435,7 +435,7 @@ class TaskControl(object):
         logging.info(
             f"B{self.block_number:02d}.T{self.trial_index:04d} "
             f"t={round(trial_data['Trial start timestamp'] / 60, 1):4.1f}min "
-            f"ch:{self.last_choice:+.0f} bias:{self.moving_average():+.2f} "
+            f"ch:{('L' if self.last_choice < 0 else 'R' if self.last_choice > 0 else '-')} bias:{self.moving_average():+.2f} "
             f"r:{self.reward_number}({round(self.task_settings['reward_amount_ul'] * self.reward_number, 1):.1f}uL) "
             f"crit:{self.trials_post_criterion}{_extras}"
         )

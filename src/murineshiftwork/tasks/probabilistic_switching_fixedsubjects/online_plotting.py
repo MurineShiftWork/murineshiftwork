@@ -392,7 +392,8 @@ class OnlinePlottingForPS(Process):
         self,
         window_title="this_process",
         frame_margins=0.01,
-        window_height=0.24,
+        window_width=0.45,
+        window_height=0.45,
     ):
         screens = QtGui.QGuiApplication.screens()
         cursor = QtGui.QCursor.pos()
@@ -405,11 +406,9 @@ class OnlinePlottingForPS(Process):
         screen_size_px = cursor_screen.geometry()
         new_top_width_margin = int(screen_size_px.width() * frame_margins)
         new_top_height_margin = int(screen_size_px.height() * frame_margins)
-        # new geometry
         pos = QtCore.QPoint(new_top_width_margin, new_top_height_margin)
-        new_w = int(screen_size_px.width() - 2 * frame_margins * screen_size_px.width())
+        new_w = int(screen_size_px.width() * window_width)
         new_h = int(screen_size_px.height() * window_height)
-        # mov window
         self.win.move(pos)
         self.win.resize(new_w, new_h)
         self.win.setWindowTitle(window_title)
@@ -433,6 +432,14 @@ class OnlinePlottingForPS(Process):
         :param dict_for_update:
         :return:
         """
+        if dict_for_update is None:
+            return
+        try:
+            self._update_data(dict_for_update)
+        except KeyboardInterrupt:
+            pass
+
+    def _update_data(self, dict_for_update):
         self.trial_index = dict_for_update["trial_index"]
         self.data.moving_average[self.trial_index] = dict_for_update["moving_average"]
 

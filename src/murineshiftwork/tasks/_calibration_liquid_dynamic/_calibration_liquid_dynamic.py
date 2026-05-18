@@ -10,9 +10,11 @@ import logging
 import math
 import random
 import time
+import warnings
 
 import numpy as np
-from scipy.optimize import curve_fit
+from pybpodapi.exceptions.bpod_error import BpodErrorException
+from scipy.optimize import OptimizeWarning, curve_fit
 
 from murineshiftwork.hardware.bpod.water import make_sma_for_drop_of_water
 from murineshiftwork.logic.calibration import (
@@ -69,13 +71,21 @@ def _estimate_ul(
 
     if len(measured_times) >= 3:
         try:
-            popt, _ = curve_fit(
-                _exponential_function,
-                times_arr,
-                ul_arr,
-                p0=[0.01, 20.0, 0.0],
-                maxfev=5000,
-            )
+            mask = ul_arr > 0
+            ts, us = times_arr[mask], ul_arr[mask]
+            s_span = float(ts.max() - ts.min()) if len(ts) >= 2 else 1.0
+            ul_min, ul_max = float(us.min()), float(us.max())
+            b0 = np.log(ul_max / ul_min) / s_span if s_span > 0 and ul_min > 0 else 5.0
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", OptimizeWarning)
+                popt, _ = curve_fit(
+                    _exponential_function,
+                    ts,
+                    us,
+                    p0=[ul_min, b0, 0.0],
+                    bounds=([0.0, 0.0, -np.inf], [np.inf, np.inf, np.inf]),
+                    maxfev=5000,
+                )
             return float(max(0.1, _exponential_function(open_s, *popt)))
         except Exception:
             pass
@@ -111,13 +121,21 @@ def _suggest_additional_times(
 
     # Build best-available predictor
     try:
-        popt, _ = curve_fit(
-            _exponential_function,
-            times_arr,
-            ul_arr,
-            p0=[0.01, 20.0, 0.0],
-            maxfev=5000,
-        )
+        mask = ul_arr > 0
+        ts, us = times_arr[mask], ul_arr[mask]
+        s_span = float(ts.max() - ts.min()) if len(ts) >= 2 else 1.0
+        ul_min, ul_max = float(us.min()), float(us.max())
+        b0 = np.log(ul_max / ul_min) / s_span if s_span > 0 and ul_min > 0 else 5.0
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", OptimizeWarning)
+            popt, _ = curve_fit(
+                _exponential_function,
+                ts,
+                us,
+                p0=[ul_min, b0, 0.0],
+                bounds=([0.0, 0.0, -np.inf], [np.inf, np.inf, np.inf]),
+                maxfev=5000,
+            )
 
         def fit_fn(t):
             return float(_exponential_function(t, *popt))
@@ -229,80 +247,123 @@ class Task(TaskRunner):
             serial_port=self.input_kwargs.get("serial_port_scale", ""),
         )
         scale.start()
-        scale.tare()
-        logging.info(
-            f"Scale ready. Post-tare weight: {scale.read_weight_blocking():.4f} g"
-        )
+        self._tare_verified(scale, max_retries=2, threshold_g=1.0)
+
+        from murineshiftwork.cli.defaults import DEFAULT_CALIBRATION_FILE_WATER
 
         calibration = CalibrationDataWater(
-            file_path=self.input_kwargs["calibration_file_water"]
+            file_path=self.input_kwargs.get(
+                "calibration_file_water", DEFAULT_CALIBRATION_FILE_WATER
+            )
         )
 
-        for valve_id in valves:
-            if not self.continue_task:
-                break
-            logging.info(
-                f"\n{'=' * 55}\nCalibrating valve {valve_id}"
-                f"  |  target range: {min_ul}–{max_ul} µL\n{'=' * 55}"
-            )
-            self._calibrate_valve(
-                valve_id=valve_id,
-                calibration=calibration,
-                scale=scale,
-                initial_times_s=initial_times_s,
-                time_min_s=time_min_s,
-                time_max_s=time_max_s,
-                n_initial=n_initial,
-                min_ul=min_ul,
-                max_ul=max_ul,
-                inter_pulse_s=inter_pulse_s,
-                settle_s=settle_s,
-                scale_noise_g=scale_noise_g,
-                min_snr=min_snr,
-                min_pulses=min_pulses,
-                max_pulses=max_pulses,
-                max_adaptive_rounds=max_adaptive_rounds,
-                n_target=n_target,
-                outlier_sigma=outlier_sigma,
-            )
-
-        logging.debug(f"\n{str(calibration)}\n")
-        calibration.save(overwrite=True)
-
-        if config_dir and setup_name and not setup_name.startswith("unknown_"):
+        try:
             for valve_id in valves:
-                try:
-                    new_cal = calibration.to_valve_calibration(valve_id)
-                except ValueError as exc:
-                    logging.warning(
-                        f"Valve {valve_id}: cannot build ValveCalibration — {exc}"
-                    )
-                    continue
-                is_valid, reason = new_cal.validate()
+                if not self.continue_task:
+                    break
                 logging.info(
-                    f"Valve {valve_id}: validation {'PASS' if is_valid else 'FAIL'} — {reason}"
+                    f"\n{'=' * 55}\nCalibrating valve {valve_id}"
+                    f"  |  target range: {min_ul}–{max_ul} µL\n{'=' * 55}"
                 )
-                written = update_valve_calibration(
-                    config_dir=config_dir,
-                    setup_name=setup_name,
-                    valve_id=valve_id,
-                    new_calibration=new_cal,
-                    force=force_save,
+                try:
+                    self._calibrate_valve(
+                        valve_id=valve_id,
+                        calibration=calibration,
+                        scale=scale,
+                        initial_times_s=initial_times_s,
+                        time_min_s=time_min_s,
+                        time_max_s=time_max_s,
+                        n_initial=n_initial,
+                        min_ul=min_ul,
+                        max_ul=max_ul,
+                        inter_pulse_s=inter_pulse_s,
+                        settle_s=settle_s,
+                        scale_noise_g=scale_noise_g,
+                        min_snr=min_snr,
+                        min_pulses=min_pulses,
+                        max_pulses=max_pulses,
+                        max_adaptive_rounds=max_adaptive_rounds,
+                        n_target=n_target,
+                        outlier_sigma=outlier_sigma,
+                    )
+                except Exception as exc:
+                    logging.error(
+                        f"Valve {valve_id}: calibration aborted — {exc}. "
+                        "Saving data collected so far."
+                    )
+                    break
+
+                # Persist immediately after each valve so a later crash can't lose it.
+                calibration.save(overwrite=True)
+                self._write_valve_to_yaml(
+                    valve_id, calibration, config_dir, setup_name, force_save
                 )
-                if written:
-                    logging.info(
-                        f"Valve {valve_id}: written to {setup_name}.yaml "
-                        f"({len(new_cal.points)} points)"
-                    )
-                else:
-                    logging.warning(
-                        f"Valve {valve_id}: NOT written — validation failed. "
-                        "Re-run with force_save_calibration=true to override."
-                    )
-        else:
+        finally:
+            logging.debug(f"\n{str(calibration)}\n")
+            calibration.save(overwrite=True)
+
+        if not (config_dir and setup_name and not setup_name.startswith("unknown_")):
             logging.info(
                 "No --setup name provided; calibration saved to CSV only. "
                 "Pass --setup <name> to also update the setup YAML."
+            )
+
+    # ------------------------------------------------------------------
+
+    def _tare_verified(
+        self, scale, max_retries: int = 2, threshold_g: float = 1.0
+    ) -> None:
+        """Tare and verify the post-tare reading is within threshold of zero.
+
+        Retries up to max_retries times; logs a warning if never within range
+        so the operator knows to check scale placement before trusting results.
+        """
+        for attempt in range(max_retries + 1):
+            scale.tare()
+            post_tare = scale.read_weight_blocking()
+            logging.info(f"Scale ready. Post-tare weight: {post_tare:.4f} g")
+            if abs(post_tare) <= threshold_g:
+                return
+            logging.warning(
+                f"Post-tare weight {post_tare:.4f} g exceeds ±{threshold_g} g — "
+                + (
+                    "retrying tare"
+                    if attempt < max_retries
+                    else "proceeding anyway; check scale placement and surface stability"
+                )
+            )
+
+    # ------------------------------------------------------------------
+
+    def _write_valve_to_yaml(
+        self, valve_id, calibration, config_dir, setup_name, force_save
+    ):
+        if not (config_dir and setup_name and not setup_name.startswith("unknown_")):
+            return
+        try:
+            new_cal = calibration.to_valve_calibration(valve_id)
+        except ValueError as exc:
+            logging.warning(f"Valve {valve_id}: cannot build ValveCalibration — {exc}")
+            return
+        is_valid, reason = new_cal.validate()
+        logging.info(
+            f"Valve {valve_id}: validation {'PASS' if is_valid else 'FAIL'} — {reason}"
+        )
+        written = update_valve_calibration(
+            config_dir=config_dir,
+            setup_name=setup_name,
+            valve_id=valve_id,
+            new_calibration=new_cal,
+            force=force_save,
+        )
+        if written:
+            logging.info(
+                f"Valve {valve_id}: written to {setup_name}.yaml ({len(new_cal.points)} points)"
+            )
+        else:
+            logging.warning(
+                f"Valve {valve_id}: NOT written — validation failed. "
+                "Re-run with force_save_calibration=true to override."
             )
 
     # ------------------------------------------------------------------
@@ -346,20 +407,32 @@ class Task(TaskRunner):
             for open_s in new_this_round:
                 if not self.continue_task:
                     return
-                ul_per_drop = self._measure_point(
-                    valve_id,
-                    open_s,
-                    calibration,
-                    scale,
-                    measured_times,
-                    measured_ul,
-                    inter_pulse_s,
-                    settle_s,
-                    scale_noise_g,
-                    min_snr,
-                    min_pulses,
-                    max_pulses,
-                )
+                for _attempt in range(2):
+                    try:
+                        ul_per_drop = self._measure_point(
+                            valve_id,
+                            open_s,
+                            calibration,
+                            scale,
+                            measured_times,
+                            measured_ul,
+                            inter_pulse_s,
+                            settle_s,
+                            scale_noise_g,
+                            min_snr,
+                            min_pulses,
+                            max_pulses,
+                        )
+                        break
+                    except BpodErrorException:
+                        if _attempt == 0:
+                            logging.warning(
+                                f"Valve {valve_id} | open={open_s:.4f}s: "
+                                "Bpod error — retrying in 2 s..."
+                            )
+                            time.sleep(2)
+                        else:
+                            raise
                 measured_times.append(open_s)
                 measured_ul.append(ul_per_drop)
 
@@ -434,7 +507,6 @@ class Task(TaskRunner):
 
         # Tare before each point so sticking from prior point is reset
         scale.tare()
-        time.sleep(0.5)
 
         for _ in range(n_pulses):
             if not self.continue_task:

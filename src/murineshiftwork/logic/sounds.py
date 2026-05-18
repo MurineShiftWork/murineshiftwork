@@ -6,7 +6,10 @@ import sounddevice as sd
 
 sample_rate_dict = {
     "sysdefault": 44100,
+    "default": 44100,
+    "HDA Intel PCH": 44100,
     "XONAR SOUND CARD": 192000,
+    "XONAR AE": 192000,
 }
 
 
@@ -71,6 +74,10 @@ class StereoSound(object):
                     f"or default '{self.default_sound_device}'"
                 )
             else:
+                logging.warning(
+                    f"Sound device '{sound_device or self.default_sound_device}' not found "
+                    f"— falling back to system default output."
+                )
                 self.sound_device = "sysdefault"
 
         self.sample_rate = sample_rate or get_sample_rate(

@@ -1,4 +1,3 @@
-import json
 import logging
 from pathlib import Path
 
@@ -27,6 +26,7 @@ from murineshiftwork.logic.log import setup_logging
 from murineshiftwork.logic.machine_config import resolve_config_dir
 from murineshiftwork.logic.misc import find_task_by_name
 from murineshiftwork.logic.paths import get_host_ip, get_host_name
+from murineshiftwork.logic.task_settings import build_task_settings
 
 # Re-export for anything that imported these from here before the split
 __all__ = [
@@ -195,74 +195,23 @@ def _stage_device_to_controller_config(device) -> dict:
     }
 
 
-def _build_task_settings_patch(args_dict, settings_task_default, task_modes):
-    """Build settings.task.patched from the 5-level priority chain.
-
-    Priority (lowest → highest):
-      1. bundled task.yaml default:
-      2. config_dir overlay task.yaml default:
-      3. task_mode from subject YAML task_overrides (sticky mode)
-      4. subject YAML task_overrides (non-mode keys)
-      5. CLI --task-mode (overrides sticky mode from subject YAML)
-      6. CLI -ts KEY=VALUE
-    """
-    patched = dict(settings_task_default)
-    task_name = args_dict.get("task", "")
-
-    subject_config = args_dict.get("subject_config")
-    subject_yaml_patch = (
-        dict(subject_config.task_overrides.get(task_name, {})) if subject_config else {}
-    )
-
-    # Sticky task_mode: read from subject YAML unless CLI --task-mode overrides it
-    cli_task_mode = args_dict.get("task_mode", "")
-    sticky_mode = subject_yaml_patch.pop("task_mode", "")
-    effective_mode = cli_task_mode or sticky_mode
-
-    if effective_mode:
-        if effective_mode not in task_modes:
-            raise ValueError(
-                f"Task mode '{effective_mode}' not found in task.yaml 'mode:' section. "
-                f"Available: {list(task_modes.keys())}"
-            )
-        mode_overrides = task_modes[effective_mode]
-        patched = deep_merge(patched, mode_overrides)
-        logging.debug(f"Task mode '{effective_mode}' applied: {mode_overrides}")
-
-    if subject_yaml_patch:
-        patched = deep_merge(patched, subject_yaml_patch)
-        logging.debug(
-            f"Subject YAML task_overrides for '{task_name}': {subject_yaml_patch}"
-        )
-
-    cli_overrides = _parse_key_value_list(args_dict.get("task_settings_overrides", []))
-    patched.update(cli_overrides)
-    if cli_overrides:
-        logging.debug(f"CLI task-settings overrides applied: {cli_overrides}")
-
-    if patched:
-        logging.debug(
-            f"settings.task.patched for '{task_name}':\n"
-            + json.dumps(patched, indent=4, sort_keys=True, default=str)
-        )
-
-    for _cal_key in (
+def _extra_injections_from_args(args_dict: dict) -> dict:
+    """Collect fallback-injection keys from args_dict for build_task_settings."""
+    injections: dict = {}
+    for key in (
         "calibration_file_water",
         "calibration_file_sound",
         "calibration_file_stage",
         "serial_port_stage",
         "serial_port_pulsepal",
         "serial_port_scale",
+        "settings.stage",
     ):
-        if _cal_key in args_dict and _cal_key not in patched:
-            patched[_cal_key] = args_dict[_cal_key]
-    if "settings.stage" in args_dict and "settings.stage" not in patched:
-        patched["settings.stage"] = args_dict["settings.stage"]
-    # Inject config_dir so tasks can write back state (level progression, etc.)
-    if args_dict.get("config_dir") and "config_dir" not in patched:
-        patched["config_dir"] = args_dict["config_dir"]
-
-    return patched
+        if key in args_dict:
+            injections[key] = args_dict[key]
+    if args_dict.get("config_dir"):
+        injections["config_dir"] = args_dict["config_dir"]
+    return injections
 
 
 def _resolve_setup_config_ports(args_dict, setup_config, patched):
@@ -291,6 +240,18 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
         args_dict["settings.stage"] = _stage_device_to_controller_config(stage_dev)
         patched["settings.stage"] = args_dict["settings.stage"]
         logging.debug("Built settings.stage from SetupConfig stage device")
+
+    if setup_config and "scale" in setup_config.devices:
+        try:
+            resolved_scale = setup_config.device_port("scale")
+            args_dict["serial_port_scale"] = resolved_scale
+            patched["serial_port_scale"] = resolved_scale
+            logging.debug(f"Resolved scale port from SetupConfig: {resolved_scale}")
+        except ValueError as exc:
+            logging.warning(
+                f"SetupConfig scale port resolution failed ({exc}); "
+                f"using CLI value {args_dict['serial_port_scale']!r}"
+            )
 
     if setup_config and setup_config.cameras:
         cam_path = setup_config.cameras.config
@@ -338,7 +299,15 @@ def evaluate_args(args_dict=None):
         raise ValueError(f"Unknown command: '{args_dict['command']}'")
 
     task_name = args_dict.get("task", "")
-    patched = _build_task_settings_patch(args_dict, settings_task_default, task_modes)
+    patched = build_task_settings(
+        task_name=task_name,
+        settings_task_default=settings_task_default,
+        task_modes=task_modes,
+        subject_config=args_dict.get("subject_config"),
+        task_mode=args_dict.get("task_mode", ""),
+        cli_overrides=args_dict.get("task_settings_overrides", []),
+        extra_injections=_extra_injections_from_args(args_dict),
+    )
     args_dict["settings.task.patched"] = patched
 
     # Write task_mode back to subject YAML so next session picks up the same mode
@@ -373,22 +342,3 @@ def evaluate_args(args_dict=None):
         preflight_hardware_check(args_dict)
 
     return args_dict
-
-
-def _parse_key_value_list(kv_list: list) -> dict:
-    """Parse ['KEY=VALUE', ...] into a dict with type coercion."""
-    import ast
-
-    result = {}
-    for item in kv_list:
-        item = item.strip().strip("'\"")
-        if "=" not in item:
-            continue
-        k, _, v = item.partition("=")
-        k = k.strip()
-        v = v.strip()
-        try:
-            result[k] = ast.literal_eval(v)
-        except (ValueError, SyntaxError):
-            result[k] = v
-    return result

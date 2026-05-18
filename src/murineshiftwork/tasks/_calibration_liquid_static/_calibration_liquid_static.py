@@ -73,8 +73,12 @@ class Task(TaskRunner):
         scale.tare()
         logging.info(f"Scale ready. Post-tare: {scale.read_weight_blocking():.4f} g")
 
+        from murineshiftwork.cli.defaults import DEFAULT_CALIBRATION_FILE_WATER
+
         calibration = CalibrationDataWater(
-            file_path=self.input_kwargs["calibration_file_water"]
+            file_path=self.input_kwargs.get(
+                "calibration_file_water", DEFAULT_CALIBRATION_FILE_WATER
+            )
         )
 
         for valve_id in VALVES_TO_CALIBRATE:

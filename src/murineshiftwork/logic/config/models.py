@@ -89,9 +89,20 @@ class ValveCalibration(BaseModel):
         s = np.array([p[0] for p in pts], dtype=float)
         ul = np.array([p[1] for p in pts], dtype=float)
 
-        ul_min, ul_max = ul.min(), ul.max()
-        s_span = s.max() - s.min()
-        b0 = np.log(ul_max / ul_min) / s_span if s_span > 0 and ul_min > 0 else 20.0
+        # Drop dead-zone / noise points (≤ 0 µL) before fitting so they don't
+        # corrupt the initial-guess calculation or pull the optimizer to b ≈ 0.
+        mask = ul > 0
+        s, ul = s[mask], ul[mask]
+
+        if len(s) < 3:
+            raise ValueError(
+                f"Too few positive-volume calibration points ({len(s)}) after "
+                "filtering dead-zone measurements — need at least 3."
+            )
+
+        ul_min, ul_max = float(ul.min()), float(ul.max())
+        s_span = float(s.max() - s.min())
+        b0 = np.log(ul_max / ul_min) / s_span if s_span > 0 and ul_min > 0 else 5.0
         a0 = ul_min
         c0 = 0.0
 
@@ -137,19 +148,18 @@ class ValveCalibration(BaseModel):
         - Exponential R² ≥ r2_threshold
         - Fit parameter b > 0 (growth, not decay)
         """
-        if len(self.points) < 3:
-            return False, f"only {len(self.points)} point(s) — need at least 3"
-
         pts = sorted(self.points, key=lambda p: p[0])
         s = np.array([p[0] for p in pts], dtype=float)
         ul = np.array([p[1] for p in pts], dtype=float)
 
-        if np.any(ul <= 0):
-            return False, "one or more volume values are ≤ 0"
-        if np.any(np.diff(ul) <= 0):
+        # Filter dead-zone points (same as _fit does) before any checks.
+        mask = ul > 0
+        s, ul = s[mask], ul[mask]
+
+        if len(s) < 3:
             return (
                 False,
-                "volume is not monotonically increasing with open time",
+                f"only {int(mask.sum())} positive-volume point(s) — need at least 3",
             )
 
         try:
@@ -224,8 +234,11 @@ class SetupConfig(BaseModel):
 # ---------------------------------------------------------------------------
 # Subject config
 
+SUBJECT_CONFIG_SCHEMA_VERSION = 1
+
 
 class SubjectConfig(BaseModel):
+    schema_version: int = 1
     name: str
     registered: str = ""
     project: str = ""

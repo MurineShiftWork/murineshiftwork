@@ -3,11 +3,11 @@ default:
   show_live_plot: true
   record_video: false
   sequence:
-  - 1
   - 2
+  - 1
+  - 6
   - 3
-  - 4
-  - 5
+  - 7
   training_levels_file: null
   start_level: 1
   reset_level: false
@@ -18,6 +18,7 @@ default:
   level_1_min_trials: 50
   prevent_regression_below_start: true
   n_max_trials: 1500
+  strict_sequence: false
   iti_duration: 0.4
   punish_duration: 0.5
   min_response_window_s: 2.0
@@ -25,6 +26,7 @@ default:
   reward_sound_frequency: 8000
   reward_sound_duration: 0.3
   reward_sound_amplitude: 0.05
+  reward_sound_device: HDA Intel PCH
   HARDWARE_BNC_TRIAL_START: 1
   HARDWARE_PORT_LEFT: 1
   HARDWARE_PORT_CENTER: 2
@@ -34,4 +36,23 @@ default:
   barcode_bit_duration_ms: 35.0
   barcode_init_duration_ms: 10.0
   barcode_tolerance: 0.25
-mode: {}
+mode:
+  # Named overrides — select with: msw run ... --task-mode <name>
+  # Only params that differ from 'default:' need to be listed.
+  habituation:
+    start_level: 1
+    reset_level: true
+    progression_threshold: 0.75
+    regression_threshold: 0.3
+    n_max_trials: 300
+    iti_duration: 0.6
+  expert:
+    progression_threshold: 0.9
+    regression_threshold: 0.2
+    n_max_trials: 1500
+    prevent_regression_below_start: true
+  probe:
+    n_max_trials: 500
+    reset_level: false
+    prevent_regression_below_start: false
+    progression_threshold: 0.95

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 from multiprocessing import Process, Queue
 
@@ -92,15 +94,15 @@ class OnlinePlottingForSA(Process):
         p_perf.setLabel("left", "Fraction correct")
         p_perf.addLine(
             y=self.progression_threshold,
-            pen=pg.mkPen("g", width=1, style=QtCore.Qt.DashLine),
+            pen=pg.mkPen("g", width=1, style=QtCore.Qt.PenStyle.DashLine),
         )
         p_perf.addLine(
             y=self.progression_threshold_advanced,
-            pen=pg.mkPen("y", width=1, style=QtCore.Qt.DashLine),
+            pen=pg.mkPen("y", width=1, style=QtCore.Qt.PenStyle.DashLine),
         )
         p_perf.addLine(
             y=self.regression_threshold,
-            pen=pg.mkPen("r", width=1, style=QtCore.Qt.DashLine),
+            pen=pg.mkPen("r", width=1, style=QtCore.Qt.PenStyle.DashLine),
         )
         curve_perf = pg.PlotDataItem(pen=pg.mkPen("w", width=2))
         p_perf.addItem(curve_perf)
@@ -164,4 +166,4 @@ class OnlinePlottingForSA(Process):
         monitor.exit_signal.connect(lambda _: app.quit())
         monitor.start()
 
-        app.exec_()
+        app.exec()

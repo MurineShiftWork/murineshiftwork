@@ -12,4 +12,30 @@ default:
   barcode_bit_duration_ms: 35.0
   barcode_init_duration_ms: 10.0
   barcode_tolerance: 0.25
-mode: {}
+mode:
+  # Named overrides — select with: msw run ... --task-mode <name>
+  # Only params that differ from 'default:' need to be listed.
+  habituation:
+    air_puff_durations:
+    - 0.01
+    - 0.02
+    n_repeats_per_duration: 10
+    inter_trial_interval:
+    - 5
+    - 8
+    - 0.5
+  standard:
+    air_puff_durations:
+    - 0.01
+    - 0.05
+    - 0.1
+    n_repeats_per_duration: 30
+  extended:
+    air_puff_durations:
+    - 0.005
+    - 0.01
+    - 0.02
+    - 0.05
+    - 0.1
+    - 0.2
+    n_repeats_per_duration: 50

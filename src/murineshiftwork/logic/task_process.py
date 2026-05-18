@@ -183,6 +183,7 @@ class TaskProcess(object):
         self.subject = str(subject)
         self.task_in = str(task)
         self.input_kwargs = kwargs
+        self.input_kwargs["subject"] = self.subject
         self.debug = self.input_kwargs.get("debug", False)
         self.simulate = simulate
 

@@ -68,6 +68,8 @@ def list_available_tasks(detailed=False):
 
 def find_task_by_name(task_name=None, ignore_error=True):
     available_tasks = list_available_tasks()
+    if task_name in available_tasks:
+        return task_name
     found = [x for x in available_tasks if task_name in x]
     if len(found) == 1:
         return found[0]
