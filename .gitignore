@@ -76,7 +76,7 @@ docs/_build/
 
 # Project-specific: session data and external sub-repos
 data/
+external/
+<MagicMock*
 *.json
 *.conf.custom
-rpi_camera_ensemble/
-external/ttl_barcoder/
