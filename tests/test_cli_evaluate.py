@@ -53,6 +53,7 @@ def _base_args(tmp_path, subject, task="_test_flush_water", **overrides):
     """Return a minimal valid args_dict for evaluate_args testing."""
     base = {
         "command": "run",
+        "simulate": True,  # skip hardware preflight in CI (no /dev/ttyACM0)
         "subject": subject,
         "task": task,
         "debug": False,

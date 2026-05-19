@@ -13,11 +13,18 @@ Files:
 
 from pathlib import Path
 
+import pytest
+
 from murineshiftwork.readers.session import read_session_data
 
 FIXTURE_V2 = Path(__file__).parent / "data" / "fixture_v2"
+_skip_no_fixture = pytest.mark.skipif(
+    not FIXTURE_V2.exists(),
+    reason="fixture_v2 not in repo (tests/data/ is gitignored)",
+)
 
 
+@_skip_no_fixture
 class TestReaderV2Format:
     def test_fixture_dir_exists(self):
         assert FIXTURE_V2.exists(), "fixture_v2 directory must exist"
@@ -73,6 +80,10 @@ class TestReaderV2Format:
         assert data["is_ephys_session"] is False
 
 
+@pytest.mark.skipif(
+    not (Path(__file__).parent / "data" / "fixture_jsonl").exists(),
+    reason="fixture_jsonl not in repo (tests/data/ is gitignored)",
+)
 class TestReaderBackwardCompatJSONL:
     """Confirm fixture_jsonl (v1 JSON format) still reads correctly."""
 

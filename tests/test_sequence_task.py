@@ -3,6 +3,9 @@
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
+import pytest
+
+pytest.importorskip("ttl_barcoder")  # skip until package is published
 
 # ---------------------------------------------------------------------------
 # Helpers

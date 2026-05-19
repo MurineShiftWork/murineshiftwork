@@ -39,9 +39,12 @@ jobs:
         # tag_only=true: creates an annotated tag only, no file changes, no commit.
         # Exit 3 = no eligible commits since last tag (chore/docs only).
         # Exit 6 = NothingToCommitError quirk in tag_only mode — tag is still created.
+        # set +e so bash does not exit before we can inspect $?.
         run: |
+          set +e
           cz bump --yes
           rc=$?
+          set -e
           [ $rc -eq 0 ] || [ $rc -eq 3 ] || [ $rc -eq 6 ] || exit $rc
 
       - name: Push tag

@@ -1,6 +1,9 @@
 """Integration test: sequence task save_session_end() writes start_level to subject YAML."""
 
+import pytest
 import yaml
+
+pytest.importorskip("ttl_barcoder")  # skip until package is published
 
 
 def _make_subject_yaml(tmp_path, subject="mouse001"):
