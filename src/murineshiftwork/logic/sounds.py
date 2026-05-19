@@ -86,7 +86,7 @@ class StereoSound(object):
         else:
             self._device_id = self.sound_device  # string fallback ("sysdefault")
 
-        self.sample_rate = (
+        _sr: int | None = (
             sample_rate
             or get_sample_rate(
                 target_device_name=_dev_dict.get("name", self.sound_device)
@@ -94,11 +94,12 @@ class StereoSound(object):
             or int(_dev_dict.get("default_samplerate", 0))
             or None
         )
-        if self.sample_rate is None:
+        if _sr is None:
             raise ValueError(
                 f"Could not find sample rate for device '{self.sound_device}'. "
                 f"Change device or provide sample rate in input."
             )
+        self.sample_rate: int = _sr
 
         self.ttl_channel = ttl_channel or self.default_ttl_channel
         if self.ttl_channel != 0 and self.ttl_channel != 1:

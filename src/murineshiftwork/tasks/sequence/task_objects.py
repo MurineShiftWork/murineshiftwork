@@ -259,8 +259,7 @@ class TaskControl:
             "led5",
             "response_window_s",
         ]
-        df.index = range(1, len(df) + 1)
-        df.index.name = "level"
+        df.index = pd.RangeIndex(start=1, stop=len(df) + 1, name="level")
         return df
 
     def _get_level_params(self) -> dict:
@@ -360,7 +359,7 @@ class TaskControl:
     @staticmethod
     def _compute_transition_times(poke_events: list) -> list:
         """Inter-poke transition times from sorted poke event list."""
-        transitions = []
+        transitions: list[dict] = []
         prev = None
         for p in poke_events:
             if prev is not None:
