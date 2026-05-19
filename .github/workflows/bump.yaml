@@ -8,8 +8,7 @@ jobs:
   bump:
     name: Bump version
     runs-on: ubuntu-latest
-    # Skip if the push was itself a bump tag (avoids loops; redundant with
-    # tag_only=true but kept as a safeguard in case that setting changes).
+    # Skip if this push is itself a bump commit — prevents infinite loop.
     if: "!startsWith(github.event.head_commit.message, 'bump:')"
     permissions:
       contents: write
@@ -20,12 +19,12 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install commitizen
-        run: uv pip install commitizen
+        run: pip install commitizen
 
       - name: Configure git identity
         run: |
@@ -35,17 +34,10 @@ jobs:
       - name: Fetch all tags
         run: git fetch --tags
 
-      - name: Bump version tag
-        # tag_only=true: creates an annotated tag only, no file changes, no commit.
-        # Exit 3 = no eligible commits since last tag (chore/docs only).
-        # Exit 6 = NothingToCommitError quirk in tag_only mode — tag is still created.
-        # set +e so bash does not exit before we can inspect $?.
-        run: |
-          set +e
-          cz bump --yes
-          rc=$?
-          set -e
-          [ $rc -eq 0 ] || [ $rc -eq 3 ] || [ $rc -eq 6 ] || exit $rc
+      - name: Bump version
+        # Commits VERSION file update + creates annotated tag.
+        # Exit 3 = no eligible commits since last tag (chore/docs only) — not an error.
+        run: cz bump --yes || [ $? -eq 3 ]
 
-      - name: Push tag
-        run: git push --tags
+      - name: Push bump commit and tag
+        run: git push && git push --tags

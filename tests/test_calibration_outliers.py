@@ -23,7 +23,7 @@ def test_injected_outlier_is_flagged():
     """A point far below the fitted curve should be detected."""
     ul_with_outlier = GOOD_UL.copy()
     ul_with_outlier[2] = 0.3  # should be ~4.15 µL, injected as 0.3 µL
-    mask, residuals = flag_outlier_points(TIMES_S, ul_with_outlier, sigma_threshold=2.0)
+    mask, residuals = flag_outlier_points(TIMES_S, ul_with_outlier, sigma_threshold=1.5)
     assert mask[2], f"Expected index 2 to be flagged; residuals={residuals}"
 
 

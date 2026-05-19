@@ -11,7 +11,7 @@ license = { file = "LICENSE" }
 authors = [
     { name = "Lars B. Rollik", email = "L.B.Rollik@protonmail.com" },
 ]
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.0",
     "tqdm",
@@ -100,7 +100,7 @@ name = "cz_conventional_commits"
 version_provider = "scm"
 tag_format = "v$version"
 update_changelog_on_bump = false
-tag_only = true
+version_files = ["VERSION"]
 
 # ---------------------------------------------------------------------------
 # Pytest
@@ -115,7 +115,7 @@ addopts = "--cov=murineshiftwork --durations=0"
 # ---------------------------------------------------------------------------
 
 [tool.black]
-target-version = ["py310", "py311"]
+target-version = ["py312", "py313"]
 line-length = 88
 skip-string-normalization = false
 
