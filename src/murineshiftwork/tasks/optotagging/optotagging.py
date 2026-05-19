@@ -125,8 +125,16 @@ class Task(TaskRunner):
                     self._bnc_channel_trial_onset,
                     last_state_name="exit",
                 )
-                self.bpod.send_state_machine(sma)
-                if not self.bpod.run_state_machine(sma):
+                try:
+                    self.bpod.send_state_machine(sma)
+                    _barcode_ok = self.bpod.run_state_machine(sma)
+                except OSError as exc:
+                    logging.error(
+                        f"Bpod serial connection lost before protocol {protocol_name!r}"
+                        f" — USB I/O error: {exc}"
+                    )
+                    break
+                if not _barcode_ok:
                     logging.warning(
                         f"Protocol {protocol_name!r}: no data on start barcode."
                     )
@@ -163,11 +171,18 @@ class Task(TaskRunner):
                         output_actions=[],
                     )
 
-                    self.bpod.send_state_machine(sma)
-                    if not self.bpod.run_state_machine(sma):
-                        logging.warning(
-                            f"Protocol {protocol_name!r}: no data on trial {trial_index}. "
-                            "Terminating protocol."
+                    try:
+                        self.bpod.send_state_machine(sma)
+                        if not self.bpod.run_state_machine(sma):
+                            logging.warning(
+                                f"Protocol {protocol_name!r}: no data on trial {trial_index}. "
+                                "Terminating protocol."
+                            )
+                            break
+                    except OSError as exc:
+                        logging.error(
+                            f"Bpod serial connection lost on trial #{trial_index}"
+                            f" — USB I/O error: {exc}"
                         )
                         break
 

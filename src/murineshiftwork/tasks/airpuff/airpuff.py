@@ -165,11 +165,17 @@ class Task(TaskRunner):
                     output_actions=[(bnc_channel, 0)],  # explicit LOW: BNC hold bug fix
                 )
 
-            self.bpod.send_state_machine(sma)
-
-            if not self.bpod.run_state_machine(sma):
-                logging.warning(
-                    f"No data returned on trial #{trial_index}. Terminating protocol."
+            try:
+                self.bpod.send_state_machine(sma)
+                if not self.bpod.run_state_machine(sma):
+                    logging.warning(
+                        f"No data returned on trial #{trial_index}. Terminating protocol."
+                    )
+                    break
+            except OSError as exc:
+                logging.error(
+                    f"Bpod serial connection lost on trial #{trial_index}"
+                    f" — USB I/O error: {exc}"
                 )
                 break
 

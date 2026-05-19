@@ -41,6 +41,7 @@ class BpodFactory:
         self._connected = False
         self._exiting = False
         self._write_lock = threading.Lock()
+        self._port_config = "unknown"
         self._bpod = self._create_bpod()
 
     # ------------------------------------------------------------------
@@ -67,7 +68,15 @@ class BpodFactory:
             try:
                 self._bpod.open()
                 self._connected = True
-                logging.info(f"Bpod connected on {self.serial_port}")
+                hw = self._bpod._hardware
+                fw = getattr(hw, "firmware_version", "?")
+                mt = getattr(hw, "machine_type", None)
+                _MACHINE_NAMES = {1: "r0.5", 2: "r0.7", 3: "r2.0", 4: "r2+"}
+                machine = _MACHINE_NAMES.get(mt, f"type={mt}")
+                logging.info(
+                    f"Bpod connected on {self.serial_port}"
+                    f" | {self._port_config} | fw {fw} | {machine}"
+                )
                 return
             except UnicodeDecodeError as exc:
                 logging.warning(f"Bpod connect attempt {attempt}/{retries}: {exc}")
@@ -121,6 +130,7 @@ class BpodFactory:
                 **self._bpod_kwargs,
             )
             logging.getLogger("pybpodapi").setLevel(logging.WARNING)
+            self._port_config = "4-port"
             return bpod
         except IndexError:
             logging.info(
@@ -148,4 +158,5 @@ class BpodFactory:
                 "Power-cycle the Bpod and try again."
             ) from exc
         logging.getLogger("pybpodapi").setLevel(logging.WARNING)
+        self._port_config = "8-port"
         return bpod

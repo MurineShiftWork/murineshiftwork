@@ -41,11 +41,18 @@ class Task(TaskRunner):
             else:
                 sma = task_control.draw_next_trial()
 
-            self.bpod.send_state_machine(sma)
-
-            if not self.bpod.run_state_machine(sma):
-                logging.warning(
-                    f"No data returned on trial #{trial_index}. Terminating protocol."
+            try:
+                self.bpod.send_state_machine(sma)
+                if not self.bpod.run_state_machine(sma):
+                    logging.warning(
+                        f"No data returned on trial #{trial_index}. Terminating protocol."
+                    )
+                    self.input_kwargs["objects"]["kill_queue"].put(True)
+                    break
+            except OSError as exc:
+                logging.error(
+                    f"Bpod serial connection lost on trial #{trial_index}"
+                    f" — USB I/O error: {exc}"
                 )
                 self.input_kwargs["objects"]["kill_queue"].put(True)
                 break

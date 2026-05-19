@@ -90,12 +90,18 @@ class Task(TaskRunner):
             else:
                 sma = task_control.draw_next_trial()
 
-            self.bpod.send_state_machine(sma)
-
             try:
+                self.bpod.send_state_machine(sma)
                 has_run = self.bpod.run_state_machine(sma)
             except TypeError:
                 has_run = False
+            except OSError as exc:
+                logging.error(
+                    f"Bpod serial connection lost on trial #{trial_index}"
+                    f" — USB I/O error: {exc}"
+                )
+                self.input_kwargs["objects"]["kill_queue"].put(True)
+                break
 
             if not has_run:
                 logging.warning(
