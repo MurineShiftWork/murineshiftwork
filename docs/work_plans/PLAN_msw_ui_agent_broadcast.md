@@ -377,71 +377,169 @@ Pending: all other tasks (probabilistic_switching, fixedsubjects, airpuff, optot
 
 ---
 
-## 10. Implementation sequence
+## 10. Agent scope decision — LOCKED
 
-### Phase 0 — already done
-- [x] `BpodOverrideAPI` class (`hardware/bpod/override.py`)
-- [x] Float rounding in `_NumpyEncoder` (`logic/io.py`)
-- [x] Blockout timing in sequence task
+**The setup-agent is acquisition-only.**
 
-### Phase 1 — Stage 1 agent core
-1. `agent/session_manager.py` — event queue, drain thread, trial buffer, counters
-2. `agent/plot.py` — PlotSpec loader + Plotly trace computation (rolling_mean, cumulative_sum, histogram, timeseries)
-3. `agent/hardware_manager.py` — Bpod/stage handle ownership, BpodOverrideAPI wrapper
-4. `agent/routers/session.py` — /session/* endpoints
-5. `agent/routers/hardware.py` — /hardware/* endpoints
-6. `agent/routers/config.py` — /config/* endpoints
-7. `agent/app.py` — FastAPI + uvicorn entrypoint, CORS, lifespan
-8. `msw agent {start,stop,status}` CLI subcommand
-9. `agent_port` field in SetupConfig
-10. `TaskProcess.__init__` accepts `event_queue=None`
-11. Tests: mock hardware, state transitions idle→running→idle→error
+It manages one live session at a time: starts/stops `TaskProcess`, holds the Bpod handle,
+drains the trial event queue, accumulates live trial data, and serves that data via HTTP.
 
-### Phase 2 — Vue UI scaffold
-1. Create `external/msw-ui/` with Vite + Vue 3 + TS
-2. `agents.json` with all setups + camera URLs
-3. `SessionStore` (Pinia) with localStorage persistence
-4. `useAgentPolling` composable (status + plot polling, retry on failure)
-5. `CameraGrid.vue` (MJPEG stream, port from test-gen page)
-6. `PlotPanel.vue` (Plotly.js, `extendTraces` for incremental)
-7. `SessionHeader.vue` (start/stop, subject/task dropdowns from /config/*)
-8. `OverridePanel.vue` (valve buttons → POST /hardware/action)
+**The agent does NOT:**
+- Scan the filesystem for session history
+- Serve `GET /sessions` or `GET /sessions/{id}` endpoints
+- Know anything about past sessions
 
-### Phase 3 — Stage 2 CLI dispatch
-- `_find_agent()` + `_dispatch_to_agent()` in `execute.py`
-- `--no-agent` flag
+Rationale: filesystem scanning couples the agent to the output directory layout, adds
+latency risk from disk I/O on the task-thread host, and is orthogonal to its core job.
+History is a read-only concern that should not share a process with hardware I/O.
 
-### Phase 4 — Stage 3 central server (optional for multi-network)
-- `central/registry.py` + heartbeat
-- `central/proxy.py` HTTP forwarding
-- Vue: replace `agents.json` with `GET /registry/rigs` (one-line store change)
-
-### Phase 5 — Stage 6 interactive mode
-- SSE endpoint `/session/events` for live trial counter (no full WS needed)
-- `BpodOverrideAPI` wired into `HardwareManager` for concurrent-session valve control
+**UI endpoint cleanup required:** `useAgentPolling.ts` and `stores/session.ts` were
+drafted with `GET /sessions` and `GET /sessions/{session_id}` calls. These must be
+removed or replaced before Stage 2 integration. The `SessionHeader` dropdown and
+`SessionHistory` table will source data from the history mechanism chosen in §11 instead.
 
 ---
 
-## 11. Session history in UI
+## 11. Session history — DECISION REQUIRED
 
-The Pinia store maintains a per-setup ring buffer of the last `SESSION_HISTORY_MAX = 20` completed sessions (persisted to `localStorage`). An entry is written automatically when the status transitions from `running/stopping → idle`. Entries from excluded task prefixes (`_calibration_`, `_test_`, `example`) are dropped.
+The agent provides no history endpoints. Two options for surfacing past sessions in the UI:
 
-Each history entry: `session_id, subject, task, task_mode, started_at, ended_at, trial_count, reward_count, reward_total_ul`.
+### Option A — localStorage ring-buffer (simple, self-contained)
 
-The `SessionHistory.vue` component is collapsed by default, expanding to a sortable table on click. No external storage needed — the last 20 sessions per setup persist in `localStorage` until the user clears browser data.
+Pinia store accumulates a per-setup ring buffer (`SESSION_HISTORY_MAX = 20`) in
+`localStorage`. An entry is written when `GET /session/status` transitions from
+`running → idle`. Survives page refresh. Lost on browser data clear or new machine.
 
-**Plot clear / history navigation:**
+- Entries: `session_basename, subject, task, task_mode, started_at, ended_at,
+  trial_count, reward_count, reward_total_ul`
+- Excluded: task names starting with `_calibration_` or `_test_`
+- The UI session dropdown and history table both read from this local store
+- No new backend code needed for history
+- **Limitation**: only sessions the UI has witnessed since localStorage was last cleared;
+  no way to browse sessions run from the CLI without the UI open
 
-- **Clear** button in the plot section header calls `store.clearPlots(name)` — resets accumulated trace arrays to empty, resets `lastPolledTrial` to 0. Next poll refetches from trial 0. Useful when something went wrong with the incremental accumulation.
-- Previous sessions are not replayed in the online plot (there is no endpoint to query historical trial data for plotting). They appear only in the summary history table.
-- If the user wants to browse historical plots, that is a future "session replay" feature (v2 scope).
+### Option B — Separate session-index service
+
+A lightweight second process (or CLI command) that scans the msw output directory
+(from `SetupConfig.data_path` or `MSW_DATA_PATH` env) for `.msw.session.yaml` files
+and builds a queryable index:
+
+```
+msw session-index --port 8800   # long-running, separate from any setup-agent
+GET /index/sessions?setup=setup-1&limit=50
+GET /index/sessions/{session_id}
+GET /index/sessions/{session_id}/trials?since=N   # reads .jsonl for historical replay
+```
+
+The Vue UI's `agents.json` would gain an optional `index_url` field. When present, the
+session dropdown and history table query the index instead of localStorage.
+
+- **Advantage**: covers CLI-run sessions, survives browser data clear, allows historical
+  plot replay (read `.jsonl` from offset N)
+- **Disadvantage**: another process to manage; needs `data_path` configured per setup;
+  filesystem scanning I/O is on the index host (separate from hardware host — acceptable)
+
+### Current implementation state
+
+The Vue side was drafted with agent-backed history (Option B shape). That code must be
+revised before integration:
+- `useAgentPolling.ts`: remove `fetchSessionList`, `fetchSessionDetail`, watch on
+  `selectedSessionId` that triggers agent calls
+- `stores/session.ts`: keep `sessionList`/`sessionDetail` structures but populate from
+  Option A (status-transition hook) or Option B (index service), not from agent
+- `SessionHistory.vue`: currently wired to `store.sessionList` — keep, just change source
+- `SessionHeader.vue`: session dropdown currently reads `store.sessionList` — same
+
+**Recommendation**: implement Option A first (no extra backend), add Option B as a
+follow-on once the agent sprint is complete and the output directory layout is stable.
 
 ---
 
-## 12. Open questions
+## 12. Implementation stages — agent sprint
 
-- **Blockout timing in other tasks**: add pattern task by task; define a `log_trial_timing()` helper in `TaskRunner` to standardise the log format.
-- **plot.py computation time**: if a large trial buffer + complex aggregation causes > 20 ms API response, move computation to a background thread via `asyncio.to_thread()`.
-- **Plot spec versioning**: if task.yaml `plot:` block changes mid-development, the localStorage-persisted traces may have wrong shape. Mitigate by including `plot_spec_hash` in the store and clearing traces on mismatch.
-- **OverridePanel during session**: `POST /hardware/action` must go through `HardwareManager._write_lock` (already implemented in `BpodOverrideAPI`). Confirm lock is acquired by agent before forwarding to task-injected bpod.
-- **Camera URLs in central server context**: if central server proxies camera streams, add `camera_proxy_url` to `RigEntry`. For direct-agent mode (agents.json), camera URLs are per-setup in `agents.json` — no proxy needed.
+### Done (current branch)
+- [x] `BpodOverrideAPI` (`hardware/bpod/override.py`)
+- [x] Float rounding in trial JSON (`logic/io.py`)
+- [x] Blockout timing log: sequence, probabilistic_switching, optotagging
+- [x] Vue UI scaffold (`external/msw-ui/`) — components, store, composables, Docker
+
+### Stage 1 — Agent process + read-only endpoints (zero risk)
+
+New module `murineshiftwork/agent/`:
+1. `agent/state.py` — `AgentState` dataclass: holds `TaskProcess | None`, `SessionStatus`,
+   trial buffer `list[dict]`, drain thread
+2. `agent/app.py` — FastAPI app, CORS, lifespan (start drain thread, stop on shutdown)
+3. `agent/routers/config.py` — `GET /config/subjects`, `/config/tasks`,
+   `/config/task-modes/{task}`; reads yaml/filesystem, no hardware needed
+4. `agent/routers/session.py` — `GET /session/status` (always `idle` at this stage)
+5. `msw agent --setup <name> --port 8765` CLI entry point, runs uvicorn in main thread
+6. `agent_port: int = 8765` added to `SetupConfig`
+
+No task running, no hardware. Can test immediately against the Vue UI status polling.
+
+### Stage 2 — Session start/stop + event queue bridge (low risk)
+
+7. `POST /session/start` → instantiate `TaskProcess` in daemon thread, flip state to `running`
+8. `POST /session/stop` → `task_runner.stop()` + `bpod.stop_trial()`, flip to `stopping`
+9. `TaskProcess.__init__` accepts `event_queue: queue.Queue | None = None` (passed through
+   `**kwargs` — no signature break for existing callers)
+10. Three main tasks (sequence, probabilistic_switching, optotagging) get one line after
+    `save_trial_data()`: `if self._event_queue: self._event_queue.put_nowait(trial_dict)`
+11. `AgentState` drain thread appends to `trial_buffer`, updates live counters
+12. `GET /session/status` now returns live `trial_count`, `reward_count`, `elapsed_s`
+
+PyQt `online_plotting.py` untouched — tasks still send to their own separate queue.
+
+### Stage 3 — Incremental plot data (medium complexity, isolated)
+
+13. `plot:` block added to `task.yaml` for sequence, probabilistic_switching (optional;
+    absent = UI shows empty plot area, no error)
+14. `agent/plot.py` — `PlotSpec` loader + panel computation:
+    `rolling_mean`, `cumulative_sum`, `timeseries`, `histogram`, `scatter`
+15. `GET /session/plot-spec` → parsed `PlotSpec` or `{panels: []}` when idle
+16. `GET /session/plot?since_trial=N` → slices `trial_buffer[N:]`, runs panel computation,
+    returns `PlotUpdate` with `x_append`/`y_append` per panel
+
+All computation on the existing `trial_buffer` copy — no file I/O, no task thread contact.
+
+### Stage 4 — Hardware override API (low risk, BpodOverrideAPI already done)
+
+17. `agent/routers/hardware.py` — `POST /hardware/action` → dispatches to `BpodOverrideAPI`
+18. Returns 409 if bpod handle not held; uses existing `_write_lock` for safety
+
+### Stage 5 — Session history (separate decision, see §11)
+
+Implement Option A (localStorage ring-buffer) first:
+19. Update `useAgentPolling.ts`: remove agent-backed `GET /sessions` calls
+20. Update `stores/session.ts`: write history entry on `running → idle` status transition
+21. Revise `SessionHeader` dropdown and `SessionHistory` table to read from local store
+
+Option B (index service) deferred until after agent sprint is validated.
+
+### Stage 6 — Deprecation markers on PyQt plotting
+
+22. Add module-level comment to each `tasks/*/online_plotting.py`:
+
+```python
+# TODO(msw-ui): remove after msw-ui online plotting is validated in production.
+#   Replaced by GET /session/plot — PlotSpec in task.yaml.
+```
+
+No code removed. PyQt plots continue running unchanged.
+
+---
+
+## 13. Open questions
+
+- **Blockout timing in remaining tasks**: add to airpuff, fixedsubjects, sequence_automated,
+  homecage_sleep, openfield, periodic_trigger. Define `log_trial_timing()` helper in
+  `TaskRunner` to standardise the log format across all tasks.
+- **plot.py computation time**: if large trial buffer + complex aggregation causes > 20 ms
+  API response, move to `asyncio.to_thread()`.
+- **Plot spec versioning**: if `task.yaml plot:` block changes mid-development, persisted
+  traces have wrong shape. Mitigate with `plot_spec_hash` in the Pinia store; clear traces
+  on mismatch.
+- **OverridePanel during session**: confirm `HardwareManager` acquires `_write_lock` before
+  forwarding `/hardware/action` to the task-injected bpod handle.
+- **Camera URLs in central server context**: if a central server proxies camera streams,
+  add `camera_proxy_url` to `RigEntry`. For direct-agent mode (agents.json) no proxy needed.
