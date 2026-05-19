@@ -13,7 +13,6 @@ default:
   reset_level: false
   buffer_trials: 10
   progression_threshold: 0.9
-  progression_threshold_advanced: 0.8
   regression_threshold: 0.2
   level_1_min_trials: 50
   prevent_regression_below_start: true
@@ -21,11 +20,10 @@ default:
   strict_sequence: false
   iti_duration: 0.4
   punish_duration: 0.5
-  min_response_window_s: 2.0
   reward_sound: true
-  reward_sound_frequency: 8000
-  reward_sound_duration: 0.3
-  reward_sound_amplitude: 0.05
+  reward_sound_frequency: -1
+  reward_sound_duration: 0.2
+  reward_sound_amplitude: 0.15
   reward_sound_device: HDA Intel PCH
   HARDWARE_BNC_TRIAL_START: 1
   HARDWARE_PORT_LEFT: 1
@@ -36,6 +34,14 @@ default:
   barcode_bit_duration_ms: 35.0
   barcode_init_duration_ms: 10.0
   barcode_tolerance: 0.25
+  # Colors assigned in sequence order (first port → first color, etc.)
+  port_colors:
+    - '#34475C'
+    - '#4BA5BF'
+    - '#90C681'
+    - '#FFD062'
+    - '#ED6F5D'
+    - '#ABBAB3'
 mode:
   # Named overrides — select with: msw run ... --task-mode <name>
   # Only params that differ from 'default:' need to be listed.
@@ -47,8 +53,6 @@ mode:
     n_max_trials: 300
     iti_duration: 0.6
   expert:
-    progression_threshold: 0.9
-    regression_threshold: 0.2
     n_max_trials: 1500
     prevent_regression_below_start: true
   probe:

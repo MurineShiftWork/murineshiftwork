@@ -91,7 +91,17 @@ class Task(TaskRunner):
                             "trial_index": task_control.trial_index,
                             "outcome": task_control.last_outcome,
                             "level": task_control.current_level,
+                            "level_at_trial": info.get(
+                                "level", task_control.current_level
+                            ),
                             "perf_buffer_mean": info.get("perf_buffer_mean", 0.0),
+                            "trial_time_s": trial_data.get("Trial start timestamp", 0),
+                            "reward_count_trial": info.get("reward_count_trial", 0),
+                            "water_ul_trial": info.get("water_ul_trial", 0.0),
+                            "water_ul_cumulative": info.get("water_ul_cumulative", 0.0),
+                            "poke_events": info.get("poke_events", []),
+                            "transition_times": info.get("transition_times", []),
+                            "sequence_duration_s": info.get("sequence_duration_s"),
                         }
                     )
 
@@ -120,8 +130,17 @@ class Task(TaskRunner):
                 )
                 task_control.save()
                 logging.info("Session-end barcode sent.")
-            except Exception:
-                logging.warning("Session-end barcode failed to send.", exc_info=True)
+            except (OSError, Exception) as _exc:
+                import serial
+
+                if isinstance(_exc, (OSError, serial.SerialException)):
+                    logging.debug(
+                        f"Session-end barcode skipped (port already dead): {_exc}"
+                    )
+                else:
+                    logging.warning(
+                        "Session-end barcode failed to send.", exc_info=True
+                    )
 
         task_control.save_session_end()
         self.input_kwargs["objects"]["kill_queue"].put(True)
@@ -147,10 +166,9 @@ def run_task(**args_dict):
                 n_max_trials=task_settings.get("n_max_trials", 1500),
                 n_levels=50,
                 progression_threshold=task_settings.get("progression_threshold", 0.9),
-                progression_threshold_advanced=task_settings.get(
-                    "progression_threshold_advanced", 0.8
-                ),
                 regression_threshold=task_settings.get("regression_threshold", 0.2),
+                sequence=list(task_settings.get("sequence", [])),
+                port_colors=list(task_settings.get("port_colors", [])),
             )
             plotting.start()
 

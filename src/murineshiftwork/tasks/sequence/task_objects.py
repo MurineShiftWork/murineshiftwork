@@ -75,12 +75,17 @@ class TaskControl:
             task_settings.get("reward_sound_device") or StereoSound.default_sound_device
         )
         self.sound = StereoSound(sound_device=sound_device)
+        self.sound.setup_sound_device()
         self.sound_reward_code = self.sound.register_new_sound(
-            frequency=task_settings.get("reward_sound_frequency", 8000),
-            duration=task_settings.get("reward_sound_duration", 0.3),
-            amplitude=task_settings.get("reward_sound_amplitude", 0.05),
+            frequency=task_settings.get("reward_sound_frequency", -1),
+            duration=task_settings.get("reward_sound_duration", 0.2),
+            amplitude=task_settings.get("reward_sound_amplitude", 0.15),
             play_blocking=False,
         )
+
+        # Session-level reward tracking
+        self._session_reward_count = 0
+        self._session_water_ul = 0.0
 
         # Water calibration
         self.calibration_water = CalibrationDataWater(
@@ -226,6 +231,20 @@ class TaskControl:
     # ------------------------------------------------------------------ #
 
     def _load_levels(self, filepath: str) -> pd.DataFrame:
+        df = (
+            pd.read_csv(filepath, index_col="level")
+            if self._has_header(filepath)
+            else self._load_levels_legacy(filepath)
+        )
+        return df
+
+    @staticmethod
+    def _has_header(filepath: str) -> bool:
+        with open(filepath) as f:
+            return not f.readline()[0].isdigit()
+
+    @staticmethod
+    def _load_levels_legacy(filepath: str) -> pd.DataFrame:
         df = pd.read_csv(filepath, header=None)
         df.columns = [
             "reward1",
@@ -238,17 +257,14 @@ class TaskControl:
             "led3",
             "led4",
             "led5",
-            "response_window_ms",
+            "response_window_s",
         ]
+        df.index = range(1, len(df) + 1)
+        df.index.name = "level"
         return df
 
     def _get_level_params(self) -> dict:
-        row = self.levels_df.iloc[self.current_level - 1]
-        # CSV response windows are in ms and designed for head-fixed lick sequences.
-        # Apply a configurable minimum so freely moving port-poke trials are achievable.
-        raw_window_s = float(row["response_window_ms"]) / 1000.0
-        min_window = float(self.task_settings.get("min_response_window_s", 2.0))
-        response_window_s = max(raw_window_s, min_window)
+        row = self.levels_df.loc[self.current_level]
         return {
             "rewards": [
                 float(row["reward1"]),
@@ -264,7 +280,7 @@ class TaskControl:
                 float(row["led4"]),
                 float(row["led5"]),
             ],
-            "response_window_s": response_window_s,
+            "response_window_s": float(row["response_window_s"]),
         }
 
     # ------------------------------------------------------------------ #
@@ -296,6 +312,68 @@ class TaskControl:
     def softcode_handler(self, softcode=None):
         self.sound.execute_sound_handler(sound_code=softcode)
 
+    # ------------------------------------------------------------------ #
+    # Scoring — MATLAB UpdateLevel.m algorithm                            #
+    # ------------------------------------------------------------------ #
+
+    def _score_sequence_matlab(self, trial_data: dict) -> bool:
+        """Detect if the target sequence occurred in raw port events.
+
+        Mirrors UpdateLevel.m: collect all PortIn timestamps, sort by time,
+        remove consecutive duplicate ports, then use strfind (contiguous
+        subsequence search) to detect the template.
+        """
+        events = trial_data.get("Events timestamps", {})
+        poke_events: list[tuple[float, int]] = []
+        for port in range(1, 9):
+            for t in events.get(f"Port{port}In", []):
+                poke_events.append((t, port))
+        if not poke_events:
+            return False
+        poke_events.sort()
+        deduped: list[int] = []
+        for _, port in poke_events:
+            if not deduped or deduped[-1] != port:
+                deduped.append(port)
+        template = list(self.sequence)
+        n = len(template)
+        for i in range(len(deduped) - n + 1):
+            if deduped[i : i + n] == template:
+                return True
+        return False
+
+    def _extract_poke_events(self, trial_data: dict) -> list:
+        """Return all port-in events sorted by time with t=0 at first poke."""
+        events = trial_data.get("Events timestamps", {})
+        raw = []
+        for port in range(1, 9):
+            for t in events.get(f"Port{port}In", []):
+                raw.append({"port": port, "host_ts": t})
+        raw.sort(key=lambda x: x["host_ts"])
+        if raw:
+            t0 = raw[0]["host_ts"]
+            for p in raw:
+                p["time"] = round(p["host_ts"] - t0, 4)
+                del p["host_ts"]
+        return raw
+
+    @staticmethod
+    def _compute_transition_times(poke_events: list) -> list:
+        """Inter-poke transition times from sorted poke event list."""
+        transitions = []
+        prev = None
+        for p in poke_events:
+            if prev is not None:
+                transitions.append(
+                    {
+                        "from": prev["port"],
+                        "to": p["port"],
+                        "dt": round(p["time"] - prev["time"], 4),
+                    }
+                )
+            prev = p
+        return transitions
+
     def draw_next_trial(self) -> StateMachine:
         params = self._get_level_params()
         # Pad rewards/leds to sequence length so sequences longer than 5 pokes work
@@ -324,24 +402,40 @@ class TaskControl:
                 f"wait_poke_{i + 1}" if i < self.n_pokes - 1 else "exit_seq"
             )
 
-            if strict:
+            if i == 0:
+                # First poke: no timeout, no Tup condition — MATLAB WaitForInitialPoke
+                # has Timer=0 with only the correct port event; Tup would fire immediately
+                # at timer=0 and must not be present.
+                wait_conditions = {
+                    getattr(Bpod.Events, f"Port{port}In"): f"reward_poke_{i}",
+                }
+                if strict:
+                    for p in _ALL_PORTS:
+                        if p != port:
+                            wait_conditions[getattr(Bpod.Events, f"Port{p}In")] = (
+                                "punish"
+                            )
+                state_timer = 0
+            elif strict:
                 wait_conditions = {Bpod.Events.Tup: "punish"}
                 for p in _ALL_PORTS:
                     event = getattr(Bpod.Events, f"Port{p}In")
                     wait_conditions[event] = (
                         f"reward_poke_{i}" if p == port else "punish"
                     )
+                state_timer = response_window
             else:
                 wait_conditions = {
                     Bpod.Events.Tup: "punish",
                     getattr(Bpod.Events, f"Port{port}In"): f"reward_poke_{i}",
                 }
+                state_timer = response_window
 
             # BNC HIGH on first state entry (trial start marker)
             bnc_actions = [(self.bnc_channel, 1)] if i == 0 else []
             sma.add_state(
                 state_name=f"wait_poke_{i}",
-                state_timer=response_window,
+                state_timer=state_timer,
                 state_change_conditions=wait_conditions,
                 output_actions=bnc_actions
                 + ([(pwm_ch, led_pwm)] if led_pwm > 0 else []),
@@ -401,12 +495,9 @@ class TaskControl:
             self.trial_data.append(trial_data)
             return
 
-        # Did the mouse complete the full sequence?
-        st = trial_data["States timestamps"]
-        last_reward_key = f"reward_poke_{self.n_pokes - 1}"
-        is_correct = last_reward_key in st and not (
-            np.isnan(np.array(st[last_reward_key][0])).all()
-        )
+        # MATLAB UpdateLevel.m algorithm: detect sequence as contiguous
+        # subsequence in sorted-deduped port events (not just final state visited)
+        is_correct = self._score_sequence_matlab(trial_data)
         self.last_outcome = "correct" if is_correct else "incorrect"
 
         # Track buffer and level-1 trial count
@@ -418,6 +509,28 @@ class TaskControl:
         trial_level = self.current_level
         params = self._get_level_params()
         perf = float(np.mean(self.perf_buffer)) if self.perf_buffer else 0.0
+
+        # Count rewards/water actually dispensed this trial
+        st = trial_data["States timestamps"]
+        rewards_this_trial = 0
+        water_this_trial = 0.0
+        for i in range(self.n_pokes):
+            rkey = f"reward_poke_{i}"
+            if rkey in st and not np.isnan(np.array(st[rkey][0])).all():
+                if params["rewards"][i] > 0:
+                    rewards_this_trial += 1
+                    water_this_trial += params["rewards"][i]
+        self._session_reward_count += rewards_this_trial
+        self._session_water_ul += water_this_trial
+
+        # Extract poke events, transitions, and sequence duration for plotting
+        poke_events = self._extract_poke_events(trial_data)
+        transition_times = self._compute_transition_times(poke_events)
+        sequence_duration_s = (
+            round(poke_events[-1]["time"] - poke_events[0]["time"], 3)
+            if is_correct and len(poke_events) >= 2
+            else None
+        )
 
         self._update_level()
 
@@ -431,22 +544,39 @@ class TaskControl:
             "led_intensities": params["leds"],
             "perf_buffer_mean": perf,
             "perf_buffer_n": len(self.perf_buffer),
+            "reward_count_trial": rewards_this_trial,
+            "water_ul_trial": round(water_this_trial, 2),
+            "water_ul_cumulative": round(self._session_water_ul, 2),
+            "poke_events": poke_events,
+            "transition_times": transition_times,
+            "sequence_duration_s": sequence_duration_s,
         }
         trial_data["analysis"] = {}
         self.trial_data.append(trial_data)
 
         _t = trial_data.get("Trial start timestamp", 0)
+        lvl_arrow = (
+            f"→{self.current_level}" if self.current_level != trial_level else "  "
+        )
+        n_correct = int(sum(self.perf_buffer))
+        n_buf = len(self.perf_buffer)
         print(
             f"[T={round(_t / 60, 1):>5} min] "
             f"Trial {trial_index:>4} | "
-            f"Lvl {trial_level:>2}{'→' + str(self.current_level) if self.current_level != trial_level else '  '} | "
+            f"Lvl {trial_level:>2}{lvl_arrow:<3} | "
             f"{'CORRECT  ' if is_correct else 'incorrect'} | "
-            f"Perf {perf:.2f} ({len(self.perf_buffer)}/{self.perf_buffer.maxlen})"
+            f"Perf {perf:.2f} ({n_correct}/{n_buf}) | "
+            f"R:{rewards_this_trial} {water_this_trial:.1f}uL | "
+            f"Total:{self._session_water_ul:.1f}uL"
         )
 
     def _update_level(self):
+        # Mirrors MATLAB UpdateLevel.m exactly: single progression_threshold,
+        # strictly-greater comparison (> not >=), buffer must be full.
         buf = self.perf_buffer
         n_levels = len(self.levels_df)
+        prog_thresh = self.task_settings.get("progression_threshold", 0.9)
+        reg_thresh = self.task_settings.get("regression_threshold", 0.2)
 
         # Level 1: need minimum trial count before progression check
         if self.current_level == 1:
@@ -454,7 +584,7 @@ class TaskControl:
                 "level_1_min_trials", 50
             ):
                 return
-            if len(buf) >= buf.maxlen and float(np.mean(buf)) >= 0.9:
+            if len(buf) >= buf.maxlen and float(np.mean(buf)) > prog_thresh:
                 self._advance_level()
             return
 
@@ -462,14 +592,7 @@ class TaskControl:
             return
 
         perf = float(np.mean(buf))
-        prog_thresh = (
-            self.task_settings.get("progression_threshold", 0.9)
-            if self.current_level <= 13
-            else self.task_settings.get("progression_threshold_advanced", 0.8)
-        )
-        reg_thresh = self.task_settings.get("regression_threshold", 0.2)
-
-        if perf >= prog_thresh and self.current_level < n_levels:
+        if perf > prog_thresh and self.current_level < n_levels:
             self._advance_level()
         elif perf < reg_thresh:
             prevent = self.task_settings.get("prevent_regression_below_start", True)
@@ -505,7 +628,8 @@ class TaskControl:
         save_trial_data(self.trial_data, str(self.save_path) + ".df.jsonl")
 
     def __del__(self):
-        self.save()
+        if hasattr(self, "save_path"):
+            self.save()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.save()
