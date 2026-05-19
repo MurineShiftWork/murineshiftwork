@@ -43,14 +43,42 @@ def _decode_tuples(obj):
     return obj
 
 
+_FLOAT_DECIMALS = 4
+
+
+def _round_floats(obj):
+    """Recursively round all floats to _FLOAT_DECIMALS decimal places."""
+    if isinstance(obj, float):
+        return round(obj, _FLOAT_DECIMALS)
+    if isinstance(obj, dict):
+        return {k: _round_floats(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_round_floats(v) for v in obj]
+    if isinstance(obj, tuple):
+        return tuple(_round_floats(v) for v in obj)
+    if isinstance(obj, np.ndarray):
+        if np.issubdtype(obj.dtype, np.floating):
+            return obj.round(_FLOAT_DECIMALS).tolist()
+        return obj.tolist()
+    if isinstance(obj, np.floating):
+        return round(float(obj), _FLOAT_DECIMALS)
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+    return obj
+
+
 class _NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
+            if np.issubdtype(obj.dtype, np.floating):
+                return obj.round(_FLOAT_DECIMALS).tolist()
             return obj.tolist()
         if isinstance(obj, np.integer):
             return int(obj)
         if isinstance(obj, np.floating):
-            return float(obj)
+            return round(float(obj), _FLOAT_DECIMALS)
         if isinstance(obj, np.bool_):
             return bool(obj)
         return super().default(obj)
@@ -62,7 +90,10 @@ def save_trial_data(trial_data_list: list, filepath) -> None:
     with filepath.open("w") as f:
         f.write(json.dumps({"_msw_version": MSW_FILE_VERSION}) + "\n")
         for trial in trial_data_list:
-            f.write(json.dumps(_encode_tuples(trial), cls=_NumpyEncoder) + "\n")
+            f.write(
+                json.dumps(_round_floats(_encode_tuples(trial)), cls=_NumpyEncoder)
+                + "\n"
+            )
     logging.debug(f"Saved {len(trial_data_list)} trials to {filepath}")
 
 
