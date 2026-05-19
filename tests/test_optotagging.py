@@ -5,6 +5,10 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
+pytest.importorskip("pypulsepal")  # skip whole module if pypulsepal not installed
+
+import pytest
+
 from murineshiftwork.logic.stimulation import (
     DORIC_MAX_CURRENT_MA,
     DORIC_MAX_VOLTAGE,
