@@ -81,9 +81,9 @@ include = ["/src", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]
 # Commitizen
 # ---------------------------------------------------------------------------
 # Bump workflow:
-#   cz bump          → reads conventional commits, determines next semver,
-#                      creates annotated tag v{version} only (tag_only=true, no bump commit)
-#   git push --tags  → pushes the new tag; triggers release CI
+#   cz bump --tag-only → reads conventional commits, determines next semver,
+#                        creates annotated tag v{version} — no bump commit.
+#   git push --tags    → pushes the new tag; triggers release CI
 #
 # cz bump always produces a clean X.Y.Z tag — never dev or rc unless you pass
 # --prerelease explicitly. Do NOT pass --prerelease in normal releases.
@@ -100,7 +100,6 @@ name = "cz_conventional_commits"
 version_provider = "scm"
 tag_format = "v$version"
 update_changelog_on_bump = false
-version_files = ["VERSION"]
 
 # ---------------------------------------------------------------------------
 # Pytest
