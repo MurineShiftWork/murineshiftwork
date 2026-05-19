@@ -45,6 +45,9 @@ jobs:
           murineshiftwork --version
           msw --version
 
+      - name: Install pytest (always, regardless of variant)
+        run: pip install pytest pytest-cov
+
       - name: Run tests (namespace readiness always included)
         run: pytest tests/ -v --no-header -q
         env:

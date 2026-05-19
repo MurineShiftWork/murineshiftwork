@@ -32,9 +32,12 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Fetch all tags
+        run: git fetch --tags
+
       - name: Bump version tag
         # tag_only=true in pyproject.toml: creates an annotated tag only, no commit.
-        # Exit code 3 means no eligible commits since last tag (chore/docs only) — not an error.
+        # Exit code 3 = no eligible commits; exit code 6 = tag already exists. Both non-fatal.
         run: cz bump --yes
         continue-on-error: true
 
