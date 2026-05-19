@@ -53,8 +53,16 @@ class GenericSerialDevice(SerialDevice):
     type: Literal["serial_generic"]
 
 
+class ScaleDevice(SerialDevice):
+    type: Literal["scale"]
+    scale_type: Literal["hx711", "bench"] = "hx711"
+    baudrate: int = 4800
+
+
 DeviceUnion = Annotated[
-    Union[BpodDevice, PulsePalDevice, StageTowerDevice, GenericSerialDevice],
+    Union[
+        BpodDevice, PulsePalDevice, StageTowerDevice, GenericSerialDevice, ScaleDevice
+    ],
     Field(discriminator="type"),
 ]
 

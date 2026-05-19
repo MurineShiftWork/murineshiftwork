@@ -34,6 +34,7 @@ from murineshiftwork.logic.config.models import (  # noqa: F401
     ExecutionConfig,
     GenericSerialDevice,
     PulsePalDevice,
+    ScaleDevice,
     SerialDevice,
     SetupConfig,
     StageTowerDevice,

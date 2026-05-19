@@ -205,6 +205,8 @@ def _extra_injections_from_args(args_dict: dict) -> dict:
         "serial_port_stage",
         "serial_port_pulsepal",
         "serial_port_scale",
+        "scale_type",
+        "scale_baudrate",
         "settings.stage",
     ):
         if key in args_dict:
@@ -242,6 +244,7 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
         logging.debug("Built settings.stage from SetupConfig stage device")
 
     if setup_config and "scale" in setup_config.devices:
+        scale_dev = setup_config.devices["scale"]
         try:
             resolved_scale = setup_config.device_port("scale")
             args_dict["serial_port_scale"] = resolved_scale
@@ -252,6 +255,11 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
                 f"SetupConfig scale port resolution failed ({exc}); "
                 f"using CLI value {args_dict['serial_port_scale']!r}"
             )
+        scale_type = getattr(scale_dev, "scale_type", "hx711")
+        scale_baudrate = getattr(scale_dev, "baudrate", 4800)
+        args_dict["scale_type"] = scale_type
+        args_dict["scale_baudrate"] = scale_baudrate
+        patched["scale_type"] = scale_type
 
     if setup_config and setup_config.cameras:
         cam_path = setup_config.cameras.config
