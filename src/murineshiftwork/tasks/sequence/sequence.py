@@ -40,8 +40,6 @@ class Task(TaskRunner):
         max_trials = task_settings["n_max_trials"]
 
         while self.continue_task and trial_index < max_trials:
-            logging.info(f"Trial: {trial_index}")
-
             barcode_value = None
             barcode_wall_time = None
 
@@ -61,6 +59,8 @@ class Task(TaskRunner):
                 self.input_kwargs["objects"]["kill_queue"].put(True)
                 break
 
+            _t_bpod_done = time.perf_counter()
+
             trial_data = self.bpod.session.current_trial.export()
             task_control.update(
                 trial_index=trial_index,
@@ -69,6 +69,12 @@ class Task(TaskRunner):
                 barcode_wall_time=barcode_wall_time,
             )
             task_control.save()
+
+            _compute_ms = (time.perf_counter() - _t_bpod_done) * 1000
+            logging.info(
+                f"Trial {trial_index:4d}: {task_control.last_outcome or 'barcode':<9} | "
+                f"compute {_compute_ms:.0f}ms"
+            )
 
             if task_settings.get("show_live_plot", True) and trial_index > 0:
                 info = trial_data.get("info", {})

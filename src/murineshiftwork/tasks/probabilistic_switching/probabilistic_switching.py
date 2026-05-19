@@ -25,8 +25,6 @@ class Task(TaskRunner):
         trial_index = 0
         max_trials = task_settings["n_max_trials"]
         while self.continue_task and trial_index < max_trials:
-            logging.info(f"Trial: {trial_index}")
-
             if trial_index == 0 and not task_settings["testing"]:
                 from murineshiftwork.hardware.bpod.ttl import (
                     make_ttl_identifier_sequences,
@@ -52,6 +50,8 @@ class Task(TaskRunner):
                 self.input_kwargs["objects"]["kill_queue"].put(True)
                 break
 
+            _t_bpod_done = time.perf_counter()
+
             trial_data = self.bpod.session.current_trial.export()
             task_control.update(trial_index=trial_index, trial_data=trial_data)
             if task_settings["show_live_plot"] and trial_index > 0:
@@ -69,6 +69,13 @@ class Task(TaskRunner):
                 )
 
             task_control.save()
+
+            _compute_ms = (time.perf_counter() - _t_bpod_done) * 1000
+            logging.info(
+                f"Trial {trial_index:4d}: "
+                f"{'rewarded  ' if task_control.last_rewarded else 'unrewarded'} | "
+                f"compute {_compute_ms:.0f}ms"
+            )
             trial_index += 1
 
         self.input_kwargs["objects"]["kill_queue"].put(True)

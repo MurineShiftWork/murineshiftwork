@@ -142,8 +142,6 @@ class Task(TaskRunner):
                 trial_index += 1
 
                 while self.continue_task and trial_index <= n_trials:
-                    logging.info(f"Protocol {protocol_name!r} — trial {trial_index}")
-
                     sma = StateMachine(bpod=self.bpod)
                     sma = add_trial_onset_ttl(
                         sma=sma,
@@ -173,6 +171,8 @@ class Task(TaskRunner):
                         )
                         break
 
+                    _t_bpod_done = time.perf_counter()
+
                     record.update(
                         trial_index=trial_index,
                         trial_data=self.bpod.session.current_trial.export(),
@@ -181,6 +181,12 @@ class Task(TaskRunner):
                         protocol=protocol_name,
                     )
                     record.save()
+
+                    _compute_ms = (time.perf_counter() - _t_bpod_done) * 1000
+                    logging.info(
+                        f"Protocol {protocol_name!r} trial {trial_index:4d} | "
+                        f"compute {_compute_ms:.0f}ms"
+                    )
                     trial_index += 1
 
                 # Protocol-end barcode
