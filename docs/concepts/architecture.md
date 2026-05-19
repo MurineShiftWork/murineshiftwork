@@ -1,7 +1,5 @@
 # Architecture Overview
 
-> Skeleton — fill in.
-
 ## Layers
 
 ```
