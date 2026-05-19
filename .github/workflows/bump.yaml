@@ -35,9 +35,9 @@ jobs:
         run: git fetch --tags
 
       - name: Bump version
-        # Creates annotated tag only — no bump commit, no file changes.
+        # Updates pyproject.toml version + VERSION, commits "bump: ...", tags v{version}.
         # Exit 3 = no eligible commits since last tag (chore/docs only) — not an error.
-        run: cz bump --yes --tag-only || [ $? -eq 3 ]
+        run: cz bump --yes || [ $? -eq 3 ]
 
-      - name: Push tag
-        run: git push --tags
+      - name: Push bump commit and tag
+        run: git push && git push --tags

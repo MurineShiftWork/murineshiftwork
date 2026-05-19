@@ -81,14 +81,18 @@ include = ["/src", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]
 # Commitizen
 # ---------------------------------------------------------------------------
 # Bump workflow:
-#   cz bump --tag-only → reads conventional commits, determines next semver,
-#                        creates annotated tag v{version} — no bump commit.
-#   git push --tags    → pushes the new tag; triggers release CI
+#   cz bump --yes    → reads conventional commits, determines next semver,
+#                      updates [tool.commitizen] version + VERSION file,
+#                      creates "bump: ..." commit and annotated tag v{version}.
+#   git push && git push --tags → pushes bump commit + tag; triggers release CI.
 #
 # cz bump always produces a clean X.Y.Z tag — never dev or rc unless you pass
 # --prerelease explicitly. Do NOT pass --prerelease in normal releases.
-# .devN versions appearing in pip show / __version__ between tags are computed
-# at install time by hatch-vcs and are NOT written as git tags.
+# .devN versions in pip show / __version__ between tags are computed at install
+# time by hatch-vcs from git tags and are NOT written as git tags.
+#
+# version = "x.y.z" below is commitizen's own version tracking (updated on
+# each bump commit). hatch-vcs derives the *package* version from git tags.
 #
 # Commit types that drive version:
 #   feat:                      → minor  (x.1.0)
@@ -97,9 +101,10 @@ include = ["/src", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version_provider = "scm"
+version = "2.2.0"
 tag_format = "v$version"
 update_changelog_on_bump = false
+version_files = ["VERSION"]
 
 # ---------------------------------------------------------------------------
 # Pytest
