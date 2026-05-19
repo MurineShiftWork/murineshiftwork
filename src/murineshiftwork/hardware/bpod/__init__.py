@@ -1,4 +1,5 @@
 from murineshiftwork.hardware.bpod.factory import BpodFactory as BpodFactory
+from murineshiftwork.hardware.bpod.override import BpodOverrideAPI as BpodOverrideAPI
 from murineshiftwork.hardware.bpod.ttl import (
     add_trial_onset_ttl as add_trial_onset_ttl,
 )
