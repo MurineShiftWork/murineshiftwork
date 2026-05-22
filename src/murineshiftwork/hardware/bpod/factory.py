@@ -1,24 +1,24 @@
 import importlib
 import logging
 import threading
+import time
 
 
 class BpodFactory:
-    """Context-manager wrapper around pybpodapi Bpod with auto 4/8-port detection.
+    """Context-manager wrapper around pybpodapi Bpod with auto 4/8-port detection
+    and retry on transient serial errors.
 
-    Handles the UnicodeDecodeError that occurs randomly on initial connection,
-    and auto-detects 4-port vs 8-port hardware by catching the IndexError that
-    pybpodapi raises when BPOD_WIRED_PORTS_ENABLED is not configured for the
-    actual number of ports.
+    Root cause of first-connect failures: opening a USB-CDC ttyACM device toggles
+    DTR, which resets the Arduino firmware. The firmware takes ~1–2 s to boot;
+    pybpodapi's handshake fires immediately and gets garbage bytes back
+    (UnicodeDecodeError, wrong-byte BpodErrorException, or empty reads). Sleeping
+    retry_delay_s before the next attempt lets the firmware settle.
 
-    Proxies all attribute access to the underlying Bpod object so callers can
-    use it as a drop-in replacement for a bare pybpodapi.protocol.Bpod instance.
+    Connection happens in open(), not in __init__, so callers can construct
+    BpodFactory() before the serial port is accessible and call open() later.
 
-    _write_lock: threading.Lock
-        Serialises serial writes for Phase 2 ControllerSession override injection.
-        Not contended in Phase 1 (CLI actions are blocking / single-threaded), but
-        is the infrastructure that lets ControllerSession safely inject manual
-        overrides (valve open/close at firmware level) during a running state machine.
+    _write_lock serialises serial writes for future ControllerSession override
+    injection during a running state machine.
     """
 
     _SETTINGS_STANDARD = "murineshiftwork.hardware.bpod.user_settings"
@@ -29,20 +29,22 @@ class BpodFactory:
         serial_port="/dev/ttyACM0",
         workspace_path=None,
         session_name=None,
-        connect_retries=2,
+        connect_retries=3,
+        retry_delay_s=2.0,
         **kwargs,
     ):
         self.serial_port = serial_port
         self.workspace_path = workspace_path
         self.session_name = session_name
         self.connect_retries = connect_retries
+        self.retry_delay_s = retry_delay_s
         self._bpod_kwargs = kwargs
 
+        self._bpod = None
         self._connected = False
         self._exiting = False
         self._write_lock = threading.Lock()
         self._port_config = "unknown"
-        self._bpod = self._create_bpod()
 
     # ------------------------------------------------------------------
     # Context manager
@@ -60,13 +62,28 @@ class BpodFactory:
     # Public API
 
     def open(self, max_try=None):
-        """Open the Bpod connection with retry on UnicodeDecodeError."""
+        """Open the Bpod connection, retrying on transient serial errors.
+
+        Sleeps retry_delay_s before each retry so the Arduino firmware has
+        time to finish booting after the USB-DTR reset that open() triggers.
+        """
         if self._connected or self._exiting:
             return
-        retries = max_try or self.connect_retries
+        retries = max_try if max_try is not None else self.connect_retries
+        last_exc: Exception | None = None
         for attempt in range(1, retries + 1):
+            if attempt > 1:
+                logging.warning(
+                    "Bpod connect attempt %d/%d on %s "
+                    "(sleeping %.1f s for firmware settle)...",
+                    attempt,
+                    retries,
+                    self.serial_port,
+                    self.retry_delay_s,
+                )
+                time.sleep(self.retry_delay_s)
             try:
-                self._bpod.open()
+                self._bpod = self._create_bpod_object()
                 self._connected = True
                 hw = self._bpod._hardware
                 fw = getattr(hw, "firmware_version", "?")
@@ -74,26 +91,39 @@ class BpodFactory:
                 _MACHINE_NAMES = {1: "r0.5", 2: "r0.7", 3: "r2.0", 4: "r2+"}
                 machine = _MACHINE_NAMES.get(mt, f"type={mt}")
                 logging.info(
-                    f"Bpod connected on {self.serial_port}"
-                    f" | {self._port_config} | fw {fw} | {machine}"
+                    "Bpod connected on %s | %s | fw %s | %s",
+                    self.serial_port,
+                    self._port_config,
+                    fw,
+                    machine,
                 )
                 return
-            except UnicodeDecodeError as exc:
-                logging.warning(f"Bpod connect attempt {attempt}/{retries}: {exc}")
+            except Exception as exc:
+                self._close_partial(self._bpod)
+                self._bpod = None
+                last_exc = exc
+                logging.warning(
+                    "Bpod connect attempt %d/%d failed: %s: %s",
+                    attempt,
+                    retries,
+                    type(exc).__name__,
+                    exc,
+                )
         raise RuntimeError(
-            f"Failed to connect to Bpod at {self.serial_port} after {retries} attempts "
-            "(UnicodeDecodeError). Try again — this is a known transient serial issue."
-        )
+            f"Failed to connect to Bpod at {self.serial_port!r} after {retries} attempts. "
+            f"Last error: {type(last_exc).__name__}: {last_exc}. "
+            "Power-cycle the Bpod and try again."
+        ) from last_exc
 
     def close_safely(self):
         """Stop any running trial and close the connection."""
         self._exiting = True
-        if self._connected and self._bpod:
+        if self._connected and self._bpod is not None:
             try:
                 self._bpod.stop_trial()
                 self._bpod.close()
             except Exception as exc:
-                logging.warning(f"Bpod safe-close error: {exc}")
+                logging.warning("Bpod safe-close error: %s", exc)
             finally:
                 self._connected = False
 
@@ -109,21 +139,43 @@ class BpodFactory:
         self._bpod.softcode_handler_function = value
 
     def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(name)
         return getattr(self._bpod, name)
 
     # ------------------------------------------------------------------
     # Internal
 
-    def _create_bpod(self):
-        """Create pybpodapi Bpod object, auto-detecting 4 vs 8 port hardware."""
+    def _close_partial(self, bpod) -> None:
+        """Close the serial port on a partially-opened pybpodapi Bpod.
+
+        After a failed open(), _arcom may hold an open serial.Serial fd.
+        Closing it releases the port so the next retry can open it cleanly.
+        """
+        if bpod is None:
+            return
+        try:
+            if hasattr(bpod, "_arcom") and bpod._arcom is not None:
+                bpod._arcom.close()
+        except Exception:
+            pass
+
+    def _create_bpod_object(self):
+        """Create and connect pybpodapi Bpod, auto-detecting 4 vs 8 port config.
+
+        IndexError from _bpodcom_enable_ports means the port-count setting
+        doesn't match the hardware — immediately switch to 8-port settings.
+        All other exceptions are propagated to open() which handles retry.
+        """
         from confapp import conf
         from pybpodapi import protocol as bpod_protocol
 
         conf += self._SETTINGS_STANDARD
         importlib.reload(bpod_protocol)
 
+        partial = None
         try:
-            bpod = bpod_protocol.Bpod(
+            partial = bpod_protocol.Bpod(
                 serial_port=self.serial_port,
                 workspace_path=self.workspace_path,
                 session_name=self.session_name,
@@ -131,32 +183,22 @@ class BpodFactory:
             )
             logging.getLogger("pybpodapi").setLevel(logging.WARNING)
             self._port_config = "4-port"
-            return bpod
+            return partial
         except IndexError:
+            self._close_partial(partial)
             logging.info(
-                "4-port Bpod config failed (IndexError) — retrying with 8-port settings"
+                "4-port config mismatch (IndexError) — retrying with 8-port settings"
             )
-        except Exception as exc:
-            raise RuntimeError(
-                f"Bpod at {self.serial_port!r} failed to connect: {exc}. "
-                "Power-cycle the Bpod and try again."
-            ) from exc
 
         conf += self._SETTINGS_8PORT
         importlib.reload(bpod_protocol)
 
-        try:
-            bpod = bpod_protocol.Bpod(
-                serial_port=self.serial_port,
-                workspace_path=self.workspace_path,
-                session_name=self.session_name,
-                **self._bpod_kwargs,
-            )
-        except Exception as exc:
-            raise RuntimeError(
-                f"Bpod at {self.serial_port!r} failed to connect (8-port): {exc}. "
-                "Power-cycle the Bpod and try again."
-            ) from exc
+        bpod = bpod_protocol.Bpod(
+            serial_port=self.serial_port,
+            workspace_path=self.workspace_path,
+            session_name=self.session_name,
+            **self._bpod_kwargs,
+        )
         logging.getLogger("pybpodapi").setLevel(logging.WARNING)
         self._port_config = "8-port"
         return bpod

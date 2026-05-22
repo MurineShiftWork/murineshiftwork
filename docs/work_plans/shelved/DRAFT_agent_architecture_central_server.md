@@ -1,6 +1,12 @@
-# MSW Agent Architecture — Implementation Draft
+# MSW Agent Architecture — Central Server Design (SHELVED)
 
-> Status: design complete 2026-05-18. Implementation not started.
+> **Shelved 2026-05-20.** Superseded by `PLAN_msw_ui_agent_broadcast.md`.
+> Key difference: this doc has a central server + proxy between agents and the Vue UI.
+> The decided design has no central server — `agents.json` static config, polling transport,
+> Vue SPA in `external/msw-ui/` served per-machine. Kept for reference if a
+> central server / multi-machine aggregation is needed in future.
+>
+> Original status: design complete 2026-05-18. Implementation not started.
 > Frontend: **Vue 3 + TypeScript** (decided). Backend: FastAPI. No React.
 
 ---

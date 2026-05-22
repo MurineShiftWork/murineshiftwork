@@ -22,13 +22,13 @@ _LEVELS_COLS = [
     "led3",
     "led4",
     "led5",
-    "response_window_ms",
+    "response_window_s",
 ]
 
 
 def _make_levels_df(n=5):
     """Minimal levels table: n identical rows with 3 µL rewards and 2 s windows."""
-    row = [3.0, 3.0, 3.0, 3.0, 3.0, 50.0, 50.0, 50.0, 50.0, 50.0, 2000.0]
+    row = [3.0, 3.0, 3.0, 3.0, 3.0, 50.0, 50.0, 50.0, 50.0, 50.0, 2.0]
     return pd.DataFrame([row] * n, columns=_LEVELS_COLS)
 
 
@@ -41,16 +41,18 @@ def _make_tc(sequence=None, task_settings=None, current_level=1, n_levels=5):
         "subject": "mouse001",
         "start_level": 1,
         "buffer_trials": 10,
-        "level_1_min_trials": 5,
         "min_response_window_s": 2.0,
         "punish_duration": 0.5,
         "iti_duration": 0.4,
         "reward_sound": False,
         "strict_sequence": False,
         "HARDWARE_BNC_TRIAL_START": 1,
+        "init_port_timeout_s": 10.0,
     }
     if task_settings:
         settings.update(task_settings)
+
+    from collections import deque
 
     tc = object.__new__(TaskControl)
     tc.sequence = seq
@@ -60,12 +62,15 @@ def _make_tc(sequence=None, task_settings=None, current_level=1, n_levels=5):
     tc._valve_time_cache = {}
     tc.levels_df = _make_levels_df(n_levels)
     tc._session_start_level = current_level
+    tc.perf_buffer = deque(maxlen=settings.get("buffer_trials", 10))
+    tc.perf_buffer_perfect = deque(maxlen=settings.get("buffer_trials", 10))
+    tc._session_reward_count = 0
+    tc._session_liquid_ul = 0.0
+    tc._session_task_trials = 0
+    tc._session_no_response_count = 0
 
-    # Mock calibration: always return 0.05 s for any valve/volume
-    tc.calibration_water = MagicMock()
-    tc.calibration_water.water_volume_to_valve_time.side_effect = (
-        lambda valves, target_volume: {v: 0.05 for v in valves}
-    )
+    # Valve calibration injected by CLI/agent — always return 0.05 s
+    tc.task_settings["valve_s_for_ul"] = lambda port, ul: 0.05
 
     tc.sound = MagicMock()
     tc.sound_reward_code = 0
@@ -316,3 +321,119 @@ class TestLevelProgression:
         tc._register_subject = MagicMock()
         tc._update_level()
         assert tc.current_level == 5  # not regressed below session start
+
+    def test_regression_fires_when_prevent_is_false(self):
+        """0% perf at level 10 must regress to 9 when prevent_regression_below_start=False."""
+        from collections import deque
+
+        tc = _make_tc(
+            current_level=10,
+            n_levels=10,
+            task_settings={
+                "prevent_regression_below_start": False,
+                "regression_threshold": 0.2,
+            },
+        )
+        tc._session_start_level = 10
+        tc.perf_buffer = deque([0] * 10, maxlen=10)
+        tc.perf_buffer_perfect = deque(maxlen=10)
+        tc._save_level = MagicMock()
+        tc._register_subject = MagicMock()
+        tc._update_level()
+        assert tc.current_level == 9
+
+    def test_level_1_advances_on_full_buffer(self):
+        """Level 1 must advance when buffer is full and perf > threshold."""
+        from collections import deque
+
+        tc = _make_tc(current_level=1, n_levels=10)
+        tc.perf_buffer = deque([1] * 10, maxlen=10)
+        tc.perf_buffer_perfect = deque(maxlen=10)
+        tc._save_level = MagicMock()
+        tc._register_subject = MagicMock()
+        tc._update_level()
+        assert tc.current_level == 2
+
+    def test_level_1_no_regress_below_floor(self):
+        """Level 1 must never regress below 1."""
+        from collections import deque
+
+        tc = _make_tc(
+            current_level=1,
+            n_levels=10,
+            task_settings={"prevent_regression_below_start": False},
+        )
+        tc._session_start_level = 1
+        tc.perf_buffer = deque([0] * 10, maxlen=10)
+        tc.perf_buffer_perfect = deque(maxlen=10)
+        tc._save_level = MagicMock()
+        tc._register_subject = MagicMock()
+        tc._update_level()
+        assert tc.current_level == 1
+
+
+# ---------------------------------------------------------------------------
+# No-response trial tests
+# ---------------------------------------------------------------------------
+
+
+def _make_trial_data(port_events: dict | None = None) -> dict:
+    """Minimal trial_data dict mimicking bpod export."""
+    return {
+        "Trial start timestamp": 60.0,
+        "States timestamps": {
+            "wait_poke_0": [[0.0, 10.0]],
+            "punish": [[10.0, 10.5]],
+            "exit_seq": [[10.5, 10.9]],
+        },
+        "Events timestamps": port_events or {},
+    }
+
+
+class TestNoResponseTrials:
+    def _make_full_tc(self):
+        from collections import deque
+
+        tc = _make_tc(current_level=5, n_levels=10)
+        tc._session_start_level = 5
+        tc.perf_buffer = deque(maxlen=10)
+        tc.perf_buffer_perfect = deque(maxlen=10)
+        tc._session_reward_count = 0
+        tc._session_liquid_ul = 0.0
+        tc._save_level = MagicMock()
+        tc._register_subject = MagicMock()
+        return tc
+
+    def test_no_response_outcome(self):
+        tc = self._make_full_tc()
+        trial_data = _make_trial_data()
+        tc.update(trial_index=0, trial_data=trial_data)
+        assert tc.last_outcome == "no_response"
+
+    def test_no_response_does_not_fill_perf_buffer(self):
+        tc = self._make_full_tc()
+        trial_data = _make_trial_data()
+        tc.update(trial_index=0, trial_data=trial_data)
+        assert len(tc.perf_buffer) == 0
+        assert len(tc.perf_buffer_perfect) == 0
+
+    def test_no_response_does_not_change_level(self):
+        """10 consecutive no-response trials must not regress level."""
+
+        tc = self._make_full_tc()
+        tc.task_settings["prevent_regression_below_start"] = False
+        tc.task_settings["regression_threshold"] = 0.2
+        for i in range(15):
+            tc.update(trial_index=i, trial_data=_make_trial_data())
+        assert tc.current_level == 5
+        assert len(tc.perf_buffer) == 0
+
+    def test_no_response_info_fields(self):
+        tc = self._make_full_tc()
+        trial_data = _make_trial_data()
+        tc.update(trial_index=3, trial_data=trial_data)
+        info = trial_data["info"]
+        assert info["outcome"] == "no_response"
+        assert info["trial_type"] == "task"
+        assert info["poke_events"] == []
+        assert info["reward_count_trial"] == 0

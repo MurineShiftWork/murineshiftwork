@@ -89,7 +89,7 @@ class CalibrationData:
             logging.info(f"Saved calibration: {file_path}")
 
 
-class CalibrationDataWater(CalibrationData):
+class CalibrationDataLiquid(CalibrationData):
     allowable_offset_days = 30
     columns = [
         "measurement_time",
@@ -102,13 +102,28 @@ class CalibrationDataWater(CalibrationData):
         "volume_ul",
     ]
 
+    def load(self, file_path=None):
+        if file_path is not None:
+            self.file_path = file_path
+        # Back-compat: if the .liquid. file doesn't exist, try the old .water. name
+        if self.file_path and not Path(self.file_path).exists():
+            old_path = str(self.file_path).replace(".liquid.", ".water.")
+            if old_path != str(self.file_path) and Path(old_path).exists():
+                logging.warning(
+                    f"Calibration file not found at {self.file_path}; "
+                    f"falling back to legacy path {old_path}. "
+                    f"Rename it to {Path(self.file_path).name} to silence this warning."
+                )
+                self.file_path = old_path
+        return super().load()
+
     def add_calibration_point(
         self,
         valve_id=None,
         valve_opening_time=None,
         n_drops=None,
         inter_pulse_interval=None,
-        water_weight_g=None,
+        liquid_weight_g=None,
     ):
         self.__add__(
             {
@@ -116,7 +131,7 @@ class CalibrationDataWater(CalibrationData):
                 "valve_opening_time": valve_opening_time,
                 "n_drops": n_drops,
                 "inter_pulse_interval": inter_pulse_interval,
-                "water_weight_g": water_weight_g,
+                "liquid_weight_g": liquid_weight_g,
             }
         )
 
@@ -124,7 +139,7 @@ class CalibrationDataWater(CalibrationData):
         """Compute weight_per_drop and volume_ul columns in-place. Idempotent."""
         self.upgrade_calibration_file_field_names()
         self.calibration_data["weight_per_drop"] = np.round(
-            self.calibration_data["water_weight_g"] / self.calibration_data["n_drops"],
+            self.calibration_data["liquid_weight_g"] / self.calibration_data["n_drops"],
             3,
         )
         self.calibration_data["volume_ul"] = np.round(
@@ -134,34 +149,38 @@ class CalibrationDataWater(CalibrationData):
             by="valve_opening_time"
         )
 
-    def water_volume_to_valve_time(self, valves=None, target_volume=None):
-        if self.calibration_data is not None and not self.calibration_data.empty:
-            self._compute_volumes()
+    def liquid_volume_to_valve_time(self, valves=None, target_volume=None):
+        if self.calibration_data is None or self.calibration_data.empty:
+            raise ValueError(
+                f"Liquid calibration data is empty. "
+                f"Ensure a calibration CSV exists at: {self.file_path}"
+            )
+        self._compute_volumes()
 
-            if not hasattr(valves, "__iter__"):
-                valves = [valves]
+        if not hasattr(valves, "__iter__"):
+            valves = [valves]
 
-            # Get target valve opening times (seconds) for given volumes via exponential fit.
-            # Preferred path: use SetupConfig.valve_s_for_ul() which calls
-            # ValveCalibration.s_for_ul() with the same exponential model.
-            # This CSV path is kept for backward compat when SetupConfig is absent.
-            calibration_targets = {}
-            for this_valve in valves:
-                data_for_valve = self.calibration_data.loc[
-                    self.calibration_data["valve_id"] == this_valve
-                ].sort_values("valve_opening_time")
+        # Get target valve opening times (seconds) for given volumes via exponential fit.
+        # Preferred path: use SetupConfig.valve_s_for_ul() which calls
+        # ValveCalibration.s_for_ul() with the same exponential model.
+        # This CSV path is kept for backward compat when SetupConfig is absent.
+        calibration_targets = {}
+        for this_valve in valves:
+            data_for_valve = self.calibration_data.loc[
+                self.calibration_data["valve_id"] == this_valve
+            ].sort_values("valve_opening_time")
 
-                points = list(
-                    zip(
-                        data_for_valve["valve_opening_time"].tolist(),
-                        data_for_valve["volume_ul"].tolist(),
-                    )
+            points = list(
+                zip(
+                    data_for_valve["valve_opening_time"].tolist(),
+                    data_for_valve["volume_ul"].tolist(),
                 )
-                from murineshiftwork.logic.config import ValveCalibration
+            )
+            from murineshiftwork.logic.config import ValveCalibration
 
-                vc = ValveCalibration(points=[[t, u] for t, u in points])
-                calibration_targets[this_valve] = vc.s_for_ul(target_volume)
-            return calibration_targets
+            vc = ValveCalibration(points=[[t, u] for t, u in points])
+            calibration_targets[this_valve] = vc.s_for_ul(target_volume)
+        return calibration_targets
 
     def save_calibration_plot(self):
         if (
@@ -202,7 +221,7 @@ class CalibrationDataWater(CalibrationData):
         if df.empty:
             raise ValueError(f"No calibration data for valve {valve_id}")
 
-        df["_ul"] = np.round((df["water_weight_g"] / df["n_drops"]) * 1e3, 3)
+        df["_ul"] = np.round((df["liquid_weight_g"] / df["n_drops"]) * 1e3, 3)
         # Average repeated measurements at the same opening time before converting
         # to points — duplicate times arise when adaptive rounds revisit a time slot.
         df = (
@@ -226,15 +245,19 @@ class CalibrationDataWater(CalibrationData):
 
     def upgrade_calibration_file_field_names(self):
         """Ensure compatibility between old calibration data files and new columns format."""
+        if "water_weight_g" in self.calibration_data.columns:
+            self.calibration_data = self.calibration_data.rename(
+                columns={"water_weight_g": "liquid_weight_g"}
+            )
         if "microliters" in self.calibration_data.columns:
             logging.debug(
-                "Water calibration file has old field names. Making backup copy and overwriting original.."
+                "Liquid calibration file has old field names. Making backup copy and overwriting original.."
             )
             self.calibration_data = self.calibration_data.rename(
                 {
                     "valve": "valve_id",
                     "valve_time": "valve_opening_time",
-                    "weight": "water_weight_g",
+                    "weight": "liquid_weight_g",
                     "microliters": "volume_ul",
                 }
             )
@@ -282,7 +305,7 @@ def _exponential_function(x, a, b, c):
     return a * np.exp(b * x) + c
 
 
-def fit_water_calibration_exp(x_observed=None, y_observed=None):
+def fit_calibration_exp(x_observed=None, y_observed=None):
     # x = np.linspace(0, 4, 50)
     # y = _exponential_function(x, 2.5, 1.3, 0.5)
     # yn = y + 0.2 * np.random.normal(size=len(x))
@@ -293,13 +316,13 @@ def fit_water_calibration_exp(x_observed=None, y_observed=None):
     return popt, pcov
 
 
-def evaluate_water_calibration_curve_continuous(popt=None, min=0, max=10, step=0.1):
+def evaluate_calibration_curve_continuous(popt=None, min=0, max=10, step=0.1):
     x_continuous = np.linspace(min, max, int(max / step), endpoint=True)
     y_continuous = _exponential_function(x_continuous, *popt)
     return x_continuous, y_continuous
 
 
-def evaluate_water_calibration_curve_y_to_x(x_continuous, y_continuous, y_target=None):
+def evaluate_calibration_curve_y_to_x(x_continuous, y_continuous, y_target=None):
     x_value = np.interp(y_target, x_continuous, y_continuous)
     return x_value
 
@@ -575,3 +598,7 @@ def save_calibration_pdfs(
             logging.warning(f"Failed to plot calibration for '{sname}': {exc}")
 
     return saved
+
+
+# Back-compat alias
+CalibrationDataWater = CalibrationDataLiquid

@@ -16,8 +16,8 @@ default_out_path = resolve_data_dir()
 default_config_dir = resolve_config_dir()
 
 CALIBRATION_FILE_PATH = Path("~/.murineshiftwork").expanduser()
-DEFAULT_CALIBRATION_FILE_WATER = str(
-    CALIBRATION_FILE_PATH / "calibration.water.default.csv"
+DEFAULT_CALIBRATION_FILE_LIQUID = str(
+    CALIBRATION_FILE_PATH / "calibration.liquid.default.csv"
 )
 DEFAULT_CALIBRATION_FILE_SOUND = "calibration.sound.default.csv"
 DEFAULT_CALIBRATION_FILE_STAGE = str(

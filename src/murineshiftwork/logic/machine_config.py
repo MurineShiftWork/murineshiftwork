@@ -115,5 +115,15 @@ def read_machine_config() -> dict:
     return _load_machine_config()
 
 
+def read_labwatch_config() -> dict:
+    """Return the ``labwatch:`` block from machine config, or empty dict."""
+    return _load_machine_config().get("labwatch", {})
+
+
+def read_ui_url() -> str:
+    """Return the ``ui_url`` from machine config, or empty string."""
+    return str(_load_machine_config().get("ui_url", ""))
+
+
 def get_machine_config_path() -> Path:
     return _MACHINE_CONFIG_FILE

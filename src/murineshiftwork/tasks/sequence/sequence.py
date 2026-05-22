@@ -11,7 +11,7 @@ from murineshiftwork.logic.barcode import (
     prepare_barcode,
 )
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
-from murineshiftwork.tasks.sequence.online_plotting import OnlinePlottingForSA
+from murineshiftwork.tasks.sequence.online_plotting import OnlinePlottingForSeq
 from murineshiftwork.tasks.sequence.task_objects import TaskControl
 
 
@@ -19,8 +19,6 @@ class Task(TaskRunner):
     def run(self):
         task_settings = self.input_kwargs["settings.task.patched"]
 
-        # Inject top-level kwargs that task_objects needs (calibration_file_water
-        # comes via settings.task.patched from evaluate.py — no manual injection needed)
         task_settings["subject"] = self.input_kwargs.get("subject", "unknown")
         task_settings.setdefault(
             "session_paths", self.input_kwargs.get("session_paths", {})
@@ -38,6 +36,18 @@ class Task(TaskRunner):
 
         trial_index = 0
         max_trials = task_settings["n_max_trials"]
+        _stop_reward_ul = float(task_settings.get("stop_reward_ul", 1000.0))
+        _stop_trials = int(task_settings.get("stop_trials", 500))
+        _stop_time_min = float(task_settings.get("stop_time_min", 60.0))
+        _stop_level = int(task_settings.get("start_level", 1)) + int(
+            task_settings.get("stop_level_delta", 15)
+        )
+        _warned_stop: dict[str, bool] = {
+            "reward": False,
+            "trials": False,
+            "time": False,
+            "level": False,
+        }
 
         while self.continue_task and trial_index < max_trials:
             barcode_value = None
@@ -66,8 +76,6 @@ class Task(TaskRunner):
                 self.input_kwargs["objects"]["kill_queue"].put(True)
                 break
 
-            _t_bpod_done = time.perf_counter()
-
             trial_data = self.bpod.session.current_trial.export()
             task_control.update(
                 trial_index=trial_index,
@@ -77,14 +85,59 @@ class Task(TaskRunner):
             )
             task_control.save()
 
-            _compute_ms = (time.perf_counter() - _t_bpod_done) * 1000
-            logging.info(
-                f"Trial {trial_index:4d}: {task_control.last_outcome or 'barcode':<9} | "
-                f"compute {_compute_ms:.0f}ms"
-            )
+            info = trial_data.get("info", {})
+            if info.get("trial_type") == "task":
+                _liq = info.get("liquid_ul_cumulative", 0.0)
+                _t_min = trial_data.get("Trial start timestamp", 0) / 60.0
+                if (
+                    not _warned_stop["reward"]
+                    and _stop_reward_ul > 0
+                    and _liq >= _stop_reward_ul
+                ):
+                    _warned_stop["reward"] = True
+                    logging.warning(
+                        "Stop criterion — reward: %.0f µL ≥ %.0f µL (1 ml)",
+                        _liq,
+                        _stop_reward_ul,
+                    )
+                if (
+                    not _warned_stop["time"]
+                    and _stop_time_min > 0
+                    and _t_min >= _stop_time_min
+                ):
+                    _warned_stop["time"] = True
+                    logging.warning(
+                        "Stop criterion — time: %.1f min ≥ %.0f min (1 h)",
+                        _t_min,
+                        _stop_time_min,
+                    )
+                if (
+                    not _warned_stop["trials"]
+                    and _stop_trials > 0
+                    and task_control._session_task_trials >= _stop_trials
+                ):
+                    _warned_stop["trials"] = True
+                    logging.warning(
+                        "Stop criterion — trials: %d task trials ≥ %d (+ %d no-response)",
+                        task_control._session_task_trials,
+                        _stop_trials,
+                        task_control._session_no_response_count,
+                    )
+                if (
+                    not _warned_stop["level"]
+                    and _stop_level > 0
+                    and task_control.current_level >= _stop_level
+                ):
+                    _warned_stop["level"] = True
+                    logging.warning(
+                        "Stop criterion — level: %d ≥ %d (%d levels above session start %d)",
+                        task_control.current_level,
+                        _stop_level,
+                        task_settings.get("stop_level_delta", 15),
+                        task_settings.get("start_level", 1),
+                    )
 
             if task_settings.get("show_live_plot", True) and trial_index > 0:
-                info = trial_data.get("info", {})
                 if info.get("trial_type") == "task":
                     self.input_kwargs["objects"]["data_queue"].put(
                         {
@@ -95,10 +148,14 @@ class Task(TaskRunner):
                                 "level", task_control.current_level
                             ),
                             "perf_buffer_mean": info.get("perf_buffer_mean", 0.0),
+                            "perf_perfect_mean": info.get("perf_perfect_mean", 0.0),
+                            "is_perfect": info.get("is_perfect", False),
                             "trial_time_s": trial_data.get("Trial start timestamp", 0),
                             "reward_count_trial": info.get("reward_count_trial", 0),
-                            "water_ul_trial": info.get("water_ul_trial", 0.0),
-                            "water_ul_cumulative": info.get("water_ul_cumulative", 0.0),
+                            "liquid_ul_trial": info.get("liquid_ul_trial", 0.0),
+                            "liquid_ul_cumulative": info.get(
+                                "liquid_ul_cumulative", 0.0
+                            ),
                             "poke_events": info.get("poke_events", []),
                             "transition_times": info.get("transition_times", []),
                             "sequence_duration_s": info.get("sequence_duration_s"),
@@ -159,8 +216,11 @@ def run_task(**args_dict):
     with TaskProcess(**args_dict) as tp:
         # Online plot (separate process)
         if task_settings.get("show_live_plot", True):
-            plotting = OnlinePlottingForSA(
+            plotting = OnlinePlottingForSeq(
                 session_name=tp.session_paths.get("session_basename", ""),
+                subject=args_dict.get("subject", ""),
+                setup=args_dict.get("setup", "")
+                or args_dict.get("metadata", {}).get("setup", ""),
                 data_queue=dq,
                 kill_queue=kq,
                 n_max_trials=task_settings.get("n_max_trials", 1500),
@@ -169,6 +229,20 @@ def run_task(**args_dict):
                 regression_threshold=task_settings.get("regression_threshold", 0.2),
                 sequence=list(task_settings.get("sequence", [])),
                 port_colors=list(task_settings.get("port_colors", [])),
+                poke_ymax_s=task_settings.get("online_plot_poke_ymax_s") or None,
+                poke_xmax_s=float(task_settings.get("online_plot_poke_xmax_s", 6.0)),
+                xlim_trials=int(task_settings.get("online_plot_xlim_trials", 100)),
+                poke_log_scale=bool(
+                    task_settings.get("online_plot_poke_log_scale", True)
+                ),
+                first_poke_offset_s=float(
+                    task_settings.get("online_plot_first_poke_offset_s", 0.5)
+                ),
+                stop_reward_ul=float(task_settings.get("stop_reward_ul", 1000.0)),
+                stop_trials=int(task_settings.get("stop_trials", 500)),
+                stop_time_min=float(task_settings.get("stop_time_min", 60.0)),
+                stop_level_delta=int(task_settings.get("stop_level_delta", 15)),
+                start_level=int(task_settings.get("start_level", 1)),
             )
             plotting.start()
 

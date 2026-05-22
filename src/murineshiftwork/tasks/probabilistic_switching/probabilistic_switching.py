@@ -126,8 +126,13 @@ def run_task(**args_dict):
 
         # Online plotting
         if task_settings.get("show_live_plot", True):
+            _setup = args_dict.get("metadata", {}).get(
+                "setup", ""
+            ) or task_settings.get("setup", "")
+            _subject = tp.session_paths.get("subject", "")
+            _setup_str = f"[{_setup}] " if _setup else ""
             plotting_process = OnlinePlottingForPS(
-                session_name=tp.session_paths["session_basename"],
+                session_name=f"{_setup_str}{_subject} @ probabilistic_switching",
                 is_simulation=False,
                 data_queue=dq,
                 kill_queue=kq,

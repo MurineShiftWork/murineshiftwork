@@ -141,9 +141,9 @@ def test_subject_config_defaults():
 def test_subject_config_task_overrides():
     sc = SubjectConfig(
         name="test_mouse",
-        task_overrides={"_test_flush_water": {"VALVE_OPENING_TIME_MS": 80}},
+        task_overrides={"_test_flush_valves": {"VALVE_OPENING_TIME_MS": 80}},
     )
-    assert sc.task_overrides["_test_flush_water"]["VALVE_OPENING_TIME_MS"] == 80
+    assert sc.task_overrides["_test_flush_valves"]["VALVE_OPENING_TIME_MS"] == 80
 
 
 # ---------------------------------------------------------------------------
@@ -162,7 +162,7 @@ def test_execution_config_with_setup_and_subject():
     ec = ExecutionConfig(
         setup=_make_setup(),
         subject=SubjectConfig(name="mouse_01"),
-        task_name="_test_flush_water",
+        task_name="_test_flush_valves",
         task_settings={"VALVE_OPENING_TIME_MS": 60},
     )
     assert ec.setup.name == "test_setup"

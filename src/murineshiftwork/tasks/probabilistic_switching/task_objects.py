@@ -8,10 +8,7 @@ import numpy as np
 from pybpodapi.protocol import Bpod, StateMachine
 
 from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
-from murineshiftwork.logic.calibration import (
-    CalibrationDataSound,
-    CalibrationDataWater,
-)
+from murineshiftwork.logic.calibration import CalibrationDataSound
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.maths import ExponentialMovingAverage, withprob
 from murineshiftwork.logic.sounds import StereoSound
@@ -113,13 +110,17 @@ class TaskControl(object):
         self.sound_delay_correction = (
             self.calibration_sound.calculate_sound_delay_correction()
         )
-        self.calibration_water = CalibrationDataWater(
-            file_path=self.task_settings["calibration_file_water"]
-        )
-        self.valve_times_dict = self.calibration_water.water_volume_to_valve_time(
-            valves=self.task_settings["HARDWARE_VALVES_FOR_WATER"],
-            target_volume=self.task_settings["reward_amount_ul"],
-        )
+        valve_s_for_ul = self.task_settings.get("valve_s_for_ul")
+        if valve_s_for_ul is None:
+            raise ValueError(
+                "valve_s_for_ul not in task settings — "
+                "ensure the setup YAML has calibrations.bpod_valve entries."
+            )
+        target_vol = float(self.task_settings["reward_amount_ul"])
+        self.valve_times_dict = {
+            v: valve_s_for_ul(v, target_vol)
+            for v in self.task_settings["HARDWARE_VALVES_FOR_WATER"]
+        }
 
         from murineshiftwork.logic.task_process import update_session_yaml
 

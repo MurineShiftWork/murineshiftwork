@@ -23,7 +23,7 @@ MSW resolves the config directory in this order (first match wins):
 1. `--config-dir /path` CLI argument (per-call override)
 2. `MSW_CONFIG_DIR` environment variable
 3. `~/.murineshiftwork/msw_machine.yaml` (written by `msw init`)
-4. `~/.murineshiftwork/` (legacy flat-file fallback)
+4. `/mnt/maindata/msw_configs` (historical default, used if the directory exists)
 
 ## Create a setup config
 
@@ -49,7 +49,9 @@ msw subject list -f 2025   # filter by partial name
 ## Run a test flush
 
 ```bash
-msw run -t _test_flush_water -s _test_subject --setup setup-1
+msw run -t _test_flush_valves -s _test_subject --setup setup-1
 # Override flush time:
-msw run -t _test_flush_water -s _test_subject --setup setup-1 -ts VALVE_OPENING_TIME_MS=80
+msw run -t _test_flush_valves -s _test_subject --setup setup-1 -ts VALVE_OPENING_TIME_MS=80
+# Use the 'wash' mode preset (30 cycles × 2000 ms):
+msw run -t _test_flush_valves -s _test_subject --setup setup-1 --task-mode wash
 ```

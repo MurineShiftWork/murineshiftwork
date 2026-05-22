@@ -4,9 +4,9 @@ from pathlib import Path
 import yaml
 
 from murineshiftwork.cli.defaults import (
+    DEFAULT_CALIBRATION_FILE_LIQUID,
     DEFAULT_CALIBRATION_FILE_SOUND,
     DEFAULT_CALIBRATION_FILE_STAGE,
-    DEFAULT_CALIBRATION_FILE_WATER,
     available_tasks,
     default_config_dir,
     default_out_path,
@@ -115,9 +115,9 @@ def _evaluate_and_load_configs(args_dict=None):
         default_dir=args_dict["config_dir"],
     )
     if not args_dict["task"].startswith("_calibration"):
-        args_dict["calibration_file_water"] = validate_config_file_path(
+        args_dict["calibration_file_liquid"] = validate_config_file_path(
             config_file=args_dict.get(
-                "calibration_file_water", DEFAULT_CALIBRATION_FILE_WATER
+                "calibration_file_liquid", DEFAULT_CALIBRATION_FILE_LIQUID
             ),
             default_dir=args_dict["config_dir"],
         )
@@ -199,7 +199,7 @@ def _extra_injections_from_args(args_dict: dict) -> dict:
     """Collect fallback-injection keys from args_dict for build_task_settings."""
     injections: dict = {}
     for key in (
-        "calibration_file_water",
+        "calibration_file_liquid",
         "calibration_file_sound",
         "calibration_file_stage",
         "serial_port_stage",
@@ -269,6 +269,11 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
         ):
             args_dict["config_file_camera"] = cam_path
             logging.debug(f"Resolved camera config from SetupConfig: {cam_path}")
+        args_dict["cameras_config"] = setup_config.cameras
+
+    if setup_config and setup_config.calibrations.bpod_valve:
+        patched["valve_s_for_ul"] = setup_config.valve_s_for_ul
+        logging.debug("Injected valve_s_for_ul from SetupConfig into task settings")
 
 
 def evaluate_args(args_dict=None):
@@ -278,10 +283,16 @@ def evaluate_args(args_dict=None):
     args_dict["original"] = args_dict.copy()
 
     args_dict = _evaluate_log_level(args_dict=args_dict)
-    setup_logging(level=args_dict["log_level"], log_file=args_dict["log_file"])
-
     args_dict = _evaluate_task(args_dict=args_dict)
     args_dict = _evaluate_metadata(args_dict=args_dict)
+    setup_logging(
+        level=args_dict["log_level"],
+        log_file=args_dict["log_file"],
+        task=args_dict.get("task", ""),
+        subject=args_dict.get("subject", ""),
+        setup=args_dict.get("setup", ""),
+    )
+
     args_dict = _evaluate_and_load_configs(args_dict=args_dict)
 
     settings_task_default = args_dict["settings.task.default"]
@@ -348,5 +359,12 @@ def evaluate_args(args_dict=None):
 
     if args_dict.get("command") == "run":
         preflight_hardware_check(args_dict)
+
+    from murineshiftwork.logic.log import json_dumps_type_safe
+
+    logging.debug(
+        "settings.task.patched:\n%s",
+        json_dumps_type_safe(args_dict.get("settings.task.patched", {})),
+    )
 
     return args_dict

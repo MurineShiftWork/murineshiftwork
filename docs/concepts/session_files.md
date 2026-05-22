@@ -1,7 +1,5 @@
 # Session Files
 
-> Skeleton — fill in.
-
 ## File types produced per session
 
 | File | Description |
@@ -27,6 +25,23 @@ task_settings:
   ...
 ```
 
+## Sequence task — subject state fields
+
+At session end, `save_session_end()` writes a summary to the per-subject state store
+(`~/.murineshiftwork/sequence/<subject>_level.json`) and the labwatch payload:
+
+| Field | Description |
+|---|---|
+| `level` | Training level at session end |
+| `session_start_level` | Training level at session start |
+| `total_trials` | Total `update()` calls (includes barcodes and no-response trials) |
+| `task_trials` | Trials with a poke response that were scored (excludes no-response and barcodes) |
+| `no_response_trials` | Trials where the animal did not initiate within `init_port_timeout_s` |
+| `session_reward_count` | Number of valve openings (rewards delivered) |
+| `session_liquid_ul` | Total water dispensed (µL) |
+
+The exit log line reads: `"Session end — 'mouse001': level 12, trials 312 (289 task, 23 no-response)"`.
+
 ## Data directory layout
 
 ```
@@ -38,3 +53,19 @@ task_settings:
             ├── <session_basename>.msw.session.yaml
             └── <session_basename>.msw.log
 ```
+
+## Central log file
+
+A separate per-run log is written to `~/.murineshiftwork/logs/` with the filename:
+
+```
+<setup>--<datetime>--<subject>--<task>.log
+```
+
+For example: `setup-1--2026-05-21T143201--mouse001--sequence.log`
+
+The central log contains `DEBUG`-level output from all modules. The session log
+(`<session_basename>.msw.log`) contains `INFO`-level output. Both are kept.
+
+Up to 100 central log files are retained; older ones are pruned automatically.
+Override the central log path with `--log-file <path>` (`msw run` only).

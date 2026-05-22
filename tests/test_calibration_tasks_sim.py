@@ -17,7 +17,7 @@ from murineshiftwork.logic.scale import SimWeighingScale
 
 def _make_sim_kwargs(tmp_path: Path, valve_id: int = 1) -> dict:
     """Minimal kwargs for both calibration Task classes."""
-    cal_file = tmp_path / "calibration.water.test.csv"
+    cal_file = tmp_path / "calibration.liquid.test.csv"
     return {
         "settings.task.patched": {
             "VALVES_TO_CALIBRATE": [valve_id],
@@ -42,7 +42,7 @@ def _make_sim_kwargs(tmp_path: Path, valve_id: int = 1) -> dict:
             "SCALE_NOISE_G": 0.05,
             "TARGET_RANGE_UL": [0.1, 5.0],
         },
-        "calibration_file_water": str(cal_file),
+        "calibration_file_liquid": str(cal_file),
         "scale": SimWeighingScale(weight_g=0.004),
         "config_dir": "",
         "setup": "unknown_setup",
@@ -66,7 +66,7 @@ class TestCalibrationLiquidStaticSim:
         task = Task(bpod=bpod, **kwargs)
         task.run()
 
-        cal_file = Path(kwargs["calibration_file_water"])
+        cal_file = Path(kwargs["calibration_file_liquid"])
         assert cal_file.exists(), "calibration CSV must be saved after task completes"
 
     def test_bpod_state_machines_were_fired(self, tmp_path):
@@ -120,7 +120,7 @@ class TestCalibrationLiquidDynamicSim:
         task = Task(bpod=bpod, **kwargs)
         task.run()
 
-        cal_file = Path(kwargs["calibration_file_water"])
+        cal_file = Path(kwargs["calibration_file_liquid"])
         assert cal_file.exists(), "calibration CSV must be saved"
 
     def test_bpod_state_machines_were_fired(self, tmp_path):

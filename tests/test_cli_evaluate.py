@@ -49,7 +49,7 @@ def test_parse_kv_no_equals_skipped():
 # Helpers
 
 
-def _base_args(tmp_path, subject, task="_test_flush_water", **overrides):
+def _base_args(tmp_path, subject, task="_test_flush_valves", **overrides):
     """Return a minimal valid args_dict for evaluate_args testing."""
     base = {
         "command": "run",
@@ -63,7 +63,7 @@ def _base_args(tmp_path, subject, task="_test_flush_water", **overrides):
         "config_file_subjects": "",
         "config_file_task": "task.yaml",
         "config_file_camera": "",
-        "calibration_file_water": "",
+        "calibration_file_liquid": "",
         "calibration_file_sound": "",
         "calibration_file_stage": str(tmp_path / "nonexistent.yaml"),
         "serial_port_bpod": "/dev/ttyACM0",
@@ -105,7 +105,7 @@ def test_subject_yaml_task_overrides_applied(tmp_path):
     _write_subject_yaml(
         tmp_path,
         subject,
-        task_overrides={"_test_flush_water": {"VALVE_OPENING_TIME_MS": 77}},
+        task_overrides={"_test_flush_valves": {"VALVE_OPENING_TIME_MS": 77}},
     )
     args = _base_args(tmp_path, subject)
     result = evaluate_args(args_dict=args)
@@ -120,7 +120,7 @@ def test_cli_task_settings_override_highest_priority(tmp_path):
     _write_subject_yaml(
         tmp_path,
         subject,
-        task_overrides={"_test_flush_water": {"VALVE_OPENING_TIME_MS": 77}},
+        task_overrides={"_test_flush_valves": {"VALVE_OPENING_TIME_MS": 77}},
     )
     args = _base_args(
         tmp_path, subject, task_settings_overrides=["VALVE_OPENING_TIME_MS=90"]
@@ -166,7 +166,9 @@ def test_task_overlay_overrides_bundled_default(tmp_path):
 
     subject = "s082_tabfixed_m2000001"
     _write_subject_yaml(tmp_path, subject)
-    _write_task_overlay(tmp_path, "_test_flush_water", {"VALVE_OPENING_TIME_MS": 123.0})
+    _write_task_overlay(
+        tmp_path, "_test_flush_valves", {"VALVE_OPENING_TIME_MS": 123.0}
+    )
     args = _base_args(tmp_path, subject)
     result = evaluate_args(args_dict=args)
     assert result["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 123.0
@@ -179,7 +181,7 @@ def test_task_overlay_preserves_unmentioned_bundled_keys(tmp_path):
     subject = "s082_tabfixed_m2000002"
     _write_subject_yaml(tmp_path, subject)
     # Override only VALVE_OPENING_TIME_MS; N_FLUSH_CYCLES should come from bundled defaults
-    _write_task_overlay(tmp_path, "_test_flush_water", {"VALVE_OPENING_TIME_MS": 77.0})
+    _write_task_overlay(tmp_path, "_test_flush_valves", {"VALVE_OPENING_TIME_MS": 77.0})
     args = _base_args(tmp_path, subject)
     result = evaluate_args(args_dict=args)
     patched = result["settings.task.patched"]
@@ -195,7 +197,7 @@ def test_task_overlay_absent_uses_bundled_only(tmp_path):
     _write_subject_yaml(tmp_path, subject)
     args = _base_args(tmp_path, subject)
     result = evaluate_args(args_dict=args)
-    # Bundled _test_flush_water default is 50.0
+    # Bundled _test_flush_valves default is 50.0
     assert result["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 50.0
     assert result["config_file_task_overlay"] == ""
 
@@ -206,7 +208,9 @@ def test_cli_override_beats_task_overlay(tmp_path):
 
     subject = "s082_tabfixed_m2000004"
     _write_subject_yaml(tmp_path, subject)
-    _write_task_overlay(tmp_path, "_test_flush_water", {"VALVE_OPENING_TIME_MS": 123.0})
+    _write_task_overlay(
+        tmp_path, "_test_flush_valves", {"VALVE_OPENING_TIME_MS": 123.0}
+    )
     args = _base_args(
         tmp_path, subject, task_settings_overrides=["VALVE_OPENING_TIME_MS=200"]
     )
@@ -220,10 +224,10 @@ def test_task_overlay_deep_merges_nested_keys(tmp_path):
 
     subject = "s082_tabfixed_m2000005"
     _write_subject_yaml(tmp_path, subject)
-    # _test_flush_water has no nested keys; use a contrived overlay with a nested dict
+    # _test_flush_valves has no nested keys; use a contrived overlay with a nested dict
     _write_task_overlay(
         tmp_path,
-        "_test_flush_water",
+        "_test_flush_valves",
         {"hardware": {"port": "/dev/ttyACM9"}, "VALVE_OPENING_TIME_MS": 55.0},
     )
     args = _base_args(tmp_path, subject)
@@ -254,10 +258,10 @@ def test_sticky_task_mode_from_subject_yaml_applied(tmp_path):
     _write_subject_yaml(
         tmp_path,
         subject,
-        task_overrides={"_test_flush_water": {"task_mode": "low_volume"}},
+        task_overrides={"_test_flush_valves": {"task_mode": "low_volume"}},
     )
     _write_task_overlay_with_mode(
-        tmp_path, "_test_flush_water", "low_volume", {"VALVE_OPENING_TIME_MS": 25.0}
+        tmp_path, "_test_flush_valves", "low_volume", {"VALVE_OPENING_TIME_MS": 25.0}
     )
     args = _base_args(tmp_path, subject)
     result = evaluate_args(args_dict=args)
@@ -272,16 +276,16 @@ def test_cli_task_mode_beats_sticky_subject_yaml_mode(tmp_path):
     _write_subject_yaml(
         tmp_path,
         subject,
-        task_overrides={"_test_flush_water": {"task_mode": "low_volume"}},
+        task_overrides={"_test_flush_valves": {"task_mode": "low_volume"}},
     )
     _write_task_overlay_with_mode(
         tmp_path,
-        "_test_flush_water",
+        "_test_flush_valves",
         "low_volume",
         {"VALVE_OPENING_TIME_MS": 25.0},
     )
     # Add a second mode to select via CLI
-    overlay_dir = tmp_path / "tasks" / "_test_flush_water"
+    overlay_dir = tmp_path / "tasks" / "_test_flush_valves"
     (overlay_dir / "task.yaml").write_text(
         yaml.dump(
             {
@@ -307,14 +311,14 @@ def test_subject_yaml_overrides_stack_on_top_of_sticky_mode(tmp_path):
         tmp_path,
         subject,
         task_overrides={
-            "_test_flush_water": {
+            "_test_flush_valves": {
                 "task_mode": "low_volume",
                 "N_FLUSH_CYCLES": 7,  # subject key on top of mode
             }
         },
     )
     _write_task_overlay_with_mode(
-        tmp_path, "_test_flush_water", "low_volume", {"VALVE_OPENING_TIME_MS": 25.0}
+        tmp_path, "_test_flush_valves", "low_volume", {"VALVE_OPENING_TIME_MS": 25.0}
     )
     args = _base_args(tmp_path, subject)
     result = evaluate_args(args_dict=args)
@@ -335,9 +339,11 @@ def test_full_priority_chain_order(tmp_path):
     _write_subject_yaml(
         tmp_path,
         subject,
-        task_overrides={"_test_flush_water": {"VALVE_OPENING_TIME_MS": 150.0}},
+        task_overrides={"_test_flush_valves": {"VALVE_OPENING_TIME_MS": 150.0}},
     )
-    _write_task_overlay(tmp_path, "_test_flush_water", {"VALVE_OPENING_TIME_MS": 100.0})
+    _write_task_overlay(
+        tmp_path, "_test_flush_valves", {"VALVE_OPENING_TIME_MS": 100.0}
+    )
 
     # Without CLI override: subject yaml (150) wins
     args = _base_args(tmp_path, subject)

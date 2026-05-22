@@ -21,9 +21,16 @@ msw run -s <subject> -t <task> [options]
 | `--task-mode <name>` | Apply named config block from `task.yaml mode:` section |
 | `-ts KEY=VALUE` | One-off task setting override (highest priority) |
 | `-o <path>` | Output data directory (default: `~/data`) |
-| `-p <port>` | Bpod serial port (overrides setup YAML) |
+| `-b / --port-bpod <port>` | Bpod serial port (overrides setup YAML, default `/dev/ttyACM0`) |
+| `-p / --port-pulsepal <port>` | PulsePal serial port (default `/dev/ttyACM1`) |
+| `--port-stage <port>` | Stage controller serial port (default `/dev/ttyUSB0`) |
+| `--port-scale <port>` | Weighing scale serial port (calibration tasks only) |
 | `--simulate` | Use SimBpod — no hardware required |
-| `--debug` | Force subject to `_test_subject`, verbose logging |
+| `-l / --log-level <level>` | Log level (INFO, DEBUG, WARNING, …) |
+| `--debug` | Sets log level to DEBUG; if subject YAML not found, falls back to `_test_subject` |
+| `--child-of <basename>` | Save session directly in `--out-path` (skip subject dir) |
+| `-m / --meta KEY=VALUE` | Arbitrary metadata pairs (e.g. `-m project=myproject cohort=1`) |
+| `--meta-experimenter <name>` | Experimenter name or initials (shorthand for `-m experimenter=NAME`) |
 
 ## Examples
 
@@ -38,7 +45,7 @@ msw run -s mouse001 -t sequence --setup setup_a -ts REWARD_VOLUME_UL=5.0
 msw run -s mouse001 -t probabilistic_switching --task-mode habituation
 
 # Simulate without hardware
-msw run -s _test_subject -t _test_flush_water --simulate
+msw run -s _test_subject -t _test_flush_valves --simulate
 ```
 
 ## Settings priority

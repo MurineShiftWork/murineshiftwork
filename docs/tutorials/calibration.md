@@ -28,7 +28,7 @@ See `docs/setup/SERIAL.md` for per-setup port assignments.
 
 ```bash
 msw run -s _test_subject -t _calibration_liquid_dynamic --setup <setup_name> \
-    --scale-port /dev/ttyACM1
+    --port-scale /dev/ttyACM1
 ```
 
 Follow on-screen prompts: the task opens each valve for a range of durations,
@@ -45,10 +45,10 @@ Enter weights manually when prompted (useful without a connected scale).
 ## Viewing calibration curves
 
 ```bash
-msw calibration --setup <setup_name> --output-dir ./calibration_plots/
+msw calibration plot --setup <setup_name> --out ./calibration_plots/
 ```
 
-Plots are saved as PNG; R² and fit parameters are printed to stdout.
+Plots are saved as PDF (one file per setup, timestamped); R² and fit parameters are printed to stdout.
 
 ## Setup YAML location
 
@@ -59,11 +59,12 @@ Calibration data is written to `<config_dir>/setups/<setup_name>.yaml` under
 calibrations:
   bpod_valve:
     1:
-      fit: exponential
-      a: 0.123
-      b: 4.56
-      r2: 0.998
+      updated: "2026-05-21T10:00:00"
+      points: [[20.0, 0.8], [40.0, 1.6], [60.0, 2.4], [80.0, 3.3]]
 ```
+
+`points` is a list of `[open_time_ms, volume_ul]` pairs collected during the run.
+The exponential fit is computed at runtime from these points — not stored in the YAML.
 
 ## Troubleshooting
 

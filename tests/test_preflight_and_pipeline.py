@@ -56,7 +56,7 @@ def test_list_available_tasks_nonempty():
 
     tasks = list_available_tasks()
     assert len(tasks) >= 5
-    assert "_test_flush_water" in tasks
+    assert "_test_flush_valves" in tasks
     assert "sequence" in tasks
     assert "probabilistic_switching" in tasks
 
@@ -67,7 +67,7 @@ def test_find_task_by_name():
         list_available_tasks,
     )
 
-    assert find_task_by_name("flush") == "_test_flush_water"
+    assert find_task_by_name("flush") == "_test_flush_valves"
     assert (
         find_task_by_name("sequence") in list_available_tasks()
     )  # "sequence" substring also matches _test_ttl_sequences
@@ -77,7 +77,7 @@ def test_find_task_by_name():
 def test_get_task_dir_returns_path():
     from murineshiftwork.cli.evaluate import get_task_dir
 
-    d = get_task_dir("_test_flush_water")
+    d = get_task_dir("_test_flush_valves")
     assert d != ""
     assert Path(d).is_dir()
 
@@ -117,7 +117,7 @@ def _write_setup_yaml(path, setup_name):
 
 
 def test_calibration_files_in_patched_settings(tmp_path):
-    """calibration_file_water injected into settings.task.patched from CLI args."""
+    """calibration_file_liquid injected into settings.task.patched from CLI args."""
     from murineshiftwork.cli.evaluate import evaluate_args
 
     _write_subject_yaml(tmp_path, "subj001")
@@ -128,13 +128,13 @@ def test_calibration_files_in_patched_settings(tmp_path):
     args = dict(
         command="run",
         subject="subj001",
-        task="_test_flush_water",
+        task="_test_flush_valves",
         task_dir="",
         config_dir=str(tmp_path),
         config_file_subjects="subject.settings",
         config_file_task="task.settings",
         config_file_camera="camera.rcc.config",
-        calibration_file_water=str(fake_cal),
+        calibration_file_liquid=str(fake_cal),
         calibration_file_sound="calibration.sound.default.csv",
         calibration_file_stage=str(tmp_path / "stage.yaml"),
         serial_port_bpod="/dev/ttyACM0",
@@ -154,7 +154,7 @@ def test_calibration_files_in_patched_settings(tmp_path):
     )
     result = evaluate_args(args_dict=args)
     patched = result["settings.task.patched"]
-    assert patched.get("calibration_file_water") == str(fake_cal)
+    assert patched.get("calibration_file_liquid") == str(fake_cal)
     assert "serial_port_stage" in patched
 
 
@@ -172,13 +172,13 @@ def test_cli_ts_overrides_calibration_file(tmp_path):
     args = dict(
         command="run",
         subject="subj001",
-        task="_test_flush_water",
+        task="_test_flush_valves",
         task_dir="",
         config_dir=str(tmp_path),
         config_file_subjects="subject.settings",
         config_file_task="task.settings",
         config_file_camera="camera.rcc.config",
-        calibration_file_water=str(fake_cal_default),
+        calibration_file_liquid=str(fake_cal_default),
         calibration_file_sound="calibration.sound.default.csv",
         calibration_file_stage=str(tmp_path / "stage.yaml"),
         serial_port_bpod="/dev/ttyACM0",
@@ -194,11 +194,11 @@ def test_cli_ts_overrides_calibration_file(tmp_path):
         log_level="INFO",
         log_file=str(tmp_path / "test.log"),
         debug=True,
-        task_settings_overrides=[f"calibration_file_water={fake_cal_override}"],
+        task_settings_overrides=[f"calibration_file_liquid={fake_cal_override}"],
     )
     result = evaluate_args(args_dict=args)
     patched = result["settings.task.patched"]
-    assert patched["calibration_file_water"] == str(fake_cal_override)
+    assert patched["calibration_file_liquid"] == str(fake_cal_override)
 
 
 def test_subject_task_overrides_applied(tmp_path):
@@ -208,20 +208,20 @@ def test_subject_task_overrides_applied(tmp_path):
     _write_subject_yaml(
         tmp_path,
         "subj001",
-        task_overrides={"_test_flush_water": {"N_FLUSH_CYCLES": 7}},
+        task_overrides={"_test_flush_valves": {"N_FLUSH_CYCLES": 7}},
     )
     _write_setup_yaml(tmp_path, "setup-test")
 
     args = dict(
         command="run",
         subject="subj001",
-        task="_test_flush_water",
+        task="_test_flush_valves",
         task_dir="",
         config_dir=str(tmp_path),
         config_file_subjects="subject.settings",
         config_file_task="task.settings",
         config_file_camera="camera.rcc.config",
-        calibration_file_water="cal.csv",
+        calibration_file_liquid="cal.csv",
         calibration_file_sound="cal_sound.csv",
         calibration_file_stage="stage.yaml",
         serial_port_bpod="/dev/ttyACM0",
@@ -369,7 +369,7 @@ def test_init_task_uses_importlib():
     """get_task_dir uses importlib, not exec."""
     from murineshiftwork.cli.evaluate import get_task_dir
 
-    d = get_task_dir("_test_flush_water")
+    d = get_task_dir("_test_flush_valves")
     assert Path(d).exists()
     # Must not have injected anything into globals via exec
     assert "ThisTask" not in globals()

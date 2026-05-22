@@ -5,7 +5,7 @@ import time
 import numpy as np
 from tqdm import tqdm
 
-from murineshiftwork.hardware.bpod.water import make_sma_for_drop_of_water
+from murineshiftwork.hardware.bpod.valve import make_sma_for_drop_of_water
 from murineshiftwork.logic.calibration import (
     CalibrationDataWater,
     flag_outlier_points,
@@ -75,11 +75,11 @@ class Task(TaskRunner):
         scale.tare()
         logging.info(f"Scale ready. Post-tare: {scale.read_weight_blocking():.4f} g")
 
-        from murineshiftwork.cli.defaults import DEFAULT_CALIBRATION_FILE_WATER
+        from murineshiftwork.cli.defaults import DEFAULT_CALIBRATION_FILE_LIQUID
 
         calibration = CalibrationDataWater(
             file_path=self.input_kwargs.get(
-                "calibration_file_water", DEFAULT_CALIBRATION_FILE_WATER
+                "calibration_file_liquid", DEFAULT_CALIBRATION_FILE_LIQUID
             )
         )
 
@@ -109,11 +109,13 @@ class Task(TaskRunner):
                 time.sleep(SETTLE_TIME_S)
                 weight_after = scale.read_weight_blocking()
 
-                water_weight_g = round(weight_after - weight_before, PRECISION_DECIMALS)
-                ul_per_drop = round(water_weight_g * 1000 / N_DROPS, 3)
+                liquid_weight_g = round(
+                    weight_after - weight_before, PRECISION_DECIMALS
+                )
+                ul_per_drop = round(liquid_weight_g * 1000 / N_DROPS, 3)
                 logging.info(
                     f"Valve {valve_id} | open={valve_opening_time:.4f}s | "
-                    f"weight={water_weight_g:.4f}g | {ul_per_drop:.3f} µL/drop"
+                    f"weight={liquid_weight_g:.4f}g | {ul_per_drop:.3f} µL/drop"
                 )
 
                 valve_times_measured.append(valve_opening_time)
@@ -124,7 +126,7 @@ class Task(TaskRunner):
                     valve_opening_time=valve_opening_time,
                     n_drops=N_DROPS,
                     inter_pulse_interval=INTER_PULSE_INTERVAL,
-                    water_weight_g=water_weight_g,
+                    liquid_weight_g=liquid_weight_g,
                 )
 
             # --- Per-valve outlier check ---

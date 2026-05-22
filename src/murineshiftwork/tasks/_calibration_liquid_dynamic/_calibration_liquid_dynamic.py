@@ -16,7 +16,7 @@ import numpy as np
 from pybpodapi.exceptions.bpod_error import BpodErrorException
 from scipy.optimize import OptimizeWarning, curve_fit
 
-from murineshiftwork.hardware.bpod.water import make_sma_for_drop_of_water
+from murineshiftwork.hardware.bpod.valve import make_sma_for_drop_of_water
 from murineshiftwork.logic.calibration import (
     CalibrationDataWater,
     _exponential_function,
@@ -251,11 +251,11 @@ class Task(TaskRunner):
         scale.start()
         self._tare_verified(scale, max_retries=2, threshold_g=1.0)
 
-        from murineshiftwork.cli.defaults import DEFAULT_CALIBRATION_FILE_WATER
+        from murineshiftwork.cli.defaults import DEFAULT_CALIBRATION_FILE_LIQUID
 
         calibration = CalibrationDataWater(
             file_path=self.input_kwargs.get(
-                "calibration_file_water", DEFAULT_CALIBRATION_FILE_WATER
+                "calibration_file_liquid", DEFAULT_CALIBRATION_FILE_LIQUID
             )
         )
 
@@ -537,7 +537,7 @@ class Task(TaskRunner):
             valve_opening_time=open_s,
             n_drops=n_pulses,
             inter_pulse_interval=inter_pulse_s,
-            water_weight_g=weight_g,
+            liquid_weight_g=weight_g,
         )
         return ul_per_drop
 

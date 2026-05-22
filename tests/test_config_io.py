@@ -149,13 +149,13 @@ def test_load_subject_config_valid(tmp_path):
     data = {
         "name": "s001_tabfixed_m1099615",
         "project": "sleep_lhb",
-        "task_overrides": {"_test_flush_water": {"VALVE_OPENING_TIME_MS": 70}},
+        "task_overrides": {"_test_flush_valves": {"VALVE_OPENING_TIME_MS": 70}},
     }
     (tmp_path / "subjects" / "s001_tabfixed_m1099615.yaml").write_text(yaml.dump(data))
     cfg = load_subject_config(tmp_path, "s001_tabfixed_m1099615")
     assert cfg is not None
     assert cfg.name == "s001_tabfixed_m1099615"
-    assert cfg.task_overrides["_test_flush_water"]["VALVE_OPENING_TIME_MS"] == 70
+    assert cfg.task_overrides["_test_flush_valves"]["VALVE_OPENING_TIME_MS"] == 70
 
 
 # ---------------------------------------------------------------------------

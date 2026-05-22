@@ -50,7 +50,7 @@ In `task.yaml` (runs only for this task):
 ```yaml
 default:
   HOOKS_PRE_TASK:
-    - murineshiftwork.tasks.sequence_automated.hooks.CheckEquipmentReady
+    - mylab.hooks.CheckEquipmentReady
   HOOKS_POST_TASK: []
 ```
 

@@ -1,0 +1,27 @@
+version: 1
+task: probabilistic_switching_fixedsubjects
+panels:
+  - id: trial_outcomes
+    title: "Trial outcomes & moving average"
+    type: scatter
+    fields:
+      x: trial_index
+      y: choice_side_y        # -1 = left, +1 = right
+      color: outcome_type     # rewarded | unrewarded | punished | stop
+      overlay_rolling: moving_average
+    options:
+      y_range: [-1.5, 1.5]
+      window_trials: 20
+      forced_choice_field: forced_choice
+
+  - id: block_probabilities
+    title: "Block reward probabilities"
+    type: timeseries
+    fields:
+      x: trial_index
+      value: block_probability_left
+      value_secondary: block_probability_right
+    options:
+      y_range: [0, 1]
+      reference_lines: [0.5]
+      labels: ["Left", "Right"]

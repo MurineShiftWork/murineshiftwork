@@ -252,20 +252,19 @@ def run_task(**args_dict):
 
     conductor = None
     if needs_video:
-        from pathlib import Path
+        from murineshiftwork.hardware.camera.client import make_camera_client
 
-        from rpi_camera_ensemble.conductor.conductor import Conductor
-        from rpi_camera_ensemble.config.acquisition import EnsembleAcquisitionConfig
-        from rpi_camera_ensemble.config.conductor import ConductorConfig
-
-        ensemble_cfg_file = args_dict.get("config_file_camera", "")
-        assert Path(ensemble_cfg_file).exists(), (
-            f"Camera config not found: {ensemble_cfg_file!r}. "
-            "Pass --config-file-camera or set record_video: false."
+        conductor = make_camera_client(
+            cameras_config=args_dict.get("cameras_config"),
+            config_file_camera=args_dict.get("config_file_camera", ""),
+            output_dir=args_dict.get("out_path", ""),
         )
-        ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
-        conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path"))
-        conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
+        if conductor is None:
+            raise RuntimeError(
+                "record_video is set but no camera config found. "
+                "Pass --config-file-camera or configure cameras: in setup YAML, "
+                "or set record_video: false."
+            )
         conductor.start()
         conductor.setup_agents()
 

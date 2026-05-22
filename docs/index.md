@@ -8,7 +8,7 @@ Behaviour acquisition framework for head-fixed and freely moving murine experime
 - **TTL barcode synchronisation**: encodes Unix timestamps as a 37-bit pulse train for offline alignment of Bpod, cameras (RCE), and ephys (Open Ephys / Neuropixels)
 - **Setup configs**: per-setup YAML files in a shared git-tracked directory (`msw_configs/`)
 - **Subject configs**: per-subject YAML with per-task parameter overrides
-- **CLI**: `msw run`, `msw action`, `msw calibration`, `msw post`, `msw setup`, `msw subject`, `msw tasks`, `msw init`
+- **CLI**: `msw run`, `msw action`, `msw calibration`, `msw post`, `msw setup`, `msw subject`, `msw tasks`, `msw init`, `msw agent`
 - **Config overlay**: site-specific parameter adjustments in `msw_configs/tasks/<name>/task.yaml`; merged on top of bundled defaults without touching the installed package
 - **Named task modes**: `--task-mode <preset>` switches between `mode:` sections in `task.yaml` (e.g. habituation, deterministic, probe); mode is written to subject YAML and persists across sessions
 - **Pre/post session hooks**: custom Python classes registered in setup or task YAML; run before task init and after session end to integrate databases, Slack, LabWatch, etc.
@@ -23,10 +23,10 @@ msw init /mnt/maindata/msw_configs
 msw subject add -s mouse001
 
 # 3. Run a task
-msw run -t _test_flush_water -s mouse001 --setup setup-1
+msw run -t _test_flush_valves -s mouse001 --setup setup-1
 
 # 4. Override task parameters inline
-msw run -t _test_flush_water -s mouse001 --setup setup-1 \
+msw run -t _test_flush_valves -s mouse001 --setup setup-1 \
     -ts VALVE_OPENING_TIME_MS=60 N_FLUSH_CYCLES=5
 ```
 
@@ -53,8 +53,9 @@ murineshiftwork/
 |---|---|
 | [Getting started](getting_started/quickstart.md) | Installation, new machine, quickstart |
 | [Concepts](concepts/architecture.md) | Architecture, config system, hooks, session files |
+| [Tasks](tasks/sequence.md) | Per-task behavioural paradigm, implementation, and parameter reference |
 | [Tutorials](tutorials/calibration.md) | Calibration, adding setups and subjects |
-| [CLI reference](cli/run.md) | Per-subcommand reference pages |
+| [CLI reference](cli/run.md) | Per-subcommand reference pages (`run`, `action`, `calibration`, `post`, `setup`, `subject`, `tasks`, `agent`, `init`) |
 | [Hardware setup](setup/SERIAL.md) | Serial ports, wiring, cameras, DHCP |
 | [Work plans](work_plans/ROADMAP.md) | Roadmap and design docs |
 

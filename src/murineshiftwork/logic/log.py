@@ -20,7 +20,7 @@ def get_default_log_file_path(path=None):
     return str(_CENTRAL_LOG_DIR)
 
 
-def setup_logging(level=None, log_file=None):
+def setup_logging(level=None, log_file=None, task="", subject="", setup=""):
     if level is None:
         level = "DEBUG"
 
@@ -41,8 +41,10 @@ def setup_logging(level=None, log_file=None):
     else:
         _CENTRAL_LOG_DIR.mkdir(parents=True, exist_ok=True)
         dt = datetime.now().strftime(MSW_DATETIME_FORMAT)
-        central_log_path = _CENTRAL_LOG_DIR / f"msw-{dt}.log"
-        all_logs = sorted(_CENTRAL_LOG_DIR.glob("msw-*.log"))
+        _parts = [p for p in [setup, dt, subject, task] if p]
+        stem = "--".join(_parts)
+        central_log_path = _CENTRAL_LOG_DIR / f"{stem}.log"
+        all_logs = sorted(_CENTRAL_LOG_DIR.glob("*.log"))
         for old in all_logs[:-_MAX_LOG_FILES]:
             try:
                 old.unlink()

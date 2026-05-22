@@ -34,32 +34,67 @@ Lists the named task modes defined in the task's `task.yaml` (e.g. `habituation`
 ### init-configs
 
 ```bash
-msw tasks init-configs [--config-dir <path>] [--force]
+msw tasks init-configs [task_name ...] [--config-dir <path>] [--force]
 ```
 
 Copies bundled `task.yaml` files to `<config_dir>/tasks/<task_name>/task.yaml` for local
-customisation. Does not overwrite existing overlays unless `--force` is given.
+customisation. If no task names are given, all tasks are copied. Does not overwrite
+existing overlays unless `--force` is given.
+
+```bash
+# Copy all tasks
+msw tasks init-configs
+
+# Copy specific tasks
+msw tasks init-configs optotagging sequence --force
+```
 
 ## Available tasks
 
-Use `msw run -t <partial_name>` — names are matched by partial string.
+Use `msw run -t <partial_name>` — names are matched by partial string. Run `msw tasks list` to see the current list with overlay markers.
+
+### Behavioural tasks
 
 | Task name | Description |
 |---|---|
 | `sequence` | Auditory sequence discrimination with level progression |
 | `probabilistic_switching` | Two-armed bandit, free-choice ports |
 | `probabilistic_switching_fixedsubjects` | Two-armed bandit, fixed lick-port assignment per subject |
-| `sequence_automated` | Automated sequence (no bpod UI required) |
 | `airpuff` | Airpuff conditioning |
 | `optotagging` | Optogenetic tagging — multi-protocol loop (laser + TTL) |
-| `_test_flush_water` | Flush water valves (maintenance) |
-| `_test_stage_move` | Manual stage movement test |
+| `exp_trn_spindle` | Spindle-induction training protocol |
+| `homecage_sleep` | Homecage sleep recording |
+| `openfield` | Open-field tracking |
+| `periodic_trigger` | Periodic TTL trigger |
+| `periodic_trigger_with_video` | Periodic TTL trigger with camera recording |
+
+### Calibration tasks
+
+| Task name | Description |
+|---|---|
 | `_calibration_liquid_static` | Valve calibration — static drop count per time point |
 | `_calibration_liquid_dynamic` | Valve calibration — dynamic multi-drop measurement |
+| `_calibration_sound_latency` | Sound latency calibration |
+
+### Test / maintenance tasks
+
+| Task name | Description |
+|---|---|
+| `_test_flush_valves` | Flush water valves (maintenance) |
+| `_test_stage_move` | Manual stage movement test |
+| `_test_bpod_connect` | Minimal Bpod connection test |
+| `_test_minimal_task` | Minimal task smoke test |
+| `_test_video` | Camera/video recording test |
+| `_test_barcode_iti` | TTL barcode + ITI test |
+| `_test_barcode_iti_with_video` | TTL barcode + ITI + video test |
+| `_test_trigger_with_video` | TTL trigger + video test |
+| `_test_ttl_barcodes` | TTL barcode output test |
+| `_test_ttl_outputs` | Generic TTL output test |
 
 ## Named task modes
 
 Modes override specific default parameters. Activate with `--task-mode <mode>`.
+Run `msw tasks modes <task>` to see the current modes for any task.
 
 | Task | Modes |
 |---|---|
@@ -68,6 +103,7 @@ Modes override specific default parameters. Activate with `--task-mode <mode>`.
 | `sequence` | `habituation`, `expert`, `probe` |
 | `airpuff` | `habituation` |
 | `optotagging` | per-protocol settings in `stimulation_protocols` list |
+| `_test_flush_valves` | `fill`, `wash`, `test` |
 
 See [Tutorial: Adding a Subject](../tutorials/adding_subject.md) for how sticky task modes are
 saved per-subject and persist across sessions.

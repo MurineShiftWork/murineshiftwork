@@ -92,11 +92,8 @@ Performance is evaluated over a rolling buffer of `buffer_trials` trials (defaul
 
 | Condition | Action |
 |-----------|--------|
-| Level 1: < `level_1_min_trials` (50) completed | No check yet |
-| Level 1: buffer ≥ 9/10 correct | Advance |
-| Levels 2–13: buffer ≥ `progression_threshold` (0.9) | Advance |
-| Levels 14–49: buffer ≥ `progression_threshold_advanced` (0.8) | Advance |
-| Any level: buffer < `regression_threshold` (0.2) | Regress one level |
+| Any level: buffer full and `perf > progression_threshold` (0.9) | Advance |
+| Any level: buffer full and `perf < regression_threshold` (0.2) | Regress one level |
 | Regression floor | `prevent_regression_below_start = True` prevents going below the level at session start |
 
 The buffer is cleared on every level change.

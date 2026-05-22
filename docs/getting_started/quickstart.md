@@ -10,7 +10,7 @@ Example — probabilistic switching task:
 
 ```bash
 msw run -t probabilistic_switching -s mouse001 --setup setup-1 \
-    --researcher LBR --experiment GPe_cohort3
+    --meta-experimenter LBR -m experiment=GPe_cohort3
 ```
 
 ## Task-settings overrides
@@ -57,20 +57,22 @@ overrides applied on top of the `default:` section.
 ## Listing available tasks
 
 ```bash
-msw run --help
+msw tasks list                   # all tasks (marks [overlay] if config-dir override exists)
+msw tasks list --filter opto     # filter by name fragment
+msw run --help                   # also shows the task list in the epilog
 ```
 
 ## Serial-port resolution
 
 When `--setup setup-1` is passed and `msw_configs/setups/setup-1.yaml` contains a
 `bpod` device with `port_by_path`, MSW resolves the correct `/dev/ttyXXX` automatically.
-The `--serial-port-bpod` flag is only needed on machines without a setup YAML.
+The `-b / --port-bpod` flag is only needed on machines without a setup YAML.
 
-## Sequence automated
+## Inspecting task defaults before running
+
+Before writing a config-dir overlay, check what parameters a task exposes:
 
 ```bash
-msw run -t sequence_automated -s mouse001 --setup setup-1
-
-# Force-start at level 3
-msw run -t sequence_automated -s mouse001 --setup setup-1 -ts start_level=3 reset_level=True
+msw tasks defaults _test_flush_valves   # print bundled task.yaml
+msw tasks modes sequence                # list named mode presets
 ```

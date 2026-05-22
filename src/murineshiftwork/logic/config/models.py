@@ -211,7 +211,17 @@ class Calibrations(BaseModel):
 
 class CameraConfig(BaseModel):
     backend: str = "rce"  # "rce" | "flir_bonsai"
-    config: str = ""  # path to backend-specific config file
+    config: str = ""  # RCE: path to ensemble YAML; flir_bonsai: unused
+    # FLIR/Bonsai-specific (ignored when backend="rce")
+    n_cameras: int = 1
+    fps: int = 60
+    driver: str = "flycap"  # "flycap" | "spinnaker"
+    workflow: str = (
+        ""  # workflow stem; auto-derived as "run-flir-{driver}-{n}cam" if empty
+    )
+    bonsai_exe: str = (
+        ""  # path to Bonsai.exe; falls back to BONSAI_EXE env var if empty
+    )
 
 
 # ---------------------------------------------------------------------------

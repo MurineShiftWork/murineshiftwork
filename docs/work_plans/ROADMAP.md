@@ -19,14 +19,27 @@ Design details live in memory files or separate docs — not here.
 
 ## TODO
 
-- [ ] ControllerSession / setup-agent architecture — see ROADMAP Notes for design sketch
+- [ ] **`hardware/bpod/device.py`** — `BpodDevice(DeviceProtocol)` wrapping `BpodFactory`; wire `HardwareManager` into `execute.py`; see `MASTER_PLAN.md §3`
+- [ ] **Bpod retry — hardware verification** — test fixed retry on device `pci-0000:00:14.0-usb-0:4:1.0 → ttyACM7`; confirm 3-attempt / 2s-sleep resolves first-connect failures
+- [ ] **MSW Monitor — Step 1: server + relay** — `monitor/relay.py` (`TrialRelay` daemon Process), `monitor/server.py` (FastAPI, in-memory SessionState, PlotSpec computation); see `MASTER_PLAN.md §5`
+- [ ] **MSW Monitor — Step 2: TaskProcess wiring** — read `monitor_url` from machine config, start `TrialRelay`, add `put_nowait()` after `save_trial_data()` in `sequence`, `probabilistic_switching_fixedsubjects`, `optotagging`
+- [ ] **MSW Monitor — Step 3: CLI + plotspec** — `msw monitor serve/status/debug` subcommands; `msw plotspec <task>` with `--dry-run`
+- [ ] **MSW Monitor — Step 4: Docker** — `Dockerfile.monitor`, `docker-compose.monitor.yml`, Vue UI wired to monitor endpoints
+- [ ] **MSW Monitor — Step 5: strip `agent/`** — after monitor validated on one rig
 - [ ] `msw_flir_bonsai.timestamps` — finish user's existing unwrap code (FlyCapture 128s cycle), wire into `preprocess_camera_csv`; user has existing implementation to integrate
-- [ ] setup-agent + central server + Vue/TS frontend — see `docs/work_plans/DRAFT_agent_architecture.md`
+- [ ] **msw-openephys integration** (`msw-oe` CLI) — attach an Open Ephys session to a running MSW setup so session start confirms whether data will be written as an ephys child session or standalone. Goal: prevent ephys sessions left open and data ending up in the wrong directory. Operations: `msw-oe attach <setup>`, `msw-oe status`, `msw-oe detach`. Session start dialogue always checks OE status — even when not expected, to catch forgotten sessions. Integration point: MSW already has `is_child_session_to` plumbing (see `session_paths`); OE side uses the existing tool already made. Design sketch: `msw-oe` wraps the OE REST API; `TaskProcess` checks `msw-oe status` before `run_task()` and writes `child_session_dir` into session YAML.
+- [ ] **`docs/tasks/` coverage** — add `calibration_and_test.md`; add task docs for `airpuff`, `optotagging` when those protocols are stable
+- [ ] **post-acquisition pipeline in Python** — replace shell-script invocations in `msw post run` (`run_post_acquisition_tasks.sh`) with pure Python; provision_rpi scripts (`collate_data2.sh`, `upload_to_server.sh`, `h264_to_mp4.sh`) remain in `external/` (off-limits); Python wrapper would call them via subprocess or replicate logic; consider whether `inventory.ini` should live in `msw_configs/` (config dir) rather than alongside the scripts; see `docs/work_plans/PROVISION_RPI_SCRIPTS.md`
 
 ---
 
 ## DONE
 
+- [x] msw-flir-bonsai camera integration — `FlirBonsaiClient`, `RceConductorAdapter`, `make_camera_client()` factory; `CameraConfig` FLIR fields; RCE module-level import bug fixed · 2026-05-22
+- [x] MASTER_PLAN.md — single authoritative design doc, supersedes PLAN_msw_monitor + PLAN_msw_ui_agent_broadcast + AGENT_USAGE_MODEL + PLAN_hardware_manager · 2026-05-22
+- [x] Sequence online plot — outcome dot offsets (±0.1 from perf line), no-response grey x at 0.5, perf-perfect yellow; `poke_xmax_s` param (default 6 s) · 2026-05-22
+- [x] PlotSpec schema — `logic/plot_spec.py` pydantic validator; `sequence/plot_spec.yaml`, `probabilistic_switching_fixedsubjects/plot_spec.yaml`; 17 tests · 2026-05-22
+- [x] `hardware/manager.py` — `DeviceProtocol` + `HardwareManager` context manager · 2026-05-22
 - [x] msw-flir-bonsai package — BonsaiCameraRunner, MultiCameraRunner, timestamp unwrapping, barcode+TTL alignment; 9 tests; Bonsai workflows for FlyCapture/Spinnaker 1-cam/2-cam · 2026-05-18 · cbc3981 (external/)
 - [x] fill docs — cli/tasks.md, concepts/architecture.md stub removed · 2026-05-18 · pending
 - [x] opto task consolidation — 4 tasks → 1 unified `optotagging`; multi-protocol loop, stimulation_defaults, laser_power merged into logic/stimulation.py · 2026-05-18 · d7d3068
@@ -69,18 +82,7 @@ Design details live in memory files or separate docs — not here.
 
 **Machine-local config (`~/.murineshiftwork/msw_machine.yaml`):** This file tells MSW where to find the shared config directory. Priority chain for `config_dir` (highest wins): (1) `--config-dir` CLI arg, (2) `MSW_CONFIG_DIR` env var, (3) `config_dir` key in `~/.murineshiftwork/msw_machine.yaml`, (4) `/mnt/maindata/msw_configs` (historical default). The current live config directory on this machine is `/mnt/maindata/msw_configs` — subjects under `subjects/`, setups under `setups/`. Set a different machine with `msw config set-dir <path>` or edit the YAML directly. Full logic in `src/murineshiftwork/logic/machine_config.py`.
 
-**ControllerSession / setup-agent architecture (design 2026-05-18):**
-Three-layer target: **Web UI** (HTMX + Jinja2, no React build step) ↔ **Central server** (thin FastAPI proxy + registry) ↔ **Setup-agents** (one long-lived FastAPI per rig, port 8765). CLI: `msw run` checks `MSW_AGENT_URL` / probes `localhost:8765` then dispatches `SessionStartRequest` via HTTP; falls back to direct execution if no agent reachable (`--no-agent` flag always bypasses). Setup-agent endpoints: `/hardware/{status,connect,disconnect,action}`, `/session/{status,start,stop,events (WS)}`, `/config/{subjects,tasks,setup}`. **Hardware lifetime**: Bpod stays connected across sessions — inject `bpod=` into `TaskProcess` (same as existing injection pattern); close only on `/hardware/disconnect` or fatal serial error. **Sandboxing**: existing `TaskRunner(Thread)` is sufficient; agent wraps `TaskProcess` in `try/except BaseException` and transitions state to `"error"`. **Discovery**: heartbeat registration (agents POST to `MSW_CENTRAL_URL` every 30 s; entries >90 s old marked offline) — no mDNS. **Auth**: HTTP Basic, `MSW_AGENT_PASSWORD` env var per rig; nginx TLS terminator if exposed beyond LAN. **Session replay**: read `.msw.session.yaml` files from shared data dir after the fact — no DB. **Trial event WS schema**: `{event, rig_name, trial_index, timestamp, reward_count, extra: {}}`. **New modules**: `src/murineshiftwork/agent/` (app.py, hardware_manager.py, session_manager.py, routers/) + `src/murineshiftwork/central/` (app.py, registry.py, proxy.py) + new Pydantic models: `SessionStartRequest`, `SessionStatus`, `TrialEvent`. New parser subcommand: `msw agent {start,stop,status}`. **v1 non-scope**: no DB, no mDNS, no live plots in web UI, no Windows agent, no multi-rig sync.
+**Setup-agent architecture (Stage-1 built, commit `98ed977`):**
+One long-lived FastAPI process per rig. Bpod held open across sessions (inject `bpod=` into `TaskProcess`). Auth: HTTP Basic, `MSW_AGENT_PASSWORD` env var. Endpoints built: `/hardware/{status,reconnect}`, `/session/{active,start,events(WS)}`, `/config/{subjects,setups}`. Session start calls `evaluate_args()` — same config chain as CLI. WebSocket `/session/events` for trial event broadcast. Stage-2 adds: task→agent event wiring, `msw agent` CLI subcommand, heartbeat registration to central server. No DB, no mDNS, no web UI framework decided yet. See `docs/work_plans/PLAN_msw_ui_agent_broadcast.md`.
 
-**`TaskProcess.__del__` hazard:** `__del__` calls `exit_safely()` which does serial I/O.
-At interpreter shutdown module globals may be `None`, making `self.bpod.close_safely()` raise.
-`__exit__` already guarantees cleanup for all `with TaskProcess(...)` usage (every task).
-Fix: remove `__del__` entirely.
-
-**`build_task_settings()` design:** extract the 5-level priority chain from `evaluate_args`
-into a pure function `build_task_settings(task_name, config_dir, setup, subject, task_mode, cli_overrides) → (dict, ExecutionConfig)`.
-`evaluate_args` calls it; agent runner calls it directly without constructing a fake CLI dict.
-
-**ControllerSession (Phase 2):** owns Bpod/Stage/PulsePal handles for the full session lifetime.
-`TaskProcess` receives them via `bpod=` injection (already supported). FastAPI `POST /action`
-dispatches to ControllerSession. `msw agent start --setup <name>` starts it in background.
+**ControllerSession (future):** extend `HardwareManager` to also hold Stage/PulsePal handles. `POST /hardware/action` dispatches hardware actions without stopping the session.

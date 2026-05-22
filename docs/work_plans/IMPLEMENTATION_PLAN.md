@@ -1,354 +1,307 @@
 # MSW Implementation Plan
 
-> Generated 2026-05-18. Based on design docs in `murineshiftwork_suite/design/` and gap analysis
-> against the current monolith at `src/murineshiftwork/`. The agent architecture decided in
-> `DRAFT_agent_architecture.md` is treated as locked; open design questions are listed in §5.
+> **Architecture superseded by `MASTER_PLAN.md` (2026-05-22).** The gap table below remains
+> the authoritative task-level status tracker; for all design decisions see `MASTER_PLAN.md`.
+> Last updated 2026-05-20. Previous design ref: `PLAN_msw_ui_agent_broadcast.md` (archived).
+> (deprecated with TODO comments only, not removed). Open questions in §5.
 
 ---
 
-## 1. Design doc summary
+## 1. Architecture summary
 
-**`system_architecture.md`** — Defines the namespace package split. Each sub-system (`msw-agent`,
-`msw-server`, `msw-tasks-*`, `msw-namespace`, `msw-readers`) is an independently installable
-package contributing to the `murineshiftwork.*` implicit namespace (PEP 420: no `__init__.py`
-at namespace root). The monolith tasks dir already has `__init__.py` removed (done 2026-05-14).
-Not yet split into separate pip packages.
+```
+agents.json  ──────────────────────────────────────────────────
+  [{name, agent_url, cameras:[{name, stream_url}]}, ...]       │
+                                                                │
+external/msw-ui/  (Vue 3 + TS + Plotly.js)                    │
+  Tab bar: setup-1 | setup-2 | npxb | ...                      │
+  Per-tab: SessionHeader | CameraGrid | Metrics | PlotGrid      │
+           OverridePanel (valve/LED/BNC buttons)                │
+    ↕ HTTP poll every 2s / 5s                                   │
+                                                                │
+  Setup-agent  (FastAPI, port from SetupConfig.agent_port)     │
+    /hardware/status|reconnect|action                           │
+    /session/status|start|stop|plot-spec|plot                   │
+    /config/subjects|tasks|task-modes/{task}|setup             │
+    SessionManager: trial_buffer (deque), drain Thread          │
+      ↑ queue.Queue.put_nowait() — fire-and-forget             │
+    TaskProcess → TaskRunner(Thread)                            │
+      TaskRunner.run() → Bpod state machine                    │
+```
 
-**`agent_design.md`** — The per-rig `MSWAgent` runs three child processes: `TaskProcess`,
-`APIProcess` (FastAPI), `LoggerProcess`. All communicate via shared `mp.Queue`s carrying typed
-dataclasses (`LogMessage`, `DataMessage`, `CommandMessage`). A prototype exists in
-`backup-msw-repos/murineshiftwork/msw/agent/`. The decided architecture (see
-`DRAFT_agent_architecture.md`) replaces the multiprocess design with a single FastAPI process
-per rig (`murineshiftwork.agent`), wrapping the existing `TaskRunner(Thread)` model.
-
-**`api_reference.md`** — Full HTTP surface for both the setup-agent (port 8765) and the central
-server. Agent endpoints: `/hardware/*`, `/session/*`, `/config/*`, `/session/events` (WebSocket).
-Server endpoints: `/registry/*`, `/rigs/{rig}/*` (proxy). None of these exist yet.
-
-**`bpod_override_api.md`** — `BpodOverrideAPI` class in
-`murineshiftwork/tasks/bpod/override.py` for firmware-level valve/LED/BNC control. Phase 1
-partial equivalent (`BpodActionDriver` in `hardware/bpod/actions.py`) exists for CLI use only.
-Full interactive-mode integration (inside a running session, via `handle_interactive_command`)
-is unimplemented.
-
-**`camera_acquisition.md`** — Defines `CameraClient` protocol (`start_recording`,
-`stop_recording`, `is_recording`) that both `FlirBonsaiClient` and `RceConductorClient` must
-satisfy. `BonsaiCameraRunner` and `MultiCameraRunner` exist in `external/msw-flir-bonsai/`.
-`FlirBonsaiClient` (the `CameraClient`-compatible wrapper) is not implemented. The `SetupConfig`
-`cameras` block with discriminated `RceCameraConfig`/`FlirBonsaiCameraConfig` union is not yet
-discriminated — `CameraConfig` in `logic/config/models.py` is a minimal flat model.
-
-**`task_design.md`** — `BaseTask` ABC with `start/step/stop/pause/resume/cleanup/is_completed/
-handle_interactive_command/validate_params/get_parameter_schema`. Current tasks extend
-`TaskRunner(Thread)` with a `run()` loop rather than `step()`. No `BaseTask` class or
-`@register_task` decorator exists. Task discovery is by filesystem path convention
-(`murineshiftwork.tasks.{name}.{name}.Task`), not entry points.
-
-**`DECISIONS.md`** — Items still open: OE child session path handoff (Option A: read
-`~/.cache/oe-remote/last_session` not implemented), session file schema doc not written,
-readers/io split decided but not done, `TrainingScheduler` pattern agreed but not specified,
-`SimulatedAnimal` mechanism verified but not implemented, interactive keymap YAML schema not
-formalised, sound/XONAR sharing unresolved, timestamp precision rounding not done.
-
-**`implementation_status.md`** — All suite packages except `one-axis-stage` and
-`msw-flir-bonsai` (partial) are still templates. The priority phase ordering (namespace →
-agent → tasks → server → interface → camera) is the baseline, now updated by this plan.
-
-**`migration_and_current_package.md`** and **`package_migration_plan.md`** — Authoritative
-migration path. Phase 0 (rename `murine_shift_work` → `murineshiftwork`, Qt to optional) is
-done. Phase 1 (namespace foundation) is partially done: `SetupConfig`/`SubjectConfig`/
-`ExecutionConfig` models and `port_by_path` are implemented. Remaining: extract into standalone
-`msw-namespace` pip package, implement task entry-point registry. PyQt6/pyqtgraph remain in
-install deps (tasks still import `online_plotting.py`). Meta-package extras groups not written.
+No central server or proxy. The CLI remains the primary interface; the web UI is a
+per-machine monitoring layer that cannot block or affect task execution.
 
 ---
 
 ## 2. Gap analysis table
 
-| Area | Designed | Implemented | Gap |
-|---|---|---|---|
-| **Setup-agent** | `MSWAgent`, `HardwareManager`, `SessionManager`, FastAPI on port 8765, hardware lifetime across sessions | Nothing — no `agent/` dir in repo | Full build required: `agent/app.py`, `hardware_manager.py`, `session_manager.py`, `routers/` (hardware, session, config) |
-| **Central server** | Thin FastAPI proxy + heartbeat registry, WS multiplexer, session history from YAML scan | Nothing — no `central/` dir | Full build required: `central/app.py`, `registry.py`, `proxy.py` |
-| **Vue 3 / TS frontend** | Rig cards, session control, live trial counter via WS, HTTP Basic auth | Nothing | Full build: Vite project in `central/frontend/`, Vue components, Pinia store, WS composable |
-| **CLI: agent dispatch** | `msw run` probes agent → `POST /session/start`; `msw agent {start,stop,status}` subcommand | `msw run` does direct `TaskProcess` only; no agent subcommand | Add `_find_agent()` + `_dispatch_to_agent()` to `execute.py`; add `msw agent` to `parser.py` |
-| **Camera: CameraClient protocol** | `CameraClient` protocol, `FlirBonsaiClient`, `RceConductorClient`, `make_camera_client()` factory, `FlirBonsaiCameraConfig` discriminated | `BonsaiCameraRunner`/`MultiCameraRunner` exist in `external/msw-flir-bonsai/`. No `CameraClient` wrapper, no `make_camera_client`, no discriminated config union | Implement `FlirBonsaiClient` in `external/msw-flir-bonsai/msw_flir_bonsai/client.py`, `RceConductorClient` adapter, discriminated `CameraConfig` in `models.py`, factory function |
-| **Camera: agent integration** | `TaskProcess._initialize_hardware()` calls `make_camera_client()`, start/stop tied to session lifecycle | No camera lifecycle integration in `TaskProcess` | Wire `make_camera_client()` call into `TaskProcess.__init__` or session hooks |
-| **Barcode/TTL alignment** | `alignment.py` in readers layer; `barcode.py` mixin for tasks; `barcode_value`/`barcode_wall_time` in JSONL | `logic/barcode.py` exists, all tasks with barcodes verified; `readers/alignment.py` complete | Suite mixin class (`BarcodeMixin`) not formalised; alignment belongs in `msw-readers` (not yet extracted) |
-| **Camera timestamps** | `msw_flir_bonsai.timestamps`: `unwrap_cyclic`, `preprocess_camera_csv`; FlyCapture 128s unwrap | `timestamps.py` fully implemented in `external/msw-flir-bonsai/`. `unwrap_cyclic`, `preprocess_camera_csv`, `detect_dropped_frames` done | FlyCapture-specific unwrap in `preprocess_camera_csv` is generic (calls `unwrap_cyclic` with 128s period). User has existing FlyCapture code to verify / integrate — not yet cross-checked against real hardware output |
-| **Task runner isolation** | `BaseTask` ABC with `step()` loop; `TaskRunner(Thread)` wraps it; `is_completed()` drives session end | `TaskRunner(Thread)` base exists. Tasks implement `run()` loop, not `step()`. No `BaseTask`, no `is_completed()`, no `handle_interactive_command()` | Implement `BaseTask` ABC; refactor tasks to `step()` pattern (or keep `run()` and document as v1 bridge) |
-| **Hardware controllers** | `BpodOverrideAPI` with `open_valve`, `close_valve`, `pulse_valve`, `reward`, `set_port_light`, `set_bnc`; full interactive integration | `BpodActionDriver` (`valve_pulse`, `valve_flush`) for Phase 1 CLI; `_write_lock` in `BpodFactory` for Phase 2 injection. No full `BpodOverrideAPI`, no LED/BNC control, no `handle_interactive_command` wiring | Implement `BpodOverrideAPI` in `hardware/bpod/override.py`; wire into task interactive mode |
-| **Config system** | `SetupConfig`, `SubjectConfig`, `ExecutionConfig` with Pydantic; `port_by_path`; calibration write-back; `valve_ms_for_ul()` / `valve_s_for_ul()` | All three models implemented in `logic/config/models.py`; `port_by_path` resolves; calibration read (exponential fit) done; write-back not yet wired from calibration task | Calibration write-back from `_calibration_liquid_*` tasks not implemented; discriminated `CameraConfig` union not yet in models |
-| **CLI** | `msw run`, `msw agent`, `msw setup`, `msw subject`, `msw tasks`, `msw action`, `msw calibration`, `msw post`, `msw init` | All except `msw agent` implemented | Add `msw agent {start,stop,status}` subcommand |
-| **Session files** | `.msw.session.yaml` (format v2), JSONL data, `barcode_value`/`barcode_wall_time`; session file schema doc | `.msw.session.yaml` v2 implemented; JSONL implemented; session file schema doc (`session_file_schema.md`) not written | Write schema doc (DECISIONS item 5) |
-| **Subject/setup config** | YAML per subject, YAML per setup, `task_overrides` sticky mode | Fully implemented including sticky task_mode writeback | Nothing to add here |
-| **Reader library** | `msw-readers` standalone pkg: `alignment.py`, `validate.py`, `session.py`, `namespace.py` | All four exist in `src/murineshiftwork/readers/` in the monolith | Not yet extracted as a standalone pip package |
-| **Namespace packages** | Implicit namespace packages, no `__init__.py` at `murineshiftwork/` root | `murineshiftwork/__init__.py` removed (671ac4d). `tasks/__init__.py` removed. No `__init__.py` at `murineshiftwork/tasks/` level | Top-level namespace ready; task entry-point registry not implemented; packages not split into separate repos yet |
-| **Test coverage** | `SimulatedAnimal` via pybpodapi socketin; `MockBpod` injection; unit tests per package | `SimBpod` exists for hardware-free testing; `--simulate` flag works. No `SimulatedAnimal`. Hook tests (34), sequence writeback tests, reader tests exist | `SimulatedAnimal` class not implemented; agent tests not written; no integration test for agent dispatch |
-| **OE integration** | `msw-open-ephys` package; Option A (read `~/.cache/oe-remote/last_session`) as immediate step | `msw_open_ephys/` in `external/`; integration with main workflow incomplete | Option A not implemented in `cli/evaluate.py` |
-| **PyQt removal** | Replace `online_plotting.py` with browser polling; move Qt to optional extras | `QThread` replaced by `Thread` (54e855c). `online_plotting.py` still imported by some tasks; PyQt6 still in `install_requires` | Move PyQt6/pyqtgraph to `[extras_require] qt` in `setup.cfg`; tasks that import `online_plotting` must not in the agent path |
+> Status as of 2026-05-20.
+
+| Area | Status | Remaining gap |
+|---|---|---|
+| **Setup-agent core** | **DONE** — `agent/app.py`, `hardware_manager.py`, `session_manager.py`, `models.py`, `routers/` committed 98ed977. HTTP Basic auth via `MSW_AGENT_PASSWORD`. `msw agent start` works. | `POST /hardware/action` not wired to `BpodOverrideAPI`. `GET /config/tasks` and `/config/task-modes/{task}` not implemented. `msw agent stop/status` CLI subcommands missing. Trial event queue not injected into `TaskProcess`; `SessionManager` drain thread not started; `/session/status` returns static state only (no live counters). Agent tests not written. |
+| **CLI: agent dispatch** | **NOT STARTED** | `_find_agent()` and `_dispatch_to_agent()` not in `execute.py`. `--no-agent` flag not on `msw run`. `msw run` still routes directly to `TaskProcess` only. |
+| **Event queue bridge** | **NOT STARTED** | `TaskProcess.__init__` does not accept `event_queue` param. No tasks call `put_nowait()` after trial end. `SessionManager._drain_loop` and `_trial_buffer` not implemented. `/session/status` does not return `trial_count`, `reward_count`, `elapsed_s`. |
+| **Incremental plot API** | **NOT STARTED** | No `plot:` block in any `task.yaml`. `agent/plot.py` not written. `/session/plot-spec` and `/session/plot?since_trial=N` endpoints not implemented. |
+| **`msw-ui` Vue SPA** | **Scaffold done** — `external/msw-ui/` exists with Vite project, components, store, composables, Docker. | Not integrated against a running agent. `useAgentPolling.ts` and `stores/session.ts` still have drafted-but-unreviewed `GET /sessions` calls that must be removed (agent serves no history). Session history wiring (Option A: localStorage ring-buffer) not done. |
+| **`POST /hardware/action`** | **NOT STARTED** | Route not in `agent/routers/hardware.py`. `BpodOverrideAPI` class is ready in `hardware/bpod/override.py`. |
+| **Session history (Option A)** | **NOT STARTED** | `stores/session.ts` does not write history entry on `running→idle` transition. `SessionHeader` dropdown and `SessionHistory` table not wired to localStorage store. |
+| **BpodOverrideAPI class** | **DONE** — `hardware/bpod/override.py`: `open_valve`, `close_valve`, `pulse_valve`, `close_all_valves`, `set_port_light`, `set_bnc`, `reward`. Uses `_write_lock`. | Nothing (class complete; needs wiring via `/hardware/action` endpoint). |
+| **Optotagging unified config** | **DONE** — per-protocol `stimulation_defaults` + `stimulation` dict, `n_trials`/`iti`/`record_video`/`laser_power`, per-protocol video file, `deep_merge`. | Nothing. |
+| **Sequence task** | **DONE** — dual scoring, no-response trials, regression fix, level-1 gate removed, online plot overhaul (a61dd65, a208732). | Nothing. |
+| **Config overlay system** | **DONE** — `deep_merge`, config_dir overlay (steps 1–6), sticky `task_mode` writeback, sequence `start_level` writeback. | Nothing. |
+| **Blockout timing log** | **Partial** — done in `sequence`, `probabilistic_switching`, `optotagging`. | Pending in: `airpuff`, `probabilistic_switching_fixedsubjects`, `sequence_automated`, `homecage_sleep`, `openfield`, `periodic_trigger`. Consider `log_trial_timing()` helper in `TaskRunner` to standardise format. |
+| **Barcode/TTL** | **Done in code** — all tasks implemented; `logic/barcode.py` → `ttl_barcoder`; `readers/alignment.py` complete. | Hardware verification of optotagging and airpuff TTL barcodes still pending. Alignment script for `sequence_automated` (piecewise per-trial TTL edges) not written. |
+| **Camera: CameraClient + FlirBonsaiClient** | **Partial** — `BonsaiCameraRunner`/`MultiCameraRunner` and `timestamps.py` in `external/msw-flir-bonsai/`. | `FlirBonsaiClient` not written. `make_camera_client()` factory not written. Discriminated `CameraConfig` union not in `models.py`. |
+| **CLI** | **Mostly done** — `msw run`, `msw agent start`, `msw setup` (incl. rename), `msw subject`, `msw tasks`, `msw action`, `msw calibration`, `msw post`, `msw init`. | `msw agent stop/status` missing. `--no-agent` not on `msw run`. `msw ui` subcommand does not exist. |
+| **Session files** | **Done** — `.msw.session.yaml` v2, JSONL, `barcode_value`/`barcode_wall_time`. | Session file schema doc (`session_file_schema.md`) not written. |
+| **PyQt `online_plotting`** | **Stays** — PyQt plots continue running unchanged for now. | Add `# TODO(msw-ui): remove after msw-ui validated in production` comment to each `tasks/*/online_plotting.py`. No code removal until Stage 6 validated. |
+| **OE integration** | **Partial** — `msw_open_ephys/` scaffolded. | Option A (`~/.cache/oe-remote/last_session` in `cli/evaluate.py`) not implemented. ~20-line change, no blockers. |
+| **Calibration write-back** | **Not done** | `_calibration_liquid_*` tasks do not write back to setup YAML. `save_valve_calibration()` helper not written. No blockers. |
+| **Reader library** | **In monolith** | Not yet extracted as `msw-readers` pip package. |
 
 ---
 
-## 3. Combined implementation roadmap
+## 3. Implementation roadmap
 
-### Stage 1 — Setup-agent core (2–3 weeks)
+> Stages follow `PLAN_msw_ui_agent_broadcast.md` §12 ordering.
 
-Goal: `msw agent start --setup <name>` runs a FastAPI process on port 8765 that accepts
-`SessionStartRequest` and drives existing `TaskProcess`.
+### Agent sprint pre-work ✅ DONE
 
-**New files:**
-- `src/murineshiftwork/agent/app.py` — FastAPI lifespan, uvicorn entrypoint
-- `src/murineshiftwork/agent/hardware_manager.py` — `HardwareManager`: holds `BpodFactory`
-  across sessions; `connect(setup_config)`, `disconnect()`, `action(ActionRequest)`;
-  exposes `bpod` property for injection into `TaskProcess`
-- `src/murineshiftwork/agent/session_manager.py` — `SessionManager`: wraps `TaskProcess`,
-  owns `TrialEvent` queue, manages state machine `idle → running → stopping → idle`
-- `src/murineshiftwork/agent/routers/hardware.py` — `GET /hardware/status`,
-  `POST /hardware/connect`, `POST /hardware/disconnect`, `POST /hardware/action`
-- `src/murineshiftwork/agent/routers/session.py` — `GET /session/status`,
-  `POST /session/start`, `POST /session/stop`, `WebSocket /session/events`
-- `src/murineshiftwork/agent/routers/config.py` — `GET /config/subjects`,
-  `GET /config/tasks`, `GET /config/setup`
-
-**Modified files:**
-- `src/murineshiftwork/logic/config/models.py` — add `SessionStartRequest`, `SessionStatus`,
-  `TrialEvent` (already designed in `DRAFT_agent_architecture.md`)
-- `src/murineshiftwork/logic/task_process.py` — ensure `bpod=` injection path is clean;
-  add `TrialEvent` emission hook point after each trial (call a registered callback)
-- `src/murineshiftwork/cli/parser.py` — add `msw agent {start,stop,status}` subcommand
-- `src/murineshiftwork/cli/execute.py` — add `run_agent()` dispatcher
-
-**Tests:** mock `HardwareManager` (inject `SimBpod`), test state transitions idle→running→idle
-and idle→running→error; test `SessionStartRequest` serialisation round-trip.
+- [x] `BpodOverrideAPI` (`hardware/bpod/override.py`)
+- [x] Blockout timing log: sequence, probabilistic_switching, optotagging
+- [x] Vue UI scaffold (`external/msw-ui/`)
+- [x] Agent core: `agent/` with hardware_manager, session_manager, routers, HTTP Basic auth
 
 ---
 
-### Stage 2 — CLI dispatch to agent (1 week)
+### Agent Stage 1 — Read-only endpoints ✅ DONE (98ed977)
 
-Goal: `msw run` probes `localhost:8765` (or `MSW_AGENT_URL`) and dispatches via HTTP if
-reachable; falls back to direct execution; `--no-agent` always bypasses.
+`/hardware/status|reconnect`, `/session/status` (idle only), `/config/subjects|setups`,
+`msw agent start` CLI subcommand. HTTP Basic auth wired.
 
-**Modified files:**
-- `src/murineshiftwork/cli/execute.py` — add `_find_agent(args_dict) -> str | None` and
-  `_dispatch_to_agent(agent_url, args_dict)` (builds `SessionStartRequest` from `args_dict`,
-  `POST /session/start`, polls `GET /session/status` until idle/error)
-- `src/murineshiftwork/cli/parser.py` — add `--no-agent` flag to `msw run`
-
-**Tests:** integration test with in-process FastAPI `TestClient` + `SimBpod`.
-
----
-
-### Stage 3 — Central server + heartbeat registry (1–2 weeks)
-
-Goal: `msw central start` runs a thin proxy + registry on a configurable port. Agents
-register and heartbeat; web UI and CLI can address rigs by name.
-
-**New files:**
-- `src/murineshiftwork/central/app.py` — FastAPI, static file serving from `frontend/dist/`
-- `src/murineshiftwork/central/registry.py` — `RigRegistry`: dict of `RigEntry(rig_name,
-  agent_url, setup_name, last_seen)`, `register()`, `heartbeat()`, `get_online_rigs()` (>90s
-  → offline), thread-safe with `asyncio.Lock`
-- `src/murineshiftwork/central/proxy.py` — HTTP forward (`httpx.AsyncClient`) and WebSocket
-  multiplexing for `/rigs/{rig}/session/events`; injects `rig_name` into `TrialEvent` stream
-- Add `POST /registry/register`, `POST /registry/heartbeat`, `GET /registry/rigs`,
-  `GET/POST /rigs/{rig}/session/*`, `GET /rigs/{rig}/sessions` (YAML scan)
-
-**Modified files:**
-- `src/murineshiftwork/agent/app.py` — add heartbeat task (POST to `MSW_CENTRAL_URL` every 30s)
-- `src/murineshiftwork/cli/parser.py` — add `msw central {start,stop}` subcommand
-
-**Tests:** in-memory registry expiry, proxy forwarding with mocked agent.
+**Remaining loose ends (do with Stage 2):**
+- `GET /config/tasks` — scan task dirs, return `list[str]`
+- `GET /config/task-modes/{task}` — load `task.yaml`, return mode keys
+- `GET /config/setup` — serialise `SetupConfig`
+- `msw agent stop` and `msw agent status` CLI subcommands
+- `agent_port: int = 8765` field on `SetupConfig`
 
 ---
 
-### Stage 4 — Vue 3 / TypeScript frontend (2–3 weeks)
+### Agent Stage 2 — Event queue bridge + live counters (next)
 
-Goal: browser UI with rig cards, session control, live trial counter. Served as static build.
+Goal: tasks emit per-trial dicts non-blocking; `/session/status` returns live `trial_count`,
+`reward_count`, `elapsed_s`.
 
-**New directory:** `src/murineshiftwork/central/frontend/` (Vite + Vue 3 + TypeScript project)
+**`TaskProcess`** (`logic/task_process.py`):
+- Add `event_queue: queue.Queue | None = None` to `__init__` (passed through `**kwargs` —
+  no signature break for existing callers)
+- Expose as `self._event_queue`
 
-**Components:**
-- `App.vue` — root, HTTP Basic auth gate (stores credentials in `localStorage`)
-- `RigCard.vue` — per-rig card: setup name, state badge, subject/task labels, trial/reward
-  counts, elapsed time; Start button (opens `SessionStartModal`), Stop button
-- `SessionStartModal.vue` — subject picker (from `GET /rigs/{rig}/config/subjects`), task
-  picker, mode dropdown, Start action
-- `useTrialEvents(rigName)` composable — opens WS to `/rigs/{rig}/session/events`, updates
-  Pinia store on each `TrialEvent`
-- `store/rigs.ts` — Pinia store: `rigs: Record<string, RigState>`, updated by WS events
+**Tasks** — one line after `save_trial_data()` in each main task loop:
+```python
+if self._event_queue is not None:
+    try:
+        self._event_queue.put_nowait({
+            "trial_index": ..., "correct": ...,
+            "reward_delivered": ..., "reward_volume_ul": ...,
+            "timestamp": time.monotonic(),
+        })
+    except queue.Full:
+        pass
+```
+Priority tasks: `sequence`, `probabilistic_switching_fixedsubjects`, `optotagging`.
 
-**Build integration:**
-- `vite.config.ts` — builds to `../dist/`
-- `central/app.py` — `app.mount("/", StaticFiles(directory="central/dist"))`
+**`SessionManager`** (`agent/session_manager.py`):
+- Add `_event_queue: queue.Queue(maxsize=500)`
+- Add `_trial_buffer: deque(maxlen=1000)`, `_counters`, `_lock: threading.Lock`
+- Add `_drain_loop` daemon thread started at `__init__`
+- Pass `event_queue` to `TaskProcess` at session start
+- Update `/session/status` response to include live counters
 
-**Tests:** Vitest unit tests for composable and store; no E2E in v1.
+**CLI dispatch** (do alongside Stage 2):
+- `execute.py`: `_find_agent()` + `_dispatch_to_agent()` (polls `/session/status` until idle)
+- `parser.py`: `--no-agent` flag on `msw run`; `stop`/`status` subcommands on `msw agent`
 
----
-
-### Stage 5 — Camera integration (1–2 weeks)
-
-Goal: `SetupConfig.cameras` drives camera start/stop around each session. Both `flir_bonsai`
-and `rce` backends satisfy the same `CameraClient` protocol.
-
-**New files:**
-- `external/msw-flir-bonsai/msw_flir_bonsai/client.py` — `FlirBonsaiClient` implementing:
-  `setup_agents()` (launch `BonsaiCameraRunner` or `MultiCameraRunner` subprocess),
-  `start_recording(session_path, session_name)`, `stop_recording()`, `is_recording()`
-- `src/murineshiftwork/logic/camera.py` — `CameraClient` `Protocol` definition,
-  `make_camera_client(camera_cfg, data_dir) -> CameraClient | None` factory,
-  `RceConductorClient` adapter
-
-**Modified files:**
-- `src/murineshiftwork/logic/config/models.py` — replace flat `CameraConfig` with
-  discriminated union `RceCameraConfig | FlirBonsaiCameraConfig` (using `discriminator="backend"`)
-- `src/murineshiftwork/agent/session_manager.py` — call `make_camera_client()` in session
-  start; `camera_client.start_recording()` before first trial, `stop_recording()` after cleanup
-- `src/murineshiftwork/logic/task_process.py` — (v1 bridge) accept `camera_client=` injection
-  for direct-execution path; call start/stop in `__init__` / `__exit__`
-
-**Timestamp integration:** `msw_flir_bonsai.timestamps.preprocess_camera_csv` is implemented.
-User has existing FlyCapture 128s unwrap code — verify against real hardware CSV output before
-marking complete. No code change required unless the reference output differs from
-`unwrap_cyclic(values, period=128.0)`.
+**Tests:** mock `HardwareManager` with `SimBpod`; test idle→running→idle; test drain loop
+increments counters; integration test via FastAPI `TestClient`.
 
 ---
 
-### Stage 6 — BpodOverrideAPI + interactive mode (1 week)
+### Agent Stage 3 — Incremental plot API
 
-Goal: during a running session, interactive commands (from CLI or web UI) reach the task and
-trigger firmware-level valve/LED/BNC actions.
+Goal: Vue PlotGrid polls `/session/plot?since_trial=N` and appends to Plotly traces.
 
-**New files:**
-- `src/murineshiftwork/hardware/bpod/override.py` — `BpodOverrideAPI`: `open_valve(port)`,
-  `close_valve(port)`, `pulse_valve(port, duration_ms)`, `pulse_valve_async(...)`,
-  `close_all_valves()`, `set_port_light(port, pwm)`, `set_bnc(channel, value)`,
-  `reward(port, duration_ms, blocking=False)` — uses `_write_lock` from `BpodFactory`
+**`task.yaml` additions** (sequence first, others optional):
+```yaml
+plot:
+  panels:
+    - title: "Performance"
+      type: rolling_mean
+      field: correct
+      window: 20
+    - title: "Reward total"
+      type: cumulative_sum
+      field: reward_volume_ul
+    - title: "Response latency"
+      type: histogram
+      field: response_latency_ms
+      bins: 40
+```
 
-**Modified files:**
-- `src/murineshiftwork/agent/routers/session.py` — add
-  `POST /session/interactive/command` endpoint dispatching to `SessionManager`
-- `src/murineshiftwork/agent/session_manager.py` — forward interactive commands to task's
-  `handle_interactive_command()` method (if implemented) via thread-safe call
-- Tasks (`sequence`, `probabilistic_switching_fixedsubjects`, `optotagging`) — implement
-  `handle_interactive_command(command, params)` using `BpodOverrideAPI`
+**New file:** `agent/plot.py` — `PlotSpec` loader + panel computation
+(`rolling_mean`, `cumulative_sum`, `timeseries`, `histogram`, `scatter`). ~150 lines.
+Reads from `trial_buffer` copy — no file I/O, no task thread contact.
 
-**Keymap:** YAML `interactive_keymap:` in `task.yaml` (spec from DECISIONS item 11); parsed
-in `build_task_settings()` and surfaced in `SessionStatus` for the web UI to display.
-
----
-
-### Stage 7 — Readers extraction + session schema doc (1 week)
-
-**New doc:** `docs/session_file_schema.md` (DECISIONS item 5) — JSONL format, directory layout,
-required columns, `barcode_value`/`barcode_wall_time` contract, `trial_type` values.
-
-**Package extraction:** `msw-readers` pip package containing `src/murineshiftwork/readers/`
-(`alignment.py`, `validate.py`, `session.py`, `namespace.py`, `files.py`). Heavy deps (pandas,
-scipy, matplotlib) declared only here, not in acquisition extras.
+**New endpoints** in `routers/session.py`:
+- `GET /session/plot-spec` → parsed `PlotSpec` or `{panels: []}` when idle
+- `GET /session/plot?since_trial=N` → `PlotUpdate` with `x_append`/`y_append` per panel
 
 ---
 
-### Stage 8 — Namespace split + meta-package (2–4 weeks, parallel to other work)
+### Agent Stage 4 — Hardware override endpoint
 
-Goal: individual pip packages for `msw-namespace`, `msw-logic`, `msw-tasks-sequence`,
-`msw-tasks-private`, `msw-agent`, `msw-server`, `msw-readers` with extras groups on the
-`murineshiftwork` meta-package (see §4).
+Goal: `OverridePanel` in Vue UI sends valve/LED/BNC commands via HTTP.
 
-This stage has no feature additions; it is pure packaging work. Blocked on all prior stages
-being stable enough to pin versions.
+**Modified:** `agent/routers/hardware.py` — add `POST /hardware/action`:
+- Deserialise `ActionRequest`
+- Instantiate `BpodOverrideAPI(hw.bpod)`
+- Dispatch: `open_valve`, `close_valve`, `pulse_valve`, `set_port_light`, `set_bnc`, `reward`
+- Return 409 if bpod not connected; uses existing `_write_lock`
+
+---
+
+### Agent Stage 5 — Session history (Option A)
+
+Goal: UI shows recent sessions without any backend history endpoint.
+
+- `stores/session.ts`: write localStorage entry (`msw_session_history_<name>`) on
+  `running → idle` status transition; ring-buffer of 20 entries
+- `SessionHeader` dropdown and `SessionHistory` table read from localStorage store
+- Remove any `GET /sessions` or `GET /sessions/{id}` calls from `useAgentPolling.ts`
+  and `stores/session.ts` (agent serves no history)
+
+Option B (filesystem session-index service) deferred.
+
+---
+
+### Agent Stage 6 — PyQt deprecation markers
+
+Add to each `tasks/*/online_plotting.py`:
+```python
+# TODO(msw-ui): remove after msw-ui online plotting validated in production.
+#   Replaced by GET /session/plot (PlotSpec in task.yaml).
+```
+No code removed. PyQt plots continue running.
+
+---
+
+### Later — msw-ui integration + CLI wiring
+
+- `msw ui` CLI subcommand: open browser to `external/msw-ui/index.html` (or serve via
+  simple HTTP server from the Vue dist). Load `agents.json` from `config_dir`.
+- When Vue UI is validated in production and all tasks have `plot:` blocks, remove PyQt
+  `online_plotting.py` files one task at a time.
+
+---
+
+### Camera integration (after agent sprint stable)
+
+- `FlirBonsaiClient` (`CameraClient` wrapper) in `external/msw-flir-bonsai/`
+- `make_camera_client()` factory + discriminated `CameraConfig` union
+- Wire camera lifecycle into `SessionManager`
+
+---
+
+### Namespace split + meta-package (last, blocked on all above stable)
+
+Pure packaging work. Extract `msw-namespace`, `msw-logic`, `msw-agent`, `msw-readers` as
+standalone pip packages with extras groups on the `murineshiftwork` meta-package.
 
 ---
 
 ## 4. Package split plan
 
-| pip name | Python namespace | Status | Notes |
-|---|---|---|---|
-| `murineshiftwork` (meta) | `murineshiftwork` | **Monolith** — not yet split | Namespace root `__init__.py` removed; tasks `__init__.py` removed; ready for PEP 420 split |
-| `msw-namespace` | `murineshiftwork.namespace` | **Implemented in monolith** | `namespace/paths.py`, `namespace/spec.py`, namespace YAML specs exist; extract as standalone when Stage 8 begins |
-| `msw-logic` | `murineshiftwork.logic` + `.hardware` | **Implemented in monolith** | `SetupConfig`, `SubjectConfig`, `ExecutionConfig`, `BpodFactory`, `TaskProcess`, hooks, barcode, calibration; extract with `msw-namespace` as dep |
-| `msw-agent` | `murineshiftwork.agent` | **Not started** | Stage 1 of this plan |
-| `msw-server` / `msw-central` | `murineshiftwork.central` | **Not started** | Stage 3 of this plan (note: decided name is `central` not `server`) |
-| `msw-interface` | Vue 3 + TS static build | **Not started** | Stage 4 of this plan |
-| `msw-tasks-core` | `murineshiftwork.tasks` (registry + BaseTask) | **Not started as separate package** | `TaskRunner` base exists in monolith; `BaseTask` ABC and entry-point registry not yet written |
-| `msw-tasks-sequence` | `murineshiftwork.tasks.sequence` | **In monolith** — `tasks/sequence/` | Must not import PyQt; no `online_plotting` import in agent path |
-| `msw-tasks-private` | `murineshiftwork.tasks.*` (all others) | **In monolith** | All tasks exist in monolith; `optotagging` consolidated 2026-05-18 |
-| `msw-readers` | `murineshiftwork.readers` | **In monolith** | `readers/alignment.py`, `validate.py`, `session.py`, `namespace.py` all exist; extract as Stage 7 |
-| `msw-open-ephys` | `murineshiftwork.open_ephys` | **Scaffolded in `external/`** | OE HTTP remote; integration with CLI not complete |
-| `msw-flir-bonsai` | `msw_flir_bonsai` | **Partial** — runner + timestamps done | `FlirBonsaiClient` (CameraClient wrapper) not yet written; Stage 5 |
-| `one-axis-stage` | `one_axis_stage` | **Mature** | No changes needed |
-| `ttl_barcoder` | `ttl_barcoder` | **Mature** | No changes needed |
-| `pypulsepal` | `pypulsepal` | **In use** | Already replaces `stimulation.py` for optotagging |
+Package prefix: **`msw-tasks-`** (plural — each package may contain more than one task file).
 
-**Migration path:**
-1. Stages 1–7 build everything into the monolith at `src/murineshiftwork/agent/` and
-   `src/murineshiftwork/central/`.
-2. Stage 8: add `pyproject.toml` extras groups; `find_namespace_packages(where="src")` already
-   works once `__init__.py` is absent at namespace roots.
-3. Task namespace split: remove any remaining `__init__.py` at `murineshiftwork/tasks/`; add
-   entry-point declarations to each task package's `pyproject.toml`.
-4. Clean break criteria (from `migration_and_current_package.md`): agent stable on hardware,
-   `sequence` + `probabilistic_switching_fixedsubjects` + `optotagging` ported to `BaseTask`
-   `step()` interface, JSONL parity confirmed by existing reader tests.
+| pip name | Python namespace | Contents | Status |
+|---|---|---|---|
+| `murineshiftwork` (meta) | `murineshiftwork` | Meta-package; extras pull in task groups | **Monolith** — `__init__.py` removed at namespace root and tasks dir |
+| `msw-namespace` | `murineshiftwork.namespace` | Path/filename generation | **In monolith** — extract last |
+| `msw-logic` | `murineshiftwork.logic` + `.hardware` | Config, calibration, barcode, sounds, task_process | **In monolith** — extract last |
+| `msw-agent` | `murineshiftwork.agent` | FastAPI setup-agent, routers, models | **In monolith — Stage 1 done** |
+| `msw-tasks-core` | `murineshiftwork.tasks._calibration_*` + `._test_*` | Calibration tasks, test/flush tasks | **In monolith** — minimal deps; extract before lab tasks |
+| `msw-tasks-sequence` | `murineshiftwork.tasks.sequence` | Sequence learning task + training levels | **In monolith** — must not import PyQt in agent path; extract after core |
+| `msw-tasks-switching` | `murineshiftwork.tasks.probabilistic_switching` + `.probabilistic_switching_fixedsubjects` | Two-armed bandit (freely moving + head-fixed) | **In monolith** — depends on RCE; extract with camera client |
+| `msw-tasks-other` | `murineshiftwork.tasks.{airpuff,optotagging,homecage_sleep,openfield,periodic_trigger*,exp_trn_spindle}` | Lab-specific protocols | **In monolith** — extract last; internal-use only |
+| `msw-readers` | `murineshiftwork.readers` | Session data readers, alignment | **In monolith** — extract last |
+| `msw-open-ephys` | `murineshiftwork.open_ephys` | OE attach/detach CLI | **Scaffolded in `external/`** — CLI integration incomplete |
+| `msw-flir-bonsai` | `msw_flir_bonsai` | BonsaiCameraRunner, timestamps, alignment | **Partial** — runner + timestamps done; `FlirBonsaiClient` not written |
+| `msw-ui` | n/a (Vue SPA) | Per-setup web monitoring UI | **Scaffold done** — `external/msw-ui/`; not yet integrated against agent |
+| `one-axis-stage` | `one_axis_stage` | Stage tower driver | **Mature** |
+| `ttl_barcoder` | `ttl_barcoder` | TTL barcode encoder/decoder | **Mature** |
+| `pypulsepal` | `pypulsepal` | PulsePal laser driver | **In use** |
+
+### Extraction order
+
+1. `msw-tasks-core` (no heavy deps — good first-split test case)
+2. `msw-tasks-sequence` (self-contained; agent path must stay PyQt-free)
+3. `msw-logic` + `msw-namespace` (base layer; unblocks all others)
+4. `msw-agent` (already structurally isolated)
+5. `msw-readers` (no hardware deps)
+6. `msw-tasks-switching` (depends on RCE/camera client being stable)
+7. `msw-tasks-other` (last; internal-use, no urgency)
+
+### Per-package documentation
+
+Each extracted package gets its own `docs/` subtree shipped with the package:
+
+| Package | Docs location |
+|---|---|
+| `msw-tasks-core` | `docs/tasks/calibration_and_test.md` (this repo until split) |
+| `msw-tasks-sequence` | `docs/tasks/sequence.md` → moves to `msw-tasks-sequence/docs/` |
+| `msw-tasks-switching` | `docs/tasks/probabilistic_switching*.md` → moves to `msw-tasks-switching/docs/` |
+| `msw-logic` | Architecture and config system docs |
+| `msw-agent` | Agent API reference |
+
+Until a package is extracted, its docs live in `docs/tasks/` in the monolith.
 
 ---
 
 ## 5. Open design questions
 
-1. **`step()` vs `run()` migration path.** The current `TaskRunner.run()` loop is blocking
-   per-trial via pybpodapi's `run_state_machine()`. The `step()` design assumes `TaskProcess`
-   calls `task.step()` in a ~1 ms loop. For Bpod tasks, one `step()` call = one blocking trial
-   run, so the loop frequency is irrelevant — but the interface change requires touching every
-   task. Decision needed: adopt `BaseTask.step()` now for all tasks, or keep `run()` in v1 as
-   a bridge and only require `step()` for new suite tasks?
+1. **`step()` vs `run()` migration.** Tasks use `run()` loop; `BaseTask` ABC with `step()` not
+   written. Decision: adopt `step()` now, or keep `run()` as v1 bridge? No blocker on agent sprint.
 
-2. **`TaskProcess` in agent: Thread vs multiprocess.** The suite design (`agent_design.md`) uses
-   `mp.Process` for isolation. `DRAFT_agent_architecture.md` (decided) uses `Thread` inside a
-   FastAPI process. This is fine for task crashes (caught in `try/except BaseException`) but a
-   hung `run_state_machine()` call in a Thread will block the FastAPI event loop if they share
-   the thread pool. Confirm: `TaskRunner` runs in a daemon Thread; FastAPI runs in uvicorn's
-   main asyncio loop — no sharing, no blocking. Needs explicit verification with uvicorn's
-   `--workers 1` and a blocking task.
+2. **`TaskProcess` Thread isolation.** Daemon Thread is fine for normal exceptions; a segfault or
+   `os._exit()` from a C extension kills the whole agent. Keep Thread for v1; mitigate with
+   `systemd Restart=on-failure`. Verify no blocking calls from async uvicorn routes (use
+   `asyncio.to_thread` if needed).
 
-3. **Discriminated `CameraConfig` union.** Current `CameraConfig` in `models.py` is a flat model
-   with `backend: str`. The design requires a discriminated union
-   `RceCameraConfig | FlirBonsaiCameraConfig`. Changing this is a breaking change to existing
-   setup YAMLs on rigs that have `cameras:` blocks. Migration strategy needed (warn + auto-upgrade
-   on load, or manual YAML edit).
+3. **`agents.json` location.** Should live in `config_dir` (alongside `subjects/`, `setups/`).
+   Needs a spec: format, `msw ui` discovery path, how `agent_port` in `SetupConfig` relates to it.
 
-4. **`online_plotting.py` removal timeline.** Three tasks (`sequence`, `probabilistic_switching`,
-   `probabilistic_switching_fixedsubjects`) import `online_plotting.py` which imports `pyqtgraph`.
-   Removing Qt from `install_requires` requires ensuring these imports are never hit in the agent
-   path. Current approach: import is inside `run_task()` body, not at module level — but this
-   needs verification per task. PyQt6 stays in deps until Stage 4 (Vue frontend) is done.
+4. **`msw ui` delivery.** Does `msw ui` serve the Vue dist via a local HTTP server (simplest),
+   or open `file://` directly (breaks `fetch()`)? Simplest: `python -m http.server` from
+   `external/msw-ui/dist/`, open browser to `localhost:<random_port>`.
 
-5. **OE child session (DECISIONS item 2, Option A).** Reading `~/.cache/oe-remote/last_session`
-   at `msw run` time is a 20-line change to `cli/evaluate.py`. This is the highest-value
-   workflow improvement not yet done. No blocking dependency — can be implemented independently
-   of all stages above.
+5. **Discriminated `CameraConfig` union.** Breaking change to existing setup YAMLs.
+   Migration strategy needed before camera integration stage.
 
-6. **Calibration write-back.** `SetupConfig.valve_ms_for_ul()` is implemented (exponential fit).
-   The write path — `_calibration_liquid_dynamic` and `_calibration_liquid_static` tasks writing
-   measured points back to the setup YAML — is not wired. Both tasks need a post-run call to a
-   `save_valve_calibration(config_dir, setup_name, port, points)` helper that does a
-   read-modify-write on the YAML. This is blocked on nothing; implement alongside Stage 1 or
-   as a standalone fix.
+6. **OE child session (Option A).** Reading `~/.cache/oe-remote/last_session` in
+   `cli/evaluate.py` is a ~20-line change. No blockers.
 
-7. **`SimulatedAnimal` priority.** The mechanism is verified (pybpodapi `socketin` on
-   `PYBPOD_API_PORT`). Implementing `SimulatedAnimal` in
-   `src/murineshiftwork/hardware/bpod/sim.py` (next to `SimBpod`) would enable full end-to-end
-   task tests without hardware. This is a high-value testing investment; suggest doing it in
-   parallel with Stage 1 so agent tests can use it.
+7. **Calibration write-back.** `_calibration_liquid_*` tasks do not write back to setup YAML.
+   `save_valve_calibration()` helper not written. No blockers.
 
-8. **Auth on setup-agent.** `DRAFT_agent_architecture.md` specifies HTTP Basic with
-   `MSW_AGENT_PASSWORD` env var. This is Stage 5 (auth + hardening). In v1 development, the
-   agent runs without auth on the LAN. Ensure the FastAPI app structure makes adding Basic auth
-   middleware non-breaking (add as a dependency on all routers, not baked into route logic).
+8. **`SimulatedAnimal`.** Mechanism verified (pybpodapi `socketin`). Implementing it would
+   enable full end-to-end task tests without hardware — prerequisite for useful agent integration
+   tests.
 
-9. **Timestamp precision (DECISIONS item C).** Rounding JSONL float timestamps to 4 decimal
-   places is a safe change (Bpod resolution is ~1 ms). Confirm no test fixture uses full-precision
-   timestamps as dict keys, then implement in `logic/io.py` `_NumpyEncoder`. Low risk, do with
-   any nearby commit.
+9. **Barcode hardware verification.** Optotagging and airpuff TTL barcodes coded but unverified
+   on acquisition hardware. Alignment script for `sequence_automated` not written.
 
-10. **Windows agent scope.** `DRAFT_agent_architecture.md` explicitly defers Windows agent to
-    v2. The current `msw-tasks-sequence` / Win11 deployment uses direct `TaskProcess` execution.
-    Confirm this path remains supported under `msw run --no-agent` indefinitely, not deprecated.
+10. **Windows `msw run --no-agent`.** Win11 deployment uses direct `TaskProcess`. Must remain
+    supported indefinitely under `--no-agent`.

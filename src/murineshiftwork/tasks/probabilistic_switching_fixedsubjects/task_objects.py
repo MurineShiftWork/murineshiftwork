@@ -17,10 +17,7 @@ from murineshiftwork.logic.barcode import (
     inject_barcode_states,
     prepare_barcode,
 )
-from murineshiftwork.logic.calibration import (
-    CalibrationDataSound,
-    CalibrationDataWater,
-)
+from murineshiftwork.logic.calibration import CalibrationDataSound
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.maths import ExponentialMovingAverage, withprob
 from murineshiftwork.logic.misc import draw_jittered_trial_time
@@ -92,7 +89,6 @@ class TaskControl(object):
         save_path_data=None,
         task_settings=None,
         barcoder=None,
-        execution_config=None,
     ):
         super(TaskControl, self).__init__()
 
@@ -134,26 +130,15 @@ class TaskControl(object):
         self.sound_delay_correction = (
             self.calibration_sound.calculate_sound_delay_correction()
         )
-        self.calibration_water = CalibrationDataWater(
-            file_path=task_settings["calibration_file_water"]
-        )
-
+        valve_s_for_ul = task_settings.get("valve_s_for_ul")
+        if valve_s_for_ul is None:
+            raise ValueError(
+                "valve_s_for_ul not in task settings — "
+                "ensure the setup YAML has calibrations.bpod_valve entries."
+            )
         valves = self.task_settings["HARDWARE_VALVES_FOR_WATER"]
         target_vol = float(self.task_settings["reward_amount_ul"])
-        self.valve_times_dict = self.calibration_water.water_volume_to_valve_time(
-            valves=valves,
-            target_volume=target_vol,
-        )
-        if (
-            self.valve_times_dict is None
-            and execution_config
-            and execution_config.setup
-        ):
-            setup = execution_config.setup
-            self.valve_times_dict = {
-                v: setup.valve_s_for_ul(v, target_vol) for v in valves
-            }
-            logging.info("Valve times from SetupConfig (no water calibration CSV)")
+        self.valve_times_dict = {v: valve_s_for_ul(v, target_vol) for v in valves}
         logging.info(
             f"VALVES: {self.valve_times_dict} "
             f"FOR {self.task_settings['reward_amount_ul']} "

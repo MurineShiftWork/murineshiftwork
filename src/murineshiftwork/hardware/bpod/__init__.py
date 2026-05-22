@@ -6,8 +6,11 @@ from murineshiftwork.hardware.bpod.ttl import (
 from murineshiftwork.hardware.bpod.ttl import (
     make_ttl_identifier_sequences as make_ttl_identifier_sequences,
 )
-from murineshiftwork.hardware.bpod.water import (
+from murineshiftwork.hardware.bpod.valve import (
     make_sma_for_drop_of_water as make_sma_for_drop_of_water,
+)
+from murineshiftwork.hardware.bpod.valve import (
+    make_sma_for_valve_pulse as make_sma_for_valve_pulse,
 )
 
 

@@ -49,5 +49,7 @@ the `provision_rpi` scripts directory.
 | `--setup-group` | Setup group name |
 | `--skip-upload` | Skip remote upload step |
 | `--skip-rpi` | Skip RPi sync step |
+| `--skip-setups` | Skip setup-machine sync step |
 | `--skip-h264` | Skip h264 conversion |
-| `--dry-run` | Pass --dry-run to the shell script |
+| `--skip-msw-clean` | Skip the `msw post clean` noise-event cleaning step |
+| `--dry-run` | Pass `--dry-run` through to the shell script |

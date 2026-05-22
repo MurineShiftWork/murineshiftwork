@@ -3,8 +3,11 @@
 ## 1. Initialise config directory (first time only)
 
 ```bash
-msw init --config-dir ~/msw_configs --data-dir ~/data
+msw init ~/msw_configs --data-dir ~/data
 ```
+
+`config_dir` is a positional argument. `--data-dir` is optional but records the default
+data output path in `~/.murineshiftwork/msw_machine.yaml`.
 
 ## 2. Create the setup skeleton
 

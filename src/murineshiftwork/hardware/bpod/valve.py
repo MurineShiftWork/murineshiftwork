@@ -2,7 +2,7 @@ from pybpodapi.bpod import Bpod
 from pybpodapi.state_machine import StateMachine
 
 
-def make_sma_for_drop_of_water(
+def make_sma_for_valve_pulse(
     bpod=None,
     valve_opening_time=0,
     valve_ids=1,
@@ -10,7 +10,7 @@ def make_sma_for_drop_of_water(
 ):
     """
     valve_ids can be list or int
-    inter_drop_interval: might keep valves from overheating
+    inter_drop_interval: gap between open and exit states
     """
     if not hasattr(valve_ids, "__iter__"):
         valve_ids = [valve_ids]
@@ -33,3 +33,7 @@ def make_sma_for_drop_of_water(
         output_actions=[],
     )
     return sma
+
+
+# Back-compat alias
+make_sma_for_drop_of_water = make_sma_for_valve_pulse

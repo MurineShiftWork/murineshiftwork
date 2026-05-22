@@ -29,14 +29,8 @@ TASK STRUCTURE
 import logging
 import time
 from multiprocessing import Queue
-from pathlib import Path
 
 from pybpodapi.state_machine import StateMachine
-from rpi_camera_ensemble.conductor.conductor import Conductor
-from rpi_camera_ensemble.config.acquisition import (
-    EnsembleAcquisitionConfig,
-)
-from rpi_camera_ensemble.config.conductor import ConductorConfig
 from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
 from murineshiftwork.logic.barcode import (
@@ -44,7 +38,6 @@ from murineshiftwork.logic.barcode import (
     inject_barcode_states,
     prepare_barcode,
 )
-from murineshiftwork.logic.log import suppress_third_party_console_handlers
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 from murineshiftwork.tasks.probabilistic_switching_fixedsubjects.online_plotting import (
     OnlinePlottingForPS,
@@ -65,11 +58,14 @@ class Task(TaskRunner):
             f"BNC{task_settings['HARDWARE_BNC_TRIAL_START']}",
         )
 
+        session_file_path = self.input_kwargs.get("session_paths", {}).get(
+            "session_file_path", ""
+        )
         task_control = TaskControl(
             bpod=self.bpod,
             task_settings=task_settings,
             barcoder=barcoder,
-            execution_config=self.input_kwargs.get("execution_config"),
+            save_path_data=session_file_path or None,
         )
         self.bpod.softcode_handler_function = task_control.softcode_handler
 
@@ -169,45 +165,56 @@ def run_task(**args_dict):
     args_dict.update({"objects": {"data_queue": dq, "kill_queue": kq}})
     args_dict.update({"auto_start": False})
 
-    setup_name = args_dict.get("metadata", {}).get("setup", "n/a")
+    setup_name = args_dict.get("metadata", {}).get("setup", "")
 
-    ensemble_cfg_file = args_dict["config_file_camera"]
-    assert Path(ensemble_cfg_file).exists(), (
-        f"Camera config not found: {ensemble_cfg_file}"
+    # Camera setup — optional: fall back to no-video if config missing or agents unreachable
+    from murineshiftwork.hardware.camera.client import make_camera_client
+
+    conductor = make_camera_client(
+        cameras_config=args_dict.get("cameras_config"),
+        config_file_camera=args_dict.get("config_file_camera", ""),
+        output_dir=args_dict.get("out_path", ""),
     )
-    ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
-    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
+    if conductor is not None:
+        conductor.start()
+        try:
+            conductor.setup_agents()
+        except ConnectionError as exc:
+            logging.warning(f"Camera agents unreachable — running without video: {exc}")
+            try:
+                conductor.stop()
+            except Exception:
+                pass
+            conductor = None
+    else:
+        logging.info("No camera config — running without video.")
 
-    # Conductor __exit__ calls stop() — cleans up camera agents on any exception
-    with Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg) as conductor:
-        suppress_third_party_console_handlers()  # catch handlers from Conductor.__init__
-        conductor.setup_agents()
-        suppress_third_party_console_handlers()  # catch handlers from setup_agents
-
+    try:
         with TaskProcess(**args_dict) as tp:
             _session = tp.session_paths["session_basename"]
             _subject = tp.session_paths["subject"]
 
-            conductor.initialize_acquisition(
-                acquisition_path=(
-                    f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
-                    if args_dict["is_child_session_to"] is not None
-                    else f"{_subject}/{_session}"
-                ),
-                acquisition_name=_session,
-            )
-            conductor.start_preview()
-            conductor.start_recording()
+            if conductor is not None:
+                conductor.initialize_acquisition(
+                    acquisition_path=(
+                        f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
+                        if args_dict["is_child_session_to"] is not None
+                        else f"{_subject}/{_session}"
+                    ),
+                    acquisition_name=_session,
+                )
+                conductor.start_preview()
+                conductor.start_recording()
+                time.sleep(3)
 
+            _setup_str = f"[{setup_name}] " if setup_name else ""
             plotting_process = OnlinePlottingForPS(
-                window_title=f"[{setup_name}]  {_session}",
+                window_title=f"{_setup_str}{_subject} @ probabilistic_switching_fixedsubjects",
                 is_simulation=False,
                 data_queue=dq,
                 kill_queue=kq,
             )
             plotting_process.start()
-
-            time.sleep(3)
 
             tp.run_task()
             while tp.is_running():
@@ -217,13 +224,19 @@ def run_task(**args_dict):
                     tp.stop_task()
 
             kq.put(True)
+            if conductor is not None:
+                try:
+                    conductor.stop_acquisition()
+                except Exception as _exc:
+                    logging.warning(
+                        f"conductor.stop_acquisition() did not complete cleanly: {_exc}"
+                    )
+    finally:
+        if conductor is not None:
             try:
-                conductor.stop_acquisition()
-            except Exception as _exc:
-                logging.warning(
-                    f"conductor.stop_acquisition() did not complete cleanly: {_exc}"
-                )
-        # Conductor.stop() called by __exit__
+                conductor.stop()
+            except Exception:
+                pass
         time.sleep(1)
 
 

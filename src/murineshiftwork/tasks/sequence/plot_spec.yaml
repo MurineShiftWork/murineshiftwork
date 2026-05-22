@@ -1,0 +1,70 @@
+version: 1
+task: sequence
+panels:
+  - id: outcomes_perf
+    title: "Outcomes & rolling performance"
+    type: rolling_mean
+    fields:
+      x: trial_index
+      value: perf_buffer_mean
+      value_secondary: perf_perfect_mean
+      scatter_flag: is_correct
+    options:
+      y_correct: 1.1
+      y_incorrect: -0.1
+      y_range: [-0.15, 1.15]
+      threshold_progression: progression_threshold
+      threshold_regression: regression_threshold
+
+  - id: training_level
+    title: Training level
+    type: timeseries
+    fields:
+      x: trial_index
+      value: level
+    options:
+      y_min: 1
+      marker_up: level_up
+      marker_down: level_down
+
+  - id: session_progress
+    title: "Session progress"
+    type: cumulative_sum
+    fields:
+      x: elapsed_time_min
+      value: reward_ul
+    options:
+      y_label: "Reward (µL)"
+      overlay_count: trial_index
+
+  - id: poke_raster
+    title: "Poke sequence (time in trial)"
+    type: raster
+    fields:
+      x: trial_index
+      times: poke_times_in_trial
+      groups: poke_ports
+    options:
+      log_y: true
+      y_clip_s: 5.0
+      color_by: port
+
+  - id: poke_time_distribution
+    title: "Poke times"
+    type: histogram
+    fields:
+      value: poke_times_from_first
+      group: poke_port
+    options:
+      x_range: [0, 6.0]
+      bins: 50
+      color_by: port
+
+  - id: sequence_duration
+    title: "Sequence duration (correct trials)"
+    type: timeseries
+    fields:
+      x: trial_index
+      value: sequence_duration_s
+    options:
+      filter: is_correct

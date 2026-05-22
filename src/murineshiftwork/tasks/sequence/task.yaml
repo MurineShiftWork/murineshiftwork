@@ -1,6 +1,16 @@
 default:
   testing: false
   show_live_plot: true
+  online_plot_poke_ymax_s: null        # clip poke raster y-axis in seconds; null = auto-range
+  online_plot_poke_xmax_s: 6.0        # poke swarm + marginal histogram x-axis width in seconds
+  online_plot_xlim_trials: 100        # trial x-axis window width; 0 = show all
+  online_plot_poke_log_scale: true    # log y-axis for poke raster (false = linear)
+  online_plot_first_poke_offset_s: 0.5  # fixed y-anchor for first poke in log raster; 0 = use real time
+  # Soft-stop criteria — red reference lines + one-time console warning; no hard stop
+  stop_reward_ul: 800.0
+  stop_trials: 500
+  stop_time_min: 60.0                 # 1 hour
+  stop_level_delta: 15                # levels gained above session start_level
   record_video: false
   sequence:
   - 2
@@ -12,12 +22,13 @@ default:
   start_level: 1
   reset_level: false
   buffer_trials: 10
+  scoring_metric: ordered          # "ordered" = strfind (extra pokes allowed) | "perfect" = exact sequence only
   progression_threshold: 0.9
   regression_threshold: 0.2
-  level_1_min_trials: 50
-  prevent_regression_below_start: true
+  prevent_regression_below_start: false
   n_max_trials: 1500
   strict_sequence: false
+  init_port_timeout_s: 10.0            # max wait for first poke; 0 = no timeout (wait forever)
   iti_duration: 0.4
   punish_duration: 0.5
   reward_sound: true

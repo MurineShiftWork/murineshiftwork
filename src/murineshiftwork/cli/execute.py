@@ -168,6 +168,38 @@ def run_setup(**args_dict):
             + "\n".join(f"  - {s}" for s in setups)
         )
 
+    elif subcommand == "rename":
+        setup_name = args_dict["setup_name"]
+        new_name = args_dict.get("new_name", "")
+        if not setup_name:
+            print(
+                "Error: setup name is required. Usage: msw setup rename <name> --new-name <new>",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        if not new_name:
+            print_box("--new-name is required for 'rename'.")
+            return
+        old_path = setups_dir / f"{setup_name}.yaml"
+        new_path = setups_dir / f"{new_name}.yaml"
+        if not old_path.exists():
+            print_box(f"Setup '{setup_name}' not found at {old_path}.")
+            return
+        if new_path.exists() and not args_dict.get("force", False):
+            print_box(
+                f"Setup '{new_name}' already exists at {new_path}. Use --force to overwrite."
+            )
+            return
+        old_path.rename(new_path)
+        with open(new_path) as f:
+            raw = yaml.safe_load(f) or {}
+        raw["name"] = new_name
+        with open(new_path, "w") as f:
+            yaml.dump(
+                raw, f, default_flow_style=False, allow_unicode=True, sort_keys=False
+            )
+        print_box(f"Renamed setup '{setup_name}' → '{new_name}'.")
+
     else:
         raise ValueError(f"Unknown setup subcommand: {subcommand!r}")
 
@@ -344,6 +376,50 @@ def run_action(**args_dict):
 
 # ---------------------------------------------------------------------------
 # murineshiftwork calibration
+
+
+def run_agent(**args_dict):
+    """msw agent start --setup <name> [--port 8765]
+
+    Starts a long-lived FastAPI agent that owns the Bpod connection across
+    sessions.  The CLI (``msw run``) remains the primary session entry point;
+    the agent adds hardware persistence and a WebSocket event bus for read-only
+    UI observers.
+    """
+    try:
+        import uvicorn
+    except ImportError as exc:
+        raise SystemExit(
+            "The 'agent' extra is not installed.\n"
+            "Run: pip install 'murineshiftwork[agent]'"
+        ) from exc
+
+    from murineshiftwork.agent.app import create_app
+    from murineshiftwork.logic.config.io import load_setup_config
+    from murineshiftwork.logic.machine_config import resolve_config_dir
+
+    subcommand = args_dict.get("subcommand")
+    if subcommand != "start":
+        raise ValueError(f"Unknown agent subcommand: {subcommand!r}")
+
+    setup_name = args_dict["setup"]
+    port = args_dict.get("agent_port", 8765)
+    host = args_dict.get("agent_host", "0.0.0.0")
+
+    config_dir = resolve_config_dir(args_dict.get("config_dir", ""))
+    setup_cfg = load_setup_config(config_dir, setup_name)
+    if setup_cfg is None:
+        raise ValueError(f"Setup '{setup_name}' not found in {config_dir}/setups/")
+
+    bpod_device = setup_cfg.devices.get("bpod")
+    serial_port = args_dict.get("serial_port_bpod") or (
+        bpod_device.port
+        if bpod_device and hasattr(bpod_device, "port")
+        else "/dev/ttyACM0"
+    )
+
+    app = create_app(setup=setup_name, serial_port=serial_port, config_dir=config_dir)
+    uvicorn.run(app, host=host, port=port)
 
 
 def run_calibration(**args_dict):

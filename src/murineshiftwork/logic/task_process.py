@@ -280,17 +280,25 @@ class TaskProcess(object):
             self.bpod.close_safely()
             self.serial_is_open = False
 
-    def connect_bpod(self, max_try=2):
-        """Connect device on serial port."""
+    def connect_bpod(self, max_try=None, retry_delay_s=None):
+        """Connect device on serial port.
+
+        max_try and retry_delay_s are forwarded to BpodFactory; when None,
+        BpodFactory uses its own defaults (connect_retries=3, retry_delay_s=2.0).
+        """
         if not self.serial_is_open and not self.exiting:
             logging.debug(f"Connecting bpod on serial port: {self.serial_port}")
+            kwargs: dict = dict(
+                serial_port=self.serial_port,
+                workspace_path=self.session_paths["session_folder"],
+                session_name=self.session_paths["session_basename_behav"],
+            )
+            if max_try is not None:
+                kwargs["connect_retries"] = max_try
+            if retry_delay_s is not None:
+                kwargs["retry_delay_s"] = retry_delay_s
             try:
-                self.bpod = BpodFactory(
-                    serial_port=self.serial_port,
-                    workspace_path=self.session_paths["session_folder"],
-                    session_name=self.session_paths["session_basename_behav"],
-                    connect_retries=max_try,
-                )
+                self.bpod = BpodFactory(**kwargs)
                 self.bpod.open()
                 self.serial_is_open = True
             except RuntimeError as exc:

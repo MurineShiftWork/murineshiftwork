@@ -26,6 +26,7 @@ dependencies = [
     "sounddevice",
     "opencv-python-headless",
     "seaborn",
+    "plotly>=5.0",
 ]
 
 [project.urls]
@@ -58,6 +59,16 @@ qt = [
 ]
 rce = [
     "rpi_camera_ensemble",
+]
+agent = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "websockets>=12",
+]
+labwatch = [
+    # labwatch_client is served from a private registry — install separately:
+    # pip install labwatch-client --index-url https://<private-registry>
+    # or: pip install 'labwatch-client @ git+https://github.com/MurineShiftWork/labwatch-client.git'
 ]
 
 [project.scripts]

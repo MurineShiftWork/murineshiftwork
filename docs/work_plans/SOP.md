@@ -27,6 +27,17 @@ Short-form phrases for recurring code work. Paste as-is or adapt the bracketed p
 
 ## Git and versioning
 
+**Branch naming convention**
+
+| Prefix | Use |
+|---|---|
+| `ft/` | New feature or capability (`ft/msw-agent`, `ft/vue-frontend`) |
+| `bug/` | Bug fix (`bug/bpod-usb-disconnect`, `bug/sound-device-fallback`) |
+| `chore/` | Non-functional: deps, CI, docs, config (`chore/pre-commit-update`) |
+| `refactor/` | Code restructure, no behaviour change |
+
+Rule: one concern per branch. Open a **draft PR** immediately after the first real commit so work is visible. Merge to `main` when pre-commit and CI are green.
+
 **`commit msg`**
 > Write a conventional commit message for all uncommitted changes in the working tree.
 > Include: type, scope if meaningful, bullet list of changes, test count delta.
@@ -66,6 +77,39 @@ Short-form phrases for recurring code work. Paste as-is or adapt the bracketed p
 
 **`update hook doc`** / **`update config doc`** / **`update cli doc [subcommand]`**
 > Bring the named doc page up to date with the current implementation.
+
+---
+
+## Hardware probing
+
+**`probe bpods`**
+> Run `python3 scripts/probe_bpods.py` to connect to every setup in sequence and
+> print the Bpod hardware info box (firmware, machine type, port config, hardware counters).
+> Skips setups without a bpod device. Marks setups whose USB path does not resolve as NOPORT.
+
+```bash
+# All setups (uses config_dir from machine config)
+python3 scripts/probe_bpods.py
+
+# Subset
+python3 scripts/probe_bpods.py --setups setup-1 npxb
+
+# More retries for a flaky device
+python3 scripts/probe_bpods.py --retries 5 --retry-delay 3.0
+```
+
+**Output status codes:**
+
+| Code | Meaning |
+|---|---|
+| `OK` | Connected and hardware info printed |
+| `FAIL` | Device found but connection failed after all retries |
+| `NOPORT` | `/dev/serial/by-path/...` symlink not present (device unplugged or powered off) |
+| `NOBPOD` | Setup YAML has no `bpod` device entry |
+| `SKIP` | Setup YAML could not be parsed |
+
+Log section (WARNING+) shows retry attempts and exact exception for FAIL cases.
+Exit code: 0 if all reachable setups connected, 1 if any FAIL.
 
 ---
 
