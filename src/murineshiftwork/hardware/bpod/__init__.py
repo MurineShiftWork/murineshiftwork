@@ -1,3 +1,4 @@
+from murineshiftwork.hardware.bpod.device import BpodDevice as BpodDevice
 from murineshiftwork.hardware.bpod.factory import BpodFactory as BpodFactory
 from murineshiftwork.hardware.bpod.override import BpodOverrideAPI as BpodOverrideAPI
 from murineshiftwork.hardware.bpod.ttl import (

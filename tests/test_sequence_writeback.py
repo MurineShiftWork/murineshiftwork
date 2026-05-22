@@ -21,6 +21,10 @@ def _make_task_control(subject, config_dir, current_level=7, session_start_level
     tc.task_settings = {"subject": subject, "config_dir": str(config_dir)}
     tc.current_level = current_level
     tc._session_start_level = session_start_level
+    tc._session_task_trials = 0
+    tc._session_no_response_count = 0
+    tc._session_reward_count = 0
+    tc._session_liquid_ul = 0.0
     tc.trial_index = 42
     return tc
 

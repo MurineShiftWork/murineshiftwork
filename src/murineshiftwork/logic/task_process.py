@@ -170,6 +170,7 @@ class TaskProcess(object):
         subject=None,
         task=None,
         bpod=None,
+        devices: dict | None = None,
         auto_init=True,
         auto_start=True,
         is_child_session_to=None,
@@ -210,6 +211,9 @@ class TaskProcess(object):
         patch_logging_levels()
         add_session_log_handler(self.session_paths["session_file_path"])
         self.persist_settings()
+
+        if bpod is None and devices is not None:
+            bpod = devices.get("bpod")
 
         if bpod is not None:
             # Injected: controller owns the hardware connection

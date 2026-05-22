@@ -139,9 +139,10 @@ class BpodFactory:
         self._bpod.softcode_handler_function = value
 
     def __getattr__(self, name):
-        if name.startswith("_"):
+        bpod = self.__dict__.get("_bpod")
+        if bpod is None:
             raise AttributeError(name)
-        return getattr(self._bpod, name)
+        return getattr(bpod, name)
 
     # ------------------------------------------------------------------
     # Internal

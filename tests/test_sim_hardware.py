@@ -58,6 +58,26 @@ class TestSimBpod:
             bpod.open()
         assert ("close_safely",) in bpod.calls
 
+    def test_private_attr_raises_before_open(self):
+        """__getattr__ must raise AttributeError for unknown attrs before _bpod is set."""
+        from murineshiftwork.hardware.bpod.factory import BpodFactory
+
+        factory = BpodFactory(serial_port="/dev/ttyACM0")
+        with pytest.raises(AttributeError):
+            _ = factory._hardware
+
+    def test_private_attr_proxied_after_open(self):
+        """__getattr__ must proxy _-prefixed attributes to the underlying Bpod after open()."""
+        from unittest.mock import MagicMock, patch
+
+        from murineshiftwork.hardware.bpod.factory import BpodFactory
+
+        factory = BpodFactory(serial_port="/dev/ttyACM0")
+        mock_bpod = MagicMock()
+        mock_bpod._hardware = object()
+        with patch.object(factory, "_bpod", mock_bpod):
+            assert factory._hardware is mock_bpod._hardware
+
 
 # ---------------------------------------------------------------------------
 # SimWeighingScale

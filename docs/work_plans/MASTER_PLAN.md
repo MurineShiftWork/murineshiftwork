@@ -520,52 +520,84 @@ convention: `HARDWARE_LICK_LEFT`, `HARDWARE_LICK_RIGHT` (not `LICK_EVENT_*`).
 ## 9. Remaining work (ordered)
 
 
-### Done in this sprint (ft/msw-agent)
+### Done: ft/msw-agent → merged to main 2026-05-22
 
-- [x] Bpod retry fix — `BpodFactory.__init__` no longer auto-connects; retry loop in `open()` · 2026-05-22
-- [x] `probe_bpods.py` script — connect all setups sequentially, print hardware info box · 2026-05-22
-- [x] Sequence online plot — outcome dot offsets (±0.1), no-response grey x, perf-perfect yellow · 2026-05-22
-- [x] PlotSpec schema — `logic/plot_spec.py`, `tasks/sequence/plot_spec.yaml`, `tasks/probabilistic_switching_fixedsubjects/plot_spec.yaml`, 17 tests · 2026-05-22
-- [x] `hardware/manager.py` — `DeviceProtocol` + `HardwareManager` stub · 2026-05-22
-- [x] Camera integration — `CameraConfig` extended, `FlirBonsaiClient`, `RceConductorAdapter`, `make_camera_client()` factory; RCE module-level import bug fixed in `probabilistic_switching_fixedsubjects.py` · 2026-05-22
-- [x] Sequence poke scatter x-axis — `poke_xmax_s` param, default 6.0 s · 2026-05-22
+- [x] Bpod retry fix — `BpodFactory.__init__` no longer auto-connects; retry loop in `open()`
+- [x] `probe_bpods.py` script — connect all setups sequentially, print hardware info box
+- [x] Sequence online plot — outcome dot offsets (±0.1), no-response grey x, perf-perfect yellow; stop label fix (800 µL not "1 ml"); poke x-axis `poke_xmax_s` param default 6 s
+- [x] PlotSpec schema — `logic/plot_spec.py`, `tasks/sequence/plot_spec.yaml`, `tasks/probabilistic_switching_fixedsubjects/plot_spec.yaml`, 17 tests
+- [x] `hardware/manager.py` — `DeviceProtocol` + `HardwareManager` context manager
+- [x] Camera integration — `CameraConfig`, `FlirBonsaiClient`, `RceConductorAdapter`, `make_camera_client()` factory; minimal 4-method interface; plugin CLI design documented
+- [x] Config upgrade design — on-load warning only; `msw config upgrade` CLI documented in `config_system.md`
+- [x] Task config key naming conventions — prefix rules, naming debt table for fixedsubjects, in `MASTER_PLAN §8`
+- [x] Fix calibration import — `bpod.water` → `bpod.valve` in both `_calibration_liquid_*` tasks
 
-### Next: hardware wiring
+---
 
-- [ ] **`hardware/bpod/device.py`** — `BpodDevice(DeviceProtocol)` wrapping `BpodFactory`
-- [ ] **Wire `HardwareManager` into `execute.py`** — replace direct `TaskProcess(serial_port_bpod=...)` path
-- [ ] **`TaskProcess`: accept `devices` dict** — deprecate `serial_port_bpod=` kwarg; injected bpod path already works
-- [ ] **Hardware verification** — test Bpod retry fix on `pci-0000:00:14.0-usb-0:4:1.0 → ttyACM7`
+### Branch: ft/hardware-wiring (current)
 
-### Monitor Step 1: server + relay
+- [ ] **`hardware/bpod/device.py`** — `BpodDevice(DeviceProtocol)`: `preflight()` checks port path, `connect()` calls `BpodFactory.open()` with retry, `handle` returns Bpod instance
+- [ ] **Wire `HardwareManager` into `execute.py`** — replace direct `TaskProcess(serial_port_bpod=...)` path; `TaskProcess` receives injected `devices` dict
+- [ ] **`TaskProcess`: accept `devices` dict** — deprecate `serial_port_bpod=` kwarg; keep old kwarg as shim until all callers updated, then delete
+- [ ] **Hardware verification on rig** — test Bpod retry fix live on `pci-0000:00:14.0-usb-0:4:1.0 → ttyACM7`; run `probe_bpods.py`
+- [ ] **PR + merge ft/hardware-wiring → main**
 
-- [ ] **`monitor/relay.py`** — `TrialRelay(multiprocessing.Process, daemon=True)`, ~80 lines (sketch in §5)
-- [ ] **`monitor/server.py`** — FastAPI, in-memory `SessionState` per setup, `trial_buffer` deque, PlotSpec computation
-- [ ] **Wire relay into `TaskProcess`** — read `monitor_url` from machine config, start `TrialRelay`, add `put_nowait()` in sequence task after `save_trial_data()`
+---
+
+### Branch: ft/monitor-step1 (next after hardware)
+
+- [ ] **`monitor/relay.py`** — `TrialRelay(multiprocessing.Process, daemon=True)`; reads from `mp.Queue(maxsize=500)`; HTTP POST to monitor server; `put_nowait()` ~1 µs in task loop
+- [ ] **`monitor/server.py`** — FastAPI; in-memory `SessionState` per setup; `trial_buffer` deque; PlotSpec-driven computation
+- [ ] **Wire relay into `TaskProcess`** — read `monitor_url` from machine config; start `TrialRelay`; add `put_nowait()` in sequence task after `save_trial_data()`
 - [ ] **`msw monitor serve/status/debug`** CLI subcommands
+- [ ] **PR + merge ft/monitor-step1 → main**
 
-### Monitor Step 2: plot + CLI
+---
+
+### Branch: ft/monitor-step2 (after step 1 validated on rig)
 
 - [ ] **`msw plotspec <task>`** — load + print PlotSpec YAML; `--dry-run` generates synthetic data and prints panel updates
-- [ ] **Verify `TrialRelay` puts correct task** — sequence and fixedsubjects first; extend to optotagging
+- [ ] **Verify `TrialRelay` fields** — sequence and fixedsubjects first; extend to optotagging
 
-### Monitor Step 3: Docker + Vue
+---
+
+### Branch: ft/monitor-step3 (Docker + Vue)
 
 - [ ] **`Dockerfile.monitor`** + `docker-compose.monitor.yml`
-- [ ] **Vue UI wiring** — point polling at `/session/status` and `/session/plot`; use `/session/history/{setup}` for ring buffer (server-side, no localStorage)
+- [ ] **Vue UI wiring** — polling `/session/status` + `/session/plot`; `/session/history/{setup}` ring buffer server-side
 
-### Monitor Step 4: strip agent/
+---
+
+### Branch: ft/monitor-step4 (strip agent/)
 
 - [ ] Strip `agent/` package after monitor validated on one rig
 - [ ] Remove `msw agent start` CLI subcommand (replace with `msw monitor serve`)
 
-### Other open items
+---
 
-- [ ] **Blockout timing log** — pending in `airpuff`, `sequence_automated`, `homecage_sleep`, `openfield`, `periodic_trigger` (done: sequence, probabilistic_switching, optotagging)
-- [ ] **`msw-openephys`** — `msw-oe attach/status/detach`; session start checks OE status before `run_task()`
-- [ ] **Calibration write-back** — `_calibration_liquid_*` tasks write back to setup YAML
-- [ ] **Session file schema doc** — `docs/concepts/session_files.md`
-- [ ] **`msw_flir_bonsai.timestamps`** — finish FlyCapture 128s cycle unwrap; wire into `preprocess_camera_csv`
+### Branch: ft/config-upgrade
+
+- [ ] **`msw config upgrade task/setup/subject`** — dry-run diff, confirmation prompt, `.bak` before write, `msw_schema_version` bump; `--yes` for scripted use
+- [ ] **On-load version warning** — detect `msw_schema_version` mismatch, print one-time console warning, never auto-write
+
+---
+
+### Branch: ft/fixedsubjects-naming
+
+- [ ] **Rename `stop_trial_*` → `stop_signal_*`** (10 keys) — update task.yaml, task_objects.py, all overlay YAMLs, docs
+- [ ] **`LICK_EVENT_*` → `HARDWARE_LICK_*`**, `use_*` → `*_enabled`, `inter_trial_interval` → `iti_distribution`, `plot_trial_span` → `online_plot_xlim_trials`, timeout/delay key renames per §8 debt table
+- [ ] **Update subject YAMLs in `msw_configs/`** — run migration script or manual update before merge
+
+---
+
+### Other open items (no branch yet)
+
+- [ ] **Blockout timing log** — `airpuff`, `sequence_automated`, `homecage_sleep`, `openfield`, `periodic_trigger`
+- [ ] **`msw-openephys`** — `msw-oe attach/status/detach`; session start checks OE status
+- [ ] **Calibration write-back** — `_calibration_liquid_*` tasks write results back to setup YAML
+- [ ] **Session file schema doc** — complete skeleton at `docs/concepts/session_files.md`
+- [ ] **`msw_flir_bonsai.timestamps`** — finish FlyCapture 128 s cycle unwrap; wire into `preprocess_camera_csv`
+- [ ] **`msw flir` plugin CLI** — implement entry-point loader loop in MSW CLI; add subcommands in `msw-flir-bonsai`
 
 ---
 
