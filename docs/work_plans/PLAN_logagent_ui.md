@@ -255,18 +255,28 @@ Until then: `serial_port_bpod` is legacy; callers using `HardwareManager` pass
 
 ---
 
-## Implementation order (this branch)
+## Implementation order
 
-- [ ] Rename `TrialRelay` → `LogAgent`; rebuild `monitor/relay.py` with start/trial/stop events
-- [ ] Session UUID: generate in `TaskProcess.__init__`, store in session YAML, pass through `input_kwargs`
-- [ ] Trial payload: task puts opaque `trial_data` dict; `__stop__` sentinel carries summary
-- [ ] Bearer token: read from `msw_machine.yaml`, inject into LogAgent HTTP headers
-- [ ] Plot spec: copy to session dir at session start (TaskProcess reads from task package)
-- [ ] Rebuild `monitor/server.py`: UUID-keyed sessions, `trials?since=N`, bearer token validation on ingest
-- [ ] `docker-compose.monitor.yml` skeleton (two containers)
-- [ ] Remove `msw monitor` CLI subcommands (parser + execute)
-- [ ] Tests: LogAgent lifecycle, server ingest + query, token validation
-- [ ] Update MASTER_PLAN §5 to reference this document
+### ft/monitor-step1 (done)
+- [x] Rename `TrialRelay` → `LogAgent`; package `monitor/` → `logagent/`; three-phase lifecycle
+- [x] Session UUID: generate in `TaskProcess.__init__`, store in session YAML, tag all LogAgent payloads
+- [x] Trial payload: task puts opaque `trial_data` dict; `__stop__` sentinel carries summary
+- [x] Bearer token: read `log_bearer_token` from `msw_machine.yaml`; inject into LogAgent HTTP headers; validate on ingest endpoints
+- [x] Plot spec: copy `{task}/plot_spec.yaml` → `{session_file_path}.msw.plot_spec.yaml` in `init_task()` if file exists
+- [x] Remove `msw monitor` CLI subcommands (server is started externally, not via CLI)
+- [x] `fastapi`, `httpx`, `uvicorn` added to dev extras
+- [x] Tests: 30 passing — LogAgent lifecycle, auth, UUID, server ingest, TaskProcess integration
+
+### ft/monitor-step2 (after step1 validated on rig)
+- [ ] `GET /sessions/{uuid}/trials?since=N` — incremental trial query endpoint on the log_url API server
+  (UI polls this to get only new trials since last fetch; Vue tracks cursor N locally)
+  **Direction: UI → log_url backend API, not UI → CLI**
+- [ ] `msw plotspec <task>` — load + print PlotSpec YAML; `--dry-run` generates synthetic data
+- [ ] Verify LogAgent `trial_data` field names for sequence and fixedsubjects tasks
+
+### ft/monitor-step3 (Docker + Vue)
+- [ ] `Dockerfile.monitor` + `docker-compose.monitor.yml` — two containers: nginx (Vue dist) + FastAPI (API)
+- [ ] Vue UI wiring — polls `/session/status` + `trials?since=N`; PlotSpec-driven Plotly panels
 
 ---
 
