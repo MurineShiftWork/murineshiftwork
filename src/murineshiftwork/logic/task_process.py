@@ -398,6 +398,7 @@ class TaskProcess(object):
     def init_task(self):
         """Import specific Task and make self.task_runner Thread."""
         import importlib
+        import shutil
 
         try:
             mod = importlib.import_module(
@@ -408,6 +409,13 @@ class TaskProcess(object):
             raise ImportError(
                 f"Cannot import 'Task' from task '{self.task_name}': {exc}"
             )
+
+        plot_spec_src = Path(mod.__file__).parent / "plot_spec.yaml"
+        if plot_spec_src.exists():
+            dest = Path(self.session_paths["session_file_path"] + ".msw.plot_spec.yaml")
+            shutil.copy2(plot_spec_src, dest)
+            logging.debug("plot_spec copied: %s", dest.name)
+
         self.task_runner = TaskClass(bpod=self.bpod, **self.input_kwargs)
 
     def run_task(self):

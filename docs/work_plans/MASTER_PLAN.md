@@ -544,34 +544,27 @@ convention: `HARDWARE_LICK_LEFT`, `HARDWARE_LICK_RIGHT` (not `LICK_EVENT_*`).
 
 ---
 
-### Branch: ft/monitor-step1 (current)
+### Branch: ft/monitor-step1 (PR-ready)
 
-Architecture redesign since original plan — see `docs/work_plans/PLAN_logagent_ui.md`.
-Key changes: `TrialRelay` → `LogAgent`; session UUID as primary key; hardware-blind
-`trial_data` dict; bearer token auth; two Docker containers (UI + API).
+Architecture redesign — see `docs/work_plans/PLAN_logagent_ui.md`.
+Key changes: `monitor/` → `logagent/`; `TrialRelay` → `LogAgent`; session UUID;
+hardware-blind `trial_data`; bearer token auth; `log_url` + `log_bearer_token` in machine config.
 
-Done so far:
-- [x] `monitor/relay.py` — `TrialRelay` daemon process (to be renamed `LogAgent`)
-- [x] `monitor/server.py` — FastAPI ingest + status endpoints (setup-keyed, to rebuild UUID-keyed)
-- [x] `_start_relay()` in `TaskProcess` — reads `monitor_url` from machine config
-- [x] `put_nowait()` in sequence task after each task trial
+- [x] `logagent/logagent.py` — `LogAgent` daemon: three-phase lifecycle (start/trial/stop POSTs), session_uuid tagged on all payloads, bearer token header
+- [x] `logagent/server.py` — FastAPI ingest + status; bearer token validation on ingest; session_uuid stored
+- [x] `TaskProcess._start_relay()` — reads `log_url` + `log_bearer_token` from machine config; optional (no-op if `log_url` absent)
+- [x] `TaskProcess.__init__` — generates `session_uuid` (uuid4); persists in session YAML
+- [x] `TaskProcess.init_task()` — copies `plot_spec.yaml` → `{session}.msw.plot_spec.yaml` if task has one
+- [x] `put_nowait()` in sequence task after each trial
 - [x] Step-wise INFO logging: HardwareManager preflight/connect/ready, hook names, session identity
-- [x] Tutorial docs series plan — `PLAN_tutorial_docs.md`
+- [x] `--port-*` flags marked DEPRECATED in CLI help
+- [x] `msw monitor` CLI subcommand removed (server started externally)
+- [x] `fastapi`, `httpx`, `uvicorn` added to dev extras
+- [x] Tutorial docs plan — `PLAN_tutorial_docs.md`
 - [x] LogAgent + UI architecture plan — `PLAN_logagent_ui.md`
-- [x] `--port-*` flags marked DEPRECATED in CLI help (→ future `--device name:path`)
+- [x] Tests: 30 passing
 
-Remaining:
-- [ ] Rename `TrialRelay` → `LogAgent`; rebuild `monitor/relay.py` with start/trial/stop events
-- [ ] Session UUID — generate UUID4 in `TaskProcess.__init__`, store in session YAML
-- [ ] Trial payload — task puts opaque `trial_data`; `__stop__` sentinel carries summary
-- [ ] Bearer token — read `ui_bearer_token` from `msw_machine.yaml`; inject into LogAgent headers
-- [ ] Plot spec — copy `plot_spec.yaml` to session dir at session start
-- [ ] Rebuild `monitor/server.py` — UUID-keyed sessions, `trials?since=N`, bearer token on ingest
-- [ ] `docker-compose.monitor.yml` — two containers: `msw-ui` (nginx) + `msw-api` (FastAPI)
-- [ ] Remove `msw monitor` CLI subcommands (parser + execute)
-- [ ] `httpx` to `dev` extras in `pyproject.toml`
-- [ ] Tests — LogAgent lifecycle, server UUID ingest + query, token validation
-- [ ] PR + merge ft/monitor-step1 → main
+Next after merge: ft/monitor-step2 — `trials?since=N` endpoint + `msw plotspec` CLI (see `PLAN_logagent_ui.md`)
 
 ---
 
