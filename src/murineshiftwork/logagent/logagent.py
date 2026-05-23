@@ -11,6 +11,10 @@ Lifecycle (one process per session, daemon=True so it dies with the parent):
 Fire-and-forget guarantee: put_nowait() in the task loop is ~1 µs regardless
 of network state.  All HTTP errors are logged at DEBUG and dropped silently.
 Queue(maxsize=500) absorbs bursts; overflow drops silently in the task loop.
+
+Configured via msw_machine.yaml:
+  log_url: http://monitor-host:8080
+  log_bearer_token: <secret>   # optional; omit to disable auth
 """
 
 from __future__ import annotations
@@ -30,14 +34,18 @@ class LogAgent(multiprocessing.Process):
     def __init__(
         self,
         queue: multiprocessing.Queue,
-        monitor_url: str,
+        log_url: str,
         setup: str,
         session_start_payload: dict,
+        session_uuid: str = "",
+        bearer_token: str = "",
     ) -> None:
         super().__init__(daemon=True)
         self._queue = queue
-        self._monitor_url = monitor_url.rstrip("/")
+        self._log_url = log_url.rstrip("/")
         self._setup = setup
+        self._session_uuid = session_uuid
+        self._bearer_token = bearer_token
         self._session_start_payload = session_start_payload
 
     def run(self) -> None:
@@ -58,11 +66,14 @@ class LogAgent(multiprocessing.Process):
             self._post("trial", {"trial_data": event})
 
     def _post(self, endpoint: str, payload: dict) -> None:
-        url = f"{self._monitor_url}/ingest/{self._setup}/{endpoint}"
+        url = f"{self._log_url}/ingest/{self._setup}/{endpoint}"
+        if self._session_uuid:
+            payload = {**payload, "session_uuid": self._session_uuid}
         data = json.dumps(payload, default=str).encode()
-        req = urllib.request.Request(
-            url, data=data, headers={"Content-Type": "application/json"}
-        )
+        headers = {"Content-Type": "application/json"}
+        if self._bearer_token:
+            headers["Authorization"] = f"Bearer {self._bearer_token}"
+        req = urllib.request.Request(url, data=data, headers=headers)
         try:
             urllib.request.urlopen(req, timeout=0.5)
         except Exception as exc:

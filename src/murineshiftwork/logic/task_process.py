@@ -2,6 +2,7 @@ import logging
 import subprocess
 import sys
 import time
+import uuid
 from importlib.metadata import version as _get_version
 from pathlib import Path
 from threading import Thread
@@ -159,9 +160,10 @@ class TaskProcess(object):
     _pre_hooks: list = []
     _post_hooks: list = []
     _hook_ctx: Any = None
-    # Monitor relay
+    # LogAgent relay
     _relay_queue: Any = None
     _relay_proc: Any = None
+    session_uuid: str = ""
     # Misc
     exiting = False
     debug = False
@@ -190,6 +192,7 @@ class TaskProcess(object):
         self.input_kwargs["subject"] = self.subject
         self.debug = self.input_kwargs.get("debug", False)
         self.simulate = simulate
+        self.session_uuid = str(uuid.uuid4())
 
         self.task_name = find_task_by_name(task_name=self.task_in)
         self.session_paths = build_data_paths(
@@ -293,8 +296,9 @@ class TaskProcess(object):
     def _start_relay(self) -> None:
         from murineshiftwork.logic.machine_config import read_machine_config
 
-        monitor_url = read_machine_config().get("monitor_url", "")
-        if not monitor_url:
+        mc = read_machine_config()
+        log_url = mc.get("log_url", "")
+        if not log_url:
             return
 
         import multiprocessing
@@ -302,6 +306,7 @@ class TaskProcess(object):
 
         from murineshiftwork.logagent.logagent import LogAgent
 
+        bearer_token = mc.get("log_bearer_token", "")
         self._relay_queue = multiprocessing.Queue(maxsize=500)
         setup = self.input_kwargs.get("setup", "") or self.input_kwargs.get(
             "metadata", {}
@@ -310,18 +315,21 @@ class TaskProcess(object):
             "subject": self.subject,
             "task": self.task_name,
             "setup": setup,
+            "session_uuid": self.session_uuid,
             "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "session_paths": {k: str(v) for k, v in (self.session_paths or {}).items()},
         }
         self._relay_proc = LogAgent(
             self._relay_queue,
-            monitor_url,
+            log_url,
             setup=setup,
             session_start_payload=session_start_payload,
+            session_uuid=self.session_uuid,
+            bearer_token=bearer_token,
         )
         self._relay_proc.start()
         self.input_kwargs["relay_queue"] = self._relay_queue
-        logging.debug("LogAgent started → %s (setup=%r)", monitor_url, setup)
+        logging.debug("LogAgent started → %s (setup=%r)", log_url, setup)
 
     def exit_safely(self):
         self.exiting = True
@@ -366,6 +374,7 @@ class TaskProcess(object):
             "process": {
                 "msw_version": _get_version("murineshiftwork"),
                 "git_commit": _get_git_commit(),
+                "session_uuid": self.session_uuid,
                 "task": self.task_name,
                 "subject": self.subject,
                 "setup": self.input_kwargs.get("setup", ""),

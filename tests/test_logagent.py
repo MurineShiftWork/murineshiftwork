@@ -8,7 +8,12 @@ from fastapi.testclient import TestClient
 from murineshiftwork.logagent.logagent import LogAgent
 from murineshiftwork.logagent.server import create_app
 
-_START_PAYLOAD = {"subject": "mouse001", "task": "sequence", "setup": "rig-a"}
+_START_PAYLOAD = {
+    "subject": "mouse001",
+    "task": "sequence",
+    "setup": "rig-a",
+    "session_uuid": "test-uuid-1234",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -41,7 +46,7 @@ class TestLogAgent:
     def test_strips_url_trailing_slash(self):
         q = multiprocessing.Queue(maxsize=10)
         agent = LogAgent(q, "http://localhost:8080/", "rig-a", _START_PAYLOAD)
-        assert agent._monitor_url == "http://localhost:8080"
+        assert agent._log_url == "http://localhost:8080"
 
     def test_drops_silently_when_server_unreachable(self):
         q = multiprocessing.Queue(maxsize=10)
@@ -62,8 +67,31 @@ class TestLogAgent:
     def test_post_url_format(self):
         q = multiprocessing.Queue(maxsize=1)
         agent = LogAgent(q, "http://host:8080", "my-rig", _START_PAYLOAD)
-        url = f"{agent._monitor_url}/ingest/{agent._setup}/trial"
+        url = f"{agent._log_url}/ingest/{agent._setup}/trial"
         assert url == "http://host:8080/ingest/my-rig/trial"
+
+    def test_bearer_token_stored(self):
+        q = multiprocessing.Queue(maxsize=1)
+        agent = LogAgent(
+            q, "http://localhost:8080", "rig-a", _START_PAYLOAD, bearer_token="secret"
+        )
+        assert agent._bearer_token == "secret"
+
+    def test_no_bearer_token_by_default(self):
+        q = multiprocessing.Queue(maxsize=1)
+        agent = LogAgent(q, "http://localhost:8080", "rig-a", _START_PAYLOAD)
+        assert agent._bearer_token == ""
+
+    def test_session_uuid_stored(self):
+        q = multiprocessing.Queue(maxsize=1)
+        agent = LogAgent(
+            q,
+            "http://localhost:8080",
+            "rig-a",
+            _START_PAYLOAD,
+            session_uuid="abc-123",
+        )
+        assert agent._session_uuid == "abc-123"
 
 
 # ---------------------------------------------------------------------------
@@ -102,6 +130,14 @@ class TestMonitorServer:
         assert data["state"] == "running"
         assert data["subject"] == "mouse001"
         assert data["trial_count"] == 0
+
+    def test_session_uuid_stored_from_start_payload(self):
+        self.client.post(
+            "/ingest/rig-uuid/start",
+            json={"subject": "m1", "task": "seq", "session_uuid": "uuid-abc"},
+        )
+        data = self.client.get("/session/status/rig-uuid").json()
+        assert data["session_uuid"] == "uuid-abc"
 
     def test_ingest_trial_wrapped_in_trial_data(self):
         """LogAgent sends {trial_data: {...}}; server unwraps for storage."""
@@ -194,12 +230,48 @@ class TestMonitorServer:
         assert data["elapsed_s"] > 0
 
 
+class TestMonitorServerAuth:
+    def setup_method(self):
+        self.app = create_app(bearer_token="secret-token")
+        self.client = TestClient(self.app)
+
+    def test_ingest_start_requires_token(self):
+        resp = self.client.post(
+            "/ingest/rig-auth/start", json={"subject": "m1", "task": "s"}
+        )
+        assert resp.status_code == 401
+
+    def test_ingest_start_with_correct_token(self):
+        resp = self.client.post(
+            "/ingest/rig-auth/start",
+            json={"subject": "m1", "task": "s"},
+            headers={"Authorization": "Bearer secret-token"},
+        )
+        assert resp.status_code == 204
+
+    def test_ingest_start_with_wrong_token(self):
+        resp = self.client.post(
+            "/ingest/rig-auth/start",
+            json={"subject": "m1", "task": "s"},
+            headers={"Authorization": "Bearer wrong"},
+        )
+        assert resp.status_code == 401
+
+    def test_health_no_auth_required(self):
+        resp = self.client.get("/health")
+        assert resp.status_code == 200
+
+    def test_status_no_auth_required(self):
+        resp = self.client.get("/session/status")
+        assert resp.status_code == 200
+
+
 # ---------------------------------------------------------------------------
 # TaskProcess relay integration
 
 
-def test_task_process_starts_log_agent_when_monitor_url_set(monkeypatch):
-    """TaskProcess creates relay_queue and starts LogAgent when monitor_url is set."""
+def test_task_process_starts_log_agent_when_log_url_set(monkeypatch):
+    """TaskProcess creates relay_queue and starts LogAgent when log_url is set."""
     import sys
     import types
 
@@ -207,7 +279,7 @@ def test_task_process_starts_log_agent_when_monitor_url_set(monkeypatch):
 
     monkeypatch.setattr(
         "murineshiftwork.logic.machine_config._load_machine_config",
-        lambda: {"monitor_url": "http://localhost:8080"},
+        lambda: {"log_url": "http://localhost:8080", "log_bearer_token": "tok"},
     )
 
     started = []
@@ -215,10 +287,21 @@ def test_task_process_starts_log_agent_when_monitor_url_set(monkeypatch):
     class FakeLogAgent:
         daemon = True
 
-        def __init__(self, queue, monitor_url, setup, session_start_payload):
+        def __init__(
+            self,
+            queue,
+            log_url,
+            setup,
+            session_start_payload,
+            session_uuid="",
+            bearer_token="",
+        ):
             self.queue = queue
+            self.log_url = log_url
             self.setup = setup
             self.payload = session_start_payload
+            self.session_uuid = session_uuid
+            self.bearer_token = bearer_token
             started.append(self)
 
         def start(self):
@@ -233,6 +316,7 @@ def test_task_process_starts_log_agent_when_monitor_url_set(monkeypatch):
     tp._relay_proc = None
     tp.subject = "mouse001"
     tp.task_name = "sequence"
+    tp.session_uuid = "uuid-test-abc"
     tp.session_paths = {"session_folder": "/tmp/s", "session_basename": "s"}
     tp.input_kwargs = {"setup": "rig-a"}
     tp._start_relay()
@@ -240,13 +324,17 @@ def test_task_process_starts_log_agent_when_monitor_url_set(monkeypatch):
     assert tp._relay_queue is not None
     assert tp.input_kwargs.get("relay_queue") is tp._relay_queue
     assert len(started) == 1
-    assert started[0].setup == "rig-a"
-    assert started[0].payload["subject"] == "mouse001"
-    assert started[0].payload["task"] == "sequence"
-    assert "started_at" in started[0].payload
+    agent = started[0]
+    assert agent.setup == "rig-a"
+    assert agent.payload["subject"] == "mouse001"
+    assert agent.payload["task"] == "sequence"
+    assert agent.payload["session_uuid"] == "uuid-test-abc"
+    assert "started_at" in agent.payload
+    assert agent.session_uuid == "uuid-test-abc"
+    assert agent.bearer_token == "tok"
 
 
-def test_task_process_no_relay_when_no_monitor_url(monkeypatch):
+def test_task_process_no_relay_when_no_log_url(monkeypatch):
     import murineshiftwork.logic.task_process as tp_mod
 
     monkeypatch.setattr(
