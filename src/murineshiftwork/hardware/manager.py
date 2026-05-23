@@ -74,17 +74,18 @@ class HardwareManager:
 
     def open(self) -> dict[str, Any]:
         for device in self._devices:
-            log.debug("Hardware preflight: %s", device.name)
+            log.info("Hardware preflight: %s", device.name)
             device.preflight()
-            log.debug("Hardware connect: %s", device.name)
+            log.info("Hardware connect: %s", device.name)
             device.connect()
             self._opened.append(device)
+            log.info("Hardware ready: %s", device.name)
         return {d.name: d.handle for d in self._opened}
 
     def close(self) -> None:
         for device in reversed(self._opened):
             try:
-                log.debug("Hardware disconnect: %s", device.name)
+                log.info("Hardware disconnect: %s", device.name)
                 device.disconnect()
             except Exception:
                 log.warning("Error disconnecting %s", device.name, exc_info=True)

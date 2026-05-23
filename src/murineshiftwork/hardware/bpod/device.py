@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
 from murineshiftwork.hardware.bpod.factory import BpodFactory
+
+log = logging.getLogger(__name__)
 
 
 class BpodDevice:
@@ -26,8 +29,10 @@ class BpodDevice:
         self._factory: BpodFactory | None = None
 
     def preflight(self) -> None:
+        log.debug("Bpod preflight: checking port %s", self._serial_port)
         if not Path(self._serial_port).exists():
             raise ValueError(f"Bpod serial port not accessible: {self._serial_port!r}")
+        log.debug("Bpod preflight: port exists")
 
     def connect(self) -> None:
         self._factory = BpodFactory(
@@ -36,6 +41,7 @@ class BpodDevice:
         self._factory.open()
 
     def disconnect(self) -> None:
+        log.debug("Bpod disconnect: closing")
         if self._factory is not None:
             self._factory.close_safely()
 
