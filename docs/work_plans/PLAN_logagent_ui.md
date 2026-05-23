@@ -66,7 +66,7 @@ Bearer token strategy:
 - Token set once in `~/.murineshiftwork/msw_machine.yaml`:
   ```yaml
   log_url: http://monitor-host:8080
-  log_bearer_token: <secret>
+  log_bearer_token: <your-token-here>
   ```
 - LogAgent reads `log_bearer_token` from machine config and sends `Authorization: Bearer <token>` on every ingest POST
 - API container validates token on all `/ingest/` routes; query routes (`/sessions/...`) unprotected for v1
