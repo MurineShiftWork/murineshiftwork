@@ -568,16 +568,16 @@ Next: ft/monitor-step2 — `trials?since=N` endpoint + `msw plotspec` CLI (see `
 
 ---
 
-### Branch: ft/opto-hardware ⬅ CURRENT
+### Done: ft/opto-hardware → merged to main 2026-05-23
 
 Fix optotagging/stimulation for new hardware structure:
-- [ ] Remove wrong `hardware.serial_port_pulsepal` from `tasks/optotagging/task.yaml`
-- [ ] Add pulsepal port resolution to `_resolve_setup_config_ports()` in `evaluate.py`
-- [ ] Update pypulsepal to `ft/pydantic-config` branch (pydantic ChannelConfig/TriggerConfig, `sync_all_params()`)
-- [ ] `hardware/pulsepal/device.py` — `PulsePalDevice(DeviceProtocol)`: connects once, handle = `PulsePal` object
-- [ ] Refactor `Stimulation` to accept existing `PulsePal` connection; reprogram per-protocol via `sync_all_params()` without reconnecting
-- [ ] `execute.py` — add PulsePal to `HardwareManager` when `serial_port_pulsepal` is set
-- [ ] Optotagging task — receive PulsePal from `devices["pulsepal"]`; remove per-protocol `Stimulation(port=...)` reconnect
+- [x] Remove wrong `hardware.serial_port_pulsepal` from `tasks/optotagging/task.yaml`
+- [x] Add pulsepal port resolution to `_resolve_setup_config_ports()` in `evaluate.py`
+- [x] pypulsepal main already has pydantic ChannelConfig/TriggerConfig/PulsePalConfig + `sync_all_params()` — no branch switch needed
+- [x] `hardware/pulsepal/device.py` — `PulsePalDevice(DeviceProtocol)`: connects once, handle = `PulsePal` object
+- [x] Refactor `Stimulation` to accept existing `PulsePal` connection; reprogram per-protocol via `sync_all_params()` without reconnecting
+- [x] `execute.py` — add PulsePal to `HardwareManager` when `serial_port_pulsepal` is set; pass `devices` dict to task
+- [x] Optotagging task — receive PulsePal from `devices["pulsepal"]`; falls back to direct port if no handle
 
 ---
 

@@ -3,8 +3,6 @@ default:
   barcode_bit_duration_ms: 35.0
   barcode_init_duration_ms: 10.0
   barcode_tolerance: 0.25
-  hardware:
-    serial_port_pulsepal: /dev/ttyACM0
   stimulation_defaults:
     n_trials: 50
     iti: 1.0

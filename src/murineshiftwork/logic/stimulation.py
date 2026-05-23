@@ -36,7 +36,7 @@ def power_to_voltage(laser_power: float) -> float:
 
 
 class Stimulation:
-    pulsePal = None
+    pulsePal: Any = None
     port = ""
 
     channels_inactive = zeros(5).astype("int")
@@ -182,14 +182,27 @@ class Stimulation:
                         param_value=value,
                     )
 
-    def connect(self):
-        self.pulsePal = _PulsePal(serial_port=self.port)
+    def _sync_channel_configs(self) -> None:
+        """Write _channel_params into pulsePal.channel_configs for sync_all_params."""
+        for ch, params in self._channel_params.items():
+            cfg = self.pulsePal.channel_configs[ch - 1]  # pypulsepal is 0-indexed
+            for k, v in params.items():
+                if hasattr(cfg, k):
+                    setattr(cfg, k, v)
 
-        for channel, params in self._channel_params.items():
-            for param_name, value in params.items():
-                self.pulsePal.program_one_param(
-                    channel=channel, param_name=param_name, param_value=value
-                )
+    def connect(self, handle=None):
+        self._owns_connection = handle is None
+        if handle is None:
+            self.pulsePal = _PulsePal(serial_port=self.port)
+            for channel, params in self._channel_params.items():
+                for param_name, value in params.items():
+                    self.pulsePal.program_one_param(
+                        channel=channel, param_name=param_name, param_value=value
+                    )
+        else:
+            self.pulsePal = handle
+            self._sync_channel_configs()
+            self.pulsePal.sync_all_params()
 
         self.off()
 
@@ -223,7 +236,11 @@ class Stimulation:
                         trigger_mode=self.in_dict["trigger_mode"],
                     )
 
-        logging.info(f"PulsePal: connected on {self.port}")
+        logging.info(
+            "PulsePal: configured via injected handle"
+            if not self._owns_connection
+            else f"PulsePal: connected on {self.port}"
+        )
 
     def on(self):
         if not self.emergency_off_bool:
@@ -267,10 +284,12 @@ class Stimulation:
         if self.pulsePal is not None:
             try:
                 self.pulsePal.stop_all_outputs()
-                self.pulsePal.save_settings()
+                if getattr(self, "_owns_connection", True):
+                    self.pulsePal.save_settings()
             except Exception:
                 pass
-            self.pulsePal = None
+            if getattr(self, "_owns_connection", True):
+                self.pulsePal = None
         logging.info("PulsePal: disconnected.")
 
     def __exit__(self, exc_type, exc_val, exc_tb):

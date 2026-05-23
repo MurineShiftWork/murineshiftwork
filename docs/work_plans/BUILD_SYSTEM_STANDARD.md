@@ -291,32 +291,51 @@ on:
 
 permissions:
   contents: write
+  id-token: write  # required for PyPI trusted publishing (OIDC)
 
 jobs:
   release:
-    name: Create GitHub release
+    name: Build and publish
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # needed for hatch-vcs to read tags
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Build
         run: |
           pip install hatchling hatch-vcs
           python -m hatchling build
-      - name: Create release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
+          files: dist/*
+          generate_release_notes: false
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
 ```
+
+**Notes:**
+- `fetch-depth: 0` is required so hatch-vcs can read git tags and derive the version. Without it, the build produces `0.1.0` (fallback).
+- `softprops/action-gh-release@v2` replaces the deprecated `actions/create-release@v1`. It attaches the built wheel and sdist to the release automatically via `files: dist/*`.
+- `pypa/gh-action-pypi-publish` uses OIDC trusted publishing — no `PYPI_API_TOKEN` secret needed. Requires one-time setup on PyPI (see below).
+- The GitHub release creation fires the Zenodo webhook automatically — no extra step needed.
+- Do **not** use `actions/create-release@v1` — deprecated and unmaintained.
+
+### PyPI trusted publishing — one-time setup per repo
+
+1. Go to [pypi.org](https://pypi.org) → log in → Your projects → select the package → Settings → Publishing
+2. Under "Add a new publisher", select **GitHub Actions**
+3. Fill in: Owner = `<github-org-or-user>`, Repository = `<repo-name>`, Workflow = `release.yml`, Environment = *(leave blank)*
+4. Save. No secret needs to be added to the GitHub repo — OIDC handles authentication automatically.
+
+If the package does not yet exist on PyPI, create it first with a manual `twine upload` of an initial build, then add the trusted publisher.
 
 ---
 

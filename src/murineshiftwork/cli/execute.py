@@ -68,8 +68,16 @@ def run_task(**args_dict):
         from murineshiftwork.hardware.bpod.device import BpodDevice
         from murineshiftwork.hardware.manager import HardwareManager
 
-        with HardwareManager([BpodDevice(serial_port=serial_port)]) as devices:
+        device_list = [BpodDevice(serial_port=serial_port)]
+        serial_port_pulsepal = args_dict.get("serial_port_pulsepal", "")
+        if serial_port_pulsepal:
+            from murineshiftwork.hardware.pulsepal.device import PulsePalDevice
+
+            device_list.append(PulsePalDevice(serial_port=serial_port_pulsepal))
+
+        with HardwareManager(device_list) as devices:
             args_dict["bpod"] = devices["bpod"]
+            args_dict["devices"] = devices
             mod.run_task(**args_dict)
     else:
         mod.run_task(**args_dict)

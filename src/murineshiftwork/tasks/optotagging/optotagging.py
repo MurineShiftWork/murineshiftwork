@@ -78,9 +78,16 @@ class Task(TaskRunner):
 
     def run(self) -> None:
         task_settings = self.input_kwargs["settings.task.patched"]
-        serial_port_pulsepal = task_settings.get("hardware", {}).get(
-            "serial_port_pulsepal"
-        ) or self.input_kwargs.get("serial_port_pulsepal", "/dev/ttyACM1")
+        devices = self.input_kwargs.get("devices") or {}
+        pulsepal_handle = devices.get("pulsepal") if isinstance(devices, dict) else None
+        serial_port_pulsepal = (
+            None
+            if pulsepal_handle is not None
+            else (
+                self.input_kwargs.get("serial_port_pulsepal")
+                or task_settings.get("serial_port_pulsepal", "/dev/ttyACM1")
+            )
+        )
 
         stimulation_defaults = task_settings.get("stimulation_defaults", {})
         stimulation_protocols = task_settings.get("stimulation", {})
@@ -109,7 +116,7 @@ class Task(TaskRunner):
             )
 
             stim = Stimulation(port=serial_port_pulsepal, in_dict=params)
-            stim.connect()
+            stim.connect(handle=pulsepal_handle)
 
             if record_video and conductor is not None:
                 self._start_protocol_video(conductor, protocol_name)

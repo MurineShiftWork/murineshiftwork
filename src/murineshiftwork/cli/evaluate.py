@@ -261,6 +261,18 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
         args_dict["scale_baudrate"] = scale_baudrate
         patched["scale_type"] = scale_type
 
+    if setup_config and "pulsepal" in setup_config.devices:
+        try:
+            resolved_pp = setup_config.device_port("pulsepal")
+            args_dict["serial_port_pulsepal"] = resolved_pp
+            patched["serial_port_pulsepal"] = resolved_pp
+            logging.debug(f"Resolved pulsepal port from SetupConfig: {resolved_pp}")
+        except ValueError as exc:
+            logging.warning(
+                f"SetupConfig pulsepal port resolution failed ({exc}); "
+                f"using CLI value {args_dict.get('serial_port_pulsepal', '')!r}"
+            )
+
     if setup_config and setup_config.cameras:
         cam_path = setup_config.cameras.config
         if cam_path and (
