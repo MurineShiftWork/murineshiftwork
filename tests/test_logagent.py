@@ -3,10 +3,13 @@
 import multiprocessing
 
 import pytest
-from fastapi.testclient import TestClient
 
-from murineshiftwork.logagent.logagent import LogAgent
-from murineshiftwork.logagent.server import create_app
+pytest.importorskip("fastapi")
+
+from fastapi.testclient import TestClient  # noqa: E402
+
+from murineshiftwork.logagent.logagent import LogAgent  # noqa: E402
+from murineshiftwork.logagent.server import create_app  # noqa: E402
 
 _START_PAYLOAD = {
     "subject": "mouse001",
