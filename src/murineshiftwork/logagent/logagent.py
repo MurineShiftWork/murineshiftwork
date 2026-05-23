@@ -14,7 +14,7 @@ Queue(maxsize=500) absorbs bursts; overflow drops silently in the task loop.
 
 Configured via msw_machine.yaml:
   log_url: http://monitor-host:8080
-  log_bearer_token: <secret>   # optional; omit to disable auth
+  log_bearer_token: <your-token-here>   # optional; omit to disable auth
 """
 
 from __future__ import annotations

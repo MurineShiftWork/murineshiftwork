@@ -76,9 +76,13 @@ class TestLogAgent:
     def test_bearer_token_stored(self):
         q = multiprocessing.Queue(maxsize=1)
         agent = LogAgent(
-            q, "http://localhost:8080", "rig-a", _START_PAYLOAD, bearer_token="secret"
+            q,
+            "http://localhost:8080",
+            "rig-a",
+            _START_PAYLOAD,
+            bearer_token=_TEST_TOKEN,
         )
-        assert agent._bearer_token == "secret"
+        assert agent._bearer_token == _TEST_TOKEN
 
     def test_no_bearer_token_by_default(self):
         q = multiprocessing.Queue(maxsize=1)
@@ -233,9 +237,12 @@ class TestMonitorServer:
         assert data["elapsed_s"] > 0
 
 
+_TEST_TOKEN = "xk7-test-bearer-abc123"  # gitleaks:allow
+
+
 class TestMonitorServerAuth:
     def setup_method(self):
-        self.app = create_app(bearer_token="secret-token")
+        self.app = create_app(bearer_token=_TEST_TOKEN)
         self.client = TestClient(self.app)
 
     def test_ingest_start_requires_token(self):
@@ -248,7 +255,7 @@ class TestMonitorServerAuth:
         resp = self.client.post(
             "/ingest/rig-auth/start",
             json={"subject": "m1", "task": "s"},
-            headers={"Authorization": "Bearer secret-token"},
+            headers={"Authorization": f"Bearer {_TEST_TOKEN}"},
         )
         assert resp.status_code == 204
 
@@ -256,7 +263,7 @@ class TestMonitorServerAuth:
         resp = self.client.post(
             "/ingest/rig-auth/start",
             json={"subject": "m1", "task": "s"},
-            headers={"Authorization": "Bearer wrong"},
+            headers={"Authorization": "Bearer wrong-token"},
         )
         assert resp.status_code == 401
 
