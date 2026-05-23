@@ -433,62 +433,6 @@ def run_agent(**args_dict):
     uvicorn.run(app, host=host, port=port)
 
 
-def run_monitor(**args_dict):
-    """msw monitor serve/status/debug
-
-    serve  — start the FastAPI monitor server (receives trial events from TrialRelay)
-    status — query a running monitor server and print session state
-    debug  — print the monitor_url from machine config
-    """
-    subcommand = args_dict.get("subcommand", "serve")
-
-    if subcommand == "serve":
-        try:
-            import uvicorn
-        except ImportError as exc:
-            raise SystemExit(
-                "The 'agent' extra is not installed.\n"
-                "Run: pip install 'murineshiftwork[agent]'"
-            ) from exc
-
-        from murineshiftwork.logagent.server import create_app
-
-        port = args_dict.get("monitor_port", 8080)
-        host = args_dict.get("monitor_host", "0.0.0.0")
-        app = create_app()
-        uvicorn.run(app, host=host, port=port)
-
-    elif subcommand == "status":
-        import json
-        import urllib.request
-
-        from murineshiftwork.logic.machine_config import read_machine_config
-
-        url = args_dict.get("monitor_url") or read_machine_config().get(
-            "monitor_url", "http://localhost:8080"
-        )
-        url = url.rstrip("/")
-        try:
-            with urllib.request.urlopen(f"{url}/session/status", timeout=3) as resp:
-                data = json.loads(resp.read())
-            print(json.dumps(data, indent=2))
-        except Exception as exc:
-            raise SystemExit(f"Monitor not reachable at {url}: {exc}") from exc
-
-    elif subcommand == "debug":
-        from murineshiftwork.logic.machine_config import read_machine_config
-
-        mc = read_machine_config()
-        monitor_url = mc.get("monitor_url", "")
-        if monitor_url:
-            print(f"monitor_url: {monitor_url}")
-        else:
-            print("monitor_url: not set (add to ~/.murineshiftwork/msw_machine.yaml)")
-
-    else:
-        raise ValueError(f"Unknown monitor subcommand: {subcommand!r}")
-
-
 def run_calibration(**args_dict):
     """Plot and save calibration charts as PDF."""
     from murineshiftwork.logic.calibration import save_calibration_pdfs

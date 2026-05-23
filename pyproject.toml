@@ -44,6 +44,9 @@ dev = [
     "mkdocs-material",
     "mkdocs",
     "gitpython",
+    "fastapi",
+    "httpx",
+    "uvicorn",
 ]
 calibration = [
     "serial-scale-hx711",

@@ -10,7 +10,7 @@
 | Decision | Choice | Rationale |
 |---|---|---|
 | Session identity | UUID4 string | Namespace-independent; basename kept as human label only |
-| Auth (ingest endpoints) | Bearer token in `Authorization` header | Token stored in `msw_machine.yaml` under `ui_bearer_token` |
+| Auth (ingest endpoints) | Bearer token in `Authorization` header | Token stored in `msw_machine.yaml` under `log_bearer_token`; `log_url` names the server |
 | Auth (UI query endpoints) | None for v1 (LAN only) | Add if UI is exposed beyond LAN |
 | Container topology | **Two containers** | UI container (Vue SPA only, nginx); API container (FastAPI, receives from LogAgent + serves query endpoints to UI) |
 | LogAgent lifetime | One daemon Process per session | Created in `TaskProcess.__init__`, exits on None sentinel |
@@ -65,11 +65,18 @@ UI container  (nginx, port 80/443)
 Bearer token strategy:
 - Token set once in `~/.murineshiftwork/msw_machine.yaml`:
   ```yaml
-  ui_bearer_token: <secret>
+  log_url: http://monitor-host:8080
+  log_bearer_token: <secret>
   ```
-- LogAgent reads token from machine config and sends `Authorization: Bearer <token>` on every ingest POST
+- LogAgent reads `log_bearer_token` from machine config and sends `Authorization: Bearer <token>` on every ingest POST
 - API container validates token on all `/ingest/` routes; query routes (`/sessions/...`) unprotected for v1
-- If `ui_bearer_token` is absent from machine config: ingest calls proceed without auth (dev mode)
+- If `log_bearer_token` is absent from machine config: ingest calls proceed without auth (dev mode)
+
+**Future discussion: machine vs setup level config**
+Currently `log_url` and `log_bearer_token` live at machine level (one server per physical rig).
+This may be too coarse if a single machine runs multiple setups that report to different servers,
+or if different setups need different auth tokens.
+Decision deferred until we have >1 rig using this — revisit when multi-rig is in scope.
 
 ---
 

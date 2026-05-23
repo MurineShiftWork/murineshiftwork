@@ -16,7 +16,6 @@ from murineshiftwork.cli.execute import (
     run_agent,
     run_calibration,
     run_init,
-    run_monitor,
     run_setup,
     run_subject,
     run_task,
@@ -662,75 +661,6 @@ def make_subparser_tasks(sub_parsers):
     pi.set_defaults(func=run_tasks_init_configs)
 
 
-def make_subparser_monitor(sub_parsers):
-    p = sub_parsers.add_parser(
-        "monitor",
-        help="MSW monitor server and status",
-        formatter_class=ArgparseFormatter,
-        description=dedent(
-            """\
-            MSW Monitor — per-rig FastAPI server that receives trial events from
-            TrialRelay and exposes session status for polling UIs.
-
-            Commands:
-              msw monitor serve    Start the monitor server (default port 8080)
-              msw monitor status   Query a running monitor and print session state
-              msw monitor debug    Print monitor_url from machine config
-
-            Configure in ~/.murineshiftwork/msw_machine.yaml:
-              monitor_url: http://localhost:8080
-
-            Examples:
-              msw monitor serve
-              msw monitor serve --port 8080
-              msw monitor status
-              msw monitor status --url http://rig-2:8080
-            """
-        ),
-        epilog=_CREDIT_EPILOG,
-    )
-    sub = p.add_subparsers(metavar="subcommand", dest="subcommand")
-    sub.required = True
-
-    ps = sub.add_parser(
-        "serve", help="Start the monitor server", formatter_class=ArgparseFormatter
-    )
-    ps.add_argument(
-        "--port",
-        type=int,
-        default=8080,
-        dest="monitor_port",
-        help="TCP port for the monitor server (default: 8080)",
-    )
-    ps.add_argument(
-        "--host",
-        type=str,
-        default="0.0.0.0",
-        dest="monitor_host",
-        help="Bind host (default: 0.0.0.0)",
-    )
-    ps.set_defaults(func=run_monitor)
-
-    pst = sub.add_parser(
-        "status",
-        help="Query a running monitor server",
-        formatter_class=ArgparseFormatter,
-    )
-    pst.add_argument(
-        "--url",
-        type=str,
-        default="",
-        dest="monitor_url",
-        help="Monitor server URL (default: from machine config or http://localhost:8080)",
-    )
-    pst.set_defaults(func=run_monitor)
-
-    pd = sub.add_parser(
-        "debug", help="Print monitor config", formatter_class=ArgparseFormatter
-    )
-    pd.set_defaults(func=run_monitor)
-
-
 def make_subparser_agent(sub_parsers):
     p = sub_parsers.add_parser(
         "agent",
@@ -815,7 +745,6 @@ def parse_args(args=None):
     make_subparser_post(sub_parsers)
     make_subparser_tasks(sub_parsers)
     make_subparser_agent(sub_parsers)
-    make_subparser_monitor(sub_parsers)
 
     parsed_args = main_parser.parse_args(args=args)
     return parsed_args.__dict__

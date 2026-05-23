@@ -125,5 +125,24 @@ def read_ui_url() -> str:
     return str(_load_machine_config().get("ui_url", ""))
 
 
+def read_log_config() -> dict:
+    """Return LogAgent config from machine config.
+
+    Keys read:
+      log_url          — base URL of the ingest server (e.g. http://monitor:8080)
+      log_bearer_token — bearer token for ingest endpoints; omit to disable auth
+
+    Both keys live at machine level for now (one server per physical rig).
+    FUTURE: consider whether log_url should move to setup config so that
+    multi-rig setups pointing at different servers are supported without
+    per-machine config changes.  Deferring until we have >1 rig using this.
+    """
+    mc = _load_machine_config()
+    return {
+        "log_url": mc.get("log_url", ""),
+        "log_bearer_token": mc.get("log_bearer_token", ""),
+    }
+
+
 def get_machine_config_path() -> Path:
     return _MACHINE_CONFIG_FILE
