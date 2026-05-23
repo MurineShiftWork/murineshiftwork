@@ -568,7 +568,27 @@ Next after merge: ft/monitor-step2 — `trials?since=N` endpoint + `msw plotspec
 
 ---
 
-### Branch: ft/namespace-unification ⬅ TOP PRIORITY
+### Branch: ft/extras-restructure ⬅ TOP PRIORITY (do before namespace branch)
+
+Restructure `pyproject.toml` extras so CI and users can install meaningful subsets.
+
+**Current extras** (to replace): `dev`, `calibration`, `keyboard`, `qt`, `rce`, `agent`
+
+**Proposed extras:**
+- `readers` — pandas, h5py, etc. needed to read session files (no hardware)
+- `acquisition` — pybpodapi, serial libs — everything needed to run a session
+- `tasks` — task-specific deps that aren't in acquisition (e.g. sounddevice)
+- `dev` — pytest, pre-commit, ruff, mypy, mkdocs, **fastapi, httpx, uvicorn** (test/lint/docs only)
+
+**`msw-flir-bonsai`**: separate package (`external/msw-flir-bonsai`), Windows 11 only — not an extras entry.
+
+CI matrix variants must be updated to match: `base`, `readers`, `acquisition`, `dev` (replacing `keyboard`).
+
+**Note**: `keyboard` extra (sshkeyboard) moves into `acquisition` or `tasks` — not a standalone extra.
+
+---
+
+### Branch: ft/namespace-unification
 
 Full design and sprint breakdown in `docs/work_plans/PLAN_namespace_unification.md`.
 

@@ -1,6 +1,8 @@
 # Namespace Unification Plan
 
-*Created 2026-05-23. Branch target: ft/namespace-unification (new branch, top priority).*
+*Created 2026-05-23. Branch target: ft/namespace-unification.*
+*Pre-requisite: ft/extras-restructure (see MASTER_PLAN) must land first — it defines which install
+extras provide fastapi/httpx and restructures CI matrix variants.*
 
 ---
 
