@@ -568,6 +568,29 @@ Next after merge: ft/monitor-step2 — `trials?since=N` endpoint + `msw plotspec
 
 ---
 
+### Branch: ft/namespace-unification ⬅ TOP PRIORITY
+
+Full design and sprint breakdown in `docs/work_plans/PLAN_namespace_unification.md`.
+
+**Sprint 1** — extend NamespaceSpec + NamespaceBuilder, wire to core callers:
+- [ ] Delete `namespace/msw_files.py`; merge into `NamespaceBuilder`
+- [ ] Add `msw_separator` + `core_artifacts` to `NamespaceSpec` (Pydantic + YAML optional fields)
+- [ ] Add `get_artifact_file()`, `is_msw_file()`, `extract_artifact()` to `NamespaceBuilder`
+- [ ] Update `namespace.v1/v2/v3.yaml` to accept new fields (backward-compat defaults)
+- [ ] `generate_session_paths()`: use builder for artifact construction; add `session_yaml` + `session_log` keys
+- [ ] Update `task_process.py` + `log.py` — no more raw `.msw.` string literals
+- [ ] Tests green
+
+**Sprint 2** — MSW operational YAML + full caller migration:
+- [ ] Create `namespace/namespace.msw.yaml` — `{subject}__{datetime}__{task}` spec with separator + artifacts
+- [ ] `generate_session_paths()` → thin wrapper over `_MSW_BUILDER`
+- [ ] Update reader (`readers/namespace.py`, `readers/session.py`) to use builder methods
+- [ ] Update all task files — remove all raw `.msw.` concatenation
+
+**Sprint 3** (future) — `NamespaceBuilder` → standalone `msw-namespace` package
+
+---
+
 ### Branch: ft/device-flag
 
 - [ ] **`--device name:path`** — single repeatable flag replacing all `--port-*` flags
