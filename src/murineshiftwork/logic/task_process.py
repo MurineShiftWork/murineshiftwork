@@ -159,6 +159,9 @@ class TaskProcess(object):
     _pre_hooks: list = []
     _post_hooks: list = []
     _hook_ctx: Any = None
+    # Monitor relay
+    _relay_queue: Any = None
+    _relay_proc: Any = None
     # Misc
     exiting = False
     debug = False
@@ -210,26 +213,33 @@ class TaskProcess(object):
 
         patch_logging_levels()
         add_session_log_handler(self.session_paths["session_file_path"])
+        logging.info(
+            "Session: task=%s subject=%s setup=%s",
+            self.task_name,
+            self.subject,
+            self.input_kwargs.get("setup", ""),
+        )
+        logging.info("Session folder: %s", self.session_paths.get("session_folder", ""))
         self.persist_settings()
+        self._start_relay()
 
         if bpod is None and devices is not None:
             bpod = devices.get("bpod")
 
         if bpod is not None:
-            # Injected: controller owns the hardware connection
+            logging.info("Bpod: using injected handle")
             self.bpod = bpod
             self.serial_is_open = True
-            logging.debug("TaskProcess: using injected Bpod handle")
         elif self.simulate:
             from murineshiftwork.hardware.bpod.sim import SimBpod
 
+            logging.info("Bpod: simulation mode (SimBpod)")
             self.bpod = SimBpod()
             self.bpod.open()
             self.serial_is_open = True
-            logging.debug("TaskProcess: using SimBpod (simulate mode)")
         elif require_bpod:
-            # Self-managed: open connection from serial_port_bpod arg
             if self.serial_port:
+                logging.info("Bpod: preflight check on %s", self.serial_port)
                 accessible = test_serial_port_is_accessible(
                     port=self.serial_port,
                     baudrate=self.bpod_baudrate,
@@ -260,8 +270,10 @@ class TaskProcess(object):
             except SessionAbortError:
                 self.exit_safely()
                 raise
+            logging.info("Task init: %s", self.task_name)
             self.init_task()
         if auto_start:
+            logging.info("Task start: %s", self.task_name)
             self.run_task()
 
     def __enter__(self):
@@ -278,11 +290,50 @@ class TaskProcess(object):
         if post_exc is not None:
             raise post_exc
 
+    def _start_relay(self) -> None:
+        from murineshiftwork.logic.machine_config import read_machine_config
+
+        monitor_url = read_machine_config().get("monitor_url", "")
+        if not monitor_url:
+            return
+
+        import multiprocessing
+        from datetime import datetime, timezone
+
+        from murineshiftwork.logagent.logagent import LogAgent
+
+        self._relay_queue = multiprocessing.Queue(maxsize=500)
+        setup = self.input_kwargs.get("setup", "") or self.input_kwargs.get(
+            "metadata", {}
+        ).get("setup", "")
+        session_start_payload = {
+            "subject": self.subject,
+            "task": self.task_name,
+            "setup": setup,
+            "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "session_paths": {k: str(v) for k, v in (self.session_paths or {}).items()},
+        }
+        self._relay_proc = LogAgent(
+            self._relay_queue,
+            monitor_url,
+            setup=setup,
+            session_start_payload=session_start_payload,
+        )
+        self._relay_proc.start()
+        self.input_kwargs["relay_queue"] = self._relay_queue
+        logging.debug("LogAgent started → %s (setup=%r)", monitor_url, setup)
+
     def exit_safely(self):
         self.exiting = True
         if self.serial_is_open and self.bpod is not None:
             self.bpod.close_safely()
             self.serial_is_open = False
+        if self._relay_queue is not None:
+            try:
+                self._relay_queue.put_nowait(None)
+            except Exception:
+                pass
+            self._relay_queue = None
 
     def connect_bpod(self, max_try=None, retry_delay_s=None):
         """Connect device on serial port.

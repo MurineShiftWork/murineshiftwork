@@ -137,30 +137,31 @@ class Task(TaskRunner):
                         task_settings.get("start_level", 1),
                     )
 
-            if task_settings.get("show_live_plot", True) and trial_index > 0:
-                if info.get("trial_type") == "task":
-                    self.input_kwargs["objects"]["data_queue"].put(
-                        {
-                            "trial_index": task_control.trial_index,
-                            "outcome": task_control.last_outcome,
-                            "level": task_control.current_level,
-                            "level_at_trial": info.get(
-                                "level", task_control.current_level
-                            ),
-                            "perf_buffer_mean": info.get("perf_buffer_mean", 0.0),
-                            "perf_perfect_mean": info.get("perf_perfect_mean", 0.0),
-                            "is_perfect": info.get("is_perfect", False),
-                            "trial_time_s": trial_data.get("Trial start timestamp", 0),
-                            "reward_count_trial": info.get("reward_count_trial", 0),
-                            "liquid_ul_trial": info.get("liquid_ul_trial", 0.0),
-                            "liquid_ul_cumulative": info.get(
-                                "liquid_ul_cumulative", 0.0
-                            ),
-                            "poke_events": info.get("poke_events", []),
-                            "transition_times": info.get("transition_times", []),
-                            "sequence_duration_s": info.get("sequence_duration_s"),
-                        }
-                    )
+            if trial_index > 0 and info.get("trial_type") == "task":
+                _trial_event = {
+                    "trial_index": task_control.trial_index,
+                    "outcome": task_control.last_outcome,
+                    "level": task_control.current_level,
+                    "level_at_trial": info.get("level", task_control.current_level),
+                    "perf_buffer_mean": info.get("perf_buffer_mean", 0.0),
+                    "perf_perfect_mean": info.get("perf_perfect_mean", 0.0),
+                    "is_perfect": info.get("is_perfect", False),
+                    "trial_time_s": trial_data.get("Trial start timestamp", 0),
+                    "reward_count_trial": info.get("reward_count_trial", 0),
+                    "liquid_ul_trial": info.get("liquid_ul_trial", 0.0),
+                    "liquid_ul_cumulative": info.get("liquid_ul_cumulative", 0.0),
+                    "poke_events": info.get("poke_events", []),
+                    "transition_times": info.get("transition_times", []),
+                    "sequence_duration_s": info.get("sequence_duration_s"),
+                }
+                if task_settings.get("show_live_plot", True):
+                    self.input_kwargs["objects"]["data_queue"].put(_trial_event)
+                _relay_q = self.input_kwargs.get("relay_queue")
+                if _relay_q is not None:
+                    try:
+                        _relay_q.put_nowait(_trial_event)
+                    except Exception:
+                        pass
 
             trial_index += 1
 

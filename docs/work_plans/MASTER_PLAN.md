@@ -534,44 +534,82 @@ convention: `HARDWARE_LICK_LEFT`, `HARDWARE_LICK_RIGHT` (not `LICK_EVENT_*`).
 
 ---
 
-### Branch: ft/hardware-wiring (current)
+### Done: ft/hardware-wiring → merged to main 2026-05-22
 
-- [ ] **`hardware/bpod/device.py`** — `BpodDevice(DeviceProtocol)`: `preflight()` checks port path, `connect()` calls `BpodFactory.open()` with retry, `handle` returns Bpod instance
-- [ ] **Wire `HardwareManager` into `execute.py`** — replace direct `TaskProcess(serial_port_bpod=...)` path; `TaskProcess` receives injected `devices` dict
-- [ ] **`TaskProcess`: accept `devices` dict** — deprecate `serial_port_bpod=` kwarg; keep old kwarg as shim until all callers updated, then delete
-- [ ] **Hardware verification on rig** — test Bpod retry fix live on `pci-0000:00:14.0-usb-0:4:1.0 → ttyACM7`; run `probe_bpods.py`
-- [ ] **PR + merge ft/hardware-wiring → main**
+- [x] `hardware/bpod/device.py` — `BpodDevice(DeviceProtocol)`
+- [x] `HardwareManager` wired into `execute.py`; `TaskProcess` accepts `devices` dict
+- [x] `BpodFactory.__getattr__` fixed — `_hardware` and other `_`-prefixed attrs proxy after connect
+- [x] 28 hardware manager tests; 2 `BpodFactory.__getattr__` regression tests
+- [x] `docs.yml` CI workflow deleted (Python 3.10 incompatibility, unwanted public Pages deploy)
 
 ---
 
-### Branch: ft/monitor-step1 (next after hardware)
+### Branch: ft/monitor-step1 (current)
 
-- [ ] **`monitor/relay.py`** — `TrialRelay(multiprocessing.Process, daemon=True)`; reads from `mp.Queue(maxsize=500)`; HTTP POST to monitor server; `put_nowait()` ~1 µs in task loop
-- [ ] **`monitor/server.py`** — FastAPI; in-memory `SessionState` per setup; `trial_buffer` deque; PlotSpec-driven computation
-- [ ] **Wire relay into `TaskProcess`** — read `monitor_url` from machine config; start `TrialRelay`; add `put_nowait()` in sequence task after `save_trial_data()`
-- [ ] **`msw monitor serve/status/debug`** CLI subcommands
-- [ ] **PR + merge ft/monitor-step1 → main**
+Architecture redesign since original plan — see `docs/work_plans/PLAN_logagent_ui.md`.
+Key changes: `TrialRelay` → `LogAgent`; session UUID as primary key; hardware-blind
+`trial_data` dict; bearer token auth; two Docker containers (UI + API).
+
+Done so far:
+- [x] `monitor/relay.py` — `TrialRelay` daemon process (to be renamed `LogAgent`)
+- [x] `monitor/server.py` — FastAPI ingest + status endpoints (setup-keyed, to rebuild UUID-keyed)
+- [x] `_start_relay()` in `TaskProcess` — reads `monitor_url` from machine config
+- [x] `put_nowait()` in sequence task after each task trial
+- [x] Step-wise INFO logging: HardwareManager preflight/connect/ready, hook names, session identity
+- [x] Tutorial docs series plan — `PLAN_tutorial_docs.md`
+- [x] LogAgent + UI architecture plan — `PLAN_logagent_ui.md`
+- [x] `--port-*` flags marked DEPRECATED in CLI help (→ future `--device name:path`)
+
+Remaining:
+- [ ] Rename `TrialRelay` → `LogAgent`; rebuild `monitor/relay.py` with start/trial/stop events
+- [ ] Session UUID — generate UUID4 in `TaskProcess.__init__`, store in session YAML
+- [ ] Trial payload — task puts opaque `trial_data`; `__stop__` sentinel carries summary
+- [ ] Bearer token — read `ui_bearer_token` from `msw_machine.yaml`; inject into LogAgent headers
+- [ ] Plot spec — copy `plot_spec.yaml` to session dir at session start
+- [ ] Rebuild `monitor/server.py` — UUID-keyed sessions, `trials?since=N`, bearer token on ingest
+- [ ] `docker-compose.monitor.yml` — two containers: `msw-ui` (nginx) + `msw-api` (FastAPI)
+- [ ] Remove `msw monitor` CLI subcommands (parser + execute)
+- [ ] `httpx` to `dev` extras in `pyproject.toml`
+- [ ] Tests — LogAgent lifecycle, server UUID ingest + query, token validation
+- [ ] PR + merge ft/monitor-step1 → main
+
+---
+
+### Branch: ft/device-flag
+
+- [ ] **`--device name:path`** — single repeatable flag replacing all `--port-*` flags
+  - Parses `bpod:/dev/ttyACM7` → `{"bpod": "/dev/ttyACM7"}`; merges with setup config device ports
+  - `--port-*` flags removed once `--device` is in and callers updated
+  - Remove `serial_port_bpod` / `require_bpod` from `TaskProcess` (pass hardware via `devices=` only)
+  - See FLIR plugin CLI entry-point loader in `cli/parser.py` (same branch or companion)
 
 ---
 
 ### Branch: ft/monitor-step2 (after step 1 validated on rig)
 
 - [ ] **`msw plotspec <task>`** — load + print PlotSpec YAML; `--dry-run` generates synthetic data and prints panel updates
-- [ ] **Verify `TrialRelay` fields** — sequence and fixedsubjects first; extend to optotagging
+- [ ] **Verify `LogAgent` fields** — sequence and fixedsubjects first; extend to optotagging
 
 ---
 
 ### Branch: ft/monitor-step3 (Docker + Vue)
 
-- [ ] **`Dockerfile.monitor`** + `docker-compose.monitor.yml`
-- [ ] **Vue UI wiring** — polling `/session/status` + `/session/plot`; `/session/history/{setup}` ring buffer server-side
+- [ ] **`Dockerfile.monitor`** + `docker-compose.monitor.yml` — two containers: nginx (Vue dist) + FastAPI (API)
+- [ ] **Vue UI wiring** — polling `/sessions` + `/sessions/{uuid}/trials?since=N`; PlotSpec-driven Plotly panels
 
 ---
 
 ### Branch: ft/monitor-step4 (strip agent/)
 
-- [ ] Strip `agent/` package after monitor validated on one rig
-- [ ] Remove `msw agent start` CLI subcommand (replace with `msw monitor serve`)
+- [ ] Strip `agent/` package after LogAgent + UI validated on one rig
+- [ ] Remove `msw agent start` CLI subcommand
+
+---
+
+### Branch: ft/tutorial-docs
+
+- [ ] Write tutorial pages 00, 02, 05, 07, 08 (priority gaps) — see `PLAN_tutorial_docs.md`
+- [ ] Rewrite `getting_started/` into tutorial series structure
 
 ---
 

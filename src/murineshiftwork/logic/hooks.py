@@ -110,18 +110,24 @@ def run_pre_hooks(hooks: list[TaskHook], ctx: HookContext) -> None:
     Non-fatal failures log WARNING and are skipped.
     Fatal failures raise SessionAbortError (caller must clean up hardware).
     """
+    if not hooks:
+        return
+    logging.info("Pre-hooks: %d to run", len(hooks))
     for hook in hooks:
+        name = type(hook).__name__
+        logging.info("Pre-hook: %s", name)
         try:
             hook.pre_run(ctx)
+            logging.info("Pre-hook done: %s", name)
         except SessionAbortError:
             raise
         except Exception as exc:
             if getattr(hook, "fatal", False):
                 raise SessionAbortError(
-                    f"Fatal pre-hook {type(hook).__name__} aborted session: {exc}"
+                    f"Fatal pre-hook {name} aborted session: {exc}"
                 ) from exc
             logging.warning(
-                f"Pre-hook {type(hook).__name__} raised (skipped): {exc}",
+                f"Pre-hook {name} raised (skipped): {exc}",
                 exc_info=True,
             )
 
@@ -132,24 +138,29 @@ def run_post_hooks(hooks: list[TaskHook], ctx: HookContext) -> None:
     Non-fatal failures log WARNING and are skipped.
     Fatal failures raise SessionAbortError after all remaining hooks have run.
     """
+    if not hooks:
+        return
+    logging.info("Post-hooks: %d to run", len(hooks))
     first_fatal: Optional[SessionAbortError] = None
     for hook in hooks:
+        name = type(hook).__name__
+        logging.info("Post-hook: %s", name)
         try:
             hook.post_run(ctx)
+            logging.info("Post-hook done: %s", name)
         except SessionAbortError:
             raise
         except Exception as exc:
             if getattr(hook, "fatal", False):
-                # Capture the first fatal error; continue running remaining hooks.
                 err = SessionAbortError(
-                    f"Fatal post-hook {type(hook).__name__} aborted session: {exc}"
+                    f"Fatal post-hook {name} aborted session: {exc}"
                 )
                 err.__cause__ = exc
                 if first_fatal is None:
                     first_fatal = err
             else:
                 logging.warning(
-                    f"Post-hook {type(hook).__name__} raised (skipped): {exc}",
+                    f"Post-hook {name} raised (skipped): {exc}",
                     exc_info=True,
                 )
     if first_fatal is not None:
