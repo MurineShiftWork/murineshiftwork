@@ -36,7 +36,7 @@ def test_power_to_voltage_midpoint():
 
 def test_power_to_voltage_consistent_with_constants():
     # DORIC_MAX_VOLTAGE = DORIC_MAX_CURRENT_MA / DORIC_CURRENT_SENSITIVITY
-    assert DORIC_MAX_VOLTAGE == pytest.approx(DORIC_MAX_CURRENT_MA / 80.0)
+    assert pytest.approx(DORIC_MAX_CURRENT_MA / 80.0) == DORIC_MAX_VOLTAGE
 
 
 # ---------------------------------------------------------------------------

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-import asyncio
+import contextlib
 import logging
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
 from murineshiftwork.agent.models import SessionInfo, SessionStatus
+
+if TYPE_CHECKING:
+    import asyncio
 
 
 class SessionManager:
@@ -40,7 +43,7 @@ class SessionManager:
         self._subject = subject
         self._task = task
         self._setup = setup
-        self._started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        self._started_at = datetime.now(UTC).isoformat(timespec="seconds")
         self._trial_index = 0
         self._status = SessionStatus.running
 
@@ -71,10 +74,8 @@ class SessionManager:
         self._ws_queues.append(q)
 
     def unregister_ws(self, q: asyncio.Queue) -> None:
-        try:
+        with contextlib.suppress(ValueError):
             self._ws_queues.remove(q)
-        except ValueError:
-            pass
 
     async def broadcast(self, event: dict[str, Any]) -> None:
         for q in list(self._ws_queues):

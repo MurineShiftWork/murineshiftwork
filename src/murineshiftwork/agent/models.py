@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel
 
 
-class HardwareStatus(str, Enum):
+class HardwareStatus(StrEnum):
     connected = "connected"
     disconnected = "disconnected"
     error = "error"
 
 
-class SessionStatus(str, Enum):
+class SessionStatus(StrEnum):
     idle = "idle"
     running = "running"
     stopping = "stopping"

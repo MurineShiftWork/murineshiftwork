@@ -29,7 +29,7 @@ def _apply_stage_position(args_dict: dict) -> None:
 
     from one_axis_stage.controller import StageController
 
-    with open(calib_path) as f:
+    with Path(calib_path).open() as f:
         config = yaml.safe_load(f)
     config["connection"]["serial_port"] = serial_port_stage
     known = config.get("known_positions", {})
@@ -154,7 +154,7 @@ def run_setup(**args_dict):
             },
             "calibrations": {"bpod_valve": {}},
         }
-        with open(path, "w") as f:
+        with path.open("w") as f:
             yaml.dump(
                 skeleton,
                 f,
@@ -202,10 +202,10 @@ def run_setup(**args_dict):
             )
             return
         old_path.rename(new_path)
-        with open(new_path) as f:
+        with new_path.open() as f:
             raw = yaml.safe_load(f) or {}
         raw["name"] = new_name
-        with open(new_path, "w") as f:
+        with new_path.open("w") as f:
             yaml.dump(
                 raw, f, default_flow_style=False, allow_unicode=True, sort_keys=False
             )
@@ -250,7 +250,7 @@ def run_subject(**args_dict):
             "aliases": [],
             "task_overrides": {},
         }
-        with open(path, "w") as f:
+        with path.open("w") as f:
             yaml.dump(
                 data,
                 f,
@@ -287,10 +287,10 @@ def run_subject(**args_dict):
             )
             return
         old_path.rename(new_path)
-        with open(new_path) as f:
+        with new_path.open() as f:
             raw = yaml.safe_load(f) or {}
         raw["name"] = new_name
-        with open(new_path, "w") as f:
+        with new_path.open("w") as f:
             yaml.dump(
                 raw,
                 f,

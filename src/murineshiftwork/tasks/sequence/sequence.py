@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import time
 from multiprocessing import Queue
@@ -158,10 +159,8 @@ class Task(TaskRunner):
                     self.input_kwargs["objects"]["data_queue"].put(_trial_event)
                 _relay_q = self.input_kwargs.get("relay_queue")
                 if _relay_q is not None:
-                    try:
+                    with contextlib.suppress(Exception):
                         _relay_q.put_nowait(_trial_event)
-                    except Exception:
-                        pass
 
             trial_index += 1
 
@@ -191,7 +190,7 @@ class Task(TaskRunner):
             except (OSError, Exception) as _exc:
                 import serial
 
-                if isinstance(_exc, (OSError, serial.SerialException)):
+                if isinstance(_exc, OSError | serial.SerialException):
                     logging.debug(
                         f"Session-end barcode skipped (port already dead): {_exc}"
                     )

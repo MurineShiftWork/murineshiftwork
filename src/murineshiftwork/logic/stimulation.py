@@ -6,7 +6,7 @@ Set laser_power=None (default) for fixed 5V TTL output; 0.0-1.0 for Doric power 
 
 import logging
 import time
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 from numpy import zeros
 
@@ -62,7 +62,7 @@ class Stimulation:
     channels_currently_active: list[Any] = []
     emergency_off_bool = False
 
-    def __init__(self, port=None, in_dict: Optional[dict] = None, test: bool = False):
+    def __init__(self, port=None, in_dict: dict | None = None, test: bool = False):
         self.test = test
         self.port = port
         self._channel_params: dict = {}
@@ -148,10 +148,10 @@ class Stimulation:
 
     def set_pulse_params(
         self,
-        pulse_duration: Optional[float] = None,
-        pulse_frequency: Optional[float] = None,
-        pulse_train_duration: Optional[float] = None,
-        laser_power: Optional[float] = None,
+        pulse_duration: float | None = None,
+        pulse_frequency: float | None = None,
+        pulse_train_duration: float | None = None,
+        laser_power: float | None = None,
         sync: bool = True,
     ) -> None:
         """Update any combination of timing + power params between protocols."""

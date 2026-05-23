@@ -120,7 +120,7 @@ class FlirBonsaiClient:
         stop()                 → cleanup; safe to call even if never started
     """
 
-    def __init__(self, config: "CameraConfig", output_dir: str) -> None:
+    def __init__(self, config: CameraConfig, output_dir: str) -> None:
         self._config = config
         self._output_dir = output_dir
         self._acq_name: str = "session"
@@ -189,7 +189,7 @@ class FlirBonsaiClient:
 
 
 def make_camera_client(
-    cameras_config: "CameraConfig | None",
+    cameras_config: CameraConfig | None,
     config_file_camera: str = "",
     output_dir: str = "",
 ) -> RceConductorAdapter | FlirBonsaiClient | None:

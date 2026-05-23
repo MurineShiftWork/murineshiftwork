@@ -82,7 +82,7 @@ class Task(TaskRunner):
             iti_spec = s["inter_trial_interval"]
             iti_this_trial = (
                 draw_jittered_trial_time(*iti_spec)
-                if isinstance(iti_spec, (list, tuple)) and len(iti_spec) == 3
+                if isinstance(iti_spec, list | tuple) and len(iti_spec) == 3
                 else float(iti_spec)
             )
             iti_post_barcode = max(0.05, iti_this_trial - barcode_duration_s)

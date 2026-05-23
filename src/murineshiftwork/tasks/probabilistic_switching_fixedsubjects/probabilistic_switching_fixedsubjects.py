@@ -26,6 +26,7 @@ TASK STRUCTURE
 
 """
 
+import contextlib
 import logging
 import time
 from multiprocessing import Queue
@@ -181,10 +182,8 @@ def run_task(**args_dict):
             conductor.setup_agents()
         except ConnectionError as exc:
             logging.warning(f"Camera agents unreachable — running without video: {exc}")
-            try:
+            with contextlib.suppress(Exception):
                 conductor.stop()
-            except Exception:
-                pass
             conductor = None
     else:
         logging.info("No camera config — running without video.")
@@ -233,10 +232,8 @@ def run_task(**args_dict):
                     )
     finally:
         if conductor is not None:
-            try:
+            with contextlib.suppress(Exception):
                 conductor.stop()
-            except Exception:
-                pass
         time.sleep(1)
 
 

@@ -544,7 +544,7 @@ convention: `HARDWARE_LICK_LEFT`, `HARDWARE_LICK_RIGHT` (not `LICK_EVENT_*`).
 
 ---
 
-### Branch: ft/monitor-step1 (PR-ready)
+### Done: ft/monitor-step1 → merged to main 2026-05-23
 
 Architecture redesign — see `docs/work_plans/PLAN_logagent_ui.md`.
 Key changes: `monitor/` → `logagent/`; `TrialRelay` → `LogAgent`; session UUID;
@@ -564,11 +564,24 @@ hardware-blind `trial_data`; bearer token auth; `log_url` + `log_bearer_token` i
 - [x] LogAgent + UI architecture plan — `PLAN_logagent_ui.md`
 - [x] Tests: 30 passing
 
-Next after merge: ft/monitor-step2 — `trials?since=N` endpoint + `msw plotspec` CLI (see `PLAN_logagent_ui.md`)
+Next: ft/monitor-step2 — `trials?since=N` endpoint + `msw plotspec` CLI (see `PLAN_logagent_ui.md`)
 
 ---
 
-### Branch: ft/extras-restructure ⬅ TOP PRIORITY (do before namespace branch)
+### Branch: ft/opto-hardware ⬅ CURRENT
+
+Fix optotagging/stimulation for new hardware structure:
+- [ ] Remove wrong `hardware.serial_port_pulsepal` from `tasks/optotagging/task.yaml`
+- [ ] Add pulsepal port resolution to `_resolve_setup_config_ports()` in `evaluate.py`
+- [ ] Update pypulsepal to `ft/pydantic-config` branch (pydantic ChannelConfig/TriggerConfig, `sync_all_params()`)
+- [ ] `hardware/pulsepal/device.py` — `PulsePalDevice(DeviceProtocol)`: connects once, handle = `PulsePal` object
+- [ ] Refactor `Stimulation` to accept existing `PulsePal` connection; reprogram per-protocol via `sync_all_params()` without reconnecting
+- [ ] `execute.py` — add PulsePal to `HardwareManager` when `serial_port_pulsepal` is set
+- [ ] Optotagging task — receive PulsePal from `devices["pulsepal"]`; remove per-protocol `Stimulation(port=...)` reconnect
+
+---
+
+### Branch: ft/extras-restructure (do before namespace branch)
 
 Restructure `pyproject.toml` extras so CI and users can install meaningful subsets.
 

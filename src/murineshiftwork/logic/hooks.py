@@ -18,7 +18,7 @@ from __future__ import annotations
 import importlib
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 class SessionAbortError(RuntimeError):
@@ -38,7 +38,7 @@ class HookContext:
     task_name: str
     task_settings: dict
     session_paths: dict
-    execution_config: Optional[Any] = None
+    execution_config: Any | None = None
     output: dict = field(default_factory=dict)
 
 
@@ -141,7 +141,7 @@ def run_post_hooks(hooks: list[TaskHook], ctx: HookContext) -> None:
     if not hooks:
         return
     logging.info("Post-hooks: %d to run", len(hooks))
-    first_fatal: Optional[SessionAbortError] = None
+    first_fatal: SessionAbortError | None = None
     for hook in hooks:
         name = type(hook).__name__
         logging.info("Post-hook: %s", name)

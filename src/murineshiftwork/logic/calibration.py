@@ -1,5 +1,4 @@
 import logging
-import os.path
 import shutil
 import warnings
 from datetime import datetime
@@ -21,7 +20,7 @@ class CalibrationData:
 
     def __init__(self, file_path=None, **kwargs):
         """ """
-        super(CalibrationData, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.file_path = file_path or self.file_path
         logging.debug(f"Calibration data path: {self.file_path}")
 
@@ -201,7 +200,7 @@ class CalibrationDataLiquid(CalibrationData):
             plt.title("Valve opening times to pass water volume [uL].")
             plt.ylabel("Volume [uL]")
             plt.xlabel("Valve opening time [ms]")
-            f.savefig(os.path.splitext(self.file_path)[0] + ".png")
+            f.savefig(str(Path(self.file_path).with_suffix(".png")))
 
     def to_valve_calibration(self, valve_id: int):
         """Convert collected measurements for one valve into a ValveCalibration.
@@ -298,7 +297,7 @@ class CalibrationDataSound(CalibrationData):
             )
             plt.ylabel("Delay [ms]")
             plt.xlabel("Trial [#]")
-            f.savefig(os.path.splitext(self.file_path)[0] + ".png")
+            f.savefig(str(Path(self.file_path).with_suffix(".png")))
 
 
 def _exponential_function(x, a, b, c):
@@ -447,7 +446,7 @@ def plot_setup_valve_calibrations(
         if not yf.exists():
             logging.warning(f"Setup YAML not found: {yf}")
             continue
-        with open(yf) as f:
+        with yf.open() as f:
             raw = yaml.safe_load(f) or {}
         cal = raw.get("calibrations", {}).get("bpod_valve", {})
         if not cal:
@@ -576,7 +575,7 @@ def save_calibration_pdfs(
         if not yf.exists():
             logging.warning(f"Setup YAML not found: {yf}")
             continue
-        with open(yf) as f:
+        with yf.open() as f:
             raw = yaml.safe_load(f) or {}
         sname = raw.get("name", yf.stem)
         if not raw.get("calibrations", {}).get("bpod_valve"):

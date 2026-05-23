@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 from datetime import datetime
@@ -46,10 +47,8 @@ def setup_logging(level=None, log_file=None, task="", subject="", setup=""):
         central_log_path = _CENTRAL_LOG_DIR / f"{stem}.log"
         all_logs = sorted(_CENTRAL_LOG_DIR.glob("*.log"))
         for old in all_logs[:-_MAX_LOG_FILES]:
-            try:
+            with contextlib.suppress(OSError):
                 old.unlink()
-            except OSError:
-                pass
 
     file_handler = logging.FileHandler(filename=str(central_log_path))
     file_handler.setLevel(logging.DEBUG)
@@ -129,7 +128,7 @@ def json_dumps_type_safe(data):
 
 def write_json(data=None, save_path=None):
     try:
-        with open(save_path, "w") as f:
+        with Path(save_path).open("w") as f:
             txt = json_dumps_type_safe(data)
             f.write(txt)
             return True

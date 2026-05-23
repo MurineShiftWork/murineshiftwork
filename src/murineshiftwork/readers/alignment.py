@@ -28,7 +28,6 @@ ephys_t = result["bpod_to_ephys"](bpod_t)
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -48,7 +47,7 @@ def decode_ephys_barcodes(
     ephys_events: pd.DataFrame,
     barcode_bnc_line: int,
     timestamp_column: str = "timestamps",
-    barcode_config: Optional[BarcodeConfig] = None,
+    barcode_config: BarcodeConfig | None = None,
 ) -> list[tuple[float, int]]:
     """Decode barcode events from an open-ephys-python-tools events DataFrame.
 
@@ -111,7 +110,7 @@ def align_session_to_ephys(
     ephys_events: pd.DataFrame,
     barcode_bnc_line: int,
     timestamp_column: str = "timestamps",
-    barcode_config: Optional[BarcodeConfig] = None,
+    barcode_config: BarcodeConfig | None = None,
 ) -> tuple[pd.DataFrame, dict]:
     """Align MSW session trials to the ephys clock using TTL barcode events.
 
@@ -290,7 +289,7 @@ def align_session_to_ephys(
 
 def decode_rpi_ttl_in(
     ttl_in_npz: str | Path,
-    barcode_config: Optional[BarcodeConfig] = None,
+    barcode_config: BarcodeConfig | None = None,
 ) -> list[tuple[float, int]]:
     """Decode barcodes from an rpi_camera_ensemble ttl_in.npz file.
 
@@ -344,7 +343,7 @@ def decode_rpi_ttl_in(
 def verify_rpi_barcode_decoding(
     session_dir: str | Path,
     ttl_in_npz: str | Path,
-    barcode_config: Optional[BarcodeConfig] = None,
+    barcode_config: BarcodeConfig | None = None,
 ) -> dict:
     """Check that rpi-recorded TTL edges are decodable and match the MSW session.
 

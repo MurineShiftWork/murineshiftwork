@@ -1,5 +1,6 @@
 import os
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 root_dir = "/ceph/sjones/projects/sequence_squad/revision_data/lars_recordings/ephys"
 target_field = "probe_serial_number"
@@ -7,7 +8,7 @@ target_field = "probe_serial_number"
 for dirpath, dirnames, filenames in os.walk(root_dir):
     for filename in filenames:
         if filename.lower().endswith(".xml"):
-            file_path = os.path.join(dirpath, filename)
+            file_path = str(Path(dirpath) / filename)
             try:
                 tree = ET.parse(file_path)
                 root = tree.getroot()

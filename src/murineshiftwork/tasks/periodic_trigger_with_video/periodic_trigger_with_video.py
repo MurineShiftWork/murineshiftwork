@@ -20,7 +20,7 @@ class TaskData:
     data: list = []
 
     def __init__(self, save_path=None):
-        super(TaskData, self).__init__()
+        super().__init__()
         self.save_path = save_path
 
     def append(self, trial_index=None, trial_data=None, **info_dict_extension):

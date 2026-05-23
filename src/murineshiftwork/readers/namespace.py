@@ -1,5 +1,4 @@
 import logging
-from glob import glob
 from pathlib import Path
 
 
@@ -27,7 +26,7 @@ def test_is_legacy_format(session_dir=None):
     session_dir = Path(session_dir)
     assert session_dir.exists()
 
-    session_files = glob(str(session_dir / "*"))
+    session_files = [str(p) for p in session_dir.glob("*")]
 
     for f in session_files:
         if test_is_legacy_msw_file(file=f):

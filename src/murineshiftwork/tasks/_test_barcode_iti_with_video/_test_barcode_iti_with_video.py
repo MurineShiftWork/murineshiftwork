@@ -79,7 +79,7 @@ class Task(TaskRunner):
             iti_spec = s["inter_trial_interval"]
             iti_this_trial = (
                 draw_jittered_trial_time(*iti_spec)
-                if isinstance(iti_spec, (list, tuple)) and len(iti_spec) == 3
+                if isinstance(iti_spec, list | tuple) and len(iti_spec) == 3
                 else float(iti_spec)
             )
             iti_post_barcode = max(0.05, iti_this_trial - barcode_duration_s)
@@ -163,7 +163,7 @@ def run_task(**args_dict):
         f"Camera config not found: {ensemble_cfg_file}"
     )
     ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
-    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
+    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path"))
     conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
     conductor.start()
     conductor.setup_agents()

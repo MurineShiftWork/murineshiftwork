@@ -30,7 +30,6 @@ Expected output (passing):
 
 import argparse
 import sys
-from glob import glob
 from pathlib import Path
 
 import numpy as np
@@ -44,7 +43,7 @@ from murineshiftwork.readers.alignment import verify_rpi_barcode_decoding
 
 def find_ttl_in(session_dir: Path) -> Path | None:
     """Auto-discover ttl_in.npz in the session dir."""
-    hits = glob(str(session_dir / "*.ttl_in.npz"))
+    hits = [str(p) for p in session_dir.glob("*.ttl_in.npz")]
     if len(hits) == 1:
         return Path(hits[0])
     if len(hits) > 1:
@@ -75,7 +74,7 @@ def main():
     ttl_in = Path(args.ttl_in) if args.ttl_in else find_ttl_in(session_dir)
     if ttl_in is None:
         # also try current working directory
-        ttl_in_cwd = list(Path(".").glob("*.ttl_in.npz"))
+        ttl_in_cwd = list(Path().glob("*.ttl_in.npz"))
         if len(ttl_in_cwd) == 1:
             ttl_in = ttl_in_cwd[0]
             print(f"Found ttl_in.npz in cwd: {ttl_in}")

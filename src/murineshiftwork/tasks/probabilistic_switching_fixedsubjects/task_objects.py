@@ -24,7 +24,7 @@ from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.sounds import StereoSound
 
 
-class TaskControl(object):
+class TaskControl:
     bpod: Any = None
     _stage_queue = None
     _stage_thread = None
@@ -90,16 +90,16 @@ class TaskControl(object):
         task_settings=None,
         barcoder=None,
     ):
-        super(TaskControl, self).__init__()
+        super().__init__()
 
         if not bpod:
             raise ValueError("Required input argument: bpod")
         self.bpod = bpod
 
         self.save_path_data = (
-            Path(self.bpod.workspace_path) / self.bpod.session_name
-            if not save_path_data
-            else save_path_data
+            save_path_data
+            if save_path_data
+            else Path(self.bpod.workspace_path) / self.bpod.session_name
         )
         logging.info(f"Session: {Path(self.save_path_data).name}")
 
@@ -546,7 +546,7 @@ class TaskControl(object):
         n_back_crit = self.task_settings["forced_choice_threshold"]
         key = "choice"
         td_info = [td["info"] for td in self.trial_data if td and key in td["info"]]
-        choice_vector = [c[key] for c in td_info if key in c.keys()]
+        choice_vector = [c[key] for c in td_info if key in c]
         unique_choices = np.unique(choice_vector[-n_back_crit:])
         unique_choices_non_nan = np.array(unique_choices)[~np.isnan(unique_choices)]
         unique_choices_n_back = unique_choices_non_nan.__len__()

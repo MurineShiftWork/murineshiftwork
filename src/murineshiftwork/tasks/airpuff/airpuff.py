@@ -25,7 +25,7 @@ from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
-class AirPuff(object):
+class AirPuff:
     input_kwargs: dict = {}
     out_path = ""
 
@@ -226,7 +226,7 @@ def run_task(**args_dict):
             "Set via SetupConfig cameras.config or --config-file-camera."
         )
     ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
-    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
+    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path"))
     conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
     conductor.start()
     conductor.setup_agents()

@@ -59,7 +59,7 @@ class QueueMonitor(QtCore.QThread):
     kill_queue: Any = None
 
     def __init__(self, monitoring_queue=None, kill_queue=None):
-        super(QueueMonitor, self).__init__()
+        super().__init__()
         self.monitoring_queue = monitoring_queue
         self.kill_queue = kill_queue
 
@@ -113,8 +113,8 @@ class OnlinePlottingForPS(Process):
         values_to_show=None,
         max_trials=None,
     ):
-        super(OnlinePlottingForPS, self).__init__()
-        self.name = self.__class__.__name__ if not name else name
+        super().__init__()
+        self.name = name if name else self.__class__.__name__
 
         if not is_simulation and not data_queue:
             raise ValueError("Choose either simulation or provide data_queue")

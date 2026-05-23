@@ -1,5 +1,4 @@
 import logging
-from glob import glob
 from pathlib import Path
 
 import yaml
@@ -45,7 +44,7 @@ def read_session_data(
     session_dir = Path(session_dir)
     assert session_dir.exists()
 
-    files_in_dir = glob(str(session_dir / "*"))
+    files_in_dir = [str(p) for p in session_dir.glob("*")]
 
     def _prepare_key(s=None):
         return s.split(".msw.")[-1].replace("msw", "").strip(".")
@@ -134,9 +133,7 @@ def read_session_data(
     session_data["is_complete_session"] = is_complete_session
 
     # Check if is ephys session at top level
-    session_data["is_ephys_session"] = (
-        True if "settings.ephys" in session_data else False
-    )
+    session_data["is_ephys_session"] = "settings.ephys" in session_data
 
     return session_data
 

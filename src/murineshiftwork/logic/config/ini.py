@@ -26,7 +26,7 @@ def read_config(file=None, unrepr=True):
     path = Path(file)
     if path.suffix not in (".yaml", ".yml"):
         return {}
-    with open(path) as f:
+    with path.open() as f:
         raw = yaml.safe_load(f) or {}
     # New format: params live under 'default:'; modes under 'mode:'
     # Legacy flat format (no 'default' key): return as-is for backward compat
@@ -42,7 +42,7 @@ def read_task_modes(file=None) -> dict:
     path = Path(file)
     if path.suffix not in (".yaml", ".yml"):
         return {}
-    with open(path) as f:
+    with path.open() as f:
         raw = yaml.safe_load(f) or {}
     return raw.get("mode", {})
 

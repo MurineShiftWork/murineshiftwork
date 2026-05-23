@@ -14,8 +14,10 @@ from __future__ import annotations
 import json
 import logging
 import threading
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger(__name__)
 
@@ -37,7 +39,7 @@ class LabwatchPusher:
         self.password = password
 
     @classmethod
-    def from_machine_config(cls, cfg: dict) -> "LabwatchPusher | None":
+    def from_machine_config(cls, cfg: dict) -> LabwatchPusher | None:
         """Return a pusher if labwatch is configured, else None."""
         lw = cfg.get("labwatch", {})
         if not lw or not lw.get("url"):

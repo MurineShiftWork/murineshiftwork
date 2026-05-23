@@ -4,7 +4,7 @@ import logging
 import os
 import secrets
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import TYPE_CHECKING
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -12,6 +12,9 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from murineshiftwork.agent.hardware_manager import HardwareManager
 from murineshiftwork.agent.routers import config, hardware, session
 from murineshiftwork.agent.session_manager import SessionManager
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 _security = HTTPBasic()
 _MSW_AGENT_PASSWORD_ENV = "MSW_AGENT_PASSWORD"

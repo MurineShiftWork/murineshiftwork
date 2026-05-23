@@ -103,7 +103,7 @@ def run_task(**args_dict):
         ensemble_cfg_file = args_dict.get("config_file_camera", "")
         if ensemble_cfg_file and Path(ensemble_cfg_file).exists():
             ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
-            conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
+            conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path"))
             conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
             conductor.start()
             conductor.setup_agents()

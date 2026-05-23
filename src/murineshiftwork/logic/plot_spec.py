@@ -37,7 +37,7 @@ class PanelSpec(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def _required_fields_present(self) -> "PanelSpec":
+    def _required_fields_present(self) -> PanelSpec:
         required = _REQUIRED_FIELDS.get(self.type, set())
         missing = required - set(self.fields)
         if missing:
@@ -77,6 +77,6 @@ class PlotSpec(BaseModel):
         raise KeyError(f"No panel with id '{panel_id}' in spec for task '{self.task}'")
 
     @classmethod
-    def from_yaml(cls, path: Path | str) -> "PlotSpec":
+    def from_yaml(cls, path: Path | str) -> PlotSpec:
         data = yaml.safe_load(Path(path).read_text())
         return cls.model_validate(data)

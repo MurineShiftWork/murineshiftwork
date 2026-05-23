@@ -1,8 +1,10 @@
+import contextlib
 import logging
 import subprocess
 import sys
 import time
 import uuid
+from datetime import UTC
 from importlib.metadata import version as _get_version
 from pathlib import Path
 from threading import Thread
@@ -58,7 +60,7 @@ def update_session_yaml(session_file_path, **sections):
     else:
         data = {"msw_format_version": 2}
     data.update(sections)
-    with open(yaml_path, "w") as f:
+    with Path(yaml_path).open("w") as f:
         yaml.dump(
             data,
             f,
@@ -135,7 +137,7 @@ class ExampleTask(TaskRunner):
             trial_index += 1
 
 
-class TaskProcess(object):
+class TaskProcess:
     """Manages one session: paths, bpod connection, task thread lifecycle.
 
     Bpod injection: pass a pre-opened ``RobustBpodSession`` via ``bpod=`` to let
@@ -183,7 +185,7 @@ class TaskProcess(object):
         simulate=False,
         **kwargs,
     ):
-        super(TaskProcess, self).__init__()
+        super().__init__()
         self.serial_port = str(serial_port_bpod) if serial_port_bpod else ""
         self.out_path = str(out_path)
         self.subject = str(subject)
@@ -249,7 +251,7 @@ class TaskProcess(object):
                     timeout=1,
                 )
                 if not accessible and not self.debug:
-                    raise IOError(f"Serial port not accessible at {self.serial_port}")
+                    raise OSError(f"Serial port not accessible at {self.serial_port}")
             self.connect_bpod()
 
         # Build hook context and load hooks (after bpod is connected)
@@ -302,7 +304,7 @@ class TaskProcess(object):
             return
 
         import multiprocessing
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from murineshiftwork.logagent.logagent import LogAgent
 
@@ -316,7 +318,7 @@ class TaskProcess(object):
             "task": self.task_name,
             "setup": setup,
             "session_uuid": self.session_uuid,
-            "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "started_at": datetime.now(UTC).isoformat(timespec="seconds"),
             "session_paths": {k: str(v) for k, v in (self.session_paths or {}).items()},
         }
         self._relay_proc = LogAgent(
@@ -337,10 +339,8 @@ class TaskProcess(object):
             self.bpod.close_safely()
             self.serial_is_open = False
         if self._relay_queue is not None:
-            try:
+            with contextlib.suppress(Exception):
                 self._relay_queue.put_nowait(None)
-            except Exception:
-                pass
             self._relay_queue = None
 
     def connect_bpod(self, max_try=None, retry_delay_s=None):
@@ -386,7 +386,7 @@ class TaskProcess(object):
             },
         }
         yaml_path = self.session_paths["session_file_path"] + ".msw.session.yaml"
-        with open(yaml_path, "w") as f:
+        with Path(yaml_path).open("w") as f:
             yaml.dump(
                 data,
                 f,
@@ -427,8 +427,7 @@ class TaskProcess(object):
         return self.task_runner.is_alive()
 
     def stop_task(self):
-        if self.task_runner is not None:
-            if self.is_running():
-                self.task_runner.continue_task = False
-                self.bpod.stop_trial()
-                logging.debug("Task stopped.")
+        if self.task_runner is not None and self.is_running():
+            self.task_runner.continue_task = False
+            self.bpod.stop_trial()
+            logging.debug("Task stopped.")

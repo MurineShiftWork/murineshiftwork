@@ -42,7 +42,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -105,9 +105,7 @@ class ValidationResult:
 # ---------------------------------------------------------------------------
 
 
-def _check_msw_completeness(
-    session_dir: Path, result: ValidationResult
-) -> Optional[dict]:
+def _check_msw_completeness(session_dir: Path, result: ValidationResult) -> dict | None:
     try:
         sd = read_session_data(session_dir=session_dir, load_raw=False)
     except Exception as e:
@@ -136,9 +134,7 @@ def _check_msw_completeness(
 # ---------------------------------------------------------------------------
 
 
-def _check_rce_completeness(
-    session_dir: Path, result: ValidationResult
-) -> Optional[Any]:
+def _check_rce_completeness(session_dir: Path, result: ValidationResult) -> Any | None:
     try:
         from rpi_camera_ensemble.io.session import RCESession
     except ImportError:

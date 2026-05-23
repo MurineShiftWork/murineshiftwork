@@ -26,7 +26,7 @@ _HISTORICAL_DATA_DEFAULT = Path("/mnt/maindata/data")
 def _load_machine_config() -> dict:
     if _MACHINE_CONFIG_FILE.exists():
         try:
-            with open(_MACHINE_CONFIG_FILE) as f:
+            with _MACHINE_CONFIG_FILE.open() as f:
                 return yaml.safe_load(f) or {}
         except Exception as exc:
             logging.warning(
@@ -73,7 +73,7 @@ def write_machine_config(config_dir: str | Path, **extra_fields) -> None:
     existing = _load_machine_config()
     existing["config_dir"] = str(Path(config_dir).expanduser().resolve())
     existing.update(extra_fields)
-    with open(_MACHINE_CONFIG_FILE, "w") as f:
+    with _MACHINE_CONFIG_FILE.open("w") as f:
         yaml.dump(
             existing,
             f,

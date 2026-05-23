@@ -31,7 +31,7 @@ TTL_IDENTIFIER_SEQUENCES = {
 
 def get_ttl_identifier_sequence(file=None):
     key = Path(file).name.replace(".py", "")
-    return TTL_IDENTIFIER_SEQUENCES.get(key, None)
+    return TTL_IDENTIFIER_SEQUENCES.get(key)
 
 
 def prepare_barcode(barcoder: BarcodeTTL) -> tuple[int, float, list]:

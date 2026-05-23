@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import Annotated, Any, Literal
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
@@ -60,9 +60,7 @@ class ScaleDevice(SerialDevice):
 
 
 DeviceUnion = Annotated[
-    Union[
-        BpodDevice, PulsePalDevice, StageTowerDevice, GenericSerialDevice, ScaleDevice
-    ],
+    BpodDevice | PulsePalDevice | StageTowerDevice | GenericSerialDevice | ScaleDevice,
     Field(discriminator="type"),
 ]
 
@@ -240,9 +238,9 @@ class HooksConfig(BaseModel):
 class SetupConfig(BaseModel):
     name: str
     devices: dict[str, DeviceUnion] = {}
-    cameras: Optional[CameraConfig] = None
+    cameras: CameraConfig | None = None
     calibrations: Calibrations = Calibrations()
-    hooks: Optional[HooksConfig] = None
+    hooks: HooksConfig | None = None
 
     def device_port(self, device_name: str) -> str:
         if device_name not in self.devices:
@@ -280,8 +278,8 @@ class SubjectConfig(BaseModel):
 class ExecutionConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    setup: Optional[SetupConfig] = None
-    subject: Optional[SubjectConfig] = None
+    setup: SetupConfig | None = None
+    subject: SubjectConfig | None = None
     task_name: str = ""
     task_settings: dict[str, Any] = {}
 

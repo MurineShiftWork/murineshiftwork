@@ -101,7 +101,7 @@ class TaskControl:
         settings_to_save = {
             k: v
             for k, v in task_settings.items()
-            if isinstance(v, (str, int, float, bool, list, type(None)))
+            if isinstance(v, str | int | float | bool | list | type(None))
         }
         update_session_yaml(self.save_path, task_settings=settings_to_save)
 
@@ -304,7 +304,7 @@ class TaskControl:
 
     @staticmethod
     def _has_header(filepath: str) -> bool:
-        with open(filepath) as f:
+        with Path(filepath).open() as f:
             return not f.readline()[0].isdigit()
 
     @staticmethod
@@ -409,10 +409,7 @@ class TaskControl:
             return False
         template = list(self.sequence)
         n = len(template)
-        for i in range(len(deduped) - n + 1):
-            if deduped[i : i + n] == template:
-                return True
-        return False
+        return any(deduped[i : i + n] == template for i in range(len(deduped) - n + 1))
 
     def _score_sequence_perfect(self, trial_data: dict) -> bool:
         """'Perfect' metric: exact sequence, no extra pokes anywhere.
@@ -641,10 +638,13 @@ class TaskControl:
         liquid_this_trial = 0.0
         for i in range(self.n_pokes):
             rkey = f"reward_poke_{i}"
-            if rkey in st and not np.isnan(np.array(st[rkey][0])).all():
-                if params["rewards"][i] > 0:
-                    rewards_this_trial += 1
-                    liquid_this_trial += params["rewards"][i]
+            if (
+                rkey in st
+                and not np.isnan(np.array(st[rkey][0])).all()
+                and params["rewards"][i] > 0
+            ):
+                rewards_this_trial += 1
+                liquid_this_trial += params["rewards"][i]
         self._session_reward_count += rewards_this_trial
         self._session_liquid_ul += liquid_this_trial
         transition_times = self._compute_transition_times(poke_events)

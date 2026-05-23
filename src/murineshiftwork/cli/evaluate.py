@@ -155,7 +155,7 @@ def _evaluate_and_load_configs(args_dict=None):
         Path(calibration_file_stage).expanduser().as_posix()
     )
     if Path(args_dict["calibration_file_stage"]).exists():
-        with open(args_dict["calibration_file_stage"], "r") as _f:
+        with Path(args_dict["calibration_file_stage"]).open() as _f:
             args_dict["settings.stage"] = yaml.full_load(_f)
     else:
         args_dict["settings.stage"] = {}

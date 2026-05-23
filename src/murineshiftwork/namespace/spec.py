@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import re
 import string
 from pathlib import Path
@@ -81,16 +80,16 @@ class NamespaceBuilder:
     # Construction
 
     @classmethod
-    def from_yaml(cls, config_path: str | os.PathLike) -> "NamespaceBuilder":
+    def from_yaml(cls, config_path: str | Path) -> NamespaceBuilder:
         path = Path(config_path)
-        with open(path) as f:
+        with path.open() as f:
             data = yaml.safe_load(f)
         spec = NamespaceSpec.model_validate(data)
         logging.debug(f"Loaded NamespaceSpec v{spec.version} from {path}")
         return cls(spec)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "NamespaceBuilder":
+    def from_dict(cls, data: dict) -> NamespaceBuilder:
         return cls(NamespaceSpec.model_validate(data))
 
     # ------------------------------------------------------------------
@@ -105,8 +104,8 @@ class NamespaceBuilder:
     def __repr__(self) -> str:
         return f"NamespaceBuilder({self.to_dict()})"
 
-    def write_yaml(self, path: str | os.PathLike) -> None:
-        with open(path, "w") as f:
+    def write_yaml(self, path: str | Path) -> None:
+        with Path(path).open("w") as f:
             yaml.dump(
                 self.spec.model_dump(),
                 f,
@@ -159,7 +158,7 @@ class NamespaceBuilder:
             segments.append(self._build_one(name, values, parts))
             if name == level:
                 break
-        return os.path.join(*segments)
+        return str(Path(*segments))
 
     # ------------------------------------------------------------------
     # Parsing / validation
@@ -187,7 +186,7 @@ class NamespaceBuilder:
         return self._match_level(level, segment, known_values)
 
     def validate_path(
-        self, path: str | os.PathLike, stop_at: str | None = None
+        self, path: str | Path, stop_at: str | None = None
     ) -> dict[str, str]:
         if stop_at and stop_at not in self.hierarchy:
             raise ValueError(f"stop_at level {stop_at!r} is not in hierarchy")

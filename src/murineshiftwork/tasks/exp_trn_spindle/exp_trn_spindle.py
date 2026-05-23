@@ -1,6 +1,7 @@
 import json
 import logging
 import time
+from pathlib import Path
 
 import numpy as np
 from pybpodapi.protocol import Bpod, StateMachine
@@ -67,7 +68,7 @@ class Task(TaskRunner):
         on_off_periods_n_trial = round(on_off_periods / ITI)
 
         raw_out_path = self.input_kwargs["session_paths"]["session_file_path"]
-        with open(str(raw_out_path) + ".msw.stimulation.json", "w") as f:
+        with Path(str(raw_out_path) + ".msw.stimulation.json").open("w") as f:
             out_json = json.dumps(stimulation_param_sets, indent=4, sort_keys=True)
             f.write(out_json)
 

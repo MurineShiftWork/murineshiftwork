@@ -39,8 +39,8 @@ dev = [
     "pytest",
     "pytest-cov",
     "pre-commit",
-    "black",
-    "flake8",
+    "ruff",
+    "mypy",
     "mkdocs-material",
     "mkdocs",
     "gitpython",
@@ -84,6 +84,7 @@ msw = "murineshiftwork.cli:run_cli"
 
 [tool.hatch.version]
 source = "vcs"
+fallback-version = "0.1.0"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/murineshiftwork"]
@@ -129,25 +130,24 @@ testpaths = ["tests"]
 addopts = "--cov=murineshiftwork --durations=0"
 
 # ---------------------------------------------------------------------------
-# Black
-# ---------------------------------------------------------------------------
-
-[tool.black]
-target-version = ["py312", "py313"]
-line-length = 88
-skip-string-normalization = false
-
-# ---------------------------------------------------------------------------
 # Ruff
 # ---------------------------------------------------------------------------
 
 [tool.ruff]
 line-length = 88
+indent-width = 4
 exclude = ["external", "playground", "scripts"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
+select = ["E", "W", "F", "I", "UP", "YTT", "SIM", "PTH", "TCH", "PYI"]
+fixable = ["ALL"]
 ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 # ---------------------------------------------------------------------------
 # Mypy

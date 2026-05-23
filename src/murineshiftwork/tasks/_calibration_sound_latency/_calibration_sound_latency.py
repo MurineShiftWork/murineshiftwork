@@ -63,7 +63,7 @@ class Task(TaskRunner):
 
             ev = self.bpod.session.current_trial.export()["Events timestamps"]
             delay = dict(ev).get("BNC1High", -1)
-            if not delay == -1:
+            if delay != -1:
                 calibration_sound += {"trial": trial_index, "delay": delay[0]}
             else:
                 logging.error(f"Did not receive TTL on trial {trial_index}")
