@@ -508,8 +508,6 @@ class Task(TaskRunner):
             f"~{expected_ul:.2f} µL/drop expected | {n_pulses} pulses"
         )
 
-        # Tare before each point so sticking from prior point is reset
-        scale.tare()
         weight_before = scale.read_weight_blocking()
 
         for _ in tqdm(

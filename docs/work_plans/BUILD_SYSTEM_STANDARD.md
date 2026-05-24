@@ -214,6 +214,19 @@ For repos that already exist and can't be generated fresh. After applying: run `
 
 ## Known toolchain gotchas
 
+### release.yml: use `softprops/action-gh-release@v2`
+
+`actions/create-release@v1` is archived and deprecated by GitHub. Use `softprops/action-gh-release@v2` instead — it requires no explicit `GITHUB_TOKEN` env var (uses workflow permissions), auto-detects the tag, and supports auto-generated release notes:
+
+```yaml
+- name: Create GitHub release
+  uses: softprops/action-gh-release@v2
+  with:
+    generate_release_notes: true
+```
+
+---
+
 ### mypy v2: `import-untyped` vs `import`
 
 mypy v2 splits missing-stubs errors into two codes:

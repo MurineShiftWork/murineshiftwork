@@ -46,6 +46,10 @@ Design details live in memory files or separate docs — not here.
 
 ## DONE
 
+- [x] bench scale baudrate default 9600; `BenchScaleAdapter` + `ScaleDevice` + `make_scale` all corrected · 2026-05-24
+- [x] HX711 retry — `SerialWeighingScaleAdapter.read_weight_blocking()` overrides hx711 internal retry; suppresses ERROR-level parse-failure spam, single WARNING summary · 2026-05-24
+- [x] dynamic calibration — tqdm progress bar (`leave=False`) on drop loop; before/after weight delta (robust against bench-scale auto-zero) · 2026-05-24
+- [x] pypulsepal LCD fix — space padding (not null bytes) + "PulsePal / Python fw{ver}" display text · 2026-05-24
 - [x] execute.py device factory registry — `_DEVICE_REGISTRY` dict + lazy-import helpers replaces per-device if-chain in `run_task`; spurious pulsepal connection now prevented implicitly · 2026-05-24
 - [x] pulsepal spurious connect fix — `evaluate.py` clears `serial_port_pulsepal` when setup config present but doesn't declare pulsepal; `execute.py` secondary guard · 2026-05-24
 - [x] BUILD_SYSTEM_STANDARD.md rewrite + GH_CLI_REFERENCE.md — copier, Zenodo, vendoring, mypy v2 import-untyped gotcha · 2026-05-24
