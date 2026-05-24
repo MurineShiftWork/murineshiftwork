@@ -1,6 +1,8 @@
 import logging
 import sys
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -10,6 +12,24 @@ from murineshiftwork.logic.machine_config import (
     write_machine_config,
 )
 from murineshiftwork.logic.misc import print_box
+
+
+def _make_bpod(port: str) -> Any:
+    from murineshiftwork.hardware.bpod.device import BpodDevice
+
+    return BpodDevice(serial_port=port)
+
+
+def _make_pulsepal(port: str) -> Any:
+    from murineshiftwork.hardware.pulsepal.device import PulsePalDevice
+
+    return PulsePalDevice(serial_port=port)
+
+
+_DEVICE_REGISTRY: dict[str, Callable[[str], Any]] = {
+    "bpod": _make_bpod,
+    "pulsepal": _make_pulsepal,
+}
 
 
 def _apply_stage_position(args_dict: dict) -> None:
@@ -65,19 +85,25 @@ def run_task(**args_dict):
 
     serial_port = args_dict.get("serial_port_bpod", "")
     if serial_port and not args_dict.get("simulate") and not args_dict.get("bpod"):
-        from murineshiftwork.hardware.bpod.device import BpodDevice
         from murineshiftwork.hardware.manager import HardwareManager
 
-        device_list = [BpodDevice(serial_port=serial_port)]
-        serial_port_pulsepal = args_dict.get("serial_port_pulsepal", "")
         setup_config = args_dict.get("setup_config")
-        pulsepal_in_setup = setup_config and "pulsepal" in getattr(
-            setup_config, "devices", {}
-        )
-        if serial_port_pulsepal and (not setup_config or pulsepal_in_setup):
-            from murineshiftwork.hardware.pulsepal.device import PulsePalDevice
-
-            device_list.append(PulsePalDevice(serial_port=serial_port_pulsepal))
+        if setup_config is not None:
+            device_list = []
+            for dev_name, dev_cfg in setup_config.devices.items():
+                factory = _DEVICE_REGISTRY.get(dev_cfg.type)
+                if factory is None:
+                    logging.warning(
+                        "No device factory for type %r (device %r) — skipping",
+                        dev_cfg.type,
+                        dev_name,
+                    )
+                    continue
+                port = args_dict.get(f"serial_port_{dev_cfg.type}", "")
+                if port:
+                    device_list.append(factory(port))
+        else:
+            device_list = [_make_bpod(serial_port)]
 
         with HardwareManager(device_list) as devices:
             args_dict["bpod"] = devices["bpod"]
