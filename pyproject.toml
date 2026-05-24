@@ -30,7 +30,8 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/larsrollik/murineshiftwork"
+Homepage = "https://github.com/larsrollik/murineshiftwork"
+Documentation = "https://larsrollik.github.io/murineshiftwork/"
 "Issue Tracker" = "https://github.com/larsrollik/murineshiftwork/issues"
 
 [project.optional-dependencies]
@@ -41,12 +42,13 @@ dev = [
     "pre-commit",
     "ruff",
     "mypy",
-    "mkdocs-material",
-    "mkdocs",
     "gitpython",
     "fastapi",
     "httpx",
     "uvicorn",
+]
+docs = [
+    "mkdocs-material",
 ]
 calibration = [
     "serial-scale-hx711",
@@ -90,7 +92,15 @@ fallback-version = "0.1.0"
 packages = ["src/murineshiftwork"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]
+include = [
+    "/src/murineshiftwork",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+    "/CITATION.cff",
+    "/VERSION",
+]
 
 # ---------------------------------------------------------------------------
 # Commitizen
@@ -116,6 +126,7 @@ include = ["/src", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
+version_provider = "commitizen"
 version = "2.6.0"
 tag_format = "v$version"
 update_changelog_on_bump = false

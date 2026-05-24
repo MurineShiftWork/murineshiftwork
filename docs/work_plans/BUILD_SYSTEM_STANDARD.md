@@ -257,16 +257,24 @@ nav:
 
 ### mkdocstrings — API reference (not in templatepy, opt-in)
 
-`mkdocstrings` auto-generates API reference pages from docstrings. Not part of the templatepy template — add manually for packages that need it.
+`mkdocstrings` auto-generates API reference pages from docstrings. Not part of the templatepy template — add manually for packages that need it. No copier changes required.
 
+**Three steps to enable:**
+
+1. `.github/workflows/docs.yml` — extend the pip install line:
+```yaml
+- run: pip install mkdocs-material mkdocstrings[python]
+```
+
+2. `pyproject.toml` — add to `docs` extras (for local dev):
 ```toml
-# pyproject.toml
 docs = [
     "mkdocs-material",
     "mkdocstrings[python]",
 ]
 ```
 
+3. `mkdocs.yml` — add plugin config and nav entry:
 ```yaml
 # mkdocs.yml additions
 plugins:

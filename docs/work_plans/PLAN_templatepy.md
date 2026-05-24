@@ -109,17 +109,20 @@ Both files should be present in source distributions for reproducibility.
 
 ---
 
-### 6. mkdocstrings as opt-in copier variable (optional/deferred)
+### 6. mkdocstrings — no templatepy changes needed
 
-Add a copier boolean prompt `use_mkdocstrings` (default: false). When true:
-- Adds `mkdocstrings[python]` to `docs` extras
-- Adds `plugins:` section to `mkdocs.yml`
-- Generates a `docs/api.md` with `:::` directives
+`mkdocstrings` does **not** require copier template changes. When a generated repo needs API
+reference docs, the developer makes three manual edits:
 
-This is more complex to implement in copier (conditional file rendering).
-Defer until the simpler items above are done.
+1. Add `mkdocstrings[python]` to the `pip install` line in `.github/workflows/docs.yml`
+   (i.e. `pip install mkdocs-material mkdocstrings[python]`)
+2. Add the `plugins:` section to `mkdocs.yml`
+3. Add `docs/api.md` with `:::` directives pointing at their modules
 
-**Priority:** Low — defer.
+No new template files, no copier variable, no conditional rendering. This is documented in
+`BUILD_SYSTEM_STANDARD.md` under "mkdocstrings — API reference".
+
+**Priority:** N/A — not a templatepy change.
 
 ---
 
@@ -150,9 +153,9 @@ If not, align to the pattern in `BUILD_SYSTEM_STANDARD.md`.
 | 4 | `version` in CITATION.cff | `template/CITATION.cff` | trivial |
 | 5 | sdist includes | `template/pyproject.toml` | trivial |
 | 6 | Audit template `ci.yml` | `template/.github/workflows/ci.yml` | 30 min |
-| 7 | mkdocstrings opt-in | multiple template files | 2–3 hrs |
+| 6 | mkdocstrings | no template changes — manual per-repo | n/a |
 
-Items 1–5 can land in a single PR. Item 6 is a review + patch. Item 7 is a separate PR.
+Items 1–5 can land in a single PR. Item 7 (ci.yml audit) is a review + patch.
 
 ---
 
