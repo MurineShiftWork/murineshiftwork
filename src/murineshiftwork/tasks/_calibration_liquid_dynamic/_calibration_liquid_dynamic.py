@@ -215,6 +215,8 @@ class Task(TaskRunner):
         max_adaptive_rounds = int(s.get("MAX_ADAPTIVE_ROUNDS", 3))
         n_target = int(s.get("COVERAGE_N_POINTS_TARGET", 5))
         outlier_sigma = float(s.get("OUTLIER_SIGMA_THRESHOLD", 2.5))
+        deadzone_probe_pulses = int(s.get("DEADZONE_PROBE_PULSES", 50))
+        deadzone_ul_threshold = float(s.get("DEADZONE_UL_THRESHOLD", 0.05))
 
         config_dir = self.input_kwargs.get("config_dir", "")
         setup_name = self.input_kwargs.get("setup", "")
@@ -252,18 +254,24 @@ class Task(TaskRunner):
         scale.start()
         self._tare_verified(scale, max_retries=2, threshold_g=1.0)
 
-        from murineshiftwork.cli.defaults import DEFAULT_CALIBRATION_FILE_LIQUID
-
         calibration = CalibrationDataWater(
-            file_path=self.input_kwargs.get(
-                "calibration_file_liquid", DEFAULT_CALIBRATION_FILE_LIQUID
-            )
+            file_path=self.input_kwargs.get("calibration_file_liquid") or None
         )
 
         try:
             for valve_id in valves:
                 if not self.continue_task:
                     break
+                effective_min_s = self._probe_deadzone(
+                    valve_id=valve_id,
+                    scale=scale,
+                    time_min_s=time_min_s,
+                    time_max_s=time_max_s,
+                    inter_pulse_s=inter_pulse_s,
+                    settle_s=settle_s,
+                    probe_pulses=deadzone_probe_pulses,
+                    deadzone_ul=deadzone_ul_threshold,
+                )
                 logging.info(
                     f"\n{'=' * 55}\nCalibrating valve {valve_id}"
                     f"  |  target range: {min_ul}–{max_ul} µL\n{'=' * 55}"
@@ -274,7 +282,7 @@ class Task(TaskRunner):
                         calibration=calibration,
                         scale=scale,
                         initial_times_s=initial_times_s,
-                        time_min_s=time_min_s,
+                        time_min_s=effective_min_s,
                         time_max_s=time_max_s,
                         n_initial=n_initial,
                         min_ul=min_ul,
@@ -290,14 +298,9 @@ class Task(TaskRunner):
                         outlier_sigma=outlier_sigma,
                     )
                 except Exception as exc:
-                    logging.error(
-                        f"Valve {valve_id}: calibration aborted — {exc}. "
-                        "Saving data collected so far."
-                    )
+                    logging.error(f"Valve {valve_id}: calibration aborted — {exc}.")
                     break
 
-                # Persist immediately after each valve so a later crash can't lose it.
-                calibration.save(overwrite=True)
                 self._write_valve_to_yaml(
                     valve_id, calibration, config_dir, setup_name, force_save
                 )
@@ -305,13 +308,61 @@ class Task(TaskRunner):
             logging.debug(f"\n{str(calibration)}\n")
             calibration.save(overwrite=True)
 
-        if not (config_dir and setup_name and not setup_name.startswith("unknown_")):
-            logging.info(
-                "No --setup name provided; calibration saved to CSV only. "
-                "Pass --setup <name> to also update the setup YAML."
-            )
-
     # ------------------------------------------------------------------
+
+    def _probe_deadzone(
+        self,
+        valve_id,
+        scale,
+        time_min_s,
+        time_max_s,
+        inter_pulse_s,
+        settle_s,
+        probe_pulses=50,
+        deadzone_ul=0.05,
+    ) -> float:
+        """Find the lowest opening time above the valve's mechanical deadzone.
+
+        Measures probe_pulses drops at time_min_s; if ul/drop < deadzone_ul,
+        doubles the candidate time and retries until we're above the deadzone
+        or reach time_max_s. Returns the effective minimum opening time to use.
+        Liquid accumulated during probing stays on the pan; weight_before in
+        subsequent _measure_point calls captures it as baseline.
+        """
+        t = time_min_s
+        while t < time_max_s:
+            weight_before = scale.read_weight_blocking()
+            for _ in range(probe_pulses):
+                if not self.continue_task:
+                    return t
+                sma = make_sma_for_drop_of_water(
+                    bpod=self.bpod,
+                    valve_opening_time=t,
+                    valve_ids=valve_id,
+                    inter_drop_interval=inter_pulse_s,
+                )
+                self.bpod.send_state_machine(sma)
+                if not self.bpod.run_state_machine(sma):
+                    return t
+            time.sleep(settle_s)
+            weight_g = scale.read_weight_blocking() - weight_before
+            ul_per_drop = weight_g * 1000.0 / probe_pulses if weight_g > 0 else 0.0
+            if ul_per_drop >= deadzone_ul:
+                logging.info(
+                    f"Valve {valve_id}: deadzone probe {t:.4f}s → "
+                    f"{ul_per_drop:.3f} µL/drop — using as lower bound"
+                )
+                return t
+            logging.warning(
+                f"Valve {valve_id}: deadzone probe {t:.4f}s → "
+                f"{ul_per_drop:.3f} µL/drop < {deadzone_ul} µL threshold — stepping up"
+            )
+            t = round(min(t * 2.0, time_max_s), 4)
+        logging.warning(
+            f"Valve {valve_id}: deadzone probe reached {time_max_s:.4f}s without "
+            f"exceeding threshold — using original {time_min_s:.4f}s"
+        )
+        return time_min_s
 
     def _tare_verified(
         self, scale, max_retries: int = 2, threshold_g: float = 1.0
@@ -436,6 +487,14 @@ class Task(TaskRunner):
                             time.sleep(2)
                         else:
                             raise
+                    except ValueError as exc:
+                        logging.warning(
+                            f"Valve {valve_id} | open={open_s:.4f}s: {exc} — skipping point"
+                        )
+                        ul_per_drop = None
+                        break
+                if ul_per_drop is None:
+                    continue
                 measured_times.append(open_s)
                 measured_ul.append(ul_per_drop)
 
@@ -461,7 +520,8 @@ class Task(TaskRunner):
                 )
                 pending = suggestions
 
-        # Outlier report
+        # Outlier retry — re-measure flagged points with 2× pulses; to_valve_calibration
+        # uses .last() per opening time so the retry replaces the original row.
         if len(measured_times) >= 3:
             outlier_mask, residuals = flag_outlier_points(
                 measured_times, measured_ul, outlier_sigma
@@ -471,12 +531,33 @@ class Task(TaskRunner):
                 for i, (is_out, t, ul, res) in enumerate(
                     zip(outlier_mask, measured_times, measured_ul, residuals)
                 ):
-                    if is_out:
+                    if not is_out or not self.continue_task:
+                        continue
+                    logging.warning(
+                        f"[Valve {valve_id}] Outlier: open_s={t:.4f}s "
+                        f"measured={ul:.3f} µL/drop "
+                        f"(residual={res:+.3f} µL, {abs(res) / sigma_val:.1f}σ) "
+                        f"— re-measuring with 2× pulses"
+                    )
+                    try:
+                        new_ul = self._measure_point(
+                            valve_id,
+                            t,
+                            calibration,
+                            scale,
+                            measured_times,
+                            measured_ul,
+                            inter_pulse_s,
+                            settle_s,
+                            scale_noise_g,
+                            min_snr,
+                            min(min_pulses * 2, max_pulses),
+                            max_pulses,
+                        )
+                        measured_ul[i] = new_ul
+                    except ValueError as exc:
                         logging.warning(
-                            f"[Valve {valve_id}] Outlier: open_s={t:.4f}s "
-                            f"measured={ul:.3f} µL/drop "
-                            f"(residual={res:+.3f} µL, "
-                            f"{abs(res) / sigma_val:.1f}σ) — consider repeating"
+                            f"[Valve {valve_id}] Retry for {t:.4f}s failed: {exc} — keeping original"
                         )
             else:
                 logging.info(
@@ -503,6 +584,11 @@ class Task(TaskRunner):
             expected_ul, scale_noise_g, min_snr, min_pulses, max_pulses
         )
 
+        if n_pulses == max_pulses:
+            logging.warning(
+                f"Valve {valve_id} | open={open_s:.4f}s: n_pulses capped at {max_pulses} "
+                f"(expected {expected_ul:.3f} µL/drop — may be near deadzone)"
+            )
         logging.info(
             f"Valve {valve_id} | open={open_s:.4f}s | "
             f"~{expected_ul:.2f} µL/drop expected | {n_pulses} pulses"
@@ -527,6 +613,13 @@ class Task(TaskRunner):
 
         time.sleep(settle_s)
         weight_g = round(scale.read_weight_blocking() - weight_before, 4)
+
+        if weight_g < -scale_noise_g:
+            raise ValueError(
+                f"negative weight {weight_g:.4f} g at open={open_s:.4f}s "
+                f"(load-cell drift or tare issue)"
+            )
+
         ul_per_drop = round(weight_g * 1000.0 / n_pulses, 3)
 
         logging.info(

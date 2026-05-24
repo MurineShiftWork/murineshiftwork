@@ -199,16 +199,98 @@ MIT and BSD-2/3 are safe to vendor into anything. GPL code cannot be vendored in
 
 For repos that already exist and can't be generated fresh. After applying: run `copier update` once `.copier-answers.yml` is added.
 
-- [ ] Replace `.github/workflows/` with templatepy versions (ci.yml, release.yml, docs.yml)
+- [ ] Replace `.github/workflows/` with templatepy versions (CI.yaml, release.yml, docs.yml)
 - [ ] Add/update `.pre-commit-config.yaml` with templatepy version
-- [ ] `pyproject.toml`: switch build backend to `hatchling` + `hatch-vcs`; add `[tool.hatch.version] source="vcs"`; align `[tool.commitizen]` to `version_provider="commitizen"`, `version_files=["VERSION"]`; switch `[dependency-groups]` → `[project.optional-dependencies]`
+- [ ] `pyproject.toml`: switch build backend to `hatchling` + `hatch-vcs`; add `[tool.hatch.version] source="vcs"`; align `[tool.commitizen]` to `version_provider="commitizen"`, `version_files=["VERSION"]`; switch `[dependency-groups]` → `[project.optional-dependencies]`; add `docs = ["mkdocs-material"]` extra; add `Documentation` URL; add `CITATION.cff`/`VERSION` to sdist includes
 - [ ] Add `VERSION` file at project root; content must match `[tool.commitizen] version`
 - [ ] Move package to `src/<package_name>/` if still flat layout
-- [ ] Add `CITATION.cff` and enable Zenodo webhook
+- [ ] Add empty `src/<package_name>/py.typed` (signals typed package to mypy)
+- [ ] Add `CITATION.cff` with `version` field; enable Zenodo webhook
+- [ ] Add `mkdocs.yml` + `docs/index.md` placeholder
 - [ ] Add DOI badge to README after first release
 - [ ] Set up PyPI trusted publishing on pypi.org
+- [ ] Enable GitHub Pages (Settings → Pages → Deploy from gh-pages branch)
 - [ ] Run `pre-commit install --hook-type pre-commit --hook-type commit-msg`
 - [ ] Vendored files: add header, add `README.md` attribution, add ruff `per-file-ignores`
+
+---
+
+## MkDocs documentation
+
+### Standard setup
+
+Every package gets a minimal docs site deployed to GitHub Pages. The templatepy provides the `docs.yml` workflow — deploy triggers on any push to main that touches `docs/**`, `mkdocs.yml`, or `.github/workflows/docs.yml`.
+
+**`mkdocs.yml` (minimal):**
+```yaml
+site_name: my-package
+site_description: One-line description
+site_url: https://larsrollik.github.io/my-package/
+repo_url: https://github.com/larsrollik/my-package
+repo_name: my-package
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: teal
+    accent: teal
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - toc
+
+nav:
+  - Home: index.md
+```
+
+**`docs/index.md`:** Start with a placeholder pointing to the README. Expand later.
+
+**`[project.optional-dependencies]`:** Add `docs = ["mkdocs-material"]` so `pip install .[docs]` works locally. The `docs.yml` CI job installs it directly (`pip install mkdocs-material`).
+
+### mkdocstrings — API reference (not in templatepy, opt-in)
+
+`mkdocstrings` auto-generates API reference pages from docstrings. Not part of the templatepy template — add manually for packages that need it.
+
+```toml
+# pyproject.toml
+docs = [
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
+```
+
+```yaml
+# mkdocs.yml additions
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            docstring_style: google
+
+nav:
+  - Home: index.md
+  - API reference: api.md
+```
+
+```markdown
+# docs/api.md
+# API Reference
+::: ttl_barcoder.core.barcode_ttl
+::: ttl_barcoder.core.config
+```
+
+**When to add:** when docstrings are complete and the package has external users who need navigable API docs. Not worth it for one-liner docstrings — the README quickstart covers the public surface better.
 
 ---
 

@@ -32,8 +32,15 @@ default:
   MAX_ADAPTIVE_ROUNDS: 3          # rounds of adding new opening times after initial grid
   COVERAGE_N_POINTS_TARGET: 5     # desired number of points within the target range
 
-  # --- Outlier flagging (logged as warnings, does not stop the run) ---
+  # --- Outlier detection and auto-retry ---
+  # Outliers are re-measured with 2× MIN_PULSES; the retry replaces the original.
   OUTLIER_SIGMA_THRESHOLD: 2.5
+
+  # --- Deadzone probe ---
+  # Before each valve, probe at OPENING_TIME_MIN_S with DEADZONE_PROBE_PULSES drops.
+  # If ul/drop < DEADZONE_UL_THRESHOLD the minimum time is stepped up until above threshold.
+  DEADZONE_PROBE_PULSES: 50
+  DEADZONE_UL_THRESHOLD: 0.05      # µL/drop below which an opening time is considered deadzone
 
   # --- Save options ---
   force_save_calibration: false

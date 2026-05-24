@@ -76,6 +76,9 @@ class CalibrationData:
         if file_path is not None:
             self.file_path = file_path
 
+        if self.file_path is None:
+            return
+
         file_path = Path(self.file_path)
         if self.calibration_data is not None and not self.calibration_data.empty:
             file_path.expanduser().parent.mkdir(exist_ok=True, parents=True)
@@ -225,7 +228,7 @@ class CalibrationDataLiquid(CalibrationData):
         # to points — duplicate times arise when adaptive rounds revisit a time slot.
         df = (
             df.groupby("valve_opening_time", as_index=False)["_ul"]
-            .mean()
+            .last()
             .sort_values("valve_opening_time")
         )
         df["_ul"] = np.round(df["_ul"], 3)
