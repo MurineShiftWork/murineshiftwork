@@ -50,7 +50,7 @@ class SerialWeighingScaleAdapter(WeighingScaleBase):
 class BenchScaleAdapter(WeighingScaleBase):
     """Wraps `serial_scale_bench.Scale` (RS-232/USB bench scale) behind the shared interface."""
 
-    def __init__(self, serial_port: str, baudrate: int = 4800) -> None:
+    def __init__(self, serial_port: str, baudrate: int = 9600) -> None:
         from serial_scale_bench import Scale
 
         self._scale = Scale(serial_port=serial_port, baudrate=baudrate)
@@ -118,7 +118,7 @@ def make_scale(
     if scale_type == "hx711":
         return SerialWeighingScaleAdapter(serial_port=serial_port)
     if scale_type == "bench":
-        return BenchScaleAdapter(serial_port=serial_port, baudrate=baudrate or 4800)
+        return BenchScaleAdapter(serial_port=serial_port, baudrate=baudrate or 9600)
     if scale_type == "sim":
         return SimWeighingScale()
     raise ValueError(

@@ -56,7 +56,7 @@ class GenericSerialDevice(SerialDevice):
 class ScaleDevice(SerialDevice):
     type: Literal["scale"]
     scale_type: Literal["hx711", "bench"] = "hx711"
-    baudrate: int = 4800
+    baudrate: int = 9600
 
 
 DeviceUnion = Annotated[

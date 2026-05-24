@@ -15,6 +15,7 @@ import warnings
 import numpy as np
 from pybpodapi.exceptions.bpod_error import BpodErrorException
 from scipy.optimize import OptimizeWarning, curve_fit
+from tqdm import tqdm
 
 from murineshiftwork.hardware.bpod.valve import make_sma_for_drop_of_water
 from murineshiftwork.logic.calibration import (
@@ -509,8 +510,11 @@ class Task(TaskRunner):
 
         # Tare before each point so sticking from prior point is reset
         scale.tare()
+        weight_before = scale.read_weight_blocking()
 
-        for _ in range(n_pulses):
+        for _ in tqdm(
+            range(n_pulses), leave=False, desc=f"valve {valve_id} {open_s:.4f}s"
+        ):
             if not self.continue_task:
                 break
             sma = make_sma_for_drop_of_water(
@@ -524,7 +528,7 @@ class Task(TaskRunner):
                 break
 
         time.sleep(settle_s)
-        weight_g = round(scale.read_weight_blocking(), 4)
+        weight_g = round(scale.read_weight_blocking() - weight_before, 4)
         ul_per_drop = round(weight_g * 1000.0 / n_pulses, 3)
 
         logging.info(
