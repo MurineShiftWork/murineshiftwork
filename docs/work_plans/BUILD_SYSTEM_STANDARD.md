@@ -292,22 +292,142 @@ nav:
 
 **When to add:** when docstrings are complete and the package has external users who need navigable API docs. Not worth it for one-liner docstrings — the README quickstart covers the public surface better.
 
+### mkdocstrings docstring format
+
+mkdocstrings[python] supports **Google**, **NumPy**, and **Sphinx** styles. Configure with `docstring_style: google`. A one-liner docstring is valid Google style — mkdocstrings renders it as the summary with no parameter table. To get a parameter table you need explicit sections:
+
+```python
+def inject_barcode_states(sma, timing_sequence, bnc_channel, first_state_name="barcode_start"):
+    """Inject barcode timing states into a pybpodapi StateMachine in-place.
+
+    Args:
+        sma: pybpodapi StateMachine to modify.
+        timing_sequence: List of (level, duration_ms) tuples from BarcodeTTL.
+        bnc_channel: Bpod output channel (e.g. ``Bpod.OutputChannels.BNC2``).
+        first_state_name: Name for the first injected state; used as alignment key.
+    """
+```
+
+**Rule for this org:** one-liner docstrings by default (CLAUDE.md rule). Add Google-style `Args:` sections only on the public API surface of packages that will have a deployed API reference site. Do not add them to internal helpers or to packages whose reference docs are not yet deployed.
+
+---
+
+## Release flow (auto-bump)
+
+All repos use the **auto-bump** pattern: a single `release.yml` that triggers on every push to `main`, runs `cz bump`, and publishes if there are bumpable commits. No manual `git tag` step needed.
+
+### How it works
+
+1. Developer pushes a conventional commit to `main` (e.g. `feat:`, `fix:`)
+2. `release.yml` triggers; checks `!startsWith(commit_message, 'bump:')` — proceeds
+3. `cz bump --yes` inspects commits since last tag, bumps VERSION + creates annotated tag
+4. If nothing bumpable (exit 21): job exits 0, no release
+5. Pushes bump commit to `main` and tag to remote (both via `GITHUB_TOKEN`)
+6. Builds wheel + sdist, creates GitHub release, publishes to PyPI
+
+The bump commit message begins with `bump:` — this is how `CI.yaml` and `release.yml` prevent an infinite trigger loop. All CI jobs carry `if: "!startsWith(github.event.head_commit.message, 'bump:')"`. The CI gate treats `skipped` as acceptable.
+
+### Canonical `release.yml` (pip/hatchling variant)
+
+```yaml
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    name: Bump, build, publish
+    runs-on: ubuntu-latest
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools
+        run: pip install commitizen hatchling hatch-vcs
+
+      - name: Bump version
+        id: bump
+        run: |
+          cz bump --yes || EXIT=$?
+          if [ "${EXIT:-0}" -eq 21 ]; then
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          [ "${EXIT:-0}" -eq 0 ] || exit $EXIT
+          VERSION=$(cat VERSION)
+          git push origin HEAD:main
+          git push origin "v${VERSION}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        if: steps.bump.outputs.skipped != 'true'
+        run: python -m hatchling build
+
+      - name: Create GitHub release
+        if: steps.bump.outputs.skipped != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ steps.bump.outputs.version }}"
+          files: dist/*
+          generate_release_notes: true
+
+      - name: Publish to PyPI
+        if: steps.bump.outputs.skipped != 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+```
+
+**templatepy uses `uv build` + `uv publish --trusted-publishing automatic` instead of hatchling + pypa action.** Either works; pip/hatchling variant is used by repos that do not yet have uv in their CI. Align to uv when migrating a repo fully.
+
+### CI.yaml bump-skip pattern
+
+Every job in `CI.yaml` must carry the skip condition:
+
+```yaml
+jobs:
+  lint:
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+  test:
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+  secrets-scan:
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+  ci:
+    needs: [lint, test, secrets-scan]
+    if: always()
+    steps:
+      - run: |
+          # Accept 'skipped' (bump commit) as well as 'success'
+          [[ "${{ needs.lint.result }}"         == "success" || "${{ needs.lint.result }}"         == "skipped" ]] || exit 1
+          [[ "${{ needs.test.result }}"         == "success" || "${{ needs.test.result }}"         == "skipped" ]] || exit 1
+          [[ "${{ needs.secrets-scan.result }}" == "success" || "${{ needs.secrets-scan.result }}" == "skipped" ]] || exit 1
+```
+
+### GitHub setup required
+
+- Branch protection: require `CI` status check; allow `github-actions[bot]` to bypass (so bump push lands without needing a PR)
+- PyPI Trusted Publisher: project name, repo, workflow `release.yml`, no environment
+
 ---
 
 ## Known toolchain gotchas
-
-### release.yml: use `softprops/action-gh-release@v2`
-
-`actions/create-release@v1` is archived and deprecated by GitHub. Use `softprops/action-gh-release@v2` instead — it requires no explicit `GITHUB_TOKEN` env var (uses workflow permissions), auto-detects the tag, and supports auto-generated release notes:
-
-```yaml
-- name: Create GitHub release
-  uses: softprops/action-gh-release@v2
-  with:
-    generate_release_notes: true
-```
-
----
 
 ### mypy v2: `import-untyped` vs `import`
 
