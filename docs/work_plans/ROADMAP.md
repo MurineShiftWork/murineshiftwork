@@ -19,14 +19,25 @@ Design details live in memory files or separate docs — not here.
 
 ## TODO
 
-- [ ] **`hardware/bpod/device.py`** — `BpodDevice(DeviceProtocol)` wrapping `BpodFactory`; wire `HardwareManager` into `execute.py`; see `MASTER_PLAN.md §3`
+### Sprint order (2026-05-24)
+
+1. **Opto debug** — review PR TODO items; hardware-verify optotagging TTL barcodes; confirm airpuff TTL barcodes; test on acquisition machine
+2. **MSW namespace pkg review** — clarify path/file namespace convention and `msw_files` API (what helpers exist, what's missing, what callers expect); prerequisite to clean package split
+3. **Namespace package separation** — extract `murineshiftwork` into namespace sub-packages per IMPLEMENTATION_PLAN.md extraction order (core → sequence → logic/namespace → agent → readers → switching → other)
+4. **msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py`; wire into `RceConductorAdapter`
+
+---
+
+- [ ] **Opto — hardware verification** — test optotagging and airpuff TTL barcodes on acquisition machine; alignment script for `sequence_automated` piecewise per-trial TTL edges not written
+- [ ] **Opto — PR TODOs** — review opto PR notes for outstanding test items before closing branch
+- [ ] **msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py`
+- [ ] **Namespace pkg review + split** — map `msw_files` path/namespace conventions; then split per extraction order in `IMPLEMENTATION_PLAN.md`
 - [ ] **Bpod retry — hardware verification** — test fixed retry on device `pci-0000:00:14.0-usb-0:4:1.0 → ttyACM7`; confirm 3-attempt / 2s-sleep resolves first-connect failures
 - [ ] **MSW Monitor — Step 1: server + relay** — `monitor/relay.py` (`TrialRelay` daemon Process), `monitor/server.py` (FastAPI, in-memory SessionState, PlotSpec computation); see `MASTER_PLAN.md §5`
 - [ ] **MSW Monitor — Step 2: TaskProcess wiring** — read `monitor_url` from machine config, start `TrialRelay`, add `put_nowait()` after `save_trial_data()` in `sequence`, `probabilistic_switching_fixedsubjects`, `optotagging`
 - [ ] **MSW Monitor — Step 3: CLI + plotspec** — `msw monitor serve/status/debug` subcommands; `msw plotspec <task>` with `--dry-run`
 - [ ] **MSW Monitor — Step 4: Docker** — `Dockerfile.monitor`, `docker-compose.monitor.yml`, Vue UI wired to monitor endpoints
 - [ ] **MSW Monitor — Step 5: strip `agent/`** — after monitor validated on one rig
-- [ ] `msw_flir_bonsai.timestamps` — finish user's existing unwrap code (FlyCapture 128s cycle), wire into `preprocess_camera_csv`; user has existing implementation to integrate
 - [ ] **msw-openephys integration** (`msw-oe` CLI) — attach an Open Ephys session to a running MSW setup so session start confirms whether data will be written as an ephys child session or standalone. Goal: prevent ephys sessions left open and data ending up in the wrong directory. Operations: `msw-oe attach <setup>`, `msw-oe status`, `msw-oe detach`. Session start dialogue always checks OE status — even when not expected, to catch forgotten sessions. Integration point: MSW already has `is_child_session_to` plumbing (see `session_paths`); OE side uses the existing tool already made. Design sketch: `msw-oe` wraps the OE REST API; `TaskProcess` checks `msw-oe status` before `run_task()` and writes `child_session_dir` into session YAML.
 - [ ] **`docs/tasks/` coverage** — add `calibration_and_test.md`; add task docs for `airpuff`, `optotagging` when those protocols are stable
 - [ ] **post-acquisition pipeline in Python** — replace shell-script invocations in `msw post run` (`run_post_acquisition_tasks.sh`) with pure Python; provision_rpi scripts (`collate_data2.sh`, `upload_to_server.sh`, `h264_to_mp4.sh`) remain in `external/` (off-limits); Python wrapper would call them via subprocess or replicate logic; consider whether `inventory.ini` should live in `msw_configs/` (config dir) rather than alongside the scripts; see `docs/work_plans/PROVISION_RPI_SCRIPTS.md`
@@ -35,6 +46,9 @@ Design details live in memory files or separate docs — not here.
 
 ## DONE
 
+- [x] execute.py device factory registry — `_DEVICE_REGISTRY` dict + lazy-import helpers replaces per-device if-chain in `run_task`; spurious pulsepal connection now prevented implicitly · 2026-05-24
+- [x] pulsepal spurious connect fix — `evaluate.py` clears `serial_port_pulsepal` when setup config present but doesn't declare pulsepal; `execute.py` secondary guard · 2026-05-24
+- [x] BUILD_SYSTEM_STANDARD.md rewrite + GH_CLI_REFERENCE.md — copier, Zenodo, vendoring, mypy v2 import-untyped gotcha · 2026-05-24
 - [x] msw-flir-bonsai camera integration — `FlirBonsaiClient`, `RceConductorAdapter`, `make_camera_client()` factory; `CameraConfig` FLIR fields; RCE module-level import bug fixed · 2026-05-22
 - [x] MASTER_PLAN.md — single authoritative design doc, supersedes PLAN_msw_monitor + PLAN_msw_ui_agent_broadcast + AGENT_USAGE_MODEL + PLAN_hardware_manager · 2026-05-22
 - [x] Sequence online plot — outcome dot offsets (±0.1 from perf line), no-response grey x at 0.5, perf-perfect yellow; `poke_xmax_s` param (default 6 s) · 2026-05-22

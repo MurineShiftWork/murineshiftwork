@@ -1,4 +1,7 @@
 default:
+  required_devices:
+    - bpod
+    - pulsepal
   barcode_bits: 37
   barcode_bit_duration_ms: 35.0
   barcode_init_duration_ms: 10.0

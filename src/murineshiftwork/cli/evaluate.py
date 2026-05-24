@@ -269,12 +269,11 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
             logging.debug(f"Resolved pulsepal port from SetupConfig: {resolved_pp}")
         except ValueError as exc:
             logging.warning(
-                f"SetupConfig pulsepal port resolution failed ({exc}); "
-                f"using CLI value {args_dict.get('serial_port_pulsepal', '')!r}"
+                f"SetupConfig pulsepal port resolution failed ({exc}); skipping pulsepal"
             )
+            args_dict["serial_port_pulsepal"] = ""
+            patched.pop("serial_port_pulsepal", None)
     elif setup_config:
-        # Setup config is authoritative: it does not declare pulsepal, so clear any
-        # CLI default so execute.py does not open a spurious connection.
         args_dict["serial_port_pulsepal"] = ""
         patched.pop("serial_port_pulsepal", None)
 

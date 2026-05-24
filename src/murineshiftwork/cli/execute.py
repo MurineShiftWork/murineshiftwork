@@ -89,8 +89,12 @@ def run_task(**args_dict):
 
         setup_config = args_dict.get("setup_config")
         if setup_config is not None:
+            patched = args_dict.get("settings.task.patched", {})
+            required = set(patched.get("required_devices") or ["bpod"])
             device_list = []
             for dev_name, dev_cfg in setup_config.devices.items():
+                if dev_name not in required:
+                    continue
                 factory = _DEVICE_REGISTRY.get(dev_cfg.type)
                 if factory is None:
                     logging.warning(
