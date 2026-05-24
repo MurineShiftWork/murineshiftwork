@@ -7,6 +7,9 @@ Implement `WeighingScaleBase` to add other hardware.
 
 from __future__ import annotations
 
+import logging
+import statistics
+import time
 from abc import ABC, abstractmethod
 
 
@@ -43,8 +46,44 @@ class SerialWeighingScaleAdapter(WeighingScaleBase):
     def tare(self) -> None:
         self._scale.tare()
 
-    def read_weight_blocking(self) -> float:
-        return self._scale.read_weight_blocking()
+    def read_weight_blocking(
+        self,
+        n_valid: int = 3,
+        inter_read_delay: float = 0.2,
+        timeout: float = 30.0,
+    ) -> float:
+        # hx711 read_weight() logs ERROR on parse failures that are transient and
+        # expected (stale serial buffer on first read). Suppress those and retry here
+        # with a single WARNING summary so the noise doesn't alarm users.
+        hx_log = logging.getLogger("serial_scale_hx711")
+        prev_level = hx_log.level
+        hx_log.setLevel(logging.CRITICAL)
+
+        readings: list[float] = []
+        n_failed = 0
+        deadline = time.time() + timeout
+        try:
+            while time.time() < deadline:
+                val = self._scale.read_weight()
+                if val is not None:
+                    readings.append(val)
+                    if len(readings) >= n_valid:
+                        if n_failed:
+                            logging.warning(
+                                "HX711: %d parse failure(s) before stable read",
+                                n_failed,
+                            )
+                        return statistics.median(readings)
+                else:
+                    n_failed += 1
+                time.sleep(inter_read_delay)
+        finally:
+            hx_log.setLevel(prev_level)
+
+        raise TimeoutError(
+            f"HX711 scale could not produce {n_valid} valid readings within {timeout}s "
+            f"({n_failed} parse failures)"
+        )
 
 
 class BenchScaleAdapter(WeighingScaleBase):

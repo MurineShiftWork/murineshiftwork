@@ -118,7 +118,7 @@ Required sections in order:
 
 ```
 # PackageName
-badges (DOI, PyPI, Ruff)
+badges (DOI, PyPI)
 One-line description
 
 ## Example usage
@@ -132,10 +132,9 @@ One-line description
 ```markdown
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
 [![PyPI](https://img.shields.io/pypi/v/my-package.svg)](https://pypi.org/project/my-package)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 ```
 
-Omit DOI badge until Zenodo is set up. Do not use a Black badge — this org uses Ruff. Do not hardcode version strings in README body.
+Omit DOI badge until Zenodo is set up. Do not use a Black badge or a Ruff badge. Do not hardcode version strings in README body.
 
 ### License & sources section
 
