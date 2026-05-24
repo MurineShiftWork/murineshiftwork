@@ -272,6 +272,11 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
                 f"SetupConfig pulsepal port resolution failed ({exc}); "
                 f"using CLI value {args_dict.get('serial_port_pulsepal', '')!r}"
             )
+    elif setup_config:
+        # Setup config is authoritative: it does not declare pulsepal, so clear any
+        # CLI default so execute.py does not open a spurious connection.
+        args_dict["serial_port_pulsepal"] = ""
+        patched.pop("serial_port_pulsepal", None)
 
     if setup_config and setup_config.cameras:
         cam_path = setup_config.cameras.config

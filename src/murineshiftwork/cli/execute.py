@@ -70,7 +70,11 @@ def run_task(**args_dict):
 
         device_list = [BpodDevice(serial_port=serial_port)]
         serial_port_pulsepal = args_dict.get("serial_port_pulsepal", "")
-        if serial_port_pulsepal:
+        setup_config = args_dict.get("setup_config")
+        pulsepal_in_setup = setup_config and "pulsepal" in getattr(
+            setup_config, "devices", {}
+        )
+        if serial_port_pulsepal and (not setup_config or pulsepal_in_setup):
             from murineshiftwork.hardware.pulsepal.device import PulsePalDevice
 
             device_list.append(PulsePalDevice(serial_port=serial_port_pulsepal))
