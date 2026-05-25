@@ -186,16 +186,19 @@ def run_setup(**args_dict):
             return
 
         setups_dir.mkdir(parents=True, exist_ok=True)
-        skeleton = {
-            "name": setup_name,
-            "devices": {
-                "bpod": {
-                    "type": "bpod",
-                    "port_by_path": "FILL_IN_PORT_BY_PATH",
-                },
+        from murineshiftwork.logic.config.models import (
+            BpodDevice as _BpodDevice,
+        )
+        from murineshiftwork.logic.config.models import (
+            SetupConfig as _SetupConfig,
+        )
+
+        skeleton = _SetupConfig(
+            name=setup_name,
+            devices={
+                "bpod": _BpodDevice(type="bpod", port_by_path="FILL_IN_PORT_BY_PATH")
             },
-            "calibrations": {"bpod_valve": {}},
-        }
+        ).model_dump(exclude_none=True)
         with path.open("w") as f:
             yaml.dump(
                 skeleton,
