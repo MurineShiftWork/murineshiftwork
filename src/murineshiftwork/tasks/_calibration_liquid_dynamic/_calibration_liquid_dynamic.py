@@ -215,34 +215,27 @@ class Task(TaskRunner):
         max_adaptive_rounds = int(s.get("MAX_ADAPTIVE_ROUNDS", 3))
         n_target = int(s.get("COVERAGE_N_POINTS_TARGET", 5))
         outlier_sigma = float(s.get("OUTLIER_SIGMA_THRESHOLD", 2.5))
-        deadzone_probe_pulses = int(s.get("DEADZONE_PROBE_PULSES", 50))
-        deadzone_ul_threshold = float(s.get("DEADZONE_UL_THRESHOLD", 0.05))
-
         config_dir = self.input_kwargs.get("config_dir", "")
         setup_name = self.input_kwargs.get("setup", "")
         force_save = bool(s.get("force_save_calibration", False))
 
         # --- Calibration plan overview ---
         if initial_times_s:
-            planned_times = sorted(set(float(t) for t in initial_times_s))
+            plan_desc = f"manual grid: {sorted(set(round(float(t), 4) for t in initial_times_s))}"
         else:
-            planned_times = list(np.linspace(time_min_s, time_max_s, n_initial))
-        est_pulses = [
-            _compute_n_pulses(1.0, scale_noise_g, min_snr, min_pulses, max_pulses)
-            for _ in planned_times
-        ]
-        times_str = "  ".join(
-            f"{t:.4f}s(~{n})" for t, n in zip(planned_times, est_pulses)
-        )
+            plan_desc = (
+                f"anchor protocol — max={time_max_s:.4f}s, "
+                f"then linear estimate for {min_ul} µL, "
+                f"then {n_initial} interior points"
+            )
         logging.info(
             f"\n{'=' * 60}\n"
             f"Adaptive calibration plan\n"
-            f"  Valves:         {', '.join(str(v) for v in valves)}\n"
-            f"  Target range:   {min_ul}–{max_ul} µL\n"
-            f"  Initial times:  {times_str}\n"
-            f"  (format: open_time(~est_pulses) — pulses adapt per point)\n"
-            f"  Settle time:    {settle_s} s | Scale noise: {scale_noise_g} g | SNR target: {min_snr}\n"
-            f"  Max rounds:     {max_adaptive_rounds} adaptive\n"
+            f"  Valves:       {', '.join(str(v) for v in valves)}\n"
+            f"  Target range: {min_ul}–{max_ul} µL\n"
+            f"  Protocol:     {plan_desc}\n"
+            f"  Settle time:  {settle_s} s | Scale noise: {scale_noise_g} g | SNR target: {min_snr}\n"
+            f"  Max rounds:   {max_adaptive_rounds} adaptive\n"
             f"{'=' * 60}"
         )
 
@@ -262,27 +255,13 @@ class Task(TaskRunner):
             for valve_id in valves:
                 if not self.continue_task:
                     break
-                effective_min_s = self._probe_deadzone(
-                    valve_id=valve_id,
-                    scale=scale,
-                    time_min_s=time_min_s,
-                    time_max_s=time_max_s,
-                    inter_pulse_s=inter_pulse_s,
-                    settle_s=settle_s,
-                    probe_pulses=deadzone_probe_pulses,
-                    deadzone_ul=deadzone_ul_threshold,
-                )
-                logging.info(
-                    f"\n{'=' * 55}\nCalibrating valve {valve_id}"
-                    f"  |  target range: {min_ul}–{max_ul} µL\n{'=' * 55}"
-                )
                 try:
                     self._calibrate_valve(
                         valve_id=valve_id,
                         calibration=calibration,
                         scale=scale,
                         initial_times_s=initial_times_s,
-                        time_min_s=effective_min_s,
+                        time_min_s=time_min_s,
                         time_max_s=time_max_s,
                         n_initial=n_initial,
                         min_ul=min_ul,
@@ -307,62 +286,6 @@ class Task(TaskRunner):
         finally:
             logging.debug(f"\n{str(calibration)}\n")
             calibration.save(overwrite=True)
-
-    # ------------------------------------------------------------------
-
-    def _probe_deadzone(
-        self,
-        valve_id,
-        scale,
-        time_min_s,
-        time_max_s,
-        inter_pulse_s,
-        settle_s,
-        probe_pulses=50,
-        deadzone_ul=0.05,
-    ) -> float:
-        """Find the lowest opening time above the valve's mechanical deadzone.
-
-        Measures probe_pulses drops at time_min_s; if ul/drop < deadzone_ul,
-        doubles the candidate time and retries until we're above the deadzone
-        or reach time_max_s. Returns the effective minimum opening time to use.
-        Liquid accumulated during probing stays on the pan; weight_before in
-        subsequent _measure_point calls captures it as baseline.
-        """
-        t = time_min_s
-        while t < time_max_s:
-            weight_before = scale.read_weight_blocking()
-            for _ in range(probe_pulses):
-                if not self.continue_task:
-                    return t
-                sma = make_sma_for_drop_of_water(
-                    bpod=self.bpod,
-                    valve_opening_time=t,
-                    valve_ids=valve_id,
-                    inter_drop_interval=inter_pulse_s,
-                )
-                self.bpod.send_state_machine(sma)
-                if not self.bpod.run_state_machine(sma):
-                    return t
-            time.sleep(settle_s)
-            weight_g = scale.read_weight_blocking() - weight_before
-            ul_per_drop = weight_g * 1000.0 / probe_pulses if weight_g > 0 else 0.0
-            if ul_per_drop >= deadzone_ul:
-                logging.info(
-                    f"Valve {valve_id}: deadzone probe {t:.4f}s → "
-                    f"{ul_per_drop:.3f} µL/drop — using as lower bound"
-                )
-                return t
-            logging.warning(
-                f"Valve {valve_id}: deadzone probe {t:.4f}s → "
-                f"{ul_per_drop:.3f} µL/drop < {deadzone_ul} µL threshold — stepping up"
-            )
-            t = round(min(t * 2.0, time_max_s), 4)
-        logging.warning(
-            f"Valve {valve_id}: deadzone probe reached {time_max_s:.4f}s without "
-            f"exceeding threshold — using original {time_min_s:.4f}s"
-        )
-        return time_min_s
 
     def _tare_verified(
         self, scale, max_retries: int = 2, threshold_g: float = 1.0
@@ -443,13 +366,87 @@ class Task(TaskRunner):
         n_target,
         outlier_sigma,
     ) -> None:
-        if initial_times_s:
-            pending = sorted(set(float(t) for t in initial_times_s))
-        else:
-            pending = list(np.linspace(time_min_s, time_max_s, n_initial))
-
+        # time_min_s is a hard floor — the protocol never issues pulses shorter than this.
         measured_times: list[float] = []
         measured_ul: list[float] = []
+
+        if initial_times_s:
+            # Expert / manual mode: use the provided grid directly.
+            logging.info(
+                f"\n{'=' * 55}\nCalibrating valve {valve_id}"
+                f"  |  target range: {min_ul}–{max_ul} µL\n{'=' * 55}"
+            )
+            pending = sorted(set(round(float(t), 4) for t in initial_times_s))
+        else:
+            t_max = round(float(time_max_s), 4)
+
+            # Anchor 1: measure at time_max_s — highest SNR; seeds linear estimate.
+            ul_max = self._measure_point(
+                valve_id,
+                t_max,
+                calibration,
+                scale,
+                measured_times,
+                measured_ul,
+                inter_pulse_s,
+                settle_s,
+                scale_noise_g,
+                min_snr,
+                min_pulses,
+                max_pulses,
+            )
+            measured_times.append(t_max)
+            measured_ul.append(ul_max)
+
+            # Anchor 2: linear extrapolation → t where volume ≈ min_ul.
+            # Binary-search upward (max 3 steps) when the estimate undershoots.
+            if ul_max >= min_ul:
+                t_est = round(max(float(time_min_s), (min_ul / ul_max) * t_max), 4)
+            else:
+                logging.warning(
+                    f"Valve {valve_id}: {t_max:.4f}s delivers only {ul_max:.3f} µL/drop "
+                    f"(below {min_ul} µL target min) — using max as lower anchor"
+                )
+                t_est = t_max
+
+            for _attempt in range(3):
+                if t_est >= t_max:
+                    break
+                ul_est = self._measure_point(
+                    valve_id,
+                    t_est,
+                    calibration,
+                    scale,
+                    measured_times,
+                    measured_ul,
+                    inter_pulse_s,
+                    settle_s,
+                    scale_noise_g,
+                    min_snr,
+                    min_pulses,
+                    max_pulses,
+                )
+                measured_times.append(t_est)
+                measured_ul.append(ul_est)
+                if ul_est >= min_ul:
+                    break
+                new_t = round(t_est + (t_max - t_est) * 0.5, 4)
+                logging.warning(
+                    f"Valve {valve_id}: {t_est:.4f}s → {ul_est:.3f} µL/drop "
+                    f"< {min_ul} µL — stepping up to {new_t:.4f}s"
+                )
+                t_est = new_t
+
+            effective_min_s = measured_times[-1]
+            logging.info(
+                f"\n{'=' * 55}\nCalibrating valve {valve_id}"
+                f"  |  target range: {min_ul}–{max_ul} µL"
+                f"  |  anchors: {effective_min_s:.4f}s – {t_max:.4f}s\n{'=' * 55}"
+            )
+
+            # Interior points between anchors; endpoints already measured.
+            interior = np.linspace(effective_min_s, t_max, n_initial + 2)[1:-1]
+            pending = [round(float(t), 4) for t in interior]
 
         for round_idx in range(max_adaptive_rounds + 1):
             new_this_round = [t for t in pending if t not in measured_times]

@@ -6,16 +6,21 @@ default:
 
   # --- Target delivery range ---
   TARGET_RANGE_UL:
-  - 0.5
+  - 1.0
   - 8.0
 
-  # --- Initial measurement grid ---
-  # Leave empty [] to auto-generate N_INITIAL_POINTS evenly between
-  # OPENING_TIME_MIN_S and OPENING_TIME_MAX_S.
+  # --- Opening time bounds ---
+  # OPENING_TIME_MIN_S is a hard floor; the protocol never goes below this.
+  # OPENING_TIME_MAX_S is measured first; used as the anchor for linear estimation.
+  # Leave INITIAL_OPENING_TIMES_S empty [] to use the automatic anchor protocol.
   INITIAL_OPENING_TIMES_S: []
   OPENING_TIME_MIN_S: 0.005
   OPENING_TIME_MAX_S: 0.150
-  N_INITIAL_POINTS: 5
+
+  # --- Initial interior points ---
+  # After the two anchor measurements (max + estimated min), this many points are
+  # added evenly between the anchors.  Total initial points = 2 + N_INITIAL_POINTS.
+  N_INITIAL_POINTS: 2
 
   # --- Timing ---
   INTER_PULSE_INTERVAL_S: 0.150   # delay between individual drops
@@ -35,12 +40,6 @@ default:
   # --- Outlier detection and auto-retry ---
   # Outliers are re-measured with 2× MIN_PULSES; the retry replaces the original.
   OUTLIER_SIGMA_THRESHOLD: 2.5
-
-  # --- Deadzone probe ---
-  # Before each valve, probe at OPENING_TIME_MIN_S with DEADZONE_PROBE_PULSES drops.
-  # If ul/drop < DEADZONE_UL_THRESHOLD the minimum time is stepped up until above threshold.
-  DEADZONE_PROBE_PULSES: 50
-  DEADZONE_UL_THRESHOLD: 0.05      # µL/drop below which an opening time is considered deadzone
 
   # --- Save options ---
   force_save_calibration: false

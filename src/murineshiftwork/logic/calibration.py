@@ -224,8 +224,10 @@ class CalibrationDataLiquid(CalibrationData):
             raise ValueError(f"No calibration data for valve {valve_id}")
 
         df["_ul"] = np.round((df["liquid_weight_g"] / df["n_drops"]) * 1e3, 3)
-        # Average repeated measurements at the same opening time before converting
-        # to points — duplicate times arise when adaptive rounds revisit a time slot.
+        # Normalise valve_opening_time to 4 d.p. before groupby so that floating-point
+        # near-duplicates (e.g. np.linspace artifact 0.07999… vs round()-produced 0.08)
+        # are treated as the same key.  .last() then keeps the most-recent measurement.
+        df["valve_opening_time"] = df["valve_opening_time"].round(4)
         df = (
             df.groupby("valve_opening_time", as_index=False)["_ul"]
             .last()
