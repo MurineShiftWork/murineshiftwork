@@ -1,7 +1,5 @@
 import time
 
-from pypulsepal import PulsePal as _PulsePal
-
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 _MODEL_NAMES = {1: "model-1 (fw<20)", 2: "model-2 (fw>=20)"}
@@ -21,14 +19,11 @@ def _info_box(pairs: list[tuple[str, str]]) -> None:
 class Task(TaskRunner):
     def run(self):
         devices = self.input_kwargs.get("devices") or {}
-        settings = self.input_kwargs.get("settings.task.patched") or {}
-
         handle = devices.get("pulsepal")
-        _owns = handle is None
-
         if handle is None:
-            port = settings.get("serial_port_pulsepal", "/dev/ttyACM1")
-            handle = _PulsePal(serial_port=port)
+            raise RuntimeError(
+                "PulsePal handle not injected — check setup config has pulsepal device."
+            )
 
         pairs = [
             ("serial port", str(handle.serial_port)),
@@ -42,9 +37,6 @@ class Task(TaskRunner):
         print()
         _info_box(pairs)
         print()
-
-        if _owns:
-            handle.close()
 
 
 def run_task(**kwargs):

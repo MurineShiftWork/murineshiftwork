@@ -110,7 +110,8 @@ def run_task(**args_dict):
             device_list = [_make_bpod(serial_port)]
 
         with HardwareManager(device_list) as devices:
-            args_dict["bpod"] = devices["bpod"]
+            if "bpod" in devices:
+                args_dict["bpod"] = devices["bpod"]
             args_dict["devices"] = devices
             mod.run_task(**args_dict)
     else:
