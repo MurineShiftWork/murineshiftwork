@@ -14,6 +14,11 @@ Design details live in memory files or separate docs — not here.
   ```
 - [ ] **GitHub: create repo `serial-scale-hx711`** then push `external/serial_scale_hx711` (remote already set to `https://github.com/larsrollik/serial-scale-hx711.git`)
 - [ ] **GitHub: create repo `serial-scale-bench`** then push `external/serial_scale_bench` (remote already set to `https://github.com/larsrollik/serial-scale-bench.git`)
+- [ ] **PyPI: publish RCC deprecation stub** — `rpi-camera-colony` stub pointing users to `rpi-camera-ensemble`; same pattern as `serial-weighing-scale` stub
+- [ ] **GitHub: create repo + PyPI release for `rpi-camera-ensemble`** — push `external/provision_rpi/rpi_camera_ensemble`; ensure it is publicly installable (coexists with FLIR/Bonsai backend)
+- [ ] **GitHub: create repo for `msw-flir-bonsai`** — push `external/msw-flir-bonsai`; publish to PyPI
+- [ ] **git repo for `msw_configs/`** — move `/mnt/maindata/msw_configs` into a dedicated git repo to get clean history of setup/subject/calibration changes; MSW reads config_dir as before, just backed by git
+- [ ] **Bonsai workflows — homogenise externalized properties** — add `cam1fps`, `cam1resolution` (width × height) to the Spinnaker workflows to match FlyCapture. Currently Spinnaker only externalises `cam1idx`; fps and resolution must be pre-set in SpinView. Approach: add `SpinnakerProperty` setter nodes for `AcquisitionFrameRate`, `Width`, `Height` before the `SpinnakerCapture` node, then add `ExternalizedMapping` entries for those nodes so `-p cam1fps=60` and `-p cam1width=1280 -p cam1height=1024` work at CLI launch. Verify on acquisition machine — camera must have `AcquisitionFrameRateEnable` set to `true` in SpinView first (one-time, persists in camera EEPROM). Once done, add `width`/`height` fields to `CameraUnit` model and pass them through `BonsaiCameraRunner._build_cmd()`.
 
 ---
 
@@ -21,9 +26,9 @@ Design details live in memory files or separate docs — not here.
 
 ### Sprint order (2026-05-24)
 
-1. **Opto debug** — review PR TODO items; hardware-verify optotagging TTL barcodes; confirm airpuff TTL barcodes; test on acquisition machine
-2. **MSW namespace pkg review** — clarify path/file namespace convention and `msw_files` API (what helpers exist, what's missing, what callers expect); prerequisite to clean package split
-3. **Namespace package separation** — extract `murineshiftwork` into namespace sub-packages per IMPLEMENTATION_PLAN.md extraction order (core → sequence → logic/namespace → agent → readers → switching → other)
+1. ~~**Namespace — `file` level + `get_path(artifact=)`**~~ — **DONE** · 2026-05-24
+2. **Opto debug** — review PR TODO items; hardware-verify optotagging TTL barcodes; confirm airpuff TTL barcodes; test on acquisition machine
+3. **Namespace package separation** — extract `murineshiftwork` into namespace sub-packages per IMPLEMENTATION_PLAN.md extraction order
 4. **msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py`; wire into `RceConductorAdapter`
 
 ---
@@ -31,14 +36,15 @@ Design details live in memory files or separate docs — not here.
 - [ ] **Opto — hardware verification** — test optotagging and airpuff TTL barcodes on acquisition machine; alignment script for `sequence_automated` piecewise per-trial TTL edges not written
 - [ ] **Opto — PR TODOs** — review opto PR notes for outstanding test items before closing branch
 - [ ] **msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py`
-- [ ] **Namespace pkg review + split** — map `msw_files` path/namespace conventions; then split per extraction order in `IMPLEMENTATION_PLAN.md`
+- [ ] **msw-flir-bonsai — acquisition machine tests** — set `BONSAI_EXE`, run integration suite (`pytest tests/integration/ -v`); smoke-test CLI directly (`msw-flir find-bonsai`, `msw-flir list-cameras`, `msw-flir test-record`); run via `msw` task with `cameras.backend: flir_bonsai` in setup YAML to verify full `FlirBonsaiClient` path
 - [ ] **Bpod retry — hardware verification** — test fixed retry on device `pci-0000:00:14.0-usb-0:4:1.0 → ttyACM7`; confirm 3-attempt / 2s-sleep resolves first-connect failures
 - [ ] **MSW Monitor — Step 1: server + relay** — `monitor/relay.py` (`TrialRelay` daemon Process), `monitor/server.py` (FastAPI, in-memory SessionState, PlotSpec computation); see `MASTER_PLAN.md §5`
 - [ ] **MSW Monitor — Step 2: TaskProcess wiring** — read `monitor_url` from machine config, start `TrialRelay`, add `put_nowait()` after `save_trial_data()` in `sequence`, `probabilistic_switching_fixedsubjects`, `optotagging`
 - [ ] **MSW Monitor — Step 3: CLI + plotspec** — `msw monitor serve/status/debug` subcommands; `msw plotspec <task>` with `--dry-run`
 - [ ] **MSW Monitor — Step 4: Docker** — `Dockerfile.monitor`, `docker-compose.monitor.yml`, Vue UI wired to monitor endpoints
 - [ ] **MSW Monitor — Step 5: strip `agent/`** — after monitor validated on one rig
-- [ ] **msw-openephys integration** (`msw-oe` CLI) — attach an Open Ephys session to a running MSW setup so session start confirms whether data will be written as an ephys child session or standalone. Goal: prevent ephys sessions left open and data ending up in the wrong directory. Operations: `msw-oe attach <setup>`, `msw-oe status`, `msw-oe detach`. Session start dialogue always checks OE status — even when not expected, to catch forgotten sessions. Integration point: MSW already has `is_child_session_to` plumbing (see `session_paths`); OE side uses the existing tool already made. Design sketch: `msw-oe` wraps the OE REST API; `TaskProcess` checks `msw-oe status` before `run_task()` and writes `child_session_dir` into session YAML.
+- [ ] **msw multi-session protocol runner** — `msw run-protocol <protocol.yaml>` sequences multiple task sessions under one OE acquisition; see design notes below under msw-openephys
+- [ ] **msw-openephys integration** (`msw-oe` CLI) — attach an Open Ephys session to a running MSW setup so session start confirms whether data will be written as an ephys child session or standalone. Goal: prevent ephys sessions left open and data ending up in the wrong directory. Operations: `msw-oe attach <setup>`, `msw-oe status`, `msw-oe detach`. Session start dialogue always checks OE status — even when not expected, to catch forgotten sessions. Integration point: MSW already has `is_child_session_to` plumbing (see `session_paths`); OE side uses `oe_remote` (at `external/msw_open_ephys/oe_remote/`). Design sketch: `msw-oe` wraps the OE REST API; `TaskProcess` checks `msw-oe status` before `run_task()` and writes `child_session_dir` into session YAML. **Namespace design:** The v2 namespace YAML (`acquisition` optional level) is the right model — `acquisition` = OE ephys parent directory, `session` = MSW behavioural session nested inside it. `oe_remote session.py` already defines three modes: Standalone (`subject/session/`), Parent (`subject/acq/session/`), Child (`subject/acq/session/` reusing cached acq name). MSW's `is_child_session_to` parameter in `generate_session_paths()` maps directly: when OE is recording, pass the OE acquisition basename as `is_child_session_to`; `optional_levels: [acquisition]` in the namespace YAML means standalone sessions skip that level cleanly. **Stage 1 (parent session abstraction) DONE** — `hardware/parent_session.py`: `ParentSessionProtocol`, `OpenEphysParentSession`, `make_parent_session()`; `OpenEphysParentSessionConfig` in `models.py`; `SetupConfig.parent_session`; `--oe-remote HOST` CLI flag; `_resolve_parent_session()` in evaluate.py; 23 tests · 2026-05-25
 - [ ] **`docs/tasks/` coverage** — add `calibration_and_test.md`; add task docs for `airpuff`, `optotagging` when those protocols are stable
 - [ ] **post-acquisition pipeline in Python** — replace shell-script invocations in `msw post run` (`run_post_acquisition_tasks.sh`) with pure Python; provision_rpi scripts (`collate_data2.sh`, `upload_to_server.sh`, `h264_to_mp4.sh`) remain in `external/` (off-limits); Python wrapper would call them via subprocess or replicate logic; consider whether `inventory.ini` should live in `msw_configs/` (config dir) rather than alongside the scripts; see `docs/work_plans/PROVISION_RPI_SCRIPTS.md`
 
@@ -46,6 +52,8 @@ Design details live in memory files or separate docs — not here.
 
 ## DONE
 
+- [x] `acquisition-namespace` standalone package — extracted from `murineshiftwork.namespace.spec`; `external/acquisition-namespace`; `NamespaceBuilder`, `NamespaceSpec`, `NamespaceLevelSpec`; fixed `_build_one` self-recursion bug; 25 tests; MSW `spec.py` now re-exports from it · 2026-05-24
+- [x] namespace `file` level + `get_path(artifact=)` — `namespace.msw.yaml` `file` template; `get_msw_builder()` in `paths.py`; `msw_file()` delegates to builder (no hardcoded `.msw.` in Python); `TaskRunner.get_path()`; all raw `.msw.` replaced in `task_process.py`, `log.py`, task files; `readers/namespace.py` uses `is_msw_file()`; 23 tests · 2026-05-24
 - [x] bench scale baudrate default 9600; `BenchScaleAdapter` + `ScaleDevice` + `make_scale` all corrected · 2026-05-24
 - [x] HX711 retry — `SerialWeighingScaleAdapter.read_weight_blocking()` overrides hx711 internal retry; suppresses ERROR-level parse-failure spam, single WARNING summary · 2026-05-24
 - [x] dynamic calibration — tqdm progress bar (`leave=False`) on drop loop; before/after weight delta (robust against bench-scale auto-zero) · 2026-05-24

@@ -15,6 +15,7 @@ from murineshiftwork.logic.config.ini import deep_merge
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.stimulation import Stimulation
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
+from murineshiftwork.namespace.msw_files import msw_file
 
 
 class OptoTaggingRecord:
@@ -46,7 +47,7 @@ class OptoTaggingRecord:
         self.trial_data.append(trial_data)
 
     def save(self):
-        save_trial_data(self.trial_data, str(self.out_path) + ".msw.jsonl")
+        save_trial_data(self.trial_data, str(msw_file(self.out_path, "jsonl")))
         logging.debug(f"Saved session data to {self.out_path}")
 
     def __exit__(self, exc_type, exc_val, exc_tb):

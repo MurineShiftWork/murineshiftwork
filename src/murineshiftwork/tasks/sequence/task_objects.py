@@ -11,6 +11,7 @@ from pybpodapi.protocol import Bpod, StateMachine
 from murineshiftwork.logic.barcode import BARCODE_FIRST_STATE_NAME
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.sounds import StereoSound
+from murineshiftwork.namespace.msw_files import msw_file
 
 log = logging.getLogger(__name__)
 
@@ -235,7 +236,7 @@ class TaskControl:
         session_folder = session_paths.get("session_folder", str(self.save_path.parent))
         session_basename = session_paths.get("session_basename", self.save_path.name)
 
-        session_yaml_path = Path(str(self.save_path) + ".msw.session.yaml")
+        session_yaml_path = msw_file(self.save_path, "session.yaml")
         try:
             import yaml as _yaml  # type: ignore[import-untyped]
 
@@ -745,7 +746,7 @@ class TaskControl:
     # ------------------------------------------------------------------ #
 
     def save(self):
-        save_trial_data(self.trial_data, str(self.save_path) + ".msw.df.jsonl")
+        save_trial_data(self.trial_data, str(msw_file(self.save_path, "df.jsonl")))
 
     def __del__(self):
         if hasattr(self, "save_path"):

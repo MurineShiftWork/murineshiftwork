@@ -79,6 +79,19 @@ def _add_session_args(parser):
             "--out-path (skips subject dir)"
         ),
     )
+    g.add_argument(
+        "--oe-remote",
+        dest="oe_remote_url",
+        type=str,
+        default="",
+        metavar="HOST",
+        help=(
+            "Open Ephys GUI host (e.g. '172.24.42.168'). "
+            "Attaches this session as a child of the running OE acquisition "
+            "by reading the acquisition path from the OE REST API. "
+            "Overrides --child-of if OE returns a valid acquisition path."
+        ),
+    )
 
 
 def _add_config_args(parser):

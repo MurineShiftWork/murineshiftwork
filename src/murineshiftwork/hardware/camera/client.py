@@ -146,24 +146,44 @@ class FlirBonsaiClient:
         from msw_flir_bonsai.runner import BonsaiCameraRunner, MultiCameraRunner
 
         cfg = self._config
-        workflow = cfg.workflow or f"run-flir-{cfg.driver}-{cfg.n_cameras}cam"
+        workflow = cfg.workflow or f"run-flir-{cfg.driver}-1cam"
         bonsai_exe = cfg.bonsai_exe or None
-        runners = [
-            BonsaiCameraRunner(
-                workflow=workflow,
-                output_dir=self._output_dir,
-                session=self._acq_name,
-                cam_index=i,
-                fps=cfg.fps,
-                driver=cfg.driver,
-                bonsai_exe=bonsai_exe,
-            )
-            for i in range(cfg.n_cameras)
-        ]
+
+        if cfg.cameras:
+            runners = [
+                BonsaiCameraRunner(
+                    workflow=workflow,
+                    output_dir=self._output_dir,
+                    session=self._acq_name,
+                    cam_index=cam.index,
+                    fps=cam.fps,
+                    driver=cfg.driver,
+                    bonsai_exe=bonsai_exe,
+                )
+                for cam in cfg.cameras
+            ]
+            n = len(cfg.cameras)
+            fps_summary = ", ".join(f"cam{c.index}@{c.fps}" for c in cfg.cameras)
+        else:
+            runners = [
+                BonsaiCameraRunner(
+                    workflow=workflow,
+                    output_dir=self._output_dir,
+                    session=self._acq_name,
+                    cam_index=i,
+                    fps=cfg.fps,
+                    driver=cfg.driver,
+                    bonsai_exe=bonsai_exe,
+                )
+                for i in range(cfg.n_cameras)
+            ]
+            n = cfg.n_cameras
+            fps_summary = f"all@{cfg.fps}"
+
         self._runner = MultiCameraRunner(runners)
         log.info(
-            f"FlirBonsaiClient: starting {cfg.n_cameras} camera(s), "
-            f"driver={cfg.driver}, fps={cfg.fps}, session={self._acq_name!r}"
+            f"FlirBonsaiClient: starting {n} camera(s) "
+            f"driver={cfg.driver} [{fps_summary}] session={self._acq_name!r}"
         )
         self._runner.start()
 

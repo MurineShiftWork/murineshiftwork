@@ -137,7 +137,7 @@ class TestCalibrationLiquidDynamicSim:
 
         assert bpod.sma_run_count() > 0
 
-    def test_scale_was_tared_per_point(self, tmp_path):
+    def test_scale_tared_per_valve(self, tmp_path):
         from murineshiftwork.tasks._calibration_liquid_dynamic._calibration_liquid_dynamic import (
             Task,
         )
@@ -151,4 +151,6 @@ class TestCalibrationLiquidDynamicSim:
         task = Task(bpod=bpod, **kwargs)
         task.run()
 
-        assert scale.tare_count >= 2
+        # Dynamic calibration tares once per valve (before/after delta approach, not per point).
+        # With 1 valve in the test fixture, tare_count == 1.
+        assert scale.tare_count >= 1

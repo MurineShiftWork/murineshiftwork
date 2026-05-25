@@ -275,12 +275,13 @@ def test_record_instances_have_independent_trial_data():
 
 
 def test_record_save_writes_jsonl(tmp_path):
-    rec = OptoTaggingRecord(out_path=str(tmp_path / "session"))
+    _basename = "mouse_01__20260524_143022_123456__optotagging"
+    rec = OptoTaggingRecord(out_path=str(tmp_path / _basename))
     rec.update(
         trial_index=0, trial_data=_make_trial_data(), barcode_value=1, protocol="p"
     )
     rec.save()
-    out = tmp_path / "session.msw.jsonl"
+    out = tmp_path / f"{_basename}.msw.jsonl"
     assert out.exists()
     lines = [json.loads(line) for line in out.read_text().splitlines() if line.strip()]
     trial_lines = [ln for ln in lines if "info" in ln]

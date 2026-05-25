@@ -1,6 +1,8 @@
 import logging
 from pathlib import Path
 
+from murineshiftwork.namespace.msw_files import is_msw_file
+
 
 def test_is_legacy_msw_file(file):
     """Test if file is legacy namespace file."""
@@ -16,9 +18,9 @@ def test_is_recognized_msw_file(file):
     """Test if file is current or legacy namespace file."""
     file = str(file)
     # Back-compat: sequence task previously wrote *.df.jsonl without .msw. segment
-    if file.endswith(".df.jsonl") and ".msw." not in file:
+    if file.endswith(".df.jsonl") and not is_msw_file(file):
         return True
-    return ".msw." in file or test_is_legacy_msw_file(file=file)
+    return is_msw_file(file) or test_is_legacy_msw_file(file=file)
 
 
 def test_is_legacy_format(session_dir=None):

@@ -58,8 +58,67 @@ calibrations:
 
 ## Camera config
 
-The `cameras.config` path can be absolute or relative to the `msw_configs/` directory.
-MSW resolves it automatically when the setup is loaded.
+### RCE backend (RPi camera colony)
+
+```yaml
+cameras:
+  backend: rce
+  config: /mnt/maindata/msw_configs/device_configs/cameras/setup-1.cameras.yaml
+```
+
+`config` is the path to the RCE ensemble YAML. Absolute or relative to `msw_configs/`.
+
+### FLIR + Bonsai backend
+
+One Bonsai subprocess is launched per camera entry.  Each camera is specified
+with its SDK index and (for FlyCapture) its frame rate:
+
+```yaml
+cameras:
+  backend: flir_bonsai
+  driver: flycap                # flycap (FlyCapture2) or spinnaker (Spinnaker SDK)
+  bonsai_exe: C:\Users\lab\AppData\Local\Bonsai\Bonsai.exe
+  cameras:
+    - index: 0
+      fps: 60
+    - index: 1
+      fps: 60
+```
+
+| Field | Default | Description |
+|---|---|---|
+| `driver` | `flycap` | `flycap` (FlyCapture2 SDK) or `spinnaker` (Spinnaker SDK) |
+| `bonsai_exe` | `""` | Full path to `Bonsai.exe`. Falls back to `BONSAI_EXE` env var. |
+| `workflow` | `""` | Override workflow stem. Defaults to `run-flir-{driver}-1cam`. |
+| `cameras` | `[]` | List of per-camera specs. Each entry: `index` (int) + `fps` (int, default 60). |
+
+**`index`** is the SDK enumeration index. Run `msw flir list-cameras --driver flycap`
+on the acquisition machine to see which index maps to which serial number, then
+set them here explicitly.  Non-consecutive indices (e.g. 0 and 2, skipping a
+disconnected camera) are valid.
+
+**`fps` (FlyCapture only)**: passed as `-p cam1fps=N` to the Bonsai workflow at
+launch, which sets the `FramesPerSecond` property on the FlyCapture node.
+For Spinnaker, `fps` is ignored — frame rate is configured inside the workflow
+XML in the Bonsai editor.
+
+**Finding `bonsai_exe`**: run `msw flir find-bonsai` on the acquisition machine.
+The printed path goes directly into this field. Alternatively export `BONSAI_EXE`
+as a system environment variable and omit the field from the YAML.
+
+**Shorthand** (all cameras same fps, consecutive indices from 0):
+
+```yaml
+cameras:
+  backend: flir_bonsai
+  driver: flycap
+  bonsai_exe: C:\Users\lab\AppData\Local\Bonsai\Bonsai.exe
+  n_cameras: 2
+  fps: 60
+```
+
+**Per-camera optical parameters** (gain, shutter, exposure) are set inside the
+Bonsai workflow XML — open it in the Bonsai editor on the acquisition machine.
 
 ## Calibration migration
 

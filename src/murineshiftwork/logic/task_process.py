@@ -31,6 +31,7 @@ from murineshiftwork.logic.misc import (
     test_serial_port_is_accessible,
 )
 from murineshiftwork.logic.paths import build_data_paths, test_path_is_writable
+from murineshiftwork.namespace.msw_files import msw_file
 
 
 def _get_git_commit() -> str:
@@ -53,7 +54,7 @@ def update_session_yaml(session_file_path, **sections):
     Creates the file with msw_format_version: 2 if it does not exist yet.
     Typical callers: task_objects writing task_settings or stage after init.
     """
-    yaml_path = str(session_file_path) + ".msw.session.yaml"
+    yaml_path = str(msw_file(session_file_path, "session.yaml"))
     p = Path(yaml_path)
     if p.exists():
         data = yaml.safe_load(p.read_text()) or {}
@@ -106,6 +107,12 @@ class TaskRunner(Thread):
 
     def stop(self):
         self.continue_task = False
+
+    def get_path(self, artifact: str) -> Path:
+        """Return the session file path for *artifact* (e.g. 'df.jsonl', 'log')."""
+        return msw_file(
+            self.input_kwargs["session_paths"]["session_file_path"], artifact
+        )
 
 
 class ExampleTask(TaskRunner):
@@ -385,7 +392,9 @@ class TaskProcess:
                 "datetime": self.session_paths.get("datetime", ""),
             },
         }
-        yaml_path = self.session_paths["session_file_path"] + ".msw.session.yaml"
+        yaml_path = str(
+            msw_file(self.session_paths["session_file_path"], "session.yaml")
+        )
         with Path(yaml_path).open("w") as f:
             yaml.dump(
                 data,
@@ -412,7 +421,7 @@ class TaskProcess:
 
         plot_spec_src = Path(mod.__file__).parent / "plot_spec.yaml"
         if plot_spec_src.exists():
-            dest = Path(self.session_paths["session_file_path"] + ".msw.plot_spec.yaml")
+            dest = msw_file(self.session_paths["session_file_path"], "plot_spec.yaml")
             shutil.copy2(plot_spec_src, dest)
             logging.debug("plot_spec copied: %s", dest.name)
 

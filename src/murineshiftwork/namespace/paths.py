@@ -184,3 +184,22 @@ def parse_session_basename(basename: str) -> dict:
         f"Cannot parse datetime {dt_str!r} in basename {basename!r}. "
         f"Tried namespace versions: {_PARSE_ORDER}"
     )
+
+
+# ---------------------------------------------------------------------------
+# MSW artifact builder
+
+
+_MSW_BUILDER = None
+
+
+def get_msw_builder():
+    """Return the module-level MSW NamespaceBuilder (lazy-loaded from namespace.msw.yaml)."""
+    global _MSW_BUILDER
+    if _MSW_BUILDER is None:
+        from murineshiftwork.namespace.spec import NamespaceBuilder
+
+        _MSW_BUILDER = NamespaceBuilder.from_yaml(
+            Path(__file__).parent / "namespace.msw.yaml"
+        )
+    return _MSW_BUILDER

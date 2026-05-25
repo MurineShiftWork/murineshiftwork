@@ -204,22 +204,27 @@ class Calibrations(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Camera config (minimal — full spec in design/camera_acquisition.md)
+# Camera config
+
+
+class CameraUnit(BaseModel):
+    """Per-camera specification for the FLIR/Bonsai backend."""
+
+    index: int
+    fps: int = 60
 
 
 class CameraConfig(BaseModel):
     backend: str = "rce"  # "rce" | "flir_bonsai"
-    config: str = ""  # RCE: path to ensemble YAML; flir_bonsai: unused
+    config: str = ""  # RCE only: path to ensemble YAML
     # FLIR/Bonsai-specific (ignored when backend="rce")
-    n_cameras: int = 1
-    fps: int = 60
     driver: str = "flycap"  # "flycap" | "spinnaker"
-    workflow: str = (
-        ""  # workflow stem; auto-derived as "run-flir-{driver}-{n}cam" if empty
-    )
-    bonsai_exe: str = (
-        ""  # path to Bonsai.exe; falls back to BONSAI_EXE env var if empty
-    )
+    bonsai_exe: str = ""  # path to Bonsai.exe; falls back to BONSAI_EXE env var
+    workflow: str = ""  # workflow stem; auto-derived as run-flir-{driver}-1cam if empty
+    cameras: list[CameraUnit] = []  # per-camera index + fps; preferred over n_cameras
+    # Flat shorthand (used when cameras list is empty)
+    n_cameras: int = 1
+    fps: int = 60  # ignored for spinnaker (set in workflow XML)
 
 
 # ---------------------------------------------------------------------------

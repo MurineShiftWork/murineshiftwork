@@ -1,7 +1,6 @@
 import json
 import logging
 import time
-from pathlib import Path
 
 import numpy as np
 from pybpodapi.protocol import Bpod, StateMachine
@@ -13,6 +12,7 @@ from murineshiftwork.hardware.bpod.ttl import (
 )
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
+from murineshiftwork.namespace.msw_files import msw_file
 from murineshiftwork.tasks.exp_trn_spindle.param_sets import (
     stimulation_param_sets,
 )
@@ -45,7 +45,7 @@ class ProtocolObject:
             return self.trial_data.append(trial_data)
 
     def save(self):
-        save_trial_data(self.trial_data, str(self.out_path) + ".msw.jsonl")
+        save_trial_data(self.trial_data, str(msw_file(self.out_path, "jsonl")))
         logging.debug(f"Saved session data to {str(self.out_path)}")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -68,7 +68,7 @@ class Task(TaskRunner):
         on_off_periods_n_trial = round(on_off_periods / ITI)
 
         raw_out_path = self.input_kwargs["session_paths"]["session_file_path"]
-        with Path(str(raw_out_path) + ".msw.stimulation.json").open("w") as f:
+        with msw_file(raw_out_path, "stimulation.json").open("w") as f:
             out_json = json.dumps(stimulation_param_sets, indent=4, sort_keys=True)
             f.write(out_json)
 

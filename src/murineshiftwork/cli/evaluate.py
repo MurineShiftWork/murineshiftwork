@@ -292,6 +292,45 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
         logging.debug("Injected valve_s_for_ul from SetupConfig into task settings")
 
 
+def _resolve_parent_session(args_dict: dict) -> None:
+    """Attach to a parent acquisition session and populate is_child_session_to.
+
+    Only ``--oe-remote HOST`` is supported for now.  No permanent setup-YAML
+    config — sessions opt-in per run.  No-op when the flag is absent.
+
+    Only overwrites ``is_child_session_to`` when it is not already set by ``--child-of``.
+    """
+    oe_url = args_dict.get("oe_remote_url", "")
+    if not oe_url:
+        return
+
+    from murineshiftwork.hardware.parent_session import make_parent_session
+
+    client = make_parent_session("open_ephys", url=oe_url)
+    info = client.attach()
+
+    if info is None:
+        logging.warning(
+            "OE parent session at %r could not attach — running as standalone session",
+            oe_url,
+        )
+        return
+
+    if args_dict.get("is_child_session_to"):
+        logging.debug(
+            "is_child_session_to already set to %r — --oe-remote result discarded",
+            args_dict["is_child_session_to"],
+        )
+        return
+
+    args_dict["is_child_session_to"] = info.acquisition_name
+    logging.info(
+        "OE parent session attached: acquisition=%r subject=%r",
+        info.acquisition_name,
+        info.subject,
+    )
+
+
 def evaluate_args(args_dict=None):
     """Evaluate parsed arguments."""
     args_dict["host_name"] = get_host_name()
@@ -365,6 +404,7 @@ def evaluate_args(args_dict=None):
 
     setup_config = args_dict.get("setup_config")
     _resolve_setup_config_ports(args_dict, setup_config, patched)
+    _resolve_parent_session(args_dict)
     subject_config = args_dict.get("subject_config")
     args_dict["execution_config"] = ExecutionConfig(
         setup=setup_config,

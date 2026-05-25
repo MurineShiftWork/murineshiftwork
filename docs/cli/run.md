@@ -28,7 +28,8 @@ msw run -s <subject> -t <task> [options]
 | `--simulate` | Use SimBpod — no hardware required |
 | `-l / --log-level <level>` | Log level (INFO, DEBUG, WARNING, …) |
 | `--debug` | Sets log level to DEBUG; if subject YAML not found, falls back to `_test_subject` |
-| `--child-of <basename>` | Save session directly in `--out-path` (skip subject dir) |
+| `--child-of <basename>` | Manually set the acquisition parent folder (session saved at `<out-path>/<subject>/<basename>/<session>`) |
+| `--oe-remote <host>` | Open Ephys GUI address; auto-reads acquisition path from OE REST API and sets `--child-of` accordingly |
 | `-m / --meta KEY=VALUE` | Arbitrary metadata pairs (e.g. `-m project=myproject cohort=1`) |
 | `--meta-experimenter <name>` | Experimenter name or initials (shorthand for `-m experimenter=NAME`) |
 
