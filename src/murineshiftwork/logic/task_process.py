@@ -199,6 +199,8 @@ class TaskProcess:
         self.task_in = str(task)
         self.input_kwargs = kwargs
         self.input_kwargs["subject"] = self.subject
+        if devices:
+            self.input_kwargs["devices"] = devices
         self.debug = self.input_kwargs.get("debug", False)
         self.simulate = simulate
         self.session_uuid = str(uuid.uuid4())

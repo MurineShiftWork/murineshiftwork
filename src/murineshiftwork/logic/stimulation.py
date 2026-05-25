@@ -2,6 +2,10 @@
 
 Supports optional laser power control via Doric LDFL5 (0-5V analog input).
 Set laser_power=None (default) for fixed 5V TTL output; 0.0-1.0 for Doric power mapping.
+
+Channel indices are 0-based throughout (pypulsepal native).
+Output channels: 0–3 (firmware channels 1–4).
+Trigger channels: 0–1 (firmware trigger inputs 1–2).
 """
 
 import logging
@@ -39,7 +43,8 @@ class Stimulation:
     pulsePal: Any = None
     port = ""
 
-    channels_inactive = zeros(5).astype("int")
+    # Size 4: one entry per output channel (0-indexed, matching pypulsepal).
+    channels_inactive = zeros(4).astype("int")
     channels_stimulation = channels_inactive.copy()
     channels_clock_trigger = channels_inactive.copy()
 
@@ -50,9 +55,9 @@ class Stimulation:
         "pulse_frequency": 30,
         "pulse_train_duration": 10,
         "pulse_train_delay": 0,
-        "trigger_channels_for_stimulation": [1],
-        "channels_stimulation": [3],
-        "channel_trigger_clock": [4],
+        "trigger_channels_for_stimulation": [0],
+        "channels_stimulation": [2],
+        "channel_trigger_clock": [3],
         "reset_stimulation_after_sec": 0.005,
         "laser_power": None,  # None → fixed 5V; 0.0–1.0 → Doric LDFL5 power mapping
     }
@@ -73,6 +78,9 @@ class Stimulation:
         laser_power = self.in_dict.get("laser_power")
         if laser_power is not None:
             self._validate_power(laser_power)
+
+        self.channels_stimulation = self.channels_inactive.copy()
+        self.channels_clock_trigger = self.channels_inactive.copy()
 
         for channel in self.in_dict["channels_stimulation"]:
             self._set_channel_params(
@@ -183,9 +191,12 @@ class Stimulation:
                     )
 
     def _sync_channel_configs(self) -> None:
-        """Write _channel_params into pulsePal.channel_configs for sync_all_params."""
+        """Write _channel_params into pulsePal.channel_configs and unlink inactive channels."""
+        for cfg in self.pulsePal.channel_configs:
+            cfg.linkTriggerChannel1 = False
+            cfg.linkTriggerChannel2 = False
         for ch, params in self._channel_params.items():
-            cfg = self.pulsePal.channel_configs[ch - 1]  # pypulsepal is 0-indexed
+            cfg = self.pulsePal.channel_configs[ch]
             for k, v in params.items():
                 if hasattr(cfg, k):
                     setattr(cfg, k, v)
@@ -197,7 +208,9 @@ class Stimulation:
             for channel, params in self._channel_params.items():
                 for param_name, value in params.items():
                     self.pulsePal.program_one_param(
-                        channel=channel, param_name=param_name, param_value=value
+                        channel=channel,
+                        param_name=param_name,
+                        param_value=value,
                     )
         else:
             self.pulsePal = handle
@@ -206,35 +219,43 @@ class Stimulation:
 
         self.off()
 
+        # Gated trigger mode requires continuous=1 so the pulse train repeats for the
+        # full gate duration. The config `continuous` flag still controls non-gated modes.
+        _gated = self.in_dict.get("trigger_mode") == "gated"
         for channel in self.in_dict["channels_stimulation"]:
             self.pulsePal.set_continuous(
-                channel=channel,
-                state=1 if self.in_dict.get("continuous") else 0,
+                channel=int(channel),
+                state=1 if (_gated or self.in_dict.get("continuous")) else 0,
             )
 
+        # Set trigger links: 1 only for active stimulation channels, 0 for all others.
         for trigger_ch in self.in_dict["trigger_channels_for_stimulation"]:
-            if 0 < trigger_ch < 3:
-                link_param = f"linkTriggerChannel{int(trigger_ch)}"
-                for out_ch, active in enumerate(self.channels_stimulation[1:], start=1):
-                    if active:
-                        try:
-                            self.pulsePal.program_one_param(
-                                channel=trigger_ch - 1,
-                                param_name=link_param,
-                                param_value=out_ch,
-                            )
-                        except Exception as exc:
-                            logging.warning(
-                                f"PulsePal: could not set {link_param} for ch {out_ch}: {exc}"
-                            )
-                if (
-                    "trigger_mode" in self.in_dict
-                    and self.in_dict["trigger_mode"] in allowed_trigger_modes
-                ):
-                    self.pulsePal.program_trigger_channel(
-                        trigger_channel=trigger_ch - 1,
-                        trigger_mode=self.in_dict["trigger_mode"],
+            if trigger_ch not in (0, 1):
+                continue
+            link_param = f"linkTriggerChannel{trigger_ch + 1}"
+            for out_ch in range(self.pulsePal.nr_output_channels):
+                active = bool(self.channels_stimulation[out_ch])
+                try:
+                    self.pulsePal.program_one_param(
+                        channel=out_ch,
+                        param_name=link_param,
+                        param_value=1 if active else 0,
                     )
+                except Exception as exc:
+                    logging.warning(
+                        "PulsePal: could not set %s for ch %d: %s",
+                        link_param,
+                        out_ch,
+                        exc,
+                    )
+            if (
+                "trigger_mode" in self.in_dict
+                and self.in_dict["trigger_mode"] in allowed_trigger_modes
+            ):
+                self.pulsePal.program_trigger_channel(
+                    trigger_channel=trigger_ch,
+                    trigger_mode=self.in_dict["trigger_mode"],
+                )
 
         logging.info(
             "PulsePal: configured via injected handle"
@@ -244,7 +265,7 @@ class Stimulation:
 
     def on(self):
         if not self.emergency_off_bool:
-            ch = self.channels_stimulation[1:]
+            ch = self.channels_stimulation
             self.pulsePal.trigger_selected_channels(
                 channel_1=bool(ch[0]) if len(ch) > 0 else False,
                 channel_2=bool(ch[1]) if len(ch) > 1 else False,
@@ -270,7 +291,7 @@ class Stimulation:
 
     def trigger_clock(self):
         self._check_channels_active_reset()
-        ch = self.channels_clock_trigger[1:] + self.channels_currently_active[1:]
+        ch = self.channels_clock_trigger + self.channels_currently_active
         self.pulsePal.trigger_selected_channels(
             channel_1=bool(ch[0]) if len(ch) > 0 else False,
             channel_2=bool(ch[1]) if len(ch) > 1 else False,

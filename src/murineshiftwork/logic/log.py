@@ -28,8 +28,10 @@ def setup_logging(level=None, log_file=None, task="", subject="", setup=""):
 
     logger = logging.getLogger()
 
-    if logger.handlers:
+    if any(id(h) in _MSW_ROOT_HANDLER_IDS for h in logger.handlers):
         return
+    for h in list(logger.handlers):
+        logger.removeHandler(h)
 
     logger.setLevel(getattr(logging, level))
 

@@ -296,9 +296,9 @@ def _check_legacy_ttl_alignment(
                         df["iti"]
                         .dropna()
                         .apply(
-                            lambda x: x[0][1] - x[0][0]
-                            if x and len(x[0]) == 2
-                            else np.nan
+                            lambda x: (
+                                x[0][1] - x[0][0] if x and len(x[0]) == 2 else np.nan
+                            )
                         )
                     )
                     expected_median = float(iti_durations.median())

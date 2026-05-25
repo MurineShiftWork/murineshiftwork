@@ -33,6 +33,7 @@ Design details live in memory files or separate docs — not here.
 
 ---
 
+- [ ] **Hardware handle + camera audit** — full sweep of all task protocols to verify: (1) correct use of injected hardware handles via `devices` dict (no fallback-to-new-connection in tasks that receive a handle); (2) camera handoff from config/hardware manager instead of ad-hoc constructor calls; (3) `serial_port_pulsepal`, `serial_port_scale` not opened twice. No action yet — audit only. Pending test protocols: `_test_scale_hx_connect` and `_test_scale_bench_connect` (same pattern as `_test_pulsepal_connect`).
 - [ ] **Opto — hardware verification** — test optotagging and airpuff TTL barcodes on acquisition machine; alignment script for `sequence_automated` piecewise per-trial TTL edges not written
 - [ ] **Opto — PR TODOs** — review opto PR notes for outstanding test items before closing branch
 - [ ] **msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py`

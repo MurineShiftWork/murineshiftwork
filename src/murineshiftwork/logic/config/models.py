@@ -136,10 +136,15 @@ class ValveCalibration(BaseModel):
 
         Sampling is used rather than the analytical inverse (ln((v-c)/a)/b) because
         the analytical form is numerically fragile when a or b are near zero.
+
+        The sample grid extends 50% beyond the calibrated time range so that
+        requests outside the calibrated volume range extrapolate via the fit
+        model rather than clamping silently at the boundary.
         """
         pts = sorted(self.points, key=lambda p: p[0])
         s_min, s_max = pts[0][0], pts[-1][0]
-        s_dense = np.linspace(s_min, s_max, 2000)
+        margin = (s_max - s_min) * 0.5
+        s_dense = np.linspace(max(0.0, s_min - margin), s_max + margin, 4000)
         a, b, c = self._fit()
         ul_dense = _exp_model(s_dense, a, b, c)
         return float(np.interp(volume_ul, ul_dense, s_dense))

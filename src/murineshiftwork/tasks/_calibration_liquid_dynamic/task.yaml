@@ -14,8 +14,8 @@ default:
   # OPENING_TIME_MAX_S is measured first; used as the anchor for linear estimation.
   # Leave INITIAL_OPENING_TIMES_S empty [] to use the automatic anchor protocol.
   INITIAL_OPENING_TIMES_S: []
-  OPENING_TIME_MIN_S: 0.005
-  OPENING_TIME_MAX_S: 0.150
+  OPENING_TIME_MIN_S: 0.010
+  OPENING_TIME_MAX_S: 0.200
 
   # --- Initial interior points ---
   # After the two anchor measurements (max + estimated min), this many points are

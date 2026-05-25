@@ -16,12 +16,12 @@ default:
     pulse_train_duration: 1
     pulse_train_delay: 0
     trigger_channels_for_stimulation:
-    - 1
+    - 0
     trigger_mode: gated
     channels_stimulation:
-    - 1
+    - 0
     channel_trigger_clock:
-    - 4
+    - 3
     reset_stimulation_after_sec: 0.005
     continuous: false
   stimulation:
