@@ -41,6 +41,7 @@ murineshiftwork/                      main package
       device.py                       BpodDevice(DeviceProtocol) — PLANNED
     camera/
       client.py                       make_camera_client() + adapters (done)
+    parent_session.py                 ParentSessionProtocol, OpenEphysParentSession (done)
   logic/
     task_process.py                   TaskProcess — session thread lifecycle
     plot_spec.py                      PlotSpec pydantic model + loader (done)
@@ -227,7 +228,112 @@ cameras:
 
 ---
 
-## 5. Monitor pipeline
+## 5. OE parent session attachment
+
+### Principle
+
+Behavioural sessions nest inside an Open Ephys acquisition folder by passing
+`--parent openephys` at `msw run` time.  No permanent setup-YAML config —
+sessions opt-in per run.  `--child-of BASENAME` remains for manual override;
+if both are passed, `--child-of` wins.
+
+### `--parent` flag
+
+```
+--parent TYPE[:URL]
+```
+
+- `TYPE` = backend name: `openephys` (only supported type for now)
+- `URL` = host address (optional).  If omitted, reads `open_ephys_url` from
+  `~/.murineshiftwork/msw_machine.yaml`
+- Examples: `--parent openephys`   `--parent openephys:172.24.42.168`
+
+Machine config key:
+```yaml
+# ~/.murineshiftwork/msw_machine.yaml
+open_ephys_url: "172.24.42.168"
+```
+
+### Lifecycle
+
+```
+msw run ... --parent openephys[:URL]
+  → evaluate.py: _resolve_parent_session()
+      → parse TYPE:URL → session_type="openephys", url from flag or machine config
+      → make_parent_session("openephys", url=url)
+      → OpenEphysParentSession.attach()
+          → GET /api/status         (open-ephys-python-tools, lazy import)
+          → GET /api/recording      → base_text = "subj/acq_name/oe_session"
+          → ParentSessionInfo(acquisition_name=parts[1], ...)
+      → args_dict["is_child_session_to"] = info.acquisition_name
+      → args_dict["parent_session_info"] = info
+  → TaskProcess(**args_dict)
+      → generate_session_paths(..., is_child_session_to=acquisition_name)
+          → session folder: <out_path>/<subject>/<acquisition_name>/<session>/
+      → persist_settings()
+          → .msw.session.yaml: parent_acquisition: {backend, acquisition_name,
+            subject, parent_directory, oe_session_name, status}
+```
+
+### Session folder layout
+
+```
+<out_path>/
+└── subject/
+    └── acquisition_name/       ← OE acquisition (oe_remote base_text part [1])
+        ├── oe_session_name/    ← OE ephys data (written by Open Ephys)
+        └── session_basename/   ← MSW behavioural session (sibling of OE leaf)
+            ├── *.msw.csv
+            ├── *.msw.session.yaml
+            └── *.msw.log
+```
+
+### Plugin CLI: `msw oe`
+
+`msw-oe` is a **plugin package** (like `msw-flir-bonsai`), not a core MSW command.
+It registers via the `msw.cli` entry-point group so the same `msw oe` subcommand
+is available whether installed standalone or alongside MSW.
+
+MSW loads plugins at parser construction time:
+```python
+for ep in entry_points(group="msw.cli"):
+    ep.load()(sub_parsers)   # each plugin registers its subparser
+```
+
+`msw-oe` pyproject.toml entry point:
+```toml
+[project.entry-points."msw.cli"]
+oe = "msw_oe.cli:register"
+```
+
+Planned subcommands: `msw oe status`, `msw oe attach <setup>`.
+
+### `attach()` return conditions
+
+| Condition | Result |
+|---|---|
+| `open-ephys-python-tools` not installed | `None` + warning |
+| Host unreachable | `None` + warning |
+| `base_text` < 2 parts (`oe_remote` not called yet) | `None` + warning |
+| `require_recording=True` and status ≠ `RECORD` | `None` + info log |
+| Valid 2+ part `base_text` | `ParentSessionInfo` |
+
+`require_recording` defaults to `False` — attaches whenever `oe_remote` has
+set a valid `base_text`, regardless of recording state.
+
+### Implementation files
+
+| File | Role |
+|---|---|
+| `hardware/parent_session.py` | `ParentSessionProtocol`, `OpenEphysParentSession`, `make_parent_session(type, **kw)` |
+| `cli/evaluate.py` | `_resolve_parent_session()`, `_parse_parent_flag()` |
+| `cli/parser.py` | `--parent TYPE[:URL]` flag; entrypoint loader loop |
+| `logic/machine_config.py` | `read_open_ephys_url()` reads `open_ephys_url` key |
+| `logic/task_process.py` | `persist_settings()` writes `parent_acquisition:` to session YAML |
+
+---
+
+## 6. Monitor pipeline
 
 ### Architecture
 
@@ -342,7 +448,7 @@ monitor_url: http://localhost:8080   # absent = no relay started
 
 ---
 
-## 6. PlotSpec
+## 7. PlotSpec
 
 ### Schema
 
@@ -388,7 +494,7 @@ d[_SPEC.panel("outcomes_perf").fields["value"]]  # → "perf_buffer_mean"
 
 ---
 
-## 7. Full session call chain
+## 8. Full session call chain
 
 ```
 user: msw run --setup npxb --subject AA001 --task sequence
@@ -445,7 +551,7 @@ evaluate.py: evaluate_args(args_dict)
 
 ---
 
-## 8. Task config key naming conventions
+## 9. Task config key naming conventions
 
 Configs stay **flat** (no nesting). These rules apply to all tasks.
 
@@ -517,7 +623,7 @@ convention: `HARDWARE_LICK_LEFT`, `HARDWARE_LICK_RIGHT` (not `LICK_EVENT_*`).
 
 ---
 
-## 9. Remaining work (ordered)
+## 10. Remaining work (ordered)
 
 
 ### Done: ft/msw-agent → merged to main 2026-05-22
@@ -529,7 +635,7 @@ convention: `HARDWARE_LICK_LEFT`, `HARDWARE_LICK_RIGHT` (not `LICK_EVENT_*`).
 - [x] `hardware/manager.py` — `DeviceProtocol` + `HardwareManager` context manager
 - [x] Camera integration — `CameraConfig`, `FlirBonsaiClient`, `RceConductorAdapter`, `make_camera_client()` factory; minimal 4-method interface; plugin CLI design documented
 - [x] Config upgrade design — on-load warning only; `msw config upgrade` CLI documented in `config_system.md`
-- [x] Task config key naming conventions — prefix rules, naming debt table for fixedsubjects, in `MASTER_PLAN §8`
+- [x] Task config key naming conventions — prefix rules, naming debt table for fixedsubjects, in `MASTER_PLAN §9`
 - [x] Fix calibration import — `bpod.water` → `bpod.valve` in both `_calibration_liquid_*` tasks
 
 ---
@@ -672,7 +778,7 @@ Full design and sprint breakdown in `docs/work_plans/PLAN_namespace_unification.
 ### Branch: ft/fixedsubjects-naming
 
 - [ ] **Rename `stop_trial_*` → `stop_signal_*`** (10 keys) — update task.yaml, task_objects.py, all overlay YAMLs, docs
-- [ ] **`LICK_EVENT_*` → `HARDWARE_LICK_*`**, `use_*` → `*_enabled`, `inter_trial_interval` → `iti_distribution`, `plot_trial_span` → `online_plot_xlim_trials`, timeout/delay key renames per §8 debt table
+- [ ] **`LICK_EVENT_*` → `HARDWARE_LICK_*`**, `use_*` → `*_enabled`, `inter_trial_interval` → `iti_distribution`, `plot_trial_span` → `online_plot_xlim_trials`, timeout/delay key renames per §9 debt table
 - [ ] **Update subject YAMLs in `msw_configs/`** — run migration script or manual update before merge
 
 ---
@@ -680,11 +786,11 @@ Full design and sprint breakdown in `docs/work_plans/PLAN_namespace_unification.
 ### Other open items (no branch yet)
 
 - [ ] **Blockout timing log** — `airpuff`, `sequence_automated`, `homecage_sleep`, `openfield`, `periodic_trigger`
-- [ ] **`msw-openephys`** — `msw-oe attach/status/detach`; session start checks OE status
+- [ ] **`msw-oe` plugin package** — separate repo, registers `msw oe status/attach` via `msw.cli` entry-point group; plugin contract already live in MSW (see §5)
 - [ ] **Calibration write-back** — `_calibration_liquid_*` tasks write results back to setup YAML
 - [ ] **Session file schema doc** — complete skeleton at `docs/concepts/session_files.md`
 - [ ] **`msw_flir_bonsai.timestamps`** — finish FlyCapture 128 s cycle unwrap; wire into `preprocess_camera_csv`
-- [ ] **`msw flir` plugin CLI** — implement entry-point loader loop in MSW CLI; add subcommands in `msw-flir-bonsai`
+- [ ] **`msw flir` plugin CLI** — add subcommands in `msw-flir-bonsai` (entry-point loader already live in MSW `make_parser()`)
 
 ---
 
@@ -692,8 +798,8 @@ Full design and sprint breakdown in `docs/work_plans/PLAN_namespace_unification.
 
 | Document | Status | Superseded by |
 |---|---|---|
-| `PLAN_msw_monitor.md` | Superseded | This document §5 |
-| `PLAN_msw_ui_agent_broadcast.md` | Superseded | This document §2, §5 |
+| `PLAN_msw_monitor.md` | Superseded | This document §6 |
+| `PLAN_msw_ui_agent_broadcast.md` | Superseded | This document §2, §6 |
 | `AGENT_USAGE_MODEL.md` | Superseded | This document §1 |
 | `PLAN_hardware_manager.md` | Superseded | This document §3 |
 | `IMPLEMENTATION_PLAN.md` | **Active** — gap table still valid | Architecture superseded by this doc |

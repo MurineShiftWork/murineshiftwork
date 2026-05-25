@@ -1,7 +1,7 @@
 """Parent-session attachment — pluggable system for nesting behavioural sessions
 inside an overarching acquisition process.
 
-Activated via CLI flags only (``--oe-remote HOST``, ``--child-of BASENAME``).
+Activated via CLI flags only (``--parent TYPE[:URL]``, ``--child-of BASENAME``).
 No permanent setup-YAML config — sessions opt-in per run without touching shared files.
 
 A parent session supplies an acquisition name that MSW passes as
@@ -171,6 +171,7 @@ def make_parent_session(session_type: str, **kwargs: Any) -> ParentSessionProtoc
 
         client = make_parent_session("open_ephys", url="172.24.42.168")
     """
-    if session_type == "open_ephys":
+    normalised = session_type.replace("-", "_").lower()
+    if normalised in ("open_ephys", "openephys"):
         return OpenEphysParentSession(**kwargs)
     raise ValueError(f"Unknown parent session type: {session_type!r}")

@@ -110,7 +110,7 @@ Last audited: 2026-05-25.
 
 | Repo | `copier-apply` | `ci-rename` | `ci-gitleaks` | `pr-review` | `py-typed` | `src-layout` | `version-cz` | Priority |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **murineshiftwork** | update | x | x | x | ✓ | ✓ | ✓ | medium |
+| **murineshiftwork** | update | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
 
 ### external/
 
@@ -120,11 +120,11 @@ Last audited: 2026-05-25.
 | **msw-flir-bonsai** | ✓ v0.5.0 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
 | **oe-remote** ² | fresh apply | x | x | x | x | x | x | high |
 | **one-axis-stage** | fresh apply | x | x | x | x | x | x | medium |
-| **pypulsepal** | update v0.4.2→v0.5.0 | ✓ | ✓ | x | ✓ | ✓ | ✓ | low |
+| **pypulsepal** | update v0.4.2→v0.5.0 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
 | **rfid-to-url** | fresh apply | x | x | x | x | x | x | medium |
-| **serial-scale-bench** | update | x | x | x | ✓ | ✓ | ✓ | medium |
-| **serial-scale-hx711** | update | x | x | x | ✓ | ✓ | ✓ | medium |
-| **ttl-barcoder** | update | x | x | x | ✓ | ✓ | ✓ | medium |
+| **serial-scale-bench** | update | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
+| **serial-scale-hx711** | update | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
+| **ttl-barcoder** | update | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
 
 ² `oe-remote` must be extracted from `external/msw_open_ephys/oe_remote/` into its own git repo
   before copier can be applied.
@@ -155,9 +155,9 @@ Last audited: 2026-05-25.
 
 ### Compliance notes
 
-**CI.yaml rename (4 repos):** `murineshiftwork`, `serial-scale-bench`, `serial-scale-hx711`, `ttl-barcoder`
-all use `CI.yaml` (capital). All four already have bump-skip `if:` guards and the gate job — content
-is mostly correct, just needs filename + `secret-scanner` → `gitleaks` replacement.
+**CI.yaml rename — done (2026-05-25):** All four repos (`murineshiftwork`, `serial-scale-bench`,
+`serial-scale-hx711`, `ttl-barcoder`) renamed to `ci.yml`; `secret-scanner` replaced with
+`gitleaks/gitleaks-action@v2`; `pr-review.yml` added to all five repos including `pypulsepal`.
 
 **Suite repos — package name bug:** `msw-agent`, `msw-namespace`, `msw-tasks`, `msw-server` still have
 `name = "templatepy"` in `pyproject.toml`. Fix this before any PyPI publish. Also: build backend is

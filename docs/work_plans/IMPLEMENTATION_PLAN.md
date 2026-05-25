@@ -57,7 +57,7 @@ per-machine monitoring layer that cannot block or affect task execution.
 | **CLI** | **Mostly done** — `msw run`, `msw agent start`, `msw setup` (incl. rename), `msw subject`, `msw tasks`, `msw action`, `msw calibration`, `msw post`, `msw init`. | `msw agent stop/status` missing. `--no-agent` not on `msw run`. `msw ui` subcommand does not exist. |
 | **Session files** | **Done** — `.msw.session.yaml` v2, JSONL, `barcode_value`/`barcode_wall_time`. | Session file schema doc (`session_file_schema.md`) not written. |
 | **PyQt `online_plotting`** | **Stays** — PyQt plots continue running unchanged for now. | Add `# TODO(msw-ui): remove after msw-ui validated in production` comment to each `tasks/*/online_plotting.py`. No code removal until Stage 6 validated. |
-| **OE integration** | **Partial** — `msw_open_ephys/` scaffolded. | Option A (`~/.cache/oe-remote/last_session` in `cli/evaluate.py`) not implemented. ~20-line change, no blockers. |
+| **OE integration** | **Done** — `--parent openephys[:HOST]` flag in `msw run`; `hardware/parent_session.py` (`ParentSessionProtocol`, `OpenEphysParentSession`, `make_parent_session`); writes `parent_acquisition:` block to `.msw.session.yaml`. | `msw-oe` plugin package (separate repo) not yet created — plugin entrypoint contract live in MSW, plugin not published. |
 | **Calibration write-back** | **Not done** | `_calibration_liquid_*` tasks do not write back to setup YAML. `save_valve_calibration()` helper not written. No blockers. |
 | **Reader library** | **In monolith** | Not yet extracted as `msw-readers` pip package. |
 
@@ -237,7 +237,7 @@ Package prefix: **`msw-tasks-`** (plural — each package may contain more than 
 | `msw-tasks-switching` | `murineshiftwork.tasks.probabilistic_switching` + `.probabilistic_switching_fixedsubjects` | Two-armed bandit (freely moving + head-fixed) | **In monolith** — depends on RCE; extract with camera client |
 | `msw-tasks-other` | `murineshiftwork.tasks.{airpuff,optotagging,homecage_sleep,openfield,periodic_trigger*,exp_trn_spindle}` | Lab-specific protocols | **In monolith** — extract last; internal-use only |
 | `msw-readers` | `murineshiftwork.readers` | Session data readers, alignment | **In monolith** — extract last |
-| `msw-open-ephys` | `murineshiftwork.open_ephys` | OE attach/detach CLI | **Scaffolded in `external/`** — CLI integration incomplete |
+| `msw-oe` | standalone plugin package | `msw oe status/attach` subcommands via `msw.cli` entry-point group | **Plugin contract live in MSW** — separate repo not yet created; see MASTER_PLAN §5 |
 | `msw-flir-bonsai` | `msw_flir_bonsai` | BonsaiCameraRunner, timestamps, alignment | **Partial** — runner + timestamps done; `FlirBonsaiClient` not written |
 | `msw-ui` | n/a (Vue SPA) | Per-setup web monitoring UI | **Scaffold done** — `external/msw-ui/`; not yet integrated against agent |
 | `one-axis-stage` | `one_axis_stage` | Stage tower driver | **Mature** |
@@ -290,8 +290,8 @@ Until a package is extracted, its docs live in `docs/tasks/` in the monolith.
 5. **Discriminated `CameraConfig` union.** Breaking change to existing setup YAMLs.
    Migration strategy needed before camera integration stage.
 
-6. **OE child session (Option A).** Reading `~/.cache/oe-remote/last_session` in
-   `cli/evaluate.py` is a ~20-line change. No blockers.
+6. **OE child session.** Implemented via `--parent openephys[:HOST]` flag and
+   `hardware/parent_session.py`. No further blockers in core MSW.
 
 7. **Calibration write-back.** `_calibration_liquid_*` tasks do not write back to setup YAML.
    `save_valve_calibration()` helper not written. No blockers.

@@ -15,6 +15,7 @@ msw_format_version: 2
 process:
   msw_version: "1.2.3"
   git_commit: "abc1234"
+  session_uuid: "d4e5f6..."
   task: sequence
   subject: mouse001
   setup: setup_a
@@ -23,7 +24,22 @@ task_settings:
   REWARD_VOLUME_UL: 3.0
   start_level: 5
   ...
+# present only when --parent openephys was passed
+parent_acquisition:
+  backend: open_ephys
+  acquisition_name: "mouse001__20260525_074402__ephys_multi_behavior"
+  subject: mouse001
+  parent_directory: "/data/rig1"
+  oe_session_name: "mouse001__20260525_074402__pxi"
+  status: IDLE
 ```
+
+`parent_acquisition` is written at session start when `--parent openephys` is
+passed.  It captures exactly which Open Ephys acquisition this behavioural
+session was nested inside, linking back to the ephys data directory.
+`acquisition_name` matches the second path component of `base_text` as set by
+`oe_remote`, which is also the folder name used as `is_child_session_to` in
+`generate_session_paths()`.
 
 ## Sequence task — subject state fields
 

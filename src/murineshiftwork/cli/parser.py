@@ -80,16 +80,16 @@ def _add_session_args(parser):
         ),
     )
     g.add_argument(
-        "--oe-remote",
-        dest="oe_remote_url",
+        "--parent",
+        dest="parent_session_flag",
         type=str,
         default="",
-        metavar="HOST",
+        metavar="TYPE[:URL]",
         help=(
-            "Open Ephys GUI host (e.g. '172.24.42.168'). "
-            "Attaches this session as a child of the running OE acquisition "
-            "by reading the acquisition path from the OE REST API. "
-            "Overrides --child-of if OE returns a valid acquisition path."
+            "Attach to a parent acquisition session and nest this session inside it. "
+            "TYPE is the backend name (currently: openephys). "
+            "URL overrides the address from ~/.murineshiftwork/msw_machine.yaml. "
+            "Examples: --parent openephys  |  --parent openephys:172.24.42.168"
         ),
     )
 
@@ -758,6 +758,25 @@ def parse_args(args=None):
     make_subparser_post(sub_parsers)
     make_subparser_tasks(sub_parsers)
     make_subparser_agent(sub_parsers)
+
+    # Load plugin subcommands registered under the "msw.cli" entry-point group.
+    # Each plugin calls register(sub_parsers) to add its own subparser(s).
+    # This is how msw-flir-bonsai adds "msw flir", msw-oe adds "msw oe", etc.
+    # Plugins not installed simply have no entry point — no error, no subcommand.
+    try:
+        from importlib.metadata import entry_points as _entry_points
+
+        for _ep in _entry_points(group="msw.cli"):
+            try:
+                _ep.load()(sub_parsers)
+            except Exception as _exc:
+                import logging as _logging
+
+                _logging.debug(
+                    "msw.cli plugin %r failed to register: %s", _ep.name, _exc
+                )
+    except Exception:
+        pass
 
     parsed_args = main_parser.parse_args(args=args)
     return parsed_args.__dict__

@@ -392,6 +392,15 @@ class TaskProcess:
                 "datetime": self.session_paths.get("datetime", ""),
             },
         }
+        ps_info = self.input_kwargs.get("parent_session_info")
+        if ps_info is not None:
+            data["parent_acquisition"] = {
+                "backend": ps_info.backend,
+                "acquisition_name": ps_info.acquisition_name,
+                "subject": ps_info.subject,
+                "parent_directory": ps_info.parent_directory,
+                **ps_info.extra,
+            }
         yaml_path = str(
             msw_file(self.session_paths["session_file_path"], "session.yaml")
         )

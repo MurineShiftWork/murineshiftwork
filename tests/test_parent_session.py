@@ -79,6 +79,11 @@ def test_make_parent_session_name():
     assert client.name == "open_ephys"
 
 
+def test_make_parent_session_alias_openephys():
+    client = make_parent_session("openephys", url="127.0.0.1")
+    assert isinstance(client, OpenEphysParentSession)
+
+
 def test_make_parent_session_unknown_type_raises():
     with pytest.raises(ValueError, match="Unknown parent session type"):
         make_parent_session("imaging", url="127.0.0.1")

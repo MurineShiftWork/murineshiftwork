@@ -292,40 +292,69 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
         logging.debug("Injected valve_s_for_ul from SetupConfig into task settings")
 
 
+def _parse_parent_flag(value: str) -> tuple[str, str]:
+    """Parse ``TYPE`` or ``TYPE:URL`` from --parent flag value."""
+    parts = value.strip().split(":", 1)
+    return parts[0].strip().lower(), (parts[1].strip() if len(parts) > 1 else "")
+
+
 def _resolve_parent_session(args_dict: dict) -> None:
     """Attach to a parent acquisition session and populate is_child_session_to.
 
-    Only ``--oe-remote HOST`` is supported for now.  No permanent setup-YAML
-    config — sessions opt-in per run.  No-op when the flag is absent.
+    Reads ``--parent TYPE[:URL]`` from args_dict.  URL is optional: if omitted,
+    the backend-specific address is read from ``~/.murineshiftwork/msw_machine.yaml``.
 
-    Only overwrites ``is_child_session_to`` when it is not already set by ``--child-of``.
+    Supported types: ``openephys``  (open_ephys_url machine-config key)
+
+    No-op when ``--parent`` is absent.  Does not overwrite ``--child-of`` if already set.
     """
-    oe_url = args_dict.get("oe_remote_url", "")
-    if not oe_url:
+    parent_flag = args_dict.get("parent_session_flag", "")
+    if not parent_flag:
+        return
+
+    session_type, url_override = _parse_parent_flag(parent_flag)
+
+    if session_type == "openephys":
+        url = url_override
+        if not url:
+            from murineshiftwork.logic.machine_config import read_open_ephys_url
+
+            url = read_open_ephys_url()
+        if not url:
+            logging.warning(
+                "--parent openephys: no URL — pass as openephys:HOST or set "
+                "open_ephys_url in ~/.murineshiftwork/msw_machine.yaml"
+            )
+            return
+    else:
+        logging.warning("--parent: unknown backend %r — skipping", session_type)
         return
 
     from murineshiftwork.hardware.parent_session import make_parent_session
 
-    client = make_parent_session("open_ephys", url=oe_url)
+    client = make_parent_session(session_type, url=url)
     info = client.attach()
 
     if info is None:
         logging.warning(
-            "OE parent session at %r could not attach — running as standalone session",
-            oe_url,
+            "Parent session (%s @ %s) could not attach — running as standalone session",
+            session_type,
+            url,
         )
         return
 
     if args_dict.get("is_child_session_to"):
         logging.debug(
-            "is_child_session_to already set to %r — --oe-remote result discarded",
+            "is_child_session_to already set to %r — --parent result discarded",
             args_dict["is_child_session_to"],
         )
         return
 
     args_dict["is_child_session_to"] = info.acquisition_name
+    args_dict["parent_session_info"] = info
     logging.info(
-        "OE parent session attached: acquisition=%r subject=%r",
+        "Parent session attached [%s]: acquisition=%r subject=%r",
+        info.backend,
         info.acquisition_name,
         info.subject,
     )
