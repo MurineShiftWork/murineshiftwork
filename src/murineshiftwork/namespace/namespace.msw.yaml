@@ -1,10 +1,21 @@
-version: "1.0"
-description: "MSW session file namespace: session basename and artifact file naming."
+version: "2.0"
+description: "MSW acquisition + session file namespace: subject > acquisition > session > file."
 hierarchy:
+  - subject
+  - acquisition
   - session
   - file
-optional_levels: []
+optional_levels:
+  - acquisition
 levels:
+  subject:
+    template: "{subject}"
+    regex: "(?P<subject>[\\w\\-]+)"
+    optional_fields: []
+  acquisition:
+    template: "{subject}__{datetime}__{task}"
+    regex: "(?P<subject>[\\w\\-]+)__(?P<datetime>\\d{8}_\\d{6}(?:_\\d{6})?)__(?P<task>[\\w\\-]+)"
+    optional_fields: []
   session:
     template: "{subject}__{datetime}__{task}"
     regex: "(?P<subject>[\\w\\-]+)__(?P<datetime>\\d{8}_\\d{6}(?:_\\d{6})?)__(?P<task>[\\w\\-]+)"

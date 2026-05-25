@@ -92,12 +92,22 @@ def generate_session_paths(
     _validate_path_component(subject, "Subject name")
 
     dt = datetime.now().strftime(_NAMESPACE_FORMATS[version])
-    session_basename = "__".join([subject, dt, task])
+    values = {"subject": subject, "datetime": dt, "task": task}
+
+    builder = get_msw_builder()
+    session_basename = builder.build_path("session", values)
 
     if is_child_session_to:
-        session_folder = basepath / subject / is_child_session_to / session_basename
+        session_folder = (
+            basepath
+            / builder.build_path("subject", {"subject": subject})
+            / is_child_session_to
+            / session_basename
+        )
     else:
-        session_folder = basepath / subject / session_basename
+        session_folder = basepath / builder.generate_path(
+            "session", values, include_optional_levels=False
+        )
 
     session_paths = {
         "subject": subject,
@@ -151,7 +161,8 @@ def build_data_paths(
 def parse_session_basename(basename: str) -> dict:
     """Parse subject, datetime, task from a session basename.
 
-    Identifies the namespace version from the datetime field width and format.
+    Uses the namespace builder to validate structure, then identifies the
+    namespace version from the datetime field format.
 
     Returns dict with keys:
         subject (str), datetime (datetime), datetime_str (str),
@@ -159,22 +170,24 @@ def parse_session_basename(basename: str) -> dict:
 
     Raises ValueError if the basename cannot be parsed.
     """
-    parts = str(basename).split("__")
-    if len(parts) != 3:
+    builder = get_msw_builder()
+    try:
+        values = builder.extract_level_values("session", str(basename))
+    except ValueError:
         raise ValueError(
             f"Expected 3 '__'-separated parts (subject, datetime, task), "
-            f"got {len(parts)} in: {basename!r}"
+            f"cannot parse: {basename!r}"
         )
-    subject, dt_str, task = parts
 
+    dt_str = values["datetime"]
     for version in _PARSE_ORDER:
         try:
             dt = datetime.strptime(dt_str, _NAMESPACE_FORMATS[version])
             return {
-                "subject": subject,
+                "subject": values["subject"],
                 "datetime": dt,
                 "datetime_str": dt_str,
-                "task": task,
+                "task": values["task"],
                 "namespace_version": version,
             }
         except ValueError:

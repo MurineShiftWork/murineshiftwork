@@ -145,11 +145,32 @@ class OpenEphysParentSession:
             )
             return None
 
+        # Validate the acquisition segment through the namespace builder so the
+        # format is checked against the MSW session spec and the name is
+        # reconstructed from parsed fields (normalises any whitespace variation).
+        # parts[1] is the acquisition name in parent mode, the session name in
+        # standalone mode — either way it must be a valid MSW session string.
+        acq_segment = parts[1]
+        try:
+            from murineshiftwork.namespace.paths import get_msw_builder
+
+            _b = get_msw_builder()
+            acquisition_name = _b.build_path(
+                "session", _b.extract_level_values("session", acq_segment)
+            )
+        except ValueError:
+            log.warning(
+                "OpenEphys: base_text segment %r is not a valid MSW session name — "
+                "check that oe_remote used the MSW naming convention",
+                acq_segment,
+            )
+            return None
+
         record_nodes = rec.get("record_nodes") or []
         parent_dir = record_nodes[0].get("parent_directory", "") if record_nodes else ""
 
         return ParentSessionInfo(
-            acquisition_name=parts[1],
+            acquisition_name=acquisition_name,
             subject=parts[0],
             parent_directory=parent_dir,
             backend="open_ephys",

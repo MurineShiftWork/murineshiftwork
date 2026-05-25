@@ -18,8 +18,9 @@ def test_msw_yaml_loads():
     from murineshiftwork.namespace.spec import NamespaceBuilder
 
     b = NamespaceBuilder.from_yaml(_NAMESPACE_DIR / "namespace.msw.yaml")
-    assert b.spec.version == "1.0"
-    assert b.hierarchy == ["session", "file"]
+    assert b.spec.version == "2.0"
+    assert b.hierarchy == ["subject", "acquisition", "session", "file"]
+    assert "acquisition" in b.optional_levels
 
 
 def test_msw_yaml_in_builder_suite():
@@ -41,7 +42,8 @@ def test_get_msw_builder_returns_builder():
     from murineshiftwork.namespace.paths import get_msw_builder
 
     b = get_msw_builder()
-    assert b.hierarchy == ["session", "file"]
+    assert b.hierarchy == ["subject", "acquisition", "session", "file"]
+    assert "acquisition" in b.optional_levels
 
 
 def test_get_msw_builder_is_cached():

@@ -61,7 +61,7 @@ Use `msw run -t <partial_name>` — names are matched by partial string. Run `ms
 | `probabilistic_switching` | Two-armed bandit, free-choice ports |
 | `probabilistic_switching_fixedsubjects` | Two-armed bandit, fixed lick-port assignment per subject |
 | `airpuff` | Airpuff conditioning |
-| `optotagging` | Optogenetic tagging — multi-protocol loop (laser + TTL) |
+| `optotagging` | Optogenetic tagging — multi-protocol loop (laser + TTL). PulsePal channels use 0-based indexing (`channels_stimulation: [0]` = output channel 1). |
 | `exp_trn_spindle` | Spindle-induction training protocol |
 | `homecage_sleep` | Homecage sleep recording |
 | `openfield` | Open-field tracking |
@@ -83,6 +83,7 @@ Use `msw run -t <partial_name>` — names are matched by partial string. Run `ms
 | `_test_flush_valves` | Flush water valves (maintenance) |
 | `_test_stage_move` | Manual stage movement test |
 | `_test_bpod_connect` | Minimal Bpod connection test |
+| `_test_pulsepal_connect` | Minimal PulsePal connection test — prints firmware version, model, and channel counts |
 | `_test_minimal_task` | Minimal task smoke test |
 | `_test_video` | Camera/video recording test |
 | `_test_barcode_iti` | TTL barcode + ITI test |

@@ -198,7 +198,7 @@ def run_setup(**args_dict):
             devices={
                 "bpod": _BpodDevice(type="bpod", port_by_path="FILL_IN_PORT_BY_PATH")
             },
-        ).model_dump(exclude_none=True)
+        ).model_dump()
         with path.open("w") as f:
             yaml.dump(
                 skeleton,

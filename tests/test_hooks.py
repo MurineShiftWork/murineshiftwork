@@ -267,7 +267,8 @@ def test_setup_config_without_hooks_is_valid():
     from murineshiftwork.logic.config.models import SetupConfig
 
     cfg = SetupConfig(name="no_hooks_setup")
-    assert cfg.hooks is None
+    assert cfg.hooks.pre_task == []
+    assert cfg.hooks.post_task == []
 
 
 # ---------------------------------------------------------------------------

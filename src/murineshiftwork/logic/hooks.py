@@ -93,7 +93,7 @@ def collect_hooks(
     if (
         setup_config is not None
         and hasattr(setup_config, "hooks")
-        and setup_config.hooks
+        and setup_config.hooks is not None
     ):
         pre_paths.extend(setup_config.hooks.pre_task)
         post_paths.extend(setup_config.hooks.post_task)

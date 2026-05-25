@@ -120,6 +120,14 @@ cameras:
 **Per-camera optical parameters** (gain, shutter, exposure) are set inside the
 Bonsai workflow XML — open it in the Bonsai editor on the acquisition machine.
 
+## Valve calibration behaviour
+
+`msw run` injects `valve_s_for_ul` into task settings from the setup's `bpod_valve` calibration.
+
+- **Staleness warning**: if a valve's `updated` timestamp is more than 180 days old, a warning is logged at session start. The calibration is still used — recalibrate before data collection.
+- **Missing calibration (empty `bpod_valve: {}`)**: a built-in fallback is used and a loud warning printed. This is for debug runs only — never use for experiments.
+- **Partial calibration (some ports missing)**: hard error at session start. If you have any valve entries, all ports used by the task must be present.
+
 ## Calibration migration
 
 To migrate water and stage calibrations from the legacy `~/.murineshiftwork/` flat files:

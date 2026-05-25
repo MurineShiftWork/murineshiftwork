@@ -279,7 +279,7 @@ class SetupConfig(BaseModel):
     devices: dict[str, DeviceUnion] = {}
     cameras: CameraConfig | None = None
     calibrations: Calibrations = Calibrations()
-    hooks: HooksConfig | None = None
+    hooks: HooksConfig = HooksConfig()
 
     def device_port(self, device_name: str) -> str:
         if device_name not in self.devices:
