@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -127,7 +128,25 @@ class ValveCalibration(BaseModel):
                 f"Exponential fit failed — check calibration points for valve.\n{exc}"
             )
 
+    def _calibrated_range_ul(self) -> tuple[float, float]:
+        """Return (min_ul, max_ul) of the calibrated volume range."""
+        pts = sorted(self.points, key=lambda p: p[0])
+        a, b, c = self._fit()
+        ul_min = float(_exp_model(np.array([pts[0][0]]), a, b, c)[0])
+        ul_max = float(_exp_model(np.array([pts[-1][0]]), a, b, c)[0])
+        return ul_min, ul_max
+
     def ul_for_s(self, open_s: float) -> float:
+        pts = sorted(self.points, key=lambda p: p[0])
+        s_min, s_max = pts[0][0], pts[-1][0]
+        if open_s < s_min or open_s > s_max:
+            logging.warning(
+                "ValveCalibration.ul_for_s: open_s=%.4f s is outside calibrated "
+                "range [%.4f, %.4f] s — extrapolating",
+                open_s,
+                s_min,
+                s_max,
+            )
         a, b, c = self._fit()
         return float(_exp_model(np.array([open_s]), a, b, c)[0])
 
@@ -147,6 +166,15 @@ class ValveCalibration(BaseModel):
         s_dense = np.linspace(max(0.0, s_min - margin), s_max + margin, 4000)
         a, b, c = self._fit()
         ul_dense = _exp_model(s_dense, a, b, c)
+        ul_lo, ul_hi = float(ul_dense.min()), float(ul_dense.max())
+        if volume_ul < ul_lo or volume_ul > ul_hi:
+            logging.warning(
+                "ValveCalibration.s_for_ul: %.3f µL is outside calibrated "
+                "range [%.3f, %.3f] µL — extrapolating",
+                volume_ul,
+                ul_lo,
+                ul_hi,
+            )
         return float(np.interp(volume_ul, ul_dense, s_dense))
 
     def validate(self, r2_threshold: float = 0.95) -> tuple[bool, str]:  # type: ignore[override]
@@ -206,6 +234,7 @@ class ValveCalibration(BaseModel):
 
 class Calibrations(BaseModel):
     bpod_valve: dict[str, ValveCalibration] = {}
+    stale_days: int = 180
 
 
 # ---------------------------------------------------------------------------

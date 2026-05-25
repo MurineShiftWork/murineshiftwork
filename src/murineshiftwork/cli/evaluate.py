@@ -216,6 +216,70 @@ def _extra_injections_from_args(args_dict: dict) -> dict:
     return injections
 
 
+def _inject_valve_calibration(setup_config, patched) -> None:
+    """Inject valve_s_for_ul into patched task settings with three-tier fallback.
+
+    Tier 1 — setup has calibration for the requested port: use it, warn if stale.
+    Tier 2 — setup bpod_valve dict is entirely empty: use hardcoded fallback,
+              print a loud warning; intended for debug runs only.
+    Tier 3 — setup has some calibration but the requested port is missing:
+              hard fail — partial config is a misconfiguration, not an absence.
+    """
+    from datetime import datetime, timedelta
+
+    from murineshiftwork.logic.config._defaults import _FALLBACK_VALVE_CALIBRATION
+
+    cal = setup_config.calibrations.bpod_valve
+
+    if not cal:
+        logging.warning(
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+            "NO VALVE CALIBRATION in setup '%s'.\n"
+            "Using built-in fallback (setup-npx2 reference data).\n"
+            "DO NOT USE THIS DATA FOR EXPERIMENTS — calibrate first.\n"
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+            setup_config.name,
+        )
+        fallback = _FALLBACK_VALVE_CALIBRATION
+        patched["valve_s_for_ul"] = lambda vol, port=None: fallback.s_for_ul(vol)
+        return
+
+    # Build a lookup using the SetupConfig method but also check staleness per port.
+    stale_threshold = datetime.now() - timedelta(
+        days=setup_config.calibrations.stale_days
+    )
+    for port, vc in cal.items():
+        if vc.updated:
+            try:
+                updated_dt = datetime.fromisoformat(vc.updated)
+                if updated_dt < stale_threshold:
+                    age_days = (datetime.now() - updated_dt).days
+                    logging.warning(
+                        "Valve %s calibration on setup '%s' is %d days old "
+                        "(last updated %s) — recalibrate before data collection.",
+                        port,
+                        setup_config.name,
+                        age_days,
+                        vc.updated[:10],
+                    )
+            except ValueError:
+                pass
+
+    available_ports = sorted(cal.keys())
+
+    def _valve_s_for_ul_checked(port, volume_ul, _cal=cal, _sc=setup_config):
+        if str(port) not in _cal:
+            raise ValueError(
+                f"Valve port {port!r} has no calibration in setup '{_sc.name}'. "
+                f"Calibrated ports: {available_ports}. "
+                "Calibrate this valve before running a session with reward delivery."
+            )
+        return _sc.valve_s_for_ul(port, volume_ul)
+
+    patched["valve_s_for_ul"] = _valve_s_for_ul_checked
+    logging.debug("Injected valve_s_for_ul from SetupConfig into task settings")
+
+
 def _resolve_setup_config_ports(args_dict, setup_config, patched):
     """Apply port and camera overrides from SetupConfig into args_dict and patched."""
     if setup_config and "bpod" in setup_config.devices:
@@ -287,9 +351,8 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
             logging.debug(f"Resolved camera config from SetupConfig: {cam_path}")
         args_dict["cameras_config"] = setup_config.cameras
 
-    if setup_config and setup_config.calibrations.bpod_valve:
-        patched["valve_s_for_ul"] = setup_config.valve_s_for_ul
-        logging.debug("Injected valve_s_for_ul from SetupConfig into task settings")
+    if setup_config:
+        _inject_valve_calibration(setup_config, patched)
 
 
 def _parse_parent_flag(value: str) -> tuple[str, str]:
