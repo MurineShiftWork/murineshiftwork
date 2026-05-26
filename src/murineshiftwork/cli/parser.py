@@ -64,9 +64,9 @@ def _add_session_args(parser):
         "-o",
         "--out-path",
         type=str,
-        default=default_out_path,
+        default="",
         dest="out_path",
-        help="Output directory for session data",
+        help=f"Output directory for session data (default: from machine config; currently: {default_out_path or '~/data'})",
     )
     g.add_argument(
         "--child-of",
@@ -100,9 +100,9 @@ def _add_config_args(parser):
         "-cd",
         "--config-dir",
         type=str,
-        default=default_config_dir,
+        default="",
         dest="config_dir",
-        help="Shared config directory containing setups/, subjects/, tasks/",
+        help=f"Shared config directory containing setups/, subjects/, tasks/ (default: from machine config; currently: {default_config_dir or 'not set'})",
     )
     g.add_argument(
         "-ct",

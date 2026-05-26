@@ -46,7 +46,7 @@ class Stimulation:
     # Size 4: one entry per output channel (0-indexed, matching pypulsepal).
     channels_inactive = zeros(4).astype("int")
     channels_stimulation = channels_inactive.copy()
-    channels_clock_trigger = channels_inactive.copy()
+    channels_ttl_copy = channels_inactive.copy()
 
     time_of_last_activation = 0
 
@@ -57,7 +57,7 @@ class Stimulation:
         "pulse_train_delay": 0,
         "trigger_channels_for_stimulation": [0],
         "channels_stimulation": [2],
-        "channel_trigger_clock": [3],
+        "channels_ttl_copy": [],
         "reset_stimulation_after_sec": 0.005,
         "laser_power": None,  # None → fixed 5V; 0.0–1.0 → Doric LDFL5 power mapping
     }
@@ -80,7 +80,7 @@ class Stimulation:
             self._validate_power(laser_power)
 
         self.channels_stimulation = self.channels_inactive.copy()
-        self.channels_clock_trigger = self.channels_inactive.copy()
+        self.channels_ttl_copy = self.channels_inactive.copy()
 
         for channel in self.in_dict["channels_stimulation"]:
             self._set_channel_params(
@@ -93,15 +93,18 @@ class Stimulation:
             )
             self.channels_stimulation[int(channel)] = 1
 
-        for channel in self.in_dict["channel_trigger_clock"]:
+        for channel in self.in_dict["channels_ttl_copy"]:
+            # Mirrors stim pulse params at full 5V for ephys digital input
+            # (BNC2110 threshold ~2V; modulated stim voltage is sub-threshold at low power).
             self._set_channel_params(
                 channel=int(channel),
-                phase1Duration=0.005,
-                pulse_frequency=1,
-                pulseTrainDuration=0.005,
-                pulseTrainDelay=0,
+                phase1Duration=round(float(self.in_dict["pulse_duration"]), 3),
+                pulse_frequency=round(float(self.in_dict["pulse_frequency"]), 3),
+                pulseTrainDuration=float(self.in_dict["pulse_train_duration"]),
+                pulseTrainDelay=round(float(self.in_dict["pulse_train_delay"]), 3),
+                laser_power=None,  # always 5V
             )
-            self.channels_clock_trigger[int(channel)] = 1
+            self.channels_ttl_copy[int(channel)] = 1
 
     @staticmethod
     def _validate_power(laser_power: float) -> None:
@@ -234,7 +237,9 @@ class Stimulation:
                 continue
             link_param = f"linkTriggerChannel{trigger_ch + 1}"
             for out_ch in range(self.pulsePal.nr_output_channels):
-                active = bool(self.channels_stimulation[out_ch])
+                active = bool(
+                    self.channels_stimulation[out_ch] or self.channels_ttl_copy[out_ch]
+                )
                 try:
                     self.pulsePal.program_one_param(
                         channel=out_ch,
@@ -288,18 +293,6 @@ class Stimulation:
             >= self.in_dict["reset_stimulation_after_sec"]
         ):
             self.channels_currently_active = self.channels_inactive
-
-    def trigger_clock(self):
-        self._check_channels_active_reset()
-        ch = self.channels_clock_trigger + self.channels_currently_active
-        self.pulsePal.trigger_selected_channels(
-            channel_1=bool(ch[0]) if len(ch) > 0 else False,
-            channel_2=bool(ch[1]) if len(ch) > 1 else False,
-            channel_3=bool(ch[2]) if len(ch) > 2 else False,
-            channel_4=bool(ch[3]) if len(ch) > 3 else False,
-        )
-        time.sleep(0.005)
-        self.pulsePal.stop_all_outputs()
 
     def disconnect(self):
         if self.pulsePal is not None:

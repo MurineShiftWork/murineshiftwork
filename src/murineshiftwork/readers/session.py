@@ -10,6 +10,7 @@ from murineshiftwork.readers.files import (
     read_trial_df,
 )
 from murineshiftwork.readers.namespace import (
+    detect_session_format,
     test_is_legacy_format,
     test_is_recognized_msw_file,
 )
@@ -54,7 +55,10 @@ def read_session_data(
     }
     is_legacy_session = test_is_legacy_format(session_dir=session_dir)
 
+    fmt = detect_session_format(session_dir)
     session_data = {}
+    session_data["namespace_version"] = fmt["namespace_version"]
+    session_data["artifact_format"] = fmt["artifact_format"]
     session_data["is_legacy_session"] = is_legacy_session
 
     for k, v in session_files_dict.items():

@@ -20,13 +20,19 @@ default:
     trigger_mode: gated
     channels_stimulation:
     - 0
-    channel_trigger_clock:
-    - 3
+    channels_ttl_copy: []
     reset_stimulation_after_sec: 0.005
     continuous: false
-  stimulation:
-    default_protocol:
-      pulse_duration: 0.001
-      pulse_frequency: 40
-      pulse_train_duration: 1
-mode: {}
+  stimulation: {}
+#    default_protocol:
+#      pulse_duration: 0.001
+#      pulse_frequency: 40
+#      pulse_train_duration: 1
+mode:
+  # Example — copy to config_dir/tasks/optotagging/task.yaml and customise.
+  example_protocol:
+    stimulation:
+      protocol_1ms_40hz:
+        pulse_duration: 0.001
+        pulse_frequency: 40
+        pulse_train_duration: 1

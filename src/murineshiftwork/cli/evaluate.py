@@ -23,7 +23,7 @@ from murineshiftwork.logic.config import (
     validate_config_file_path,
 )
 from murineshiftwork.logic.log import setup_logging
-from murineshiftwork.logic.machine_config import resolve_config_dir
+from murineshiftwork.logic.machine_config import resolve_config_dir, resolve_data_dir
 from murineshiftwork.logic.misc import find_task_by_name
 from murineshiftwork.logic.paths import get_host_ip, get_host_name
 from murineshiftwork.logic.task_settings import build_task_settings
@@ -101,6 +101,8 @@ def _evaluate_and_load_configs(args_dict=None):
     args_dict["config_dir"] = config_dir
     if not Path(config_dir).exists():
         args_dict["config_dir"] = ""
+
+    args_dict["out_path"] = resolve_data_dir(cli_override=args_dict.get("out_path", ""))
 
     args_dict["config_file_subjects"] = validate_config_file_path(
         config_file=args_dict.get("config_file_subjects", ""),
@@ -380,13 +382,17 @@ def _resolve_parent_session(args_dict: dict) -> None:
     if session_type == "openephys":
         url = url_override
         if not url:
+            setup_config = args_dict.get("setup_config")
+            if setup_config is not None:
+                url = getattr(setup_config, "open_ephys_url", "") or ""
+        if not url:
             from murineshiftwork.logic.machine_config import read_open_ephys_url
 
             url = read_open_ephys_url()
         if not url:
             logging.warning(
                 "--parent openephys: no URL — pass as openephys:HOST or set "
-                "open_ephys_url in ~/.murineshiftwork/msw_machine.yaml"
+                "open_ephys_url in the setup YAML"
             )
             return
     else:
@@ -399,10 +405,13 @@ def _resolve_parent_session(args_dict: dict) -> None:
     info = client.attach()
 
     if info is None:
+        reason = getattr(client, "fail_reason", "") or "unknown reason"
         logging.warning(
-            "Parent session (%s @ %s) could not attach — running as standalone session",
+            "Parent session (%s @ %s) could not attach (%s) — "
+            "running as standalone; use --child-of ACQUISITION_NAME to set path manually",
             session_type,
             url,
+            reason,
         )
         return
 

@@ -145,12 +145,10 @@ def read_log_config() -> dict:
 
 
 def read_open_ephys_url() -> str:
-    """Return the Open Ephys GUI host from machine config, or empty string.
+    """Return the Open Ephys GUI host from machine config (legacy fallback).
 
-    Set with: ``msw config set open_ephys_url 172.24.42.168``
-    Or edit ~/.murineshiftwork/msw_machine.yaml directly::
-
-        open_ephys_url: "172.24.42.168"
+    Preferred location is now the setup YAML: ``open_ephys_url: 172.24.42.168``
+    Machine config is checked as a fallback for backward compatibility.
     """
     return str(_load_machine_config().get("open_ephys_url", ""))
 

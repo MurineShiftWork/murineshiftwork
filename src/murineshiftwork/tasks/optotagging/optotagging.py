@@ -58,24 +58,30 @@ class Task(TaskRunner):
     _bnc_channel_trial_onset = Bpod.OutputChannels.BNC1
     _bnc_channel_stimulation = Bpod.OutputChannels.BNC2
 
-    def _start_protocol_video(self, conductor, protocol_name: str):
-        """Initialize acquisition path, preview and start recording for one protocol."""
+    def _start_protocol_video(
+        self, conductor, protocol_name: str, warmup_s: float = 5.0
+    ):
+        """Initialize acquisition path, preview and start recording for one protocol.
+
+        Protocols land directly under the acquisition root so they are siblings of the
+        ephys session: subject/acquisition/protocol_name — not subject/acquisition/session/protocol_name.
+        warmup_s must exceed the camera's min_warmup_before_recording (2 s on npxb) plus
+        network round-trip, so the first barcode fires after frame TTL pulses have started.
+        """
         session_paths = self.input_kwargs["session_paths"]
         _session = session_paths["session_basename"]
         _subject = session_paths["subject"]
         _is_child = self.input_kwargs.get("_is_child_session_to")
-        base = (
-            f"{_subject}/{_is_child}/{_session}"
-            if _is_child
-            else f"{_subject}/{_session}"
-        )
+        # When running as a child of an ephys acquisition, place protocols directly
+        # under the acquisition name — not under a session subdir.
+        base = f"{_subject}/{_is_child}" if _is_child else f"{_subject}/{_session}"
         conductor.initialize_acquisition(
             acquisition_path=f"{base}/{protocol_name}",
             acquisition_name=f"{_session}_{protocol_name}",
         )
         conductor.start_preview()
         conductor.start_recording()
-        time.sleep(3)
+        time.sleep(warmup_s)
 
     def run(self) -> None:
         task_settings = self.input_kwargs["settings.task.patched"]

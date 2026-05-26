@@ -104,14 +104,14 @@ class OpenEphysParentSession:
     def __init__(self, url: str, require_recording: bool = False) -> None:
         self._host = _parse_host(url)
         self._require_recording = require_recording
+        self.fail_reason: str = ""
 
     def attach(self) -> ParentSessionInfo | None:
         try:
             from open_ephys.control import OpenEphysHTTPServer
         except ImportError:
-            log.warning(
-                "open-ephys-python-tools not installed — cannot attach OE parent session"
-            )
+            self.fail_reason = "open-ephys-python-tools not installed"
+            log.error("OpenEphys: %s", self.fail_reason)
             return None
 
         gui = OpenEphysHTTPServer(self._host)
@@ -119,30 +119,28 @@ class OpenEphysParentSession:
         try:
             status = gui.status()
         except Exception as exc:
-            log.warning("OpenEphys: cannot reach %s — %s", self._host, exc)
+            self.fail_reason = f"cannot reach {self._host} — {exc}"
+            log.error("OpenEphys: %s", self.fail_reason)
             return None
 
         if self._require_recording and status != "RECORD":
-            log.info(
-                "OpenEphys: status=%r (not RECORD) — no parent session attached", status
-            )
+            self.fail_reason = f"status={status!r} (not RECORD)"
+            log.info("OpenEphys: %s — no parent session attached", self.fail_reason)
             return None
 
         try:
             rec = gui.get_recording_info()
         except Exception as exc:
-            log.warning("OpenEphys: get_recording_info failed — %s", exc)
+            self.fail_reason = f"get_recording_info failed — {exc}"
+            log.error("OpenEphys: %s", self.fail_reason)
             return None
 
         base = (rec.get("base_text") or "").strip("/")
         parts = [p for p in base.split("/") if p]
 
         if len(parts) < 2:
-            log.warning(
-                "OpenEphys: base_text %r has <2 parts — "
-                "oe_remote may not have been called yet",
-                base,
-            )
+            self.fail_reason = f"base_text {base!r} has <2 parts — oe_remote may not have been called yet"
+            log.error("OpenEphys: %s", self.fail_reason)
             return None
 
         # Validate the acquisition segment through the namespace builder so the
@@ -159,10 +157,12 @@ class OpenEphysParentSession:
                 "session", _b.extract_level_values("session", acq_segment)
             )
         except ValueError:
-            log.warning(
-                "OpenEphys: base_text segment %r is not a valid MSW session name — "
-                "check that oe_remote used the MSW naming convention",
-                acq_segment,
+            self.fail_reason = (
+                f"base_text segment {acq_segment!r} is not a valid MSW session name "
+                f"(full base_text: {base!r})"
+            )
+            log.error(
+                "OpenEphys: %s — check oe_remote naming convention", self.fail_reason
             )
             return None
 
