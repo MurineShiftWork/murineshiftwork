@@ -120,6 +120,18 @@ cameras:
 **Per-camera optical parameters** (gain, shutter, exposure) are set inside the
 Bonsai workflow XML — open it in the Bonsai editor on the acquisition machine.
 
+## Open Ephys integration
+
+Set `open_ephys_url` to the IP or hostname of the Open Ephys GUI process for this rig:
+
+```yaml
+open_ephys_url: 172.24.42.168
+```
+
+This enables `--parent openephys` without passing the address on the CLI each time.
+`msw run` reads the URL from the active setup config, so setups without OE simply omit the field.
+Machine config (`~/.murineshiftwork/msw_machine.yaml`) is checked as a fallback for backward compatibility.
+
 ## Valve calibration behaviour
 
 `msw run` injects `valve_s_for_ul` into task settings from the setup's `bpod_valve` calibration.

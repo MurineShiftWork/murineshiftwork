@@ -16,28 +16,31 @@ Design details live in memory files or separate docs — not here.
 - [ ] **GitHub: create repo `serial-scale-bench`** then push `external/serial_scale_bench` (remote already set to `https://github.com/larsrollik/serial-scale-bench.git`)
 - [ ] **PyPI: publish RCC deprecation stub** — `rpi-camera-colony` stub pointing users to `rpi-camera-ensemble`; same pattern as `serial-weighing-scale` stub
 - [ ] **GitHub: create repo + PyPI release for `rpi-camera-ensemble`** — push `external/provision_rpi/rpi_camera_ensemble`; ensure it is publicly installable (coexists with FLIR/Bonsai backend)
-- [ ] **GitHub: create repo for `msw-flir-bonsai`** — push `external/msw-flir-bonsai`; publish to PyPI
 - [ ] **git repo for `msw_configs/`** — move `/mnt/maindata/msw_configs` into a dedicated git repo to get clean history of setup/subject/calibration changes; MSW reads config_dir as before, just backed by git
-- [ ] **Bonsai workflows — homogenise externalized properties** — add `cam1fps`, `cam1resolution` (width × height) to the Spinnaker workflows to match FlyCapture. Currently Spinnaker only externalises `cam1idx`; fps and resolution must be pre-set in SpinView. Approach: add `SpinnakerProperty` setter nodes for `AcquisitionFrameRate`, `Width`, `Height` before the `SpinnakerCapture` node, then add `ExternalizedMapping` entries for those nodes so `-p cam1fps=60` and `-p cam1width=1280 -p cam1height=1024` work at CLI launch. Verify on acquisition machine — camera must have `AcquisitionFrameRateEnable` set to `true` in SpinView first (one-time, persists in camera EEPROM). Once done, add `width`/`height` fields to `CameraUnit` model and pass them through `BonsaiCameraRunner._build_cmd()`.
 
 ---
 
 ## TODO
 
-### Sprint order (2026-05-24)
+### Sprint order (2026-05-26)
 
-1. ~~**Namespace — `file` level + `get_path(artifact=)`**~~ — **DONE** · 2026-05-24
-2. **Opto debug** — review PR TODO items; hardware-verify optotagging TTL barcodes; confirm airpuff TTL barcodes; test on acquisition machine
-3. **Namespace package separation** — extract `murineshiftwork` into namespace sub-packages per IMPLEMENTATION_PLAN.md extraction order
-4. **msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py`; wire into `RceConductorAdapter`
+1. **Open Ephys URL validation** — `open_ephys_url` in `~/.murineshiftwork/msw_machine.yaml` silently causes standalone sessions when wrong (typo produces "could not attach" warning at evaluate.py:404 that is easily missed). Fix: validate/echo the configured URL at session start, or promote the warning to ERROR with a `--force-standalone` escape hatch.
+2. **Split msw** — extract `murineshiftwork` monolith into namespace sub-packages per IMPLEMENTATION_PLAN.md extraction order; see MASTER_PLAN §namespace
+2. ~~**Namespace — `file` level + `get_path(artifact=)`**~~ — **DONE** · 2026-05-24
+3. **Opto debug** — review PR TODO items; hardware-verify optotagging TTL barcodes; confirm airpuff TTL barcodes; test on acquisition machine
+4. ~~**msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py`; wire into `RceConductorAdapter`~~ — **DONE** · 2026-05-25
 
 ---
 
+- [x] **Reader: surface namespace_version + artifact_format** — `read_session_data()` now returns `namespace_version` and `artifact_format` keys (via `detect_session_format()`). · 2026-05-26
 - [ ] **Hardware handle + camera audit** — full sweep of all task protocols to verify: (1) correct use of injected hardware handles via `devices` dict (no fallback-to-new-connection in tasks that receive a handle); (2) camera handoff from config/hardware manager instead of ad-hoc constructor calls; (3) `serial_port_pulsepal`, `serial_port_scale` not opened twice. No action yet — audit only. Pending test protocols: `_test_scale_hx_connect` and `_test_scale_bench_connect` (same pattern as `_test_pulsepal_connect`).
 - [ ] **Opto — hardware verification** — test optotagging and airpuff TTL barcodes on acquisition machine; alignment script for `sequence_automated` piecewise per-trial TTL edges not written
 - [ ] **Opto — PR TODOs** — review opto PR notes for outstanding test items before closing branch
-- [ ] **msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py`
-- [ ] **msw-flir-bonsai — acquisition machine tests** — set `BONSAI_EXE`, run integration suite (`pytest tests/integration/ -v`); smoke-test CLI directly (`msw-flir find-bonsai`, `msw-flir list-cameras`, `msw-flir test-record`); run via `msw` task with `cameras.backend: flir_bonsai` in setup YAML to verify full `FlirBonsaiClient` path
+- [x] **msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py` · 2026-05-25
+- [ ] **msw-flir-bonsai — tests & fixes**
+  - [ ] Acquisition machine smoke test — set `BONSAI_EXE`, run `pytest tests/integration/ -v`; smoke-test CLI (`msw-flir find-bonsai`, `msw-flir list-cameras`, `msw-flir test-record`); run via `msw` task with `cameras.backend: flir_bonsai` to verify full `FlirBonsaiClient` path
+  - [ ] Spinnaker workflow homogenisation — add `cam1fps`, `cam1width`, `cam1height` `ExternalizedMapping` nodes to Spinnaker workflows (requires Bonsai editor on acquisition machine); enable `AcquisitionFrameRateEnable=true` in SpinView first; then extend `CameraUnit` + `BonsaiCameraRunner._build_cmd()` for width/height
+  - [ ] GitHub repo creation + PyPI publish — push `external/msw-flir-bonsai`; configure PyPI OIDC trusted publishing; see [[project_github_org_migration]]
 - [ ] **Bpod retry — hardware verification** — test fixed retry on device `pci-0000:00:14.0-usb-0:4:1.0 → ttyACM7`; confirm 3-attempt / 2s-sleep resolves first-connect failures
 - [ ] **MSW Monitor — Step 1: server + relay** — `monitor/relay.py` (`TrialRelay` daemon Process), `monitor/server.py` (FastAPI, in-memory SessionState, PlotSpec computation); see `MASTER_PLAN.md §5`
 - [ ] **MSW Monitor — Step 2: TaskProcess wiring** — read `monitor_url` from machine config, start `TrialRelay`, add `put_nowait()` after `save_trial_data()` in `sequence`, `probabilistic_switching_fixedsubjects`, `optotagging`
