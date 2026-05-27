@@ -22,12 +22,6 @@ except ImportError as _e:
     ) from _e
 
 
-allowed_trigger_modes = {
-    "normal": 0,
-    "toggle": 1,
-    "gated": 2,
-}
-
 # Doric LDFL5: single BNC input, 0-5V analog/TTL combined.
 DORIC_CURRENT_SENSITIVITY = 80.0  # mA per volt (from manual spec)
 DORIC_MAX_CURRENT_MA = 120.0  # mA — specific laser diode max
@@ -253,9 +247,10 @@ class Stimulation:
                         out_ch,
                         exc,
                     )
-            if (
-                "trigger_mode" in self.in_dict
-                and self.in_dict["trigger_mode"] in allowed_trigger_modes
+            if "trigger_mode" in self.in_dict and self.in_dict["trigger_mode"] in (
+                "normal",
+                "toggle",
+                "gated",
             ):
                 self.pulsePal.program_trigger_channel(
                     trigger_channel=trigger_ch,

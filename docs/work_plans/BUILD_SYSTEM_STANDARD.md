@@ -445,24 +445,35 @@ jobs:
   lint:
     if: "!startsWith(github.event.head_commit.message, 'bump:')"
   test:
-    if: "!startsWith(github.event.head_commit.message, 'bump:')"
-  secrets-scan:
-    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    if: github.event_name == 'pull_request'
   ci:
-    needs: [lint, test, secrets-scan]
+    needs: [lint, test]
     if: always()
     steps:
       - run: |
-          # Accept 'skipped' (bump commit) as well as 'success'
-          [[ "${{ needs.lint.result }}"         == "success" || "${{ needs.lint.result }}"         == "skipped" ]] || exit 1
-          [[ "${{ needs.test.result }}"         == "success" || "${{ needs.test.result }}"         == "skipped" ]] || exit 1
-          [[ "${{ needs.secrets-scan.result }}" == "success" || "${{ needs.secrets-scan.result }}" == "skipped" ]] || exit 1
+          # Accept 'skipped' (bump commit or non-PR push) as well as 'success'
+          [[ "${{ needs.lint.result }}" == "success" || "${{ needs.lint.result }}" == "skipped" ]] || exit 1
+          [[ "${{ needs.test.result }}" == "success" || "${{ needs.test.result }}" == "skipped" ]] || exit 1
 ```
+
+Secrets scanning is handled by the `gitleaks` hook in `.pre-commit-config.yaml`, which runs during the `lint` job (`pre-commit run --all-files`). No separate `secrets-scan` CI job.
 
 ### GitHub setup required
 
 - Branch protection: require `CI` status check; allow `github-actions[bot]` to bypass (so bump push lands without needing a PR)
 - PyPI Trusted Publisher: project name, repo, workflow `release.yml`, no environment
+
+---
+
+## Tool licensing policy
+
+**Do not use GitHub Actions or CI tools that require a paid license for non-commercial or open-source use.**
+
+This org is academic/non-commercial. Tools that gate basic functionality behind a license key are not suitable regardless of whether a free tier exists — licensing terms can change and create operational dependency.
+
+Affected decision: `gitleaks/gitleaks-action@v2` requires a paid org license. Replaced by running the `gitleaks` pre-commit hook in the `lint` job instead — same scan, no external dependency.
+
+When evaluating a new CI action or tool: check whether org use requires a license before adding it.
 
 ---
 
