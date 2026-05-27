@@ -63,21 +63,31 @@ def generate_session_paths(
 ) -> dict:
     """Generate validated session path dict for a given namespace version.
 
+    Always produces a 4-level path: basepath / subject / acquisition / session.
+
+    For standalone sessions (no parent), the acquisition dir is named
+    ``{subject}__{datetime}__session_{task}`` — the ``session_`` prefix
+    distinguishes it from externally-attached systems (``ephys``, etc.).
+
+    For child sessions (``is_child_session_to`` set), the acquisition dir
+    is the externally-provided basename (e.g. from Open Ephys).
+
     Parameters
     ----------
-    subject:            Subject name (validated against forbidden chars).
-    task:               Task name.
-    basepath:           Root output directory.
-    version:            Namespace version — one of NAMESPACE_V1, NAMESPACE_LEGACY.
-                        Controls the datetime format written into the session basename.
-    default_subject:    Fallback subject name used when *task* starts with '_test__'.
-    is_child_session_to: If set, the session folder is nested inside this parent basename.
-    printout:           Print the path table to stdout.
+    subject:             Subject name (validated against forbidden chars).
+    task:                Task / protocol name.
+    basepath:            Root output directory.
+    version:             Namespace version — controls datetime format.
+    default_subject:     Fallback subject used when *task* starts with ``_test__``.
+    is_child_session_to: Acquisition basename from an external parent system.
+                         When ``None`` a standalone acquisition name is derived.
+    printout:            Print the path table to stdout.
 
     Returns
     -------
     dict with keys: subject, datetime, task, basepath, namespace_version,
-    session_basename, session_basename_behav, session_folder, session_file_path.
+    acquisition_name, session_basename, session_folder, session_folder_relative,
+    session_file_path.
     """
     if version not in _NAMESPACE_FORMATS:
         raise ValueError(
@@ -98,16 +108,16 @@ def generate_session_paths(
     session_basename = builder.build_path("session", values)
 
     if is_child_session_to:
-        session_folder = (
-            basepath
-            / builder.build_path("subject", {"subject": subject})
-            / is_child_session_to
-            / session_basename
-        )
+        acquisition_name = is_child_session_to
     else:
-        session_folder = basepath / builder.generate_path(
-            "session", values, include_optional_levels=False
+        acquisition_name = builder.build_path(
+            "acquisition",
+            {"subject": subject, "datetime": dt, "task": f"session_{task}"},
         )
+
+    session_folder = basepath / builder.generate_path(
+        "session", values, level_overrides={"acquisition": acquisition_name}
+    )
 
     session_paths = {
         "subject": subject,
@@ -115,8 +125,8 @@ def generate_session_paths(
         "task": task,
         "basepath": basepath,
         "namespace_version": version,
+        "acquisition_name": acquisition_name,
         "session_basename": session_basename,
-        "session_basename_behav": session_basename + ".msw",
         "session_folder": str(session_folder),
         "session_folder_relative": str(session_folder.relative_to(basepath)),
         "session_file_path": str(session_folder / session_basename),

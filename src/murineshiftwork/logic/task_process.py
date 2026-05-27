@@ -30,8 +30,9 @@ from murineshiftwork.logic.misc import (
     print_box,
     test_serial_port_is_accessible,
 )
-from murineshiftwork.logic.paths import build_data_paths, test_path_is_writable
+from murineshiftwork.logic.paths import test_path_is_writable
 from murineshiftwork.namespace.msw_files import msw_file
+from murineshiftwork.namespace.paths import generate_session_paths
 
 
 def _get_git_commit() -> str:
@@ -206,7 +207,7 @@ class TaskProcess:
         self.session_uuid = str(uuid.uuid4())
 
         self.task_name = find_task_by_name(task_name=self.task_in)
-        self.session_paths = build_data_paths(
+        self.session_paths = generate_session_paths(
             basepath=Path(self.out_path),
             subject=self.subject,
             task=self.task_name,
@@ -363,7 +364,7 @@ class TaskProcess:
             kwargs: dict = dict(
                 serial_port=self.serial_port,
                 workspace_path=self.session_paths["session_folder"],
-                session_name=self.session_paths["session_basename_behav"],
+                session_name=self.session_paths["session_basename"] + ".msw",
             )
             if max_try is not None:
                 kwargs["connect_retries"] = max_try

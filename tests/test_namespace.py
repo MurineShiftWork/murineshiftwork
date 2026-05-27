@@ -74,11 +74,12 @@ def test_v1_session_folder_path():
     assert "__flush" in paths["session_folder"]
 
 
-def test_v1_session_basename_behav_suffix():
+def test_v1_standalone_acquisition_name():
     paths = generate_session_paths(
         "mouse_01", "flush", "/data", version=NAMESPACE_V1, printout=False
     )
-    assert paths["session_basename_behav"] == paths["session_basename"] + ".msw"
+    assert paths["acquisition_name"].endswith("__session_flush")
+    assert f"/{paths['acquisition_name']}/" in paths["session_folder"]
 
 
 def test_v1_child_session_nesting():

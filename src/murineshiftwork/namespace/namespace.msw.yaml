@@ -5,8 +5,7 @@ hierarchy:
   - acquisition
   - session
   - file
-optional_levels:
-  - acquisition
+optional_levels: []
 levels:
   subject:
     template: "{subject}"
