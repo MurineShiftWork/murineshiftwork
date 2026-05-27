@@ -144,10 +144,21 @@ Optotagging sessions with multiple subprotocols:
             ├── session_manifest.yaml
             ├── <basename>.msw.session.yaml
             ├── <basename>.msw.log
-            ├── <basename>_power_ramp.msw.df.jsonl
-            ├── <basename>_following_test.msw.df.jsonl
-            └── <basename>_antidromic_primary.msw.df.jsonl
+            ├── <basename>__power_ramp/
+            │   ├── <basename>_power_ramp.msw.df.jsonl
+            │   ├── <basename>_power_ramp.msw.csv
+            │   └── <basename>_power_ramp.<camera>.avi
+            ├── <basename>__following_test/
+            │   ├── <basename>_following_test.msw.df.jsonl
+            │   └── <basename>_following_test.msw.csv
+            └── <basename>__antidromic_primary/
+                ├── <basename>_antidromic_primary.msw.df.jsonl
+                └── <basename>_antidromic_primary.msw.csv
 ```
+
+Each subprotocol gets a `{basename}__{protocol}/` subdirectory containing its JSONL trial
+data, Bpod CSV event log, and any camera recordings. The parent session dir holds only the
+shared `.msw.session.yaml`, `.msw.log`, and `session_manifest.yaml`.
 
 Legacy format (pre-2026-05-27, depth-2, no acquisition dir):
 
