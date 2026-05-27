@@ -70,6 +70,37 @@ Copier fetches the latest templatepy, replays your answers, and shows a diff. Re
 
 ---
 
+## Local development with uv
+
+### First-time setup
+
+`pre-commit` lives in `[project.optional-dependencies] dev`, so `uv run` alone won't find it — base deps only. Install once:
+
+```sh
+uv sync --extra dev
+uv run pre-commit install --hook-type pre-commit --hook-type commit-msg
+```
+
+After that, `git commit` and `uv run pre-commit run --all-files` both work for the session.
+
+### After renaming the repo directory
+
+The git hook (`  .git/hooks/pre-commit`) and every script in `.venv/bin/` embed the absolute path to the venv Python as their shebang. Renaming the directory breaks them silently — `git commit` will print `` `pre-commit` not found. Did you forget to activate your virtualenv? `` even if the venv exists.
+
+Fix:
+
+```sh
+rm -rf .venv
+uv sync --extra dev
+uv run pre-commit install --hook-type pre-commit --hook-type commit-msg
+```
+
+### Why the main murineshiftwork repo works without `--extra dev`
+
+`pre-commit` is in the main `[project.dependencies]` list there (not just the `dev` extra), so `uv run` installs it unconditionally. External sub-repos (ttl-barcoder, pypulsepal, etc.) correctly keep it in `dev` only — those repos are libraries and their users don't need pre-commit. The trade-off is the one-time `uv sync --extra dev` step.
+
+---
+
 ## Zenodo integration
 
 **No GitHub Actions step needed.** The webhook fires when `release.yml` creates a GitHub release.
