@@ -49,6 +49,7 @@ dev = [
     "fastapi",
     "httpx",
     "uvicorn",
+    "pyarrow",
 ]
 docs = [
     "mkdocs-material",

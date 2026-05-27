@@ -4,6 +4,7 @@ from pathlib import Path
 
 from pybpodapi.protocol import Bpod, StateMachine
 
+from murineshiftwork.hardware.bpod import BpodFactory
 from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
@@ -15,12 +16,19 @@ from murineshiftwork.logic.config.ini import deep_merge
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.stimulation import Stimulation
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
+from murineshiftwork.namespace.manifest import append_subprotocol, finalize_subprotocol
 from murineshiftwork.namespace.msw_files import msw_file
 
 
 class OptoTaggingRecord:
-    def __init__(self, out_path=None):
-        self.out_path = out_path
+    """Per-subprotocol trial record. Each protocol writes its own JSONL file."""
+
+    def __init__(self, session_file_path: str, protocol_name: str):
+        # proto_base is the stem used for this protocol's JSONL:
+        # {session_dir}/{session_basename}_{protocol_name}
+        session_dir = Path(session_file_path).parent
+        session_basename = Path(session_file_path).name
+        self.proto_base = str(session_dir / f"{session_basename}_{protocol_name}")
         self.trial_data: list = []
 
     def update(
@@ -47,11 +55,12 @@ class OptoTaggingRecord:
         self.trial_data.append(trial_data)
 
     def save(self):
-        save_trial_data(self.trial_data, str(msw_file(self.out_path, "df.jsonl")))
-        logging.debug(f"Saved session data to {self.out_path}")
+        save_trial_data(self.trial_data, str(msw_file(self.proto_base, "df.jsonl")))
+        logging.debug(f"Saved protocol data to {self.proto_base}")
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.save()
+    @property
+    def filename(self) -> str:
+        return Path(msw_file(self.proto_base, "df.jsonl")).name
 
 
 class Task(TaskRunner):
@@ -80,6 +89,20 @@ class Task(TaskRunner):
         conductor.start_recording()
         time.sleep(warmup_s)
 
+    def _reopen_bpod(
+        self, session_folder: str, protocol_name: str, session_basename: str
+    ) -> None:
+        """Close the current Bpod session and open a fresh one for the next protocol."""
+        serial_port = self.input_kwargs.get("serial_port_bpod", "")
+        self.bpod.close_safely()
+        self.bpod = BpodFactory(
+            serial_port=serial_port,
+            workspace_path=session_folder,
+            session_name=f"{session_basename}_{protocol_name}.msw",
+        )
+        self.bpod.open()
+        logging.debug("Bpod reopened for protocol %r", protocol_name)
+
     def run(self) -> None:
         task_settings = self.input_kwargs["settings.task.patched"]
         devices = self.input_kwargs.get("devices") or {}
@@ -96,17 +119,25 @@ class Task(TaskRunner):
         stimulation_defaults = task_settings.get("stimulation_defaults", {})
         stimulation_protocols = task_settings.get("stimulation", {})
         conductor = self.input_kwargs.get("conductor")
+        session_paths = self.input_kwargs["session_paths"]
+        session_file_path = session_paths["session_file_path"]
+        session_folder = session_paths["session_folder"]
+        session_basename = session_paths["session_basename"]
 
         barcode_cfg = barcode_config_from_settings(task_settings)
         barcoder = BarcodeTTL(barcode_cfg)
 
-        record = OptoTaggingRecord(
-            out_path=self.input_kwargs["session_paths"]["session_file_path"]
-        )
-
-        for protocol_name, protocol_config in stimulation_protocols.items():
+        for proto_idx, (protocol_name, protocol_config) in enumerate(
+            stimulation_protocols.items()
+        ):
             if not self.continue_task:
                 break
+
+            # Reopen Bpod for each protocol after the first (new Bpod session boundary)
+            if proto_idx > 0:
+                self._reopen_bpod(session_folder, protocol_name, session_basename)
+
+            record = OptoTaggingRecord(session_file_path, protocol_name)
 
             params = deep_merge(stimulation_defaults, protocol_config or {})
             n_trials = int(params.pop("n_trials", 50))
@@ -126,9 +157,17 @@ class Task(TaskRunner):
                 self._start_protocol_video(conductor, protocol_name)
 
             trial_index = 0
+            bv_start = bv_end = None
+            proto_status = "aborted"
             try:
                 # Protocol-start barcode
-                bv, bwt, timing_seq = barcoder.prepare()
+                bv_start, bwt, timing_seq = barcoder.prepare()
+                append_subprotocol(
+                    session_folder,
+                    protocol_name,
+                    record.filename,
+                    barcode_start=bv_start,
+                )
                 sma = StateMachine(bpod=self.bpod)
                 sma = inject_barcode_states(
                     sma,
@@ -153,7 +192,7 @@ class Task(TaskRunner):
                     record.update(
                         trial_index=trial_index,
                         trial_data=self.bpod.session.current_trial.export(),
-                        barcode_value=bv,
+                        barcode_value=bv_start,
                         barcode_wall_time=bwt,
                         protocol=protocol_name,
                     )
@@ -235,6 +274,7 @@ class Task(TaskRunner):
                         protocol=protocol_name,
                     )
                     record.save()
+                    proto_status = "complete"
                     logging.info(f"Protocol {protocol_name!r}: end barcode sent.")
                 except Exception:
                     logging.warning(
@@ -243,6 +283,12 @@ class Task(TaskRunner):
                     )
             finally:
                 stim.disconnect()
+                finalize_subprotocol(
+                    session_folder,
+                    protocol_name,
+                    barcode_end=bv_end,
+                    status=proto_status,
+                )
                 logging.info(f"Protocol {protocol_name!r}: stimulation disconnected.")
 
             if record_video and conductor is not None:

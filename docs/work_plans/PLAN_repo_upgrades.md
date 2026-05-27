@@ -1,5 +1,5 @@
 # Repo Upgrade Plan
-Last updated: 2026-05-24
+Last updated: 2026-05-27
 
 Audited against the "Legacy repo upgrade checklist" in `docs/work_plans/BUILD_SYSTEM_STANDARD.md`.
 Repos live under `/mnt/maindata/code/murineshiftwork/` (main) and `external/` (sub-repos).
@@ -11,8 +11,8 @@ Repos live under `/mnt/maindata/code/murineshiftwork/` (main) and `external/` (s
 | Repo | Priority | Key gaps |
 |---|---|---|
 | `murineshiftwork` (main) | High | No `release.yml`, no `docs.yml`, no `CITATION.cff`, no `py.typed`, no `Documentation` URL, no `site_url` in mkdocs.yml, docs+dev extras merged, `version_provider` missing, `CITATION.cff`/`VERSION` not in sdist, CI jobs lack bump-skip |
-| `pypulsepal` | Medium | No `py.typed`, no `version` in `CITATION.cff`, no `Documentation` URL, no separate `docs` extra, `CITATION.cff`/`VERSION` not in sdist, CI lacks bump-skip + no Python matrix |
-| `ttl_barcoder` | Done | Up to standard as of 2026-05-19 — see notes |
+| `pypulsepal` | Done | All toolchain gaps fixed; org URLs updated 2026-05-27. Manual: org transfer, Zenodo verify, Pages verify |
+| `ttl-barcoder` | Done | Up to standard as of 2026-05-19; dir renamed + gitleaks permission fixed 2026-05-27 |
 | `msw-flir-bonsai` | High | Flat layout (no `src/`), no `VERSION`, no `CITATION.cff`, no `mkdocs.yml`, no `docs.yml`, no `release.yml`, no `py.typed`, `commitizen` uses `version_provider="scm"` + `tag_only` (not the standard pattern), CI lacks bump-skip |
 | `serial_scale_bench` | Medium | Flat layout (no `src/`), no `VERSION`, no `CITATION.cff`, no `mkdocs.yml`, no `docs.yml`, no `release.yml`, no `py.typed`, `commitizen` uses `version_provider="scm"` + `tag_only`, CI lacks bump-skip |
 | `serial_scale_hx711` | Medium | Flat layout (no `src/`), no `VERSION`, no `CITATION.cff`, no `mkdocs.yml`, no `docs.yml`, no `release.yml`, no `py.typed`, `commitizen` uses `version_provider="scm"` + `tag_only`, CI lacks bump-skip |

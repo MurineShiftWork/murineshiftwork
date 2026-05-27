@@ -10,6 +10,13 @@
 | `*.msw.plot_spec.yaml` | Plot specification for the online monitor |
 | `*.msw.csv` | Raw Bpod event log — present only in legacy sessions (pre-v2) |
 
+For multi-subprotocol tasks (optotagging), each subprotocol writes its own JSONL:
+
+| File | Description |
+|---|---|
+| `{basename}_{protocol}.msw.df.jsonl` | Per-subprotocol trial dataframe |
+| `session_manifest.yaml` | Lists subprotocols, their JSONL files, barcodes, and completion status |
+
 ## `.msw.session.yaml` structure
 
 ```yaml
@@ -96,23 +103,61 @@ format info without loading session data.
 
 ## Data directory layout
 
-Current format (v2+):
+Current format (v2.6+, mandatory acquisition level):
 
 ```
 <data_dir>/
 └── <subject>/
-    └── <subject>__<datetime>__<task>/
-        ├── <basename>.msw.session.yaml
-        ├── <basename>.msw.df.jsonl
-        ├── <basename>.msw.log
-        └── <basename>.msw.plot_spec.yaml
+    └── <subject>__<datetime>__session_<task>/   ← acquisition dir (standalone)
+        ├── acquisition_manifest.yaml
+        └── <subject>__<datetime>__<task>/        ← session dir
+            ├── session_manifest.yaml
+            ├── <basename>.msw.session.yaml
+            ├── <basename>.msw.df.jsonl
+            ├── <basename>.msw.log
+            └── <basename>.msw.plot_spec.yaml
 ```
 
-Legacy format (pre-v2) additionally contained:
+When attached to an external parent (e.g. Open Ephys via `--parent openephys`),
+the acquisition dir name comes from the parent system:
 
 ```
-        ├── <basename>.msw.csv
-        └── <basename>.msw.settings.process.json   # or .msw.settings.task.json
+<data_dir>/
+└── <subject>/
+    └── <subject>__<datetime>__ephys/            ← acquisition dir (from OE)
+        ├── acquisition_manifest.yaml             ← written by MSW
+        ├── Record Node 101/                      ← written by Open Ephys
+        └── <subject>__<datetime>__<task>/
+            ├── session_manifest.yaml
+            ├── <basename>.msw.session.yaml
+            └── ...
+```
+
+Optotagging sessions with multiple subprotocols:
+
+```
+<data_dir>/
+└── <subject>/
+    └── <subject>__<datetime>__session_optotagging/
+        ├── acquisition_manifest.yaml
+        └── <subject>__<datetime>__optotagging/
+            ├── session_manifest.yaml
+            ├── <basename>.msw.session.yaml
+            ├── <basename>.msw.log
+            ├── <basename>_power_ramp.msw.df.jsonl
+            ├── <basename>_following_test.msw.df.jsonl
+            └── <basename>_antidromic_primary.msw.df.jsonl
+```
+
+Legacy format (pre-2026-05-27, depth-2, no acquisition dir):
+
+```
+<data_dir>/
+└── <subject>/
+    └── <subject>__<datetime>__<task>/           ← session dir at depth 2
+        ├── <basename>.msw.session.yaml           # or .settings.process.json for older
+        ├── <basename>.msw.df.jsonl               # or .df.pkl / switching.pkl for legacy
+        └── <basename>.msw.csv                    # Bpod raw, may be absent
 ```
 
 ## Sequence task — subject state fields

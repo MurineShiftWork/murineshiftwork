@@ -1,6 +1,6 @@
 # Retrograde Reader Framework
 
-**Status:** Phase 1 done (detection + validation layer). Phase 2 (reader dispatch refactor) pending.
+**Status:** Phase 1 done (detection + validation layer). Phase 2b (reader dispatch) in progress — see sprint item 8 in ROADMAP.md.
 
 ---
 
@@ -41,6 +41,27 @@ Detection: `detect_artifact_format(session_dir)` checks file names in order: leg
 | maindata 2025-04 | `NAMESPACE_LEGACY` | `ARTIFACT_FORMAT_SEPARATE_JSON` | `"< 1.0.0"` | `/mnt/maindata/data/_test_subject/__2025*` |
 | maindata 2026-05 early | `NAMESPACE_V1` | `ARTIFACT_FORMAT_SEPARATE_JSON` | `"1.0.0"` | `/mnt/maindata/data/t012_*/...` |
 | maindata 2026-05 current | `NAMESPACE_V1` | `ARTIFACT_FORMAT_SESSION_YAML` | `"x.y.z"` semver | `/mnt/maindata/data/t013_*/...` (recent) |
+
+### Third dimension — directory depth (added 2026-05-27)
+
+The mandatory acquisition level added in commit `449a36a` introduces a third structural dimension:
+
+| Depth | Structure | Era |
+|---|---|---|
+| 2 levels (`subject/session/`) | Legacy — no acquisition dir | All sessions before 2026-05-27 |
+| 3 levels (`subject/acquisition/session/`) | Current — acquisition always present | Sessions from 2026-05-27 onwards |
+
+**Reader impact:** `read_session_data(session_dir)` always receives a session dir (not an acquisition dir), so the depth difference is invisible to the reader. What changes is how callers (scripts, post-processing, the future session browser) navigate to find session dirs — they now must descend through the acquisition level.
+
+`detect_session_format()` already handles depth-2 and depth-3 correctly: it scans files in the provided `session_dir` regardless of what's above it.
+
+A future `read_acquisition()` function will:
+1. Accept an acquisition dir (depth-3 root)
+2. Read `acquisition_manifest.yaml` to enumerate sessions
+3. Call `read_session_data()` for each session
+4. Return a keyed dict of session data dicts
+
+See `PLAN_session_manifests.md` for the manifest format.
 
 The `msw_version` value `"< 1.0.0"` means the process JSON exists but predates the `msw_version` key.  `"legacy"` means no process JSON at all.
 

@@ -22,13 +22,17 @@ Design details live in memory files or separate docs — not here.
 
 ## TODO
 
-### Sprint order (2026-05-26)
+### Sprint order (2026-05-27)
 
 1. ~~**Open Ephys URL validation**~~ — **DONE** · 2026-05-26 · `open_ephys_url` moved from machine config to `SetupConfig` + setup YAML; `OpenEphysParentSession.attach()` now stores `fail_reason` and promotes inner errors to ERROR level; outer warning includes reason + `--child-of ACQUISITION_NAME` hint. Remaining: `--force-standalone` escape hatch.
 2. **Split msw** — extract `murineshiftwork` monolith into namespace sub-packages per IMPLEMENTATION_PLAN.md extraction order; see MASTER_PLAN §namespace
 2. ~~**Namespace — `file` level + `get_path(artifact=)`**~~ — **DONE** · 2026-05-24
 3. **Opto debug** — review PR TODO items; hardware-verify optotagging TTL barcodes; confirm airpuff TTL barcodes; test on acquisition machine
 4. ~~**msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py`; wire into `RceConductorAdapter`~~ — **DONE** · 2026-05-25
+5. ~~**Namespace — mandatory acquisition level + session_folder_relative**~~ — **DONE** · 2026-05-27 · `namespace.msw.yaml` acquisition now non-optional; standalone sessions get `subject__dt__session_{task}` acquisition dir; `level_overrides` added to `NamespaceBuilder.generate_path()`; `session_folder_relative` + `acquisition_name` in session_paths dict; `session_basename_behav` removed; all conductor calls use `session_folder_relative`; v1/v2/v3 YAML fixtures moved to `tests/data/`. See `PLAN_namespace_unification.md`.
+6. **Session/acquisition manifest writer** — `namespace/manifest.py`: write `acquisition_manifest.yaml` at acquisition dir creation; write and progressively update `session_manifest.yaml` per protocol (opto) or once for simple sessions. See `PLAN_session_manifests.md`.
+7. **Opto — per-subprotocol Bpod session + JSONL split** — each protocol in `optotagging.py` closes and reopens Bpod; writes its own `{session_basename}_{protocol}.msw.df.jsonl`; session manifest updated after each protocol. See `PLAN_session_manifests.md`.
+8. **Reader dispatch skeleton** — `read_session_data()` split into `_read_session_yaml` / `_read_separate_json` / `_read_legacy` with `_READER_DISPATCH` dict; `artifact_format` routed at top level. Phase 2b from `PLAN_retrograde_reader.md`.
 
 ---
 
@@ -55,6 +59,9 @@ Design details live in memory files or separate docs — not here.
 - [ ] **MSW Monitor — Step 3: Docker + Vue SPA** — two-container compose (`msw-ui` nginx + `msw-api` FastAPI); Vue wired to new endpoints; `config.json` runtime injection from templatevue; read-only v1 (no start/stop/override). Full plan: `PLAN_msw_ui_vue.md`. Branch: `ft/monitor-step3`
 - [ ] **MSW Monitor — Step 4: strip `agent/`** — remove `agent/` package and `msw agent start` after LogAgent + Vue validated on one rig. Branch: `ft/monitor-step4`
 - [x] **Namespace builder wiring** — extend `namespace.msw.yaml` with `subject`+`acquisition` levels (optional); wire `generate_session_paths()` and `parse_session_basename()` through `NamespaceBuilder` methods; wire `OpenEphysParentSession.attach()` base_text parse through `extract_level_values` + `build_path` roundtrip. · 2026-05-25
+- [ ] **Session/acquisition manifest writer** — see sprint item 6 above and `PLAN_session_manifests.md`
+- [ ] **Opto per-subprotocol Bpod session + JSONL split** — see sprint item 7 above and `PLAN_session_manifests.md`
+- [ ] **Reader dispatch skeleton (Phase 2b)** — see sprint item 8 above and `PLAN_retrograde_reader.md §2b`
 - [ ] **`msw oe` subcommand + `open_ephys.control` replacement** — Steps 1+2 done: `external/msw-open-ephys/` restructured (flat src layout, hatchling+hatch-vcs, package renamed `msw_open_ephys`). Remaining: add `msw oe status/preview/record/stop` delegating to `msw_open_ephys.cli.commands`; replace `open_ephys.control` in `parent_session.py` with `msw_open_ephys.controller`; add `oe = ["msw-open-ephys"]` optional dep. Full plan: `docs/work_plans/PLAN_oe_remote.md`.
 - [ ] **Hardware integration test suite** — separate repo (not `tests/`); real Bpod + PulsePal + scale + OE GUI on acquisition machine; combinatorial runs of `sequence` + `optotagging` with/without `--parent openephys`; simulation-mode smoke tests; Bpod override API for automated trial progression; scope and repo structure TBD
 - [ ] **Valve calibration fit model config** — `Calibrations.fit_model: exponential | linear` field in `models.py` (default `exponential`); written to setup YAML as `calibrations.fit_model:`; propagated to `ValveCalibration` instances on load; `ValveCalibration._fit()` branches on it; `evaluate.py` reads model from setup config when injecting `valve_s_for_ul`; calibration task reads same field as default, overridable via `-ts FIT_MODEL=linear` for one run. Design approved 2026-05-25.

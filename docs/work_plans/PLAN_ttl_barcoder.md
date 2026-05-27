@@ -1,6 +1,6 @@
 # ttl-barcoder — PyPI Release Plan
 
-Working copy: `external/ttl_barcoder/` (own git repo)
+Working copy: `external/ttl-barcoder/` (own git repo)
 Public target: `https://github.com/larsrollik/ttl-barcoder`
 PyPI target: `ttl-barcoder`
 
@@ -71,7 +71,7 @@ Six modified files are hardware-verified but not yet committed:
 
 ## Sprint 1 — Build system upgrade ✅ DONE (2026-05-23)
 
-Completed in session on `ft/opto-hardware`. All changes are unstaged in `external/ttl_barcoder`.
+Completed in session on `ft/opto-hardware`. All changes are unstaged in `external/ttl-barcoder`.
 Commit when ready: `build: migrate to hatchling+vcs, src/ layout, standard toolchain`.
 
 ### What was done
@@ -92,7 +92,7 @@ Commit when ready: `build: migrate to hatchling+vcs, src/ layout, standard toolc
 ### Still needed before committing
 
 1. Commit the 6 previously uncommitted hardware-verified bug fixes (encoder init, decoder tolerance, bpod sender)
-2. Run `pre-commit install` in `external/ttl_barcoder`
+2. Run `pre-commit install` in `external/ttl-barcoder`
 3. Run `pre-commit run --all-files` — fix any trailing whitespace / import ordering the hooks catch
 4. Tag `v0.3.0` once tests exist and the repo is public
 

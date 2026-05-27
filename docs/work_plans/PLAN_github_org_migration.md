@@ -101,8 +101,8 @@ After all transfers:
 cd /mnt/maindata/code/murineshiftwork
 git remote set-url origin git@github.com:murineshiftwork/murineshiftwork.git
 
-cd external/ttl_barcoder
-git remote set-url origin git@github.com:murineshiftwork/ttl_barcoder.git
+cd external/ttl-barcoder
+git remote set-url origin git@github.com:murineshiftwork/ttl-barcoder.git
 
 cd external/pypulsepal
 git remote set-url origin git@github.com:murineshiftwork/pypulsepal.git

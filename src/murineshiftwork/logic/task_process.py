@@ -31,6 +31,12 @@ from murineshiftwork.logic.misc import (
     test_serial_port_is_accessible,
 )
 from murineshiftwork.logic.paths import test_path_is_writable
+from murineshiftwork.namespace.manifest import (
+    append_session_to_acquisition,
+    finalize_session_in_acquisition,
+    init_acquisition_manifest,
+    init_session_manifest,
+)
 from murineshiftwork.namespace.msw_files import msw_file
 from murineshiftwork.namespace.paths import generate_session_paths
 
@@ -226,6 +232,15 @@ class TaskProcess:
         if not test_path_is_writable(target_file) and not self.debug:
             raise PermissionError(f"Session files not writable at {str(target_file)}")
 
+        _acq_folder = Path(self.session_paths["session_folder"]).parent
+        init_acquisition_manifest(_acq_folder, self.session_paths["acquisition_name"])
+        append_session_to_acquisition(
+            _acq_folder, self.session_paths["session_basename"]
+        )
+        init_session_manifest(
+            self.session_paths["session_folder"], self.session_paths["session_basename"]
+        )
+
         patch_logging_levels()
         add_session_log_handler(self.session_paths["session_file_path"])
         logging.info(
@@ -301,6 +316,12 @@ class TaskProcess:
                 run_post_hooks(self._post_hooks, self._hook_ctx)
             except SessionAbortError as exc:
                 post_exc = exc
+        status = "aborted" if exc_type is not None else "complete"
+        if self.session_paths:
+            _acq_folder = Path(self.session_paths["session_folder"]).parent
+            finalize_session_in_acquisition(
+                _acq_folder, self.session_paths["session_basename"], status=status
+            )
         self.exit_safely()
         if post_exc is not None:
             raise post_exc
