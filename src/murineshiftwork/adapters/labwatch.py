@@ -1,7 +1,17 @@
 """Labwatch session push adapter.
 
-Thin interface over the labwatch client (private registry, optional dependency).
+Thin interface over the labwatch client (optional dependency).
 The only method MSW calls is `LabwatchPusher.push(payload)`.
+
+Machine config keys (in ~/.murineshiftwork/msw_machine.yaml):
+    labwatch:
+      url: https://labwatch.example.com
+      username: myuser
+      token: mytoken      # or 'password:' as an alias
+
+The adapter is a no-op when labwatch is not configured (url absent).
+The labwatch_client import is deferred so a missing or unconfigured
+dependency never crashes a session.
 
 Usage in save_session_end():
     pusher = LabwatchPusher.from_machine_config(read_machine_config())
@@ -40,7 +50,7 @@ class LabwatchPusher:
 
     @classmethod
     def from_machine_config(cls, cfg: dict) -> LabwatchPusher | None:
-        """Return a pusher if labwatch is configured, else None."""
+        """Return a pusher if labwatch is configured in machine config, else None."""
         lw = cfg.get("labwatch", {})
         if not lw or not lw.get("url"):
             return None
@@ -61,7 +71,7 @@ class LabwatchPusher:
         except ImportError as exc:
             raise LabwatchPushError(
                 "labwatch_client is not installed. "
-                "Install with: pip install 'murineshiftwork[labwatch]'"
+                "Install msw-labwatch or labwatch-client from the private registry."
             ) from exc
 
         try:

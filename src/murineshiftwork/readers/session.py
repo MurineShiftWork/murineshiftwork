@@ -73,8 +73,11 @@ def _read_session_yaml(session_dir: Path, fmt: dict) -> dict:
                     data["settings.task"] = payload["task_settings"]
                 if "stage" in payload:
                     data["settings.stage"] = payload["stage"]
+                if "parent_acquisition" in payload:
+                    data["settings.ephys"] = payload["parent_acquisition"]
         elif Path(k).name.endswith("pkl") or Path(k).name.endswith("jsonl"):
-            data["df"] = read_trial_df(filepath=v)
+            if "df" not in data:
+                data["df"] = read_trial_df(filepath=v)
         elif Path(k).name.endswith("csv"):
             pass  # pybpod CSV present but not loaded; use ttl_barcoder for alignment
         else:

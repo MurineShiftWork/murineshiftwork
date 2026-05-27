@@ -116,7 +116,13 @@ def read_machine_config() -> dict:
 
 
 def read_labwatch_config() -> dict:
-    """Return the ``labwatch:`` block from machine config, or empty dict."""
+    """Return the ``labwatch:`` block from machine config, or empty dict.
+
+    Keys read:
+      url      — base URL of the labwatch server (e.g. https://labwatch.example.com)
+      username — labwatch username
+      token    — API token (alias: password)
+    """
     return _load_machine_config().get("labwatch", {})
 
 

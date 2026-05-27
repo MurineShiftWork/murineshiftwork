@@ -31,12 +31,13 @@ jobs:
         run: uv run pre-commit run --all-files --show-diff-on-failure
 
   test:
-    name: Test (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    name: Test (Python ${{ matrix.python-version }} · ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     if: github.event_name == 'pull_request'
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +53,8 @@ jobs:
 
       - name: Run tests
         run: uv run pytest
+        env:
+          MSW_CI: "1"
 
   ci:
     name: CI

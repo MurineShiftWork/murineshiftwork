@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
@@ -202,3 +203,104 @@ def test_attach_require_recording_passes_when_recording():
 def test_attach_host_parsed_from_url():
     client = OpenEphysParentSession(url="http://172.24.42.168:37497")
     assert client._host == "172.24.42.168"
+
+
+# ---------------------------------------------------------------------------
+# base_text parsing invariants
+# These cover the specific guarantees that make the OE→MSW path handoff safe.
+
+
+def test_attach_second_precision_datetime():
+    # OE uses time.strftime("%Y%m%d_%H%M%S") — no microseconds.
+    # namespace regex has (?:_\d{6})? so second-precision names must parse.
+    gui = _make_gui_mock(
+        status="IDLE",
+        base_text="m01/m01__20260524_143022__ephys/m01__20260524_143022__pxi",
+    )
+    client = OpenEphysParentSession(url="127.0.0.1")
+    info = _attach_with_mock_gui(client, gui)
+    assert info is not None
+    assert info.acquisition_name == "m01__20260524_143022__ephys"
+
+
+def test_attach_microsecond_precision_datetime():
+    # MSW-generated acquisition names use microsecond precision; verify roundtrip.
+    gui = _make_gui_mock(
+        status="IDLE",
+        base_text="m01/m01__20260524_143022_123456__ephys/m01__20260524_143022_123456__pxi",
+    )
+    client = OpenEphysParentSession(url="127.0.0.1")
+    info = _attach_with_mock_gui(client, gui)
+    assert info is not None
+    assert info.acquisition_name == "m01__20260524_143022_123456__ephys"
+
+
+def test_attach_leading_trailing_slashes_stripped():
+    # OE may include leading/trailing slashes; strip("/") + filter handles them.
+    gui = _make_gui_mock(
+        status="IDLE",
+        base_text="/m01/m01__20260101_120000__ephys/m01__20260101_120000__pxi/",
+    )
+    client = OpenEphysParentSession(url="127.0.0.1")
+    info = _attach_with_mock_gui(client, gui)
+    assert info is not None
+    assert info.acquisition_name == "m01__20260101_120000__ephys"
+
+
+def test_attach_invalid_acq_segment_returns_none():
+    # parts[1] is not a valid MSW basename (OE default template not yet replaced).
+    gui = _make_gui_mock(
+        status="IDLE",
+        base_text="m01/YYYY-MM-DD_HH-MM-SS/something",
+    )
+    client = OpenEphysParentSession(url="127.0.0.1")
+    info = _attach_with_mock_gui(client, gui)
+    assert info is None
+    assert "not a valid MSW session name" in client.fail_reason
+
+
+def test_attach_acquisition_and_session_levels_have_same_template():
+    # Both acquisition and session levels use {subject}__{datetime}__{task}.
+    # Validating parts[1] through "session" level is equivalent to "acquisition".
+    # Confirmed by checking the namespace builder directly.
+    from murineshiftwork.namespace.paths import get_msw_builder
+
+    b = get_msw_builder()
+    acq_spec = b.spec.levels["acquisition"]
+    ses_spec = b.spec.levels["session"]
+    assert acq_spec.template == ses_spec.template
+    assert acq_spec.regex == ses_spec.regex
+
+
+# ---------------------------------------------------------------------------
+# Integration: base_text → acquisition_name → generate_session_paths
+
+
+def test_attach_feeds_generate_session_paths_correctly(tmp_path):
+    # Full roundtrip: OE base_text → ParentSessionInfo → generate_session_paths.
+    # Verifies session folder has structure: basepath/subject/acq_name/session_basename
+    from murineshiftwork.namespace.paths import generate_session_paths
+
+    gui = _make_gui_mock(
+        status="RECORD",
+        base_text="m01/m01__20260524_143022__ephys/m01__20260524_143022__pxi",
+        record_nodes=[{"parent_directory": "/data/rig1"}],
+    )
+    client = OpenEphysParentSession(url="127.0.0.1")
+    info = _attach_with_mock_gui(client, gui)
+    assert info is not None
+
+    paths = generate_session_paths(
+        subject="m01",
+        task="sequence",
+        basepath=tmp_path,
+        is_child_session_to=info.acquisition_name,
+        printout=False,
+    )
+
+    rel_parts = Path(paths["session_folder_relative"]).parts
+    assert rel_parts[0] == "m01"  # subject
+    assert rel_parts[1] == "m01__20260524_143022__ephys"  # acquisition_name from OE
+    assert rel_parts[2].startswith("m01__")  # session basename
+    assert rel_parts[2].endswith("__sequence")
+    assert paths["acquisition_name"] == "m01__20260524_143022__ephys"

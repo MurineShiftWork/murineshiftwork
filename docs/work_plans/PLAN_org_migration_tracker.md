@@ -8,27 +8,26 @@ See `BUILD_SYSTEM_STANDARD.md` for template standard reference.
 
 Last audited: 2026-05-27.
 
+Session log: `implemented/LOG_toolchain_org_2026-05-27.md`
+
 ---
 
 ## Key findings from audit
 
-**Good news — many gaps from earlier plans have already been closed:**
-- All `external/` Python repos (except `one-axis-stage`, `rfid-to-url`) now have
-  `src/` layout, `py.typed`, `VERSION`, and `version_provider = "commitizen"`
-- `msw-flir-bonsai`, `acquisition-namespace`, `msw-open-ephys` are hatchling + src/ compliant
-- `msw-flir-bonsai` and `acquisition-namespace` are fully v0.5.0-compliant including `uv publish` OIDC
-- `murineshiftwork` main has `py.typed`, `CITATION.cff`, `release.yml` with OIDC
-- Remotes now set for `acquisition-namespace`, `msw-flir-bonsai` (ext), `ttl-barcoder`
+**2026-05-27 session — major progress:**
+- All 4 published external packages on `murineshiftwork` org, public, PyPI live, Pages built
+- CI/release/docs workflows fully homogenised to uv gold standard across all 4 repos
+- `gitleaks-action` removed everywhere; pre-commit hook covers secrets scanning
+- Zenodo DOI refs removed; re-registration TODO in ROADMAP
+- `msw-flir-bonsai` new private repo created; push + public release pending
 
 **Remaining gaps:**
-- No repos transferred to org yet (all external/ and murineshiftwork main still under `larsrollik/`)
-- `acquisition-namespace` GitHub repo does not exist yet → **blocks opto PR CI** (PyPI dep missing)
+- PyPI OIDC trusted publishers need updating on pypi.org (manual step — 3 repos)
+- `msw-flir-bonsai`: push local branch; smoke test; make public; first release
 - `rfid-to-url` and `msw-open-ephys` have **wrong remote** → `larsrollik/murineshiftwork`
-- `msw-open-ephys`: package restructured (hatchling, src/, py.typed) but **no CI workflows added** yet
-- `rpi_camera_ensemble`: under org (private, 5 commits ahead of remote), still setuptools + flat layout — build system migration pending
-- Suite repos (`msw-agent`, `msw-namespace`, `msw-tasks`, `msw-server`) have `name = "templatepy"`
-  in pyproject.toml and use setuptools — full overhaul needed
-- `murineshiftwork` main `ci.yml`: gitleaks secrets-scan job needs `pull-requests: write` permission (crashes on PR events)
+- `msw-open-ephys`: package restructured but **no CI workflows added** yet
+- `rpi_camera_ensemble`: under org (private), still setuptools + flat layout — migration pending
+- Suite repos (`msw-agent`, `msw-namespace`, `msw-tasks`, `msw-server`) have `name = "templatepy"` — full overhaul needed
 
 ---
 
@@ -46,15 +45,15 @@ Last audited: 2026-05-27.
 
 | Repo | Current remote | `gh-xfer` | `remote-set` | `copier-user` | `url-sync` | `pypi-oidc` | `zenodo-on` | `zenodo-doi` | `gh-pages` | `branch-prot` |
 |---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **acquisition-namespace** | `murineshiftwork/acquisition-namespace` (repo not created yet) | x | ✓ | x | x | x | x | x | x | x |
-| **msw-flir-bonsai** | `murineshiftwork/msw-flir-bonsai` | x | ✓ | x | x | x | x | x | x | x |
+| **acquisition-namespace** | `murineshiftwork/acquisition-namespace` ✓ | ✓ | ✓ | x | ✓ | ✓ GitHub only | x | ✓ removed | ✓ | x |
+| **msw-flir-bonsai** | `murineshiftwork/msw-flir-bonsai` ✓ (private) | ✓ | ✓ | x | x | x | x | ✓ removed | x | x |
 | **msw-open-ephys** ¹ | ⚠️ wrong → `larsrollik/murineshiftwork` | x | x | x | x | x | x | x | x | x |
 | **one-axis-stage** | `larsrollik/one-axis-stage` | x | x | x | x | x | x | x | x | x |
-| **pypulsepal** | `larsrollik/pypulsepal` | x | x | x | x | x | ⚡ relink | ✓ DOI exists | x | x |
+| **pypulsepal** | `murineshiftwork/pypulsepal` ✓ | ✓ | ✓ | x | ✓ | ✓ GitHub only | ⚡ relink | ✓ removed | ✓ | x |
 | **rfid-to-url** | ⚠️ wrong → `larsrollik/murineshiftwork` | x | x | — | x | x | x | x | x | x |
 | **serial-scale-bench** | `larsrollik/serial-scale-bench` | x | x | x | x | x | x | x | x | x |
 | **serial-scale-hx711** | `larsrollik/serial-scale-hx711` | x | x | x | x | x | x | x | x | x |
-| **ttl-barcoder** | `murineshiftwork/ttl-barcoder` | x | ✓ | x | x | x | x | x | x | x |
+| **ttl-barcoder** | `murineshiftwork/ttl-barcoder` ✓ | ✓ | ✓ | x | ✓ | ✓ GitHub only | x | ✓ removed | ✓ | x |
 
 ¹ `msw-open-ephys` (was `oe-remote`) now lives at `external/msw-open-ephys/` as a standalone git
   repo with hatchling + src/ layout, but has **no `.github/` workflows yet** — `copier apply` needed.
@@ -170,7 +169,7 @@ Last audited: 2026-05-27.
 |---|---|
 | `copier-apply` | `copier update` (if `.copier-answers.yml` exists) or `copier copy gh:larsrollik/templatepy` for fresh apply |
 | `ci-rename` | Rename `CI.yaml` → `ci.yml` (matches templatepy convention) |
-| `ci-gitleaks` | Replace `secret-scanner` step with `gitleaks/gitleaks-action@v2`; add `.gitleaks.toml` if absent |
+| `ci-gitleaks` | ~~Replace `secret-scanner` step with `gitleaks/gitleaks-action@v2`~~ → **Policy changed 2026-05-27**: drop `secrets-scan` job entirely; gitleaks runs via pre-commit in lint job (gitleaks-action requires paid org license). Add `.gitleaks.toml` with `[extend] useDefault = true` if absent. |
 | `pr-review` | Copy `.github/workflows/pr-review.yml` from templatepy v0.5.0 |
 | `py-typed` | `touch src/<pkg>/py.typed`; add to pyproject.toml sdist includes |
 | `src-layout` | Move `<pkg>/` → `src/<pkg>/`; update pyproject.toml package path |
@@ -178,13 +177,10 @@ Last audited: 2026-05-27.
 
 ### Compliance notes
 
-**CI.yaml rename — done (2026-05-25):** All four repos (`murineshiftwork`, `serial-scale-bench`,
-`serial-scale-hx711`, `ttl-barcoder`) renamed to `ci.yml`; `secret-scanner` replaced with
-`gitleaks/gitleaks-action@v2`; `pr-review.yml` added to all five repos including `pypulsepal`.
-
-**murineshiftwork main CI gitleaks bug:** `ci.yml` `secrets-scan` job crashes on PR events with
-`RequestError` — needs `pull-requests: write` in that job's permissions block (or
-`GITLEAKS_ENABLE_COMMENTS: false` env var). Fix before merging opto PR.
+**CI homogenisation — done (2026-05-27):** All 4 published external repos fully rewritten to uv
+gold standard. `gitleaks-action` removed everywhere; pre-commit hook covers secrets scanning.
+Test trigger: `github.event_name == 'pull_request'` only. Docs: `uv sync --extra docs`. Full details:
+`implemented/LOG_toolchain_org_2026-05-27.md`.
 
 **Suite repos — package name bug:** `msw-agent`, `msw-namespace`, `msw-tasks`, `msw-server` still have
 `name = "templatepy"` in `pyproject.toml`. Fix this before any PyPI publish. Also: build backend is

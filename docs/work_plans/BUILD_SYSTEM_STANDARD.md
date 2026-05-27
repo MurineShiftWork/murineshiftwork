@@ -465,6 +465,33 @@ Secrets scanning is handled by the `gitleaks` hook in `.pre-commit-config.yaml`,
 
 ---
 
+## Forgejo Actions support (planned)
+
+All repos must eventually carry both `.github/workflows/` (GitHub Actions) and `.forgejo/workflows/` (Forgejo Actions) so the same code can be built and published from a self-hosted Forgejo instance without depending on GitHub infrastructure.
+
+### Key difference: PyPI publishing
+
+PyPI OIDC trusted publishing does **not** support Forgejo as an issuer — only GitHub Actions, GitLab CI, Google Cloud, and ActiveState are accepted. Forgejo workflows must use a classic PyPI API token instead:
+
+```yaml
+# .forgejo/workflows/release.yml  — publish step
+- name: Publish to PyPI
+  run: uv publish
+  env:
+    UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+```
+
+Store a project-scoped PyPI API token as a Forgejo secret named `PYPI_API_TOKEN`. Remove the `id-token: write` permission from the Forgejo release workflow (not needed without OIDC).
+
+### Migration rules
+
+- Keep `.github/workflows/` unchanged — GitHub Actions stays as-is.
+- `.forgejo/workflows/` is a port: same jobs, same toolchain (`uv`, pre-commit, pytest), only the PyPI publish step changes.
+- All other steps (`cz bump`, `uv build`, `softprops/action-gh-release`) work identically on Forgejo Actions.
+- Apply to all repos in the org: `pypulsepal`, `ttl-barcoder`, `acquisition-namespace`, `msw-flir-bonsai`, and any future packages.
+
+---
+
 ## Tool licensing policy
 
 **Do not use GitHub Actions or CI tools that require a paid license for non-commercial or open-source use.**
