@@ -87,7 +87,6 @@ Read via `load_trial_data(filepath)` (returns a list of dicts, header skipped) o
 | `settings.task` | `dict` | Task settings |
 | `settings.process` | `dict` | Process/run settings (non-legacy sessions) |
 | `settings.stage` | `dict` | Stage settings (if present in session YAML) |
-| `raw` | `DataFrame \| None` | Bpod CSV events; only populated when `load_raw=True` and a CSV is present |
 
 `namespace_version` and `artifact_format` are derived by `detect_session_format()`
 from `murineshiftwork.readers.namespace`. Call that function directly if you need

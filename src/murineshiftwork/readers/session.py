@@ -5,7 +5,6 @@ import yaml
 
 from murineshiftwork.readers.files import (
     read_json,
-    read_pybpod_csv,
     read_settings_py,
     read_trial_df,
 )
@@ -20,7 +19,12 @@ from murineshiftwork.readers.namespace import (
 
 
 def _msw_files_dict(session_dir: Path) -> dict[str, str]:
-    """Return {artifact_key: filepath} for all recognised MSW files in session_dir."""
+    """Return {artifact_key: filepath} for all recognised MSW files in session_dir.
+
+    Non-MSW files (RCE camera files, Open Ephys record nodes, etc.) are present in
+    the directory but are not included here and are not loaded. Those files belong to
+    their respective packages; readers/ only handles the .msw.* file set.
+    """
     files = [str(p) for p in session_dir.glob("*")]
 
     def _key(s: str) -> str:
@@ -40,29 +44,21 @@ def _attach_msw_version(data: dict, is_legacy: bool) -> None:
         data["msw_version"] = "< 1.0.0"
 
 
-def _check_completeness(data: dict, is_legacy: bool, load_raw: bool) -> bool:
-    # raw CSV is only required for legacy sessions; v2+ sessions do not write one
+def _check_completeness(data: dict, is_legacy: bool) -> bool:
     required = ["df", "settings.task"]
-    if is_legacy:
-        pass  # legacy sessions have no settings.process
-    else:
+    if not is_legacy:
         required.append("settings.process")
-
     for k in required:
         if k not in data:
             return False
-    if "df" in data and data["df"] is None:
-        return False
-    return not (load_raw and "raw" in data and data.get("raw") is None)
+    return data.get("df") is not None
 
 
 # ---------------------------------------------------------------------------
 # Per-format readers
 
 
-def _read_session_yaml(
-    session_dir: Path, fmt: dict, load_raw: bool = False, **kwargs
-) -> dict:
+def _read_session_yaml(session_dir: Path, fmt: dict) -> dict:
     """ARTIFACT_FORMAT_SESSION_YAML — single .msw.session.yaml (v2+)."""
     files = _msw_files_dict(session_dir)
     data: dict = {}
@@ -80,39 +76,21 @@ def _read_session_yaml(
         elif Path(k).name.endswith("pkl") or Path(k).name.endswith("jsonl"):
             data["df"] = read_trial_df(filepath=v)
         elif Path(k).name.endswith("csv"):
-            data["raw"] = None
-            if load_raw:
-                data["raw"] = read_pybpod_csv(
-                    filepath=v,
-                    clean_events=kwargs.get("clean_port4_events", True),
-                    return_trial_structure_only=kwargs.get(
-                        "return_trial_structure_only", True
-                    ),
-                )
+            pass  # pybpod CSV present but not loaded; use ttl_barcoder for alignment
         else:
             logging.debug("session_yaml reader: unrecognised key %r — %s", k, v)
 
     return data
 
 
-def _read_separate_json(
-    session_dir: Path, fmt: dict, load_raw: bool = False, **kwargs
-) -> dict:
+def _read_separate_json(session_dir: Path, fmt: dict) -> dict:
     """ARTIFACT_FORMAT_SEPARATE_JSON — separate .msw.settings.*.json + df file."""
     files = _msw_files_dict(session_dir)
     data: dict = {}
 
     for k, v in files.items():
         if Path(k).name.endswith("csv"):
-            data["raw"] = None
-            if load_raw:
-                data["raw"] = read_pybpod_csv(
-                    filepath=v,
-                    clean_events=kwargs.get("clean_port4_events", True),
-                    return_trial_structure_only=kwargs.get(
-                        "return_trial_structure_only", True
-                    ),
-                )
+            pass  # pybpod CSV present but not loaded
         elif Path(k).name.endswith("pkl") or Path(k).name.endswith("jsonl"):
             data["df"] = read_trial_df(filepath=v)
         elif k.endswith("json") and ".msw." in v:
@@ -130,9 +108,7 @@ def _read_separate_json(
     return data
 
 
-def _read_legacy(
-    session_dir: Path, fmt: dict, load_raw: bool = False, **kwargs
-) -> dict:
+def _read_legacy(session_dir: Path, fmt: dict) -> dict:
     """ARTIFACT_FORMAT_LEGACY — task_settings.py + switching.pkl/csv."""
     # legacy sessions: scan all files (no .msw. segment present)
     all_files = [str(p) for p in session_dir.glob("*")]
@@ -146,15 +122,7 @@ def _read_legacy(
             if "df" not in data:
                 data["df"] = read_trial_df(filepath=v)
         elif name.endswith(".csv") or name.endswith("switching.csv"):
-            data["raw"] = None
-            if load_raw:
-                data["raw"] = read_pybpod_csv(
-                    filepath=v,
-                    clean_events=kwargs.get("clean_port4_events", True),
-                    return_trial_structure_only=kwargs.get(
-                        "return_trial_structure_only", True
-                    ),
-                )
+            pass  # pybpod CSV not loaded; was legacy raw Bpod event log
 
     return data
 
@@ -170,15 +138,10 @@ _READER_DISPATCH = {
 # Public API
 
 
-def read_session_data(
-    session_dir=None,
-    load_raw=False,
-    clean_port4_events=True,
-    return_trial_structure_only=True,
-):
+def read_session_data(session_dir=None):
     """Read session data, dispatching to the correct reader based on artifact format.
 
-    Returns a dict with keys: df, raw, settings.task, settings.process, settings.stage,
+    Returns a dict with keys: df, settings.task, settings.process, settings.stage,
     msw_version, namespace_version, artifact_format, is_legacy_session,
     is_complete_session, is_ephys_session.
     """
@@ -195,19 +158,13 @@ def read_session_data(
             f"No reader registered for artifact format {artifact_format!r}"
         )
 
-    data = reader(
-        session_dir,
-        fmt,
-        load_raw=load_raw,
-        clean_port4_events=clean_port4_events,
-        return_trial_structure_only=return_trial_structure_only,
-    )
+    data = reader(session_dir, fmt)
 
     data["namespace_version"] = fmt["namespace_version"]
     data["artifact_format"] = artifact_format
     data["is_legacy_session"] = is_legacy
     _attach_msw_version(data, is_legacy)
-    data["is_complete_session"] = _check_completeness(data, is_legacy, load_raw)
+    data["is_complete_session"] = _check_completeness(data, is_legacy)
     data["is_ephys_session"] = "settings.ephys" in data
 
     return data
@@ -234,5 +191,5 @@ if __name__ == "__main__":
         / "tab_npx_007_m1114799_LL_chrOn__20210928_120653__probabilistic_switching"
     )
 
-    session_data = read_session_data(session_dir=TEST_FILE_1, load_raw=False)
+    session_data = read_session_data(session_dir=TEST_FILE_1)
     print(" ")

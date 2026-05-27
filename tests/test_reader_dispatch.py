@@ -55,33 +55,32 @@ def test_dispatch_routes_to_legacy_reader():
 
 def test_completeness_passes_with_all_keys():
     data = {"df": object(), "settings.task": {}, "settings.process": {}}
-    assert _check_completeness(data, is_legacy=False, load_raw=False)
+    assert _check_completeness(data, is_legacy=False)
 
 
 def test_completeness_fails_missing_df():
     data = {"settings.task": {}, "settings.process": {}}
-    assert not _check_completeness(data, is_legacy=False, load_raw=False)
+    assert not _check_completeness(data, is_legacy=False)
 
 
 def test_completeness_fails_none_df():
     data = {"df": None, "settings.task": {}, "settings.process": {}}
-    assert not _check_completeness(data, is_legacy=False, load_raw=False)
+    assert not _check_completeness(data, is_legacy=False)
 
 
 def test_completeness_fails_missing_settings_process_nonlegacy():
     data = {"df": object(), "settings.task": {}}
-    assert not _check_completeness(data, is_legacy=False, load_raw=False)
+    assert not _check_completeness(data, is_legacy=False)
 
 
 def test_completeness_passes_without_settings_process_for_legacy():
     data = {"df": object(), "settings.task": {}}
-    assert _check_completeness(data, is_legacy=True, load_raw=False)
+    assert _check_completeness(data, is_legacy=True)
 
 
-def test_completeness_raw_not_required_for_v2():
-    # v2+ sessions don't write raw CSV — absence of "raw" must not fail completeness
+def test_completeness_passes_without_raw_key():
     data = {"df": object(), "settings.task": {}, "settings.process": {}}
-    assert _check_completeness(data, is_legacy=False, load_raw=False)
+    assert _check_completeness(data, is_legacy=False)
 
 
 # ---------------------------------------------------------------------------

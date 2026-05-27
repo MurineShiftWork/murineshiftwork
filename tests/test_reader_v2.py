@@ -30,15 +30,15 @@ class TestReaderV2Format:
         assert FIXTURE_V2.exists(), "fixture_v2 directory must exist"
 
     def test_session_loads_without_error(self):
-        data = read_session_data(session_dir=FIXTURE_V2, load_raw=False)
+        data = read_session_data(session_dir=FIXTURE_V2)
         assert isinstance(data, dict)
 
     def test_msw_version_correct(self):
-        data = read_session_data(session_dir=FIXTURE_V2, load_raw=False)
+        data = read_session_data(session_dir=FIXTURE_V2)
         assert data["msw_version"] == "1.0.0"
 
     def test_settings_process_populated(self):
-        data = read_session_data(session_dir=FIXTURE_V2, load_raw=False)
+        data = read_session_data(session_dir=FIXTURE_V2)
         proc = data.get("settings.process")
         assert proc is not None, "settings.process must be present for v2 format"
         assert proc["task"] == "probabilistic_switching_fixedsubjects"
@@ -46,37 +46,32 @@ class TestReaderV2Format:
         assert proc["setup"] == "setup-1"
 
     def test_settings_task_populated(self):
-        data = read_session_data(session_dir=FIXTURE_V2, load_raw=False)
+        data = read_session_data(session_dir=FIXTURE_V2)
         ts = data.get("settings.task")
         assert ts is not None, "settings.task must be present for v2 format"
         assert "reward_amount_ul" in ts or "HARDWARE_VALVES_FOR_WATER" in ts
 
     def test_settings_stage_populated(self):
         """This fixture includes stage config from the real session."""
-        data = read_session_data(session_dir=FIXTURE_V2, load_raw=False)
+        data = read_session_data(session_dir=FIXTURE_V2)
         assert "settings.stage" in data, "stage section must be present in this fixture"
 
     def test_df_loaded(self):
-        data = read_session_data(session_dir=FIXTURE_V2, load_raw=False)
+        data = read_session_data(session_dir=FIXTURE_V2)
         df = data.get("df")
         assert df is not None, "trial dataframe must be loaded"
         assert len(df) >= 1
 
-    def test_raw_key_present_but_none_when_not_loaded(self):
-        data = read_session_data(session_dir=FIXTURE_V2, load_raw=False)
-        assert "raw" in data, "raw key must be present (CSV file exists)"
-        assert data["raw"] is None, "raw must be None when load_raw=False"
-
     def test_is_complete_session(self):
-        data = read_session_data(session_dir=FIXTURE_V2, load_raw=False)
+        data = read_session_data(session_dir=FIXTURE_V2)
         assert data["is_complete_session"] is True
 
     def test_is_not_legacy_session(self):
-        data = read_session_data(session_dir=FIXTURE_V2, load_raw=False)
+        data = read_session_data(session_dir=FIXTURE_V2)
         assert data["is_legacy_session"] is False
 
     def test_not_ephys_session(self):
-        data = read_session_data(session_dir=FIXTURE_V2, load_raw=False)
+        data = read_session_data(session_dir=FIXTURE_V2)
         assert data["is_ephys_session"] is False
 
 
@@ -90,18 +85,18 @@ class TestReaderBackwardCompatJSONL:
     FIXTURE_JSONL = Path(__file__).parent / "data" / "fixture_jsonl"
 
     def test_jsonl_session_loads(self):
-        data = read_session_data(session_dir=self.FIXTURE_JSONL, load_raw=False)
+        data = read_session_data(session_dir=self.FIXTURE_JSONL)
         assert isinstance(data, dict)
 
     def test_jsonl_has_settings_process(self):
-        data = read_session_data(session_dir=self.FIXTURE_JSONL, load_raw=False)
+        data = read_session_data(session_dir=self.FIXTURE_JSONL)
         assert "settings.process" in data
 
     def test_jsonl_has_settings_task(self):
-        data = read_session_data(session_dir=self.FIXTURE_JSONL, load_raw=False)
+        data = read_session_data(session_dir=self.FIXTURE_JSONL)
         assert "settings.task" in data
 
     def test_jsonl_msw_version_set(self):
-        data = read_session_data(session_dir=self.FIXTURE_JSONL, load_raw=False)
+        data = read_session_data(session_dir=self.FIXTURE_JSONL)
         assert "msw_version" in data
         assert data["msw_version"] not in ("legacy",)

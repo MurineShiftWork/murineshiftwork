@@ -45,6 +45,13 @@ Design details live in memory files or separate docs — not here.
 - [ ] **URGENT FIX — `test_reader_real_sessions.py:97`: stale version assertion** — `assert d["msw_version"] == "1.0.0"` is wrong; first JSONL session now resolves to `_test_subject` (alphabetical sort) which has current version. Change to `assert d["msw_version"] not in ("legacy", "< 1.0.0")`.
 - [ ] **Camera + device declaration pattern** — `SetupConfig.cameras` → `list[CameraConfig]` with `name:` field; `required_cameras: [rce]` in task.yaml (parallel to `required_devices`); framework creates + tears down camera client in execute.py; tasks receive `args_dict["cameras"]` instead of calling `make_camera_client()` themselves; `MultiCameraClient` fan-out wrapper for mixed-backend rigs. See `docs/work_plans/PLAN_camera_device_pattern.md`. Scale + stage same pattern, lower priority.
 - [ ] **Hardware handle + camera audit** — full sweep of all task protocols to verify: (1) correct use of injected hardware handles via `devices` dict (no fallback-to-new-connection in tasks that receive a handle); (2) camera handoff from config/hardware manager instead of ad-hoc constructor calls; (3) `serial_port_pulsepal`, `serial_port_scale` not opened twice. Superseded in part by camera+device pattern work above. Pending test protocols: `_test_scale_hx_connect` and `_test_scale_bench_connect` (same pattern as `_test_pulsepal_connect`).
+- [ ] **Add RCE session validation to `rpi_camera_ensemble`** — MSW `readers.validate` now handles only MSW file completeness; camera/TTL validation belongs in rce. Implement in rce:
+  ```python
+  # rpi_camera_ensemble/validate.py
+  def validate_session(session_dir, msw_df=None, msw_version=None) -> RceValidationResult:
+      """Check conductor + agent files present; run barcode or legacy TTL alignment."""
+  ```
+  Callers run `msw.validate_session(dir)` then optionally `rce.validate_session(dir, msw_df=...)` for camera checks. Requires rce package to be public first (see [[project_github_org_migration]]).
 - [ ] **Opto — hardware verification** — test optotagging and airpuff TTL barcodes on acquisition machine; alignment script for `sequence_automated` piecewise per-trial TTL edges not written
 - [ ] **Opto — PR TODOs** — review opto PR notes for outstanding test items before closing branch
 - [x] **msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py` · 2026-05-25
