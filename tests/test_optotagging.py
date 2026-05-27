@@ -299,7 +299,7 @@ def test_record_save_writes_jsonl(tmp_path):
         protocol="power_ramp",
     )
     rec.save()
-    out = tmp_path / f"{_basename}_power_ramp.msw.df.jsonl"
+    out = tmp_path / f"{_basename}__power_ramp" / f"{_basename}_power_ramp.msw.df.jsonl"
     assert out.exists()
     lines = [json.loads(line) for line in out.read_text().splitlines() if line.strip()]
     trial_lines = [ln for ln in lines if "info" in ln]
@@ -389,7 +389,7 @@ def test_start_protocol_video_path():
     with patch("time.sleep"):
         t._start_protocol_video(conductor, "proto_40hz")
     conductor.initialize_acquisition.assert_called_once_with(
-        acquisition_path=f"{rel}/proto_40hz",
+        acquisition_path=f"{rel}/sess_001__proto_40hz",
         acquisition_name="sess_001_proto_40hz",
     )
 

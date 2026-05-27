@@ -26,8 +26,8 @@ class OptoTaggingRecord:
     def __init__(self, session_file_path: str, protocol_name: str):
         session_dir = Path(session_file_path).parent
         session_basename = Path(session_file_path).name
-        self.protocol_name = protocol_name
-        proto_dir = session_dir / protocol_name
+        self.proto_dir_name = f"{session_basename}__{protocol_name}"
+        proto_dir = session_dir / self.proto_dir_name
         proto_dir.mkdir(exist_ok=True)
         self.proto_base = str(proto_dir / f"{session_basename}_{protocol_name}")
         self.trial_data: list = []
@@ -62,7 +62,7 @@ class OptoTaggingRecord:
     @property
     def filename(self) -> str:
         return (
-            f"{self.protocol_name}/{Path(msw_file(self.proto_base, 'df.jsonl')).name}"
+            f"{self.proto_dir_name}/{Path(msw_file(self.proto_base, 'df.jsonl')).name}"
         )
 
 
@@ -84,7 +84,8 @@ class Task(TaskRunner):
         session_basename = session_paths["session_basename"]
         conductor.initialize_acquisition(
             acquisition_path=str(
-                Path(session_paths["session_folder_relative"]) / protocol_name
+                Path(session_paths["session_folder_relative"])
+                / f"{session_basename}__{protocol_name}"
             ),
             acquisition_name=f"{session_basename}_{protocol_name}",
         )
@@ -95,16 +96,18 @@ class Task(TaskRunner):
     def _reopen_bpod(
         self, session_folder: str, protocol_name: str, session_basename: str
     ) -> None:
-        """Close the current Bpod session and open a fresh one for the next protocol."""
+        """Close the current Bpod session and open a fresh one scoped to this protocol."""
         serial_port = self.input_kwargs.get("serial_port_bpod", "")
+        proto_dir = Path(session_folder) / f"{session_basename}__{protocol_name}"
+        proto_dir.mkdir(exist_ok=True)
         self.bpod.close_safely()
         self.bpod = BpodFactory(
             serial_port=serial_port,
-            workspace_path=session_folder,
+            workspace_path=str(proto_dir),
             session_name=f"{session_basename}_{protocol_name}.msw",
         )
         self.bpod.open()
-        logging.debug("Bpod reopened for protocol %r", protocol_name)
+        logging.debug("Bpod reopened for protocol %r → %s", protocol_name, proto_dir)
 
     def run(self) -> None:
         task_settings = self.input_kwargs["settings.task.patched"]
@@ -136,9 +139,7 @@ class Task(TaskRunner):
             if not self.continue_task:
                 break
 
-            # Reopen Bpod for each protocol after the first (new Bpod session boundary)
-            if proto_idx > 0:
-                self._reopen_bpod(session_folder, protocol_name, session_basename)
+            self._reopen_bpod(session_folder, protocol_name, session_basename)
 
             record = OptoTaggingRecord(session_file_path, protocol_name)
 
