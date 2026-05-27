@@ -29,7 +29,7 @@ class BpodFactory:
         serial_port="/dev/ttyACM0",
         workspace_path=None,
         session_name=None,
-        connect_retries=3,
+        connect_retries=5,
         retry_delay_s=2.0,
         **kwargs,
     ):
