@@ -4,12 +4,11 @@ import time
 from multiprocessing import Queue
 
 from pybpodapi.state_machine import StateMachine
-from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
 from murineshiftwork.logic.barcode import (
+    BarcodeTTL,
     barcode_config_from_settings,
     inject_barcode_states,
-    prepare_barcode,
 )
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 from murineshiftwork.tasks.sequence.online_plotting import OnlinePlottingForSeq
@@ -55,7 +54,7 @@ class Task(TaskRunner):
             barcode_wall_time = None
 
             if trial_index == 0 and not task_settings["testing"]:
-                barcode_value, barcode_wall_time, timing_seq = prepare_barcode(barcoder)
+                barcode_value, barcode_wall_time, timing_seq = barcoder.prepare()
                 sma = StateMachine(bpod=self.bpod)
                 sma = inject_barcode_states(
                     sma, timing_seq, bnc_channel, last_state_name="exit"
@@ -168,7 +167,7 @@ class Task(TaskRunner):
         # before Bpod closes. Provides a second alignment anchor for clock-drift correction.
         if not task_settings["testing"]:
             try:
-                bv_end, bwt_end, timing_seq_end = prepare_barcode(barcoder)
+                bv_end, bwt_end, timing_seq_end = barcoder.prepare()
                 sma_end = StateMachine(bpod=self.bpod)
                 sma_end = inject_barcode_states(
                     sma_end,

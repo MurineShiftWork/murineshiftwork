@@ -15,7 +15,6 @@ from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
     barcode_config_from_settings,
     inject_barcode_states,
-    prepare_barcode,
 )
 from murineshiftwork.logic.calibration import CalibrationDataSound
 from murineshiftwork.logic.io import save_trial_data
@@ -854,7 +853,7 @@ class TaskControl:
             raise ValueError
 
         if self.barcoder is not None:
-            bv, bwt, timing_seq = prepare_barcode(self.barcoder)
+            bv, bwt, timing_seq = self.barcoder.prepare()
             self._pending_barcode_value = bv
             self._pending_barcode_wall_time = bwt
             iti_post_barcode = max(0.05, iti_this_trial - self.barcode_duration_s)

@@ -118,6 +118,7 @@ def generate_session_paths(
         "session_basename": session_basename,
         "session_basename_behav": session_basename + ".msw",
         "session_folder": str(session_folder),
+        "session_folder_relative": str(session_folder.relative_to(basepath)),
         "session_file_path": str(session_folder / session_basename),
     }
 

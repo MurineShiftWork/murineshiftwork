@@ -1,15 +1,15 @@
 import logging
 import time
+from pathlib import Path
 
 from pybpodapi.protocol import Bpod, StateMachine
-from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
 from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
+    BarcodeTTL,
     barcode_config_from_settings,
     inject_barcode_states,
-    prepare_barcode,
 )
 from murineshiftwork.logic.config.ini import deep_merge
 from murineshiftwork.logic.io import save_trial_data
@@ -47,7 +47,7 @@ class OptoTaggingRecord:
         self.trial_data.append(trial_data)
 
     def save(self):
-        save_trial_data(self.trial_data, str(msw_file(self.out_path, "jsonl")))
+        save_trial_data(self.trial_data, str(msw_file(self.out_path, "df.jsonl")))
         logging.debug(f"Saved session data to {self.out_path}")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -69,15 +69,12 @@ class Task(TaskRunner):
         network round-trip, so the first barcode fires after frame TTL pulses have started.
         """
         session_paths = self.input_kwargs["session_paths"]
-        _session = session_paths["session_basename"]
-        _subject = session_paths["subject"]
-        _is_child = self.input_kwargs.get("_is_child_session_to")
-        # When running as a child of an ephys acquisition, place protocols directly
-        # under the acquisition name — not under a session subdir.
-        base = f"{_subject}/{_is_child}" if _is_child else f"{_subject}/{_session}"
+        session_basename = session_paths["session_basename"]
         conductor.initialize_acquisition(
-            acquisition_path=f"{base}/{protocol_name}",
-            acquisition_name=f"{_session}_{protocol_name}",
+            acquisition_path=str(
+                Path(session_paths["session_folder_relative"]) / protocol_name
+            ),
+            acquisition_name=f"{session_basename}_{protocol_name}",
         )
         conductor.start_preview()
         conductor.start_recording()
@@ -131,7 +128,7 @@ class Task(TaskRunner):
             trial_index = 0
             try:
                 # Protocol-start barcode
-                bv, bwt, timing_seq = prepare_barcode(barcoder)
+                bv, bwt, timing_seq = barcoder.prepare()
                 sma = StateMachine(bpod=self.bpod)
                 sma = inject_barcode_states(
                     sma,
@@ -220,7 +217,7 @@ class Task(TaskRunner):
 
                 # Protocol-end barcode
                 try:
-                    bv_end, bwt_end, timing_seq_end = prepare_barcode(barcoder)
+                    bv_end, bwt_end, timing_seq_end = barcoder.prepare()
                     sma_end = StateMachine(bpod=self.bpod)
                     sma_end = inject_barcode_states(
                         sma_end,

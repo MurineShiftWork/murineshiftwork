@@ -31,10 +31,12 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from ttl_barcoder.core.barcode_ttl import BarcodeTTL
-from ttl_barcoder.core.config import BarcodeConfig
 
-from murineshiftwork.logic.barcode import BARCODE_FIRST_STATE_NAME
+from murineshiftwork.logic.barcode import (
+    BARCODE_FIRST_STATE_NAME,
+    BarcodeConfig,
+    BarcodeTTL,
+)
 from murineshiftwork.readers.session import read_session_data
 
 # Minimum gap between edges that signals a new barcode (seconds).

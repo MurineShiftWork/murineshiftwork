@@ -32,12 +32,11 @@ import time
 from multiprocessing import Queue
 
 from pybpodapi.state_machine import StateMachine
-from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
 from murineshiftwork.logic.barcode import (
+    BarcodeTTL,
     barcode_config_from_settings,
     inject_barcode_states,
-    prepare_barcode,
 )
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 from murineshiftwork.tasks.probabilistic_switching_fixedsubjects.online_plotting import (
@@ -79,7 +78,7 @@ class Task(TaskRunner):
             barcode_wall_time = None
 
             if trial_index == 0 and not task_settings["testing"]:
-                barcode_value, barcode_wall_time, timing_seq = prepare_barcode(barcoder)
+                barcode_value, barcode_wall_time, timing_seq = barcoder.prepare()
                 sma = StateMachine(bpod=self.bpod)
                 sma = inject_barcode_states(
                     sma, timing_seq, bnc_channel, last_state_name="exit"
@@ -133,7 +132,7 @@ class Task(TaskRunner):
 
         if not task_settings["testing"]:
             try:
-                bv_end, bwt_end, timing_seq_end = prepare_barcode(barcoder)
+                bv_end, bwt_end, timing_seq_end = barcoder.prepare()
                 sma_end = StateMachine(bpod=self.bpod)
                 sma_end = inject_barcode_states(
                     sma_end,
@@ -167,6 +166,7 @@ def run_task(**args_dict):
     args_dict.update({"auto_start": False})
 
     setup_name = args_dict.get("metadata", {}).get("setup", "")
+    _subject = args_dict.get("subject", "")
 
     # Camera setup — optional: fall back to no-video if config missing or agents unreachable
     from murineshiftwork.hardware.camera.client import make_camera_client
@@ -190,17 +190,10 @@ def run_task(**args_dict):
 
     try:
         with TaskProcess(**args_dict) as tp:
-            _session = tp.session_paths["session_basename"]
-            _subject = tp.session_paths["subject"]
-
             if conductor is not None:
                 conductor.initialize_acquisition(
-                    acquisition_path=(
-                        f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
-                        if args_dict["is_child_session_to"] is not None
-                        else f"{_subject}/{_session}"
-                    ),
-                    acquisition_name=_session,
+                    acquisition_path=tp.session_paths["session_folder_relative"],
+                    acquisition_name=tp.session_paths["session_basename"],
                 )
                 conductor.start_preview()
                 conductor.start_recording()
