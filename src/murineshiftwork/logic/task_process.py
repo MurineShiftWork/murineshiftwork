@@ -472,5 +472,7 @@ class TaskProcess:
     def stop_task(self):
         if self.task_runner is not None and self.is_running():
             self.task_runner.continue_task = False
-            self.bpod.stop_trial()
+            if self.bpod is not None:
+                with contextlib.suppress(Exception):
+                    self.bpod.stop_trial()
             logging.debug("Task stopped.")
