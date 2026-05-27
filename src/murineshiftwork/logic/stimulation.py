@@ -58,7 +58,6 @@ class Stimulation:
         "trigger_channels_for_stimulation": [0],
         "channels_stimulation": [2],
         "channels_ttl_copy": [],
-        "channel_trigger_clock": [],
         "reset_stimulation_after_sec": 0.005,
         "laser_power": None,  # None → fixed 5V; 0.0–1.0 → Doric LDFL5 power mapping
     }
@@ -82,7 +81,6 @@ class Stimulation:
 
         self.channels_stimulation = self.channels_inactive.copy()
         self.channels_ttl_copy = self.channels_inactive.copy()
-        self.channels_trigger_clock = self.channels_inactive.copy()
 
         for channel in self.in_dict["channels_stimulation"]:
             self._set_channel_params(
@@ -107,18 +105,6 @@ class Stimulation:
                 laser_power=None,  # always 5V
             )
             self.channels_ttl_copy[int(channel)] = 1
-
-        for channel in self.in_dict["channel_trigger_clock"]:
-            # 5V TTL copy synced to same trigger as stimulation (e.g. for camera/ephys clock).
-            self._set_channel_params(
-                channel=int(channel),
-                phase1Duration=round(float(self.in_dict["pulse_duration"]), 3),
-                pulse_frequency=round(float(self.in_dict["pulse_frequency"]), 3),
-                pulseTrainDuration=float(self.in_dict["pulse_train_duration"]),
-                pulseTrainDelay=round(float(self.in_dict["pulse_train_delay"]), 3),
-                laser_power=None,  # always 5V
-            )
-            self.channels_trigger_clock[int(channel)] = 1
 
     @staticmethod
     def _validate_power(laser_power: float) -> None:
@@ -241,7 +227,7 @@ class Stimulation:
         _gated = self.in_dict.get("trigger_mode") == "gated"
         _cont_state = 1 if (_gated or self.in_dict.get("continuous")) else 0
         for channel in list(self.in_dict["channels_stimulation"]) + list(
-            self.in_dict["channel_trigger_clock"]
+            self.in_dict["channels_ttl_copy"]
         ):
             self.pulsePal.set_continuous(channel=int(channel), state=_cont_state)
 
@@ -252,9 +238,7 @@ class Stimulation:
             link_param = f"linkTriggerChannel{trigger_ch + 1}"
             for out_ch in range(self.pulsePal.nr_output_channels):
                 active = bool(
-                    self.channels_stimulation[out_ch]
-                    or self.channels_ttl_copy[out_ch]
-                    or self.channels_trigger_clock[out_ch]
+                    self.channels_stimulation[out_ch] or self.channels_ttl_copy[out_ch]
                 )
                 try:
                     self.pulsePal.program_one_param(

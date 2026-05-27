@@ -107,7 +107,7 @@ def test_stimulation_in_dict_isolated_between_instances():
 def test_stimulation_channel_params_built_for_stim_channel():
     stim = Stimulation(
         port="/dev/null",
-        in_dict={"channels_stimulation": [2], "channel_trigger_clock": [3]},
+        in_dict={"channels_stimulation": [2], "channels_ttl_copy": [3]},
     )
     assert 2 in stim._channel_params
     assert 3 in stim._channel_params
