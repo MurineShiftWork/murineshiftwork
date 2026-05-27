@@ -137,6 +137,8 @@ def _check_msw_completeness(session_dir: Path, result: ValidationResult) -> dict
 def _check_rce_completeness(session_dir: Path, result: ValidationResult) -> Any | None:
     try:
         from rpi_camera_ensemble.io.session import RCESession
+
+        RCESession.model_rebuild(_types_namespace={"Path": Path})
     except ImportError:
         result._warn("rpi_camera_ensemble not importable — skipping RCE checks")
         return None

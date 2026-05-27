@@ -24,11 +24,12 @@ class OptoTaggingRecord:
     """Per-subprotocol trial record. Each protocol writes its own JSONL file."""
 
     def __init__(self, session_file_path: str, protocol_name: str):
-        # proto_base is the stem used for this protocol's JSONL:
-        # {session_dir}/{session_basename}_{protocol_name}
         session_dir = Path(session_file_path).parent
         session_basename = Path(session_file_path).name
-        self.proto_base = str(session_dir / f"{session_basename}_{protocol_name}")
+        self.protocol_name = protocol_name
+        proto_dir = session_dir / protocol_name
+        proto_dir.mkdir(exist_ok=True)
+        self.proto_base = str(proto_dir / f"{session_basename}_{protocol_name}")
         self.trial_data: list = []
 
     def update(
@@ -60,7 +61,9 @@ class OptoTaggingRecord:
 
     @property
     def filename(self) -> str:
-        return Path(msw_file(self.proto_base, "df.jsonl")).name
+        return (
+            f"{self.protocol_name}/{Path(msw_file(self.proto_base, 'df.jsonl')).name}"
+        )
 
 
 class Task(TaskRunner):

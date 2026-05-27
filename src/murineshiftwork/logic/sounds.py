@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-import sounddevice as sd
 
 sample_rate_dict = {
     "sysdefault": 44100,
@@ -22,6 +21,8 @@ def get_sample_rate(target_device_name=None):
 
 
 def find_sound_device(target_device=None, return_first=True):
+    import sounddevice as sd
+
     devices = sd.query_devices()
 
     found_device = [(i, d) for i, d in enumerate(devices) if target_device in d["name"]]
@@ -127,6 +128,8 @@ class StereoSound:
 
     def setup_sound_device(self):
         """Set sounddevice global defaults for this device."""
+        import sounddevice as sd
+
         sd.default.device = self._device_id
         sd.default.latency = self.default_sound_latency
         sd.default.channels = self.default_sound_channels
@@ -239,6 +242,8 @@ class StereoSound:
         return new_sound_key
 
     def execute_sound_handler(self, sound_code=None, raise_errors=False):
+        import sounddevice as sd
+
         if sound_code in self.sounds:
             logging.debug(f"Playing sound # {sound_code}.")
             sd.play(

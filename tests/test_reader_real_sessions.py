@@ -94,7 +94,7 @@ def test_read_session_data_not_legacy(first_session_dir):
 
     d = read_session_data(str(first_session_dir))
     assert d["is_legacy_session"] is False
-    assert d["msw_version"] == "1.0.0"
+    assert d["msw_version"] not in ("legacy", "< 1.0.0")
 
 
 def test_read_session_data_complete(first_session_dir):

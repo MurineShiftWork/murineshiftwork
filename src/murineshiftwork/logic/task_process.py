@@ -206,6 +206,7 @@ class TaskProcess:
         self.task_in = str(task)
         self.input_kwargs = kwargs
         self.input_kwargs["subject"] = self.subject
+        self.input_kwargs["serial_port_bpod"] = self.serial_port
         if devices:
             self.input_kwargs["devices"] = devices
         self.debug = self.input_kwargs.get("debug", False)
