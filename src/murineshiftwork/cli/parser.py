@@ -88,8 +88,19 @@ def _add_session_args(parser):
         help=(
             "Attach to a parent acquisition session and nest this session inside it. "
             "TYPE is the backend name (currently: openephys). "
-            "URL overrides the address from ~/.murineshiftwork/msw_machine.yaml. "
+            "URL overrides the address from the setup YAML or machine config. "
             "Examples: --parent openephys  |  --parent openephys:172.24.42.168"
+        ),
+    )
+    g.add_argument(
+        "--force-standalone",
+        dest="force_standalone",
+        action="store_true",
+        default=False,
+        help=(
+            "When --parent is also set and the parent cannot be reached, continue "
+            "as a standalone session instead of aborting. Without this flag, a "
+            "--parent attach failure is a hard error."
         ),
     )
 

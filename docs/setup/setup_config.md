@@ -2,17 +2,29 @@
 
 Each physical setup has a YAML file at `msw_configs/setups/<setup_name>.yaml`.
 
-## Minimal skeleton
+## Skeleton
+
+`msw setup create <name>` generates a complete skeleton showing all fields with their
+defaults.  Edit `port_by_path` and add devices as needed.
 
 ```yaml
-name: setup-1
+name: my-setup
 devices:
   bpod:
     type: bpod
-    port_by_path: pci-0000:00:14.0-usb-0:10.1:1.0
+    port_by_path: FILL_IN_PORT_BY_PATH
+cameras: null
 calibrations:
   bpod_valve: {}
+  stale_days: 180
+hooks:
+  pre_task: []
+  post_task: []
 ```
+
+`cameras: null` means no cameras configured.  See the Camera config section below.
+`stale_days` and empty hook lists are the defaults — omit them if you don't need to
+override.
 
 ## Full example
 
@@ -132,11 +144,26 @@ This enables `--parent openephys` without passing the address on the CLI each ti
 `msw run` reads the URL from the active setup config, so setups without OE simply omit the field.
 Machine config (`~/.murineshiftwork/msw_machine.yaml`) is checked as a fallback for backward compatibility.
 
+## Hooks
+
+Pre- and post-task hooks are Python classes registered by dotted import path.
+See `docs/concepts/hook_system.md` for the full API.
+
+```yaml
+hooks:
+  pre_task:
+    - mypackage.hooks.FetchSubjectLevel
+  post_task:
+    - mypackage.hooks.UploadResults
+```
+
+Empty lists (the default) mean no hooks run.
+
 ## Valve calibration behaviour
 
 `msw run` injects `valve_s_for_ul` into task settings from the setup's `bpod_valve` calibration.
 
-- **Staleness warning**: if a valve's `updated` timestamp is more than 180 days old, a warning is logged at session start. The calibration is still used — recalibrate before data collection.
+- **Staleness warning**: if a valve's `updated` timestamp is older than `stale_days` (default 180), a warning is logged at session start. The calibration is still used — recalibrate before data collection. Override per-setup with `calibrations.stale_days: 90`.
 - **Missing calibration (empty `bpod_valve: {}`)**: a built-in fallback is used and a loud warning printed. This is for debug runs only — never use for experiments.
 - **Partial calibration (some ports missing)**: hard error at session start. If you have any valve entries, all ports used by the task must be present.
 

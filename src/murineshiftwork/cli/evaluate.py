@@ -406,9 +406,20 @@ def _resolve_parent_session(args_dict: dict) -> None:
 
     if info is None:
         reason = getattr(client, "fail_reason", "") or "unknown reason"
+        if not args_dict.get("force_standalone"):
+            raise RuntimeError(
+                f"\n\n  --parent {session_type} @ {url} could not attach:\n"
+                f"  {reason}\n\n"
+                f"  Session paths cannot be determined — aborting to avoid saving\n"
+                f"  data to the wrong location.\n\n"
+                f"  Options:\n"
+                f"    1. Fix the issue (run oe_remote session first, check URL)\n"
+                f"    2. Use --child-of ACQUISITION_NAME to set the path manually\n"
+                f"    3. Pass --force-standalone to intentionally run without a parent\n"
+            )
         logging.warning(
-            "Parent session (%s @ %s) could not attach (%s) — "
-            "running as standalone; use --child-of ACQUISITION_NAME to set path manually",
+            "--force-standalone: parent session (%s @ %s) unavailable (%s) — "
+            "saving to standalone path",
             session_type,
             url,
             reason,

@@ -21,6 +21,7 @@ Repos live under `/mnt/maindata/code/murineshiftwork/` (main) and `external/` (s
 | `msw-ui` | Low | Vue 3 / TypeScript — Python build standard does not apply. Lacks a `release.yml` / tag bump workflow. |
 | `msw_open_ephys` | Low | Near-empty stub (only `oe_remote.egg-info` + a bare source tree, no `pyproject.toml`). Not yet a proper Python package. |
 | `remote_python_manager` | Low | Not a Python package — only `__pycache__` present. Effectively empty. |
+| `rpi_camera_ensemble` | High | setuptools backend, flat layout (no src/), no CI workflows, no GitHub repo; toolchain + pre-commit done 2026-05-26, commits pending |
 | `provision_rpi` | N/A | Ansible playbook + RPi scripts — no Python build standard applies. |
 
 ---
@@ -341,6 +342,47 @@ No audit possible — no content to evaluate. Either populate with actual code o
 
 ---
 
+## rpi_camera_ensemble
+
+### Status
+Partially upgraded 2026-05-26. Python package at `external/provision_rpi/rpi_camera_ensemble/` — its own git repo, not the `provision_rpi` Ansible repo. Pre-commit toolchain is now fully passing; build backend and layout not yet migrated.
+
+### What is confirmed present (as of 2026-05-26)
+
+- `.pre-commit-config.yaml`: pre-commit-hooks v6.0.0, ruff v0.15.14, mypy v2.1.0, commitizen v4.16.2, gitleaks v8.30.0 — all 10 hooks green.
+- `pyproject.toml`: ruff B+N rules; per-file-ignores for FastAPI routers (B008), TTL/picamera2 hardware modules (B904/B905/N803); mypy v2.1.0 compatible with hardware-module `ignore_errors` overrides; commitizen conventional commits config.
+- `VERSION` at project root (`0.0.0`).
+- `rpi_camera_ensemble/py.typed` present.
+- `CITATION.cff` with author, ORCID, license.
+- `mkdocs.yml` updated with `site_url` and `repo_url` pointing to `murineshiftwork/rpi_camera_ensemble`.
+- `MANIFEST.in` includes `VERSION` and `CITATION.cff`.
+
+### Gaps (checklist items missing)
+
+- **Build backend: setuptools.** Must migrate to `hatchling` + `hatch-vcs`.
+- **Flat layout — no `src/` directory.** Deferred: many hardware test scripts and relative imports make this non-trivial. Do after GitHub repo is created.
+- **No CI workflows.** No `CI.yaml`, `release.yml`, or `docs.yml`.
+- **No GitHub repo yet.** Listed as manual action in ROADMAP.
+- **`[project.urls]` missing `Documentation` key.**
+- **No separate `docs` extra.** `mkdocs-material` not yet in optional-dependencies.
+- **Commits not yet made.** Three commits planned as of 2026-05-26:
+  1. Pre-existing staged fixes (io/models.py `allow_pickle`, ttl/mixin.py empty-events fix, etc.)
+  2. Toolchain files (.pre-commit-config.yaml, pyproject.toml, mkdocs.yml, MANIFEST.in, CITATION.cff, VERSION, py.typed)
+  3. Pre-commit code fixes (B904/B905/B007/TC003/N805/E501 across source; test path cleanup → tests/data/)
+
+### Manual steps (GitHub — cannot do locally)
+
+- Create GitHub repo `murineshiftwork/rpi_camera_ensemble` and push.
+- Set up PyPI Trusted Publisher once `release.yml` is added.
+- Enable Zenodo webhook once `CITATION.cff` is pushed to GitHub.
+- Enable GitHub Pages once `docs.yml` is added.
+
+### Notes
+
+`rpi_camera_ensemble` is the conductor+agent orchestration package for RPi camera rigs — used daily on the acquisition machine. The flat → `src/` layout migration is the main deferred item; it requires verifying the package is still importable on deployed RPis after restructure. Recommend doing it in one session using `copier update` or a manual restructure, after the GitHub repo is created and initial commits are in.
+
+---
+
 ## provision_rpi
 
 ### Status
@@ -359,8 +401,9 @@ Python build standard does not apply. No checklist items are relevant. The only 
 | 1 | `pypulsepal` | Almost done; small delta, high usage, already has Zenodo DOI |
 | 2 | `murineshiftwork` (main) | Highest impact; blocks PyPI publish and GitHub Pages for primary package |
 | 3 | `serial_scale_bench` + `serial_scale_hx711` | Near-identical gap set; upgrade together |
-| 4 | `msw-flir-bonsai` | Actively used; flat layout migration is the blocker |
-| 5 | `msw_open_ephys` | Needs reconstitution; priority depends on active use |
-| 6 | `one-axis-stage` + `rfid-to-url` | Full toolchain replacement; lower urgency |
-| 7 | `msw-ui` | Add `release.yml` only; minimal effort |
+| 4 | `rpi_camera_ensemble` | Toolchain done; needs GitHub repo, then setuptools→hatchling + src/ layout |
+| 5 | `msw-flir-bonsai` | Actively used; flat layout migration is the blocker |
+| 6 | `msw_open_ephys` | Needs reconstitution; priority depends on active use |
+| 7 | `one-axis-stage` + `rfid-to-url` | Full toolchain replacement; lower urgency |
+| 8 | `msw-ui` | Add `release.yml` only; minimal effort |
 | — | `remote_python_manager`, `provision_rpi` | Not Python packages; out of scope |

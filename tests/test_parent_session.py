@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -97,13 +97,15 @@ def _make_gui_mock(
     status="IDLE", base_text="", prepend_text="", append_text="", record_nodes=None
 ):
     gui = MagicMock()
-    gui.status.return_value = status
-    gui.get_recording_info.return_value = {
-        "base_text": base_text,
-        "prepend_text": prepend_text,
-        "append_text": append_text,
-        "record_nodes": record_nodes or [],
-    }
+    type(gui).status = PropertyMock(return_value=status)
+    type(gui).recording = PropertyMock(
+        return_value={
+            "base_text": base_text,
+            "prepend_text": prepend_text,
+            "append_text": append_text,
+            "record_nodes": record_nodes or [],
+        }
+    )
     return gui
 
 
@@ -116,25 +118,20 @@ def test_attach_import_error(mock_attach):
 
 def test_attach_returns_none_on_connection_error():
     gui = MagicMock()
-    gui.status.side_effect = Exception("Connection refused")
+    type(gui).status = PropertyMock(side_effect=Exception("Connection refused"))
     client = OpenEphysParentSession(url="127.0.0.1")
     result = _attach_with_mock_gui(client, gui)
     assert result is None
 
 
 def _attach_with_mock_gui(client, gui_mock):
-    """Helper: patch OpenEphysHTTPServer ctor to return gui_mock, call attach()."""
-    with (
-        patch(
-            "open_ephys.control.OpenEphysHTTPServer", return_value=gui_mock, create=True
-        ),
-        patch.dict(
-            "sys.modules",
-            {
-                "open_ephys": MagicMock(),
-                "open_ephys.control": MagicMock(OpenEphysHTTPServer=lambda h: gui_mock),
-            },
-        ),
+    """Helper: patch OEController ctor to return gui_mock, call attach()."""
+    with patch.dict(
+        "sys.modules",
+        {
+            "msw_open_ephys": MagicMock(),
+            "msw_open_ephys.controller": MagicMock(OEController=lambda ip: gui_mock),
+        },
     ):
         return client.attach()
 

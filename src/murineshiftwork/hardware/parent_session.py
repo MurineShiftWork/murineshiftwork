@@ -24,7 +24,10 @@ Adding a new backend:
 Backends
 --------
 open_ephys : OpenEphysParentSession — reads acquisition path from OE GUI REST API.
-             Requires open-ephys-python-tools.  Lazy import.
+             Requires msw-open-ephys (OEController).  Lazy import.
+             Previously used open-ephys-python-tools (OpenEphysHTTPServer), replaced
+             because that package has unstable API and does not reliably return
+             base_text in get_recording_info() across versions.
 """
 
 from __future__ import annotations
@@ -108,16 +111,18 @@ class OpenEphysParentSession:
 
     def attach(self) -> ParentSessionInfo | None:
         try:
-            from open_ephys.control import OpenEphysHTTPServer
+            from msw_open_ephys.controller import OEController
         except ImportError:
-            self.fail_reason = "open-ephys-python-tools not installed"
+            self.fail_reason = (
+                "msw-open-ephys not installed (pip install msw-open-ephys)"
+            )
             log.error("OpenEphys: %s", self.fail_reason)
             return None
 
-        gui = OpenEphysHTTPServer(self._host)
+        gui = OEController(ip=self._host)
 
         try:
-            status = gui.status()
+            status = gui.status
         except Exception as exc:
             self.fail_reason = f"cannot reach {self._host} — {exc}"
             log.error("OpenEphys: %s", self.fail_reason)
@@ -129,25 +134,28 @@ class OpenEphysParentSession:
             return None
 
         try:
-            rec = gui.get_recording_info()
+            rec = gui.recording
         except Exception as exc:
-            self.fail_reason = f"get_recording_info failed — {exc}"
+            self.fail_reason = f"GET /api/recording failed — {exc}"
             log.error("OpenEphys: %s", self.fail_reason)
             return None
 
+        log.debug("OpenEphys /api/recording: %s", rec)
+
         base = (rec.get("base_text") or "").strip("/")
         parts = [p for p in base.split("/") if p]
+        log.debug("OpenEphys base_text=%r → parts=%s", base, parts)
 
         if len(parts) < 2:
-            self.fail_reason = f"base_text {base!r} has <2 parts — oe_remote may not have been called yet"
+            self.fail_reason = (
+                f"base_text {base!r} has <2 parts — "
+                f"run oe_remote session before msw run, or use --child-of ACQUISITION_NAME"
+            )
             log.error("OpenEphys: %s", self.fail_reason)
             return None
 
         # Validate the acquisition segment through the namespace builder so the
-        # format is checked against the MSW session spec and the name is
-        # reconstructed from parsed fields (normalises any whitespace variation).
-        # parts[1] is the acquisition name in parent mode, the session name in
-        # standalone mode — either way it must be a valid MSW session string.
+        # format is checked against the MSW session spec.
         acq_segment = parts[1]
         try:
             from murineshiftwork.namespace.paths import get_msw_builder
@@ -159,11 +167,9 @@ class OpenEphysParentSession:
         except ValueError:
             self.fail_reason = (
                 f"base_text segment {acq_segment!r} is not a valid MSW session name "
-                f"(full base_text: {base!r})"
+                f"(full base_text: {base!r}) — check oe_remote naming convention"
             )
-            log.error(
-                "OpenEphys: %s — check oe_remote naming convention", self.fail_reason
-            )
+            log.error("OpenEphys: %s", self.fail_reason)
             return None
 
         record_nodes = rec.get("record_nodes") or []

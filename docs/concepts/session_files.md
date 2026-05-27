@@ -2,27 +2,33 @@
 
 ## File types produced per session
 
-| File | Description |
+| File suffix | Description |
 |---|---|
-| `*.msw.csv` | Bpod event log — one row per event |
-| `*.msw.session.yaml` | Session metadata — format version, task, subject, settings |
-| `*.msw.log` | Text log for this session |
+| `*.msw.session.yaml` | Session metadata — format version, task, subject, process settings, task settings |
+| `*.msw.df.jsonl` | Trial dataframe — one JSON object per line; first line is a version header |
+| `*.msw.log` | Session-scoped text log (`INFO`-level output) |
+| `*.msw.plot_spec.yaml` | Plot specification for the online monitor |
+| `*.msw.csv` | Raw Bpod event log — present only in legacy sessions (pre-v2) |
 
 ## `.msw.session.yaml` structure
 
 ```yaml
 msw_format_version: 2
 process:
-  msw_version: "1.2.3"
+  msw_version: "2.1.1"
   git_commit: "abc1234"
   session_uuid: "d4e5f6..."
   task: sequence
   subject: mouse001
-  setup: setup_a
-  session_basename: mouse001_2025-08-07_001
+  setup: setup-npx2
+  serial_port: /dev/ttyACM5
+  out_path: /mnt/maindata/data
+  session_folder: /mnt/maindata/data/mouse001/mouse001__20260526_100149_223167__sequence
+  session_basename: mouse001__20260526_100149_223167__sequence
+  datetime: "20260526_100149_223167"
 task_settings:
-  REWARD_VOLUME_UL: 3.0
-  start_level: 5
+  start_level: 1
+  stop_trials: 500
   ...
 # present only when --parent openephys was passed
 parent_acquisition:
@@ -35,11 +41,79 @@ parent_acquisition:
 ```
 
 `parent_acquisition` is written at session start when `--parent openephys` is
-passed.  It captures exactly which Open Ephys acquisition this behavioural
+passed. It captures exactly which Open Ephys acquisition this behavioural
 session was nested inside, linking back to the ephys data directory.
 `acquisition_name` matches the second path component of `base_text` as set by
 `oe_remote`, which is also the folder name used as `is_child_session_to` in
 `generate_session_paths()`.
+
+## `.msw.df.jsonl` structure
+
+First line is a version header:
+
+```json
+{"_msw_version": "1.0"}
+```
+
+Subsequent lines are one trial dict each:
+
+```json
+{"Bpod start timestamp": 0.0, "Trial start timestamp": 1.23, "trial_index": 0, "outcome": "correct", ...}
+```
+
+Read via `load_trial_data(filepath)` (returns a list of dicts, header skipped) or
+`read_trial_df(filepath)` (returns a pandas DataFrame).
+
+## `read_session_data()` return keys
+
+`from murineshiftwork.readers.session import read_session_data`
+
+| Key | Type | Description |
+|---|---|---|
+| `namespace_version` | `str \| None` | Basename datetime format: `"v1"` (microsecond precision) or `None` if unparseable |
+| `artifact_format` | `str` | Storage format: `"session_yaml"`, `"separate_json"`, or `"legacy"` |
+| `msw_version` | `str` | Version string from `process.msw_version`; `"legacy"` or `"< 1.0.0"` for older sessions |
+| `is_legacy_session` | `bool` | True if session uses pre-`.msw.` file naming |
+| `is_complete_session` | `bool` | True if all required files are present and loaded |
+| `is_ephys_session` | `bool` | True if `settings.ephys` key is present |
+| `df` | `DataFrame \| None` | Trial dataframe from `.msw.df.jsonl` or `.msw.df.pkl` |
+| `settings.task` | `dict` | Task settings |
+| `settings.process` | `dict` | Process/run settings (non-legacy sessions) |
+| `settings.stage` | `dict` | Stage settings (if present in session YAML) |
+| `raw` | `DataFrame \| None` | Bpod CSV events; only populated when `load_raw=True` and a CSV is present |
+
+`namespace_version` and `artifact_format` are derived by `detect_session_format()`
+from `murineshiftwork.readers.namespace`. Call that function directly if you need
+format info without loading session data.
+
+### Artifact format constants
+
+| Constant | Value | Description |
+|---|---|---|
+| `ARTIFACT_FORMAT_SESSION_YAML` | `"session_yaml"` | Single `.msw.session.yaml` (v2+, current) |
+| `ARTIFACT_FORMAT_SEPARATE_JSON` | `"separate_json"` | Two separate `.msw.settings.process.json` + `.msw.settings.task.json` files |
+| `ARTIFACT_FORMAT_LEGACY` | `"legacy"` | `task_settings.py` + `switching.pkl/csv` |
+
+## Data directory layout
+
+Current format (v2+):
+
+```
+<data_dir>/
+└── <subject>/
+    └── <subject>__<datetime>__<task>/
+        ├── <basename>.msw.session.yaml
+        ├── <basename>.msw.df.jsonl
+        ├── <basename>.msw.log
+        └── <basename>.msw.plot_spec.yaml
+```
+
+Legacy format (pre-v2) additionally contained:
+
+```
+        ├── <basename>.msw.csv
+        └── <basename>.msw.settings.process.json   # or .msw.settings.task.json
+```
 
 ## Sequence task — subject state fields
 
@@ -57,18 +131,6 @@ At session end, `save_session_end()` writes a summary to the per-subject state s
 | `session_liquid_ul` | Total water dispensed (µL) |
 
 The exit log line reads: `"Session end — 'mouse001': level 12, trials 312 (289 task, 23 no-response)"`.
-
-## Data directory layout
-
-```
-<data_dir>/
-└── <subject>/
-    └── <date>/
-        └── <session_basename>/
-            ├── <session_basename>.msw.csv
-            ├── <session_basename>.msw.session.yaml
-            └── <session_basename>.msw.log
-```
 
 ## Central log file
 

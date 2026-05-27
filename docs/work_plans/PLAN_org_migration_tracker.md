@@ -6,28 +6,29 @@ re-linking, and remaining templatepy compliance gaps across all repos.
 See `PLAN_github_org_migration.md` for step-by-step HOW-TO.
 See `BUILD_SYSTEM_STANDARD.md` for template standard reference.
 
-Last audited: 2026-05-25.
+Last audited: 2026-05-27.
 
 ---
 
 ## Key findings from audit
 
 **Good news — many gaps from earlier plans have already been closed:**
-- All `external/` Python repos (except `oe-remote`, `one-axis-stage`, `rfid-to-url`) now have
+- All `external/` Python repos (except `one-axis-stage`, `rfid-to-url`) now have
   `src/` layout, `py.typed`, `VERSION`, and `version_provider = "commitizen"`
+- `msw-flir-bonsai`, `acquisition-namespace`, `msw-open-ephys` are hatchling + src/ compliant
 - `msw-flir-bonsai` and `acquisition-namespace` are fully v0.5.0-compliant including `uv publish` OIDC
 - `murineshiftwork` main has `py.typed`, `CITATION.cff`, `release.yml` with OIDC
+- Remotes now set for `acquisition-namespace`, `msw-flir-bonsai` (ext), `ttl-barcoder`
 
 **Remaining gaps:**
-- No repos transferred to org yet
-- 4 repos use `CI.yaml` (capital) + old `secret-scanner` → rename + replace with `gitleaks`
-- 5 repos missing `pr-review.yml`
-- `rfid-to-url` and `msw_open_ephys` have **wrong remote** → `larsrollik/murineshiftwork`
-- 3 repos have no remote set locally: `acquisition-namespace`, `msw-flir-bonsai` (ext), `ttl-barcoder`
-- `oe-remote` (`external/msw_open_ephys/oe_remote/`) is **not a standalone git repo** — nested
-  subdirectory, legacy setuptools + setup.cfg, needs extraction and full overhaul
+- No repos transferred to org yet (all external/ and murineshiftwork main still under `larsrollik/`)
+- `acquisition-namespace` GitHub repo does not exist yet → **blocks opto PR CI** (PyPI dep missing)
+- `rfid-to-url` and `msw-open-ephys` have **wrong remote** → `larsrollik/murineshiftwork`
+- `msw-open-ephys`: package restructured (hatchling, src/, py.typed) but **no CI workflows added** yet
+- `rpi_camera_ensemble`: under org (private, 5 commits ahead of remote), still setuptools + flat layout — build system migration pending
 - Suite repos (`msw-agent`, `msw-namespace`, `msw-tasks`, `msw-server`) have `name = "templatepy"`
   in pyproject.toml and use setuptools — full overhaul needed
+- `murineshiftwork` main `ci.yml`: gitleaks secrets-scan job needs `pull-requests: write` permission (crashes on PR events)
 
 ---
 
@@ -45,19 +46,28 @@ Last audited: 2026-05-25.
 
 | Repo | Current remote | `gh-xfer` | `remote-set` | `copier-user` | `url-sync` | `pypi-oidc` | `zenodo-on` | `zenodo-doi` | `gh-pages` | `branch-prot` |
 |---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **acquisition-namespace** | none (not set) | x | x | x | x | x | x | x | x | x |
-| **msw-flir-bonsai** | none (not set) | x | x | x | x | x | x | x | x | x |
-| **oe-remote** ¹ | ⚠️ wrong → `larsrollik/murineshiftwork` | x | x | — | x | x | x | x | x | x |
+| **acquisition-namespace** | `murineshiftwork/acquisition-namespace` (repo not created yet) | x | ✓ | x | x | x | x | x | x | x |
+| **msw-flir-bonsai** | `murineshiftwork/msw-flir-bonsai` | x | ✓ | x | x | x | x | x | x | x |
+| **msw-open-ephys** ¹ | ⚠️ wrong → `larsrollik/murineshiftwork` | x | x | x | x | x | x | x | x | x |
 | **one-axis-stage** | `larsrollik/one-axis-stage` | x | x | x | x | x | x | x | x | x |
 | **pypulsepal** | `larsrollik/pypulsepal` | x | x | x | x | x | ⚡ relink | ✓ DOI exists | x | x |
 | **rfid-to-url** | ⚠️ wrong → `larsrollik/murineshiftwork` | x | x | — | x | x | x | x | x | x |
 | **serial-scale-bench** | `larsrollik/serial-scale-bench` | x | x | x | x | x | x | x | x | x |
 | **serial-scale-hx711** | `larsrollik/serial-scale-hx711` | x | x | x | x | x | x | x | x | x |
-| **ttl-barcoder** | none (not set) | x | x | x | x | x | x | x | x | x |
+| **ttl-barcoder** | `murineshiftwork/ttl-barcoder` | x | ✓ | x | x | x | x | x | x | x |
 
-¹ `oe-remote` lives at `external/msw_open_ephys/oe_remote/` — not yet a standalone git repo.
-  Must be extracted first (see compliance table notes). `copier-user` not applicable until it has
-  its own `.copier-answers.yml`.
+¹ `msw-open-ephys` (was `oe-remote`) now lives at `external/msw-open-ephys/` as a standalone git
+  repo with hatchling + src/ layout, but has **no `.github/` workflows yet** — `copier apply` needed.
+  Remote still wrong (points to main murineshiftwork repo).
+
+### standalone / not in external/
+
+| Repo | Current remote | `gh-xfer` | `remote-set` | `copier-user` | `url-sync` | `pypi-oidc` | `zenodo-on` | `zenodo-doi` | `gh-pages` | `branch-prot` |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **rpi_camera_ensemble** ² | `MurineShiftWork/rpi_camera_ensemble` (private, 5 commits ahead) | ✓ | ✓ | x | x | x | x | x | x | x |
+
+² `rpi_camera_ensemble` at `/home/tars/code/rpi_camera_ensemble/`. GitHub repo exists (private).
+  Still setuptools + flat layout — full build system migration required before first release.
 
 ### murineshiftwork_suite/
 
@@ -89,11 +99,17 @@ Last audited: 2026-05-25.
 
 - **pypulsepal `zenodo-on`**: concept DOI `10.5281/zenodo.6379627` already exists. After transfer,
   log into Zenodo via GitHub OAuth and verify the repo is still toggled ON under the org.
-- **Wrong remotes**: `rfid-to-url` and `msw_open_ephys` (parent of `oe-remote`) both point to
+- **Wrong remotes**: `rfid-to-url` and `msw-open-ephys` both still point to
   `larsrollik/murineshiftwork` — fix these before doing anything else with those repos.
-- **No-remote repos**: `acquisition-namespace`, `msw-flir-bonsai` (ext), `ttl-barcoder` have no
-  remote set locally. Check whether the GitHub repos exist under `larsrollik/` first; if yes,
-  transfer then `git remote add`; if not, create under the org directly.
+- **acquisition-namespace GitHub repo not yet created**: remote URL is set locally to
+  `murineshiftwork/acquisition-namespace` but the GitHub repo does not exist. Create it directly
+  under the org (no transfer needed), push, tag v1.0.0, set up PyPI OIDC → publish to PyPI.
+  **Urgent: this blocks the opto PR CI.**
+- **msw-open-ephys needs CI workflows**: package code is done (hatchling, src/, py.typed, VERSION)
+  but `.github/` was never added. Run `copier apply` to add ci.yml + release.yml; fix remote first.
+- **rpi_camera_ensemble**: repo is already private under org; 5 commits not yet pushed; needs full
+  build system migration (setuptools → hatchling, src/ layout, VERSION) before first public release.
+  Do after opto PR merges.
 - **PyPI OIDC**: `pypa/gh-action-pypi-publish` (used by main, serial-scale-*, pypulsepal,
   ttl-barcoder) supports OIDC via `id-token: write` — no workflow change needed after transfer,
   just re-register the publisher under the org name on pypi.org.
@@ -118,16 +134,23 @@ Last audited: 2026-05-25.
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **acquisition-namespace** | ✓ v0.5.0 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
 | **msw-flir-bonsai** | ✓ v0.5.0 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
-| **oe-remote** ² | fresh apply | x | x | x | x | x | x | high |
+| **msw-open-ephys** ³ | fresh apply (no .copier-answers.yml) | x (no CI at all) | x | x | ✓ | ✓ | ✓ | high |
 | **one-axis-stage** | fresh apply | x | x | x | x | x | x | medium |
-| **pypulsepal** | update v0.4.2→v0.5.0 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
+| **pypulsepal** | update v0.4.1→v0.5.0 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
 | **rfid-to-url** | fresh apply | x | x | x | x | x | x | medium |
 | **serial-scale-bench** | update | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
 | **serial-scale-hx711** | update | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
 | **ttl-barcoder** | update | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | done |
 
-² `oe-remote` must be extracted from `external/msw_open_ephys/oe_remote/` into its own git repo
-  before copier can be applied.
+### standalone / not in external/
+
+| Repo | `copier-apply` | `ci-rename` | `ci-gitleaks` | `pr-review` | `py-typed` | `src-layout` | `version-cz` | Priority |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **rpi_camera_ensemble** | fresh apply | x (old 3-file set) | x | x | x | x (flat) | x | high |
+
+³ `msw-open-ephys` package was restructured (hatchling, src/, py.typed, VERSION=3.0.0) but no
+  `.github/` directory was added. `copier apply` will add ci.yml, release.yml, docs.yml, pr-review.yml
+  in one shot. Needs correct remote set first.
 
 ### murineshiftwork_suite/
 
@@ -159,16 +182,26 @@ Last audited: 2026-05-25.
 `serial-scale-hx711`, `ttl-barcoder`) renamed to `ci.yml`; `secret-scanner` replaced with
 `gitleaks/gitleaks-action@v2`; `pr-review.yml` added to all five repos including `pypulsepal`.
 
+**murineshiftwork main CI gitleaks bug:** `ci.yml` `secrets-scan` job crashes on PR events with
+`RequestError` — needs `pull-requests: write` in that job's permissions block (or
+`GITLEAKS_ENABLE_COMMENTS: false` env var). Fix before merging opto PR.
+
 **Suite repos — package name bug:** `msw-agent`, `msw-namespace`, `msw-tasks`, `msw-server` still have
 `name = "templatepy"` in `pyproject.toml`. Fix this before any PyPI publish. Also: build backend is
 `setuptools>=42` throughout — migrate to `hatchling + hatch-vcs` as part of `copier` fresh apply.
 
-**oe-remote extraction steps:**
-1. Create a new git repo at `external/msw_open_ephys/oe_remote/` (or move source out to `external/oe-remote/`)
-2. Run `copier copy gh:larsrollik/templatepy` into the new repo root
-3. Copy source from `oe_remote/oe_remote/` → `src/oe_remote/`
-4. Migrate `setup.cfg` → `pyproject.toml` (name=`oe-remote`, entry point=`oe-remote`)
-5. Create GitHub repo under `MurineShiftWork/oe-remote`; push; set up PyPI OIDC + Zenodo
+**msw-open-ephys CI steps** (package code done, workflows not added yet):
+1. Fix remote: `git remote set-url origin git@github.com:MurineShiftWork/msw-open-ephys.git`
+2. Create GitHub repo `MurineShiftWork/msw-open-ephys`; push
+3. Run `copier copy gh:larsrollik/templatepy` (fresh apply — no .copier-answers.yml) — review diff,
+   keep existing pyproject.toml/src, adopt ci.yml + release.yml + docs.yml + pr-review.yml
+4. Set up PyPI OIDC (project name `msw-open-ephys`); enable Zenodo webhook
+
+**rpi_camera_ensemble build system migration** (do after opto PR merges):
+1. Push 5 pending commits: `git push -u origin main`
+2. Apply copier template: adopt ci.yml + release.yml; migrate pyproject.toml to hatchling + hatch-vcs
+3. Move `rpi_camera_ensemble/` → `src/rpi_camera_ensemble/`; add `py.typed`; add `VERSION` file
+4. Make repo public; set up PyPI OIDC + Zenodo; enable branch protection
 
 ---
 
@@ -179,7 +212,7 @@ Last audited: 2026-05-25.
 git -C /mnt/maindata/code/murineshiftwork \
     remote set-url origin git@github.com:MurineShiftWork/murineshiftwork.git
 
-# external/ — repos with existing remotes
+# external/ — repos with existing remotes (set after transfer)
 git -C /mnt/maindata/code/murineshiftwork/external/pypulsepal \
     remote set-url origin git@github.com:MurineShiftWork/pypulsepal.git
 git -C /mnt/maindata/code/murineshiftwork/external/serial_scale_bench \
@@ -189,17 +222,14 @@ git -C /mnt/maindata/code/murineshiftwork/external/serial_scale_hx711 \
 git -C /mnt/maindata/code/murineshiftwork/external/one-axis-stage \
     remote set-url origin git@github.com:MurineShiftWork/one-axis-stage.git
 
-# external/ — wrong remotes (fix immediately)
+# external/ — wrong remotes (fix immediately, before any push)
 git -C /mnt/maindata/code/murineshiftwork/external/rfid-to-url \
     remote set-url origin git@github.com:MurineShiftWork/rfid-to-url.git
-git -C /mnt/maindata/code/murineshiftwork/external/msw_open_ephys \
+git -C /mnt/maindata/code/murineshiftwork/external/msw-open-ephys \
     remote set-url origin git@github.com:MurineShiftWork/msw-open-ephys.git
 
-# external/ — no remote set (add after verifying/creating GitHub repo)
-git -C /mnt/maindata/code/murineshiftwork/external/ttl_barcoder \
-    remote add origin git@github.com:MurineShiftWork/ttl-barcoder.git
-git -C /mnt/maindata/code/murineshiftwork/external/acquisition-namespace \
-    remote add origin git@github.com:MurineShiftWork/acquisition-namespace.git
-git -C /mnt/maindata/code/murineshiftwork/external/msw-flir-bonsai \
-    remote add origin git@github.com:MurineShiftWork/msw-flir-bonsai.git
+# external/ — remote already set to org URL (✓), no action needed after creation:
+#   acquisition-namespace → murineshiftwork/acquisition-namespace
+#   msw-flir-bonsai       → murineshiftwork/msw-flir-bonsai
+#   ttl-barcoder          → murineshiftwork/ttl-barcoder
 ```

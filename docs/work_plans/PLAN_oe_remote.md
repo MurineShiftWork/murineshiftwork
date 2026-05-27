@@ -1,15 +1,15 @@
 # Plan: oe-remote extraction, `msw oe` command, `--parent openephys` integration
 
-## Current state
+## Current state (updated 2026-05-26)
 
-`oe-remote` lives as a plain subdirectory in `external/msw_open_ephys/oe_remote/`.
-It is tracked by the `msw_open_ephys` git repo (no `.git` of its own).
+`oe-remote` is now at `external/msw-open-ephys/` — flat `src/msw_open_ephys/` layout,
+hatchling+hatch-vcs, `VERSION`, `.pre-commit-config.yaml`. Steps 1+2 below are done.
 
 It provides a working CLI:
 - `oe-remote status / preview / record / stop`
-- Own `OEController` (direct HTTP to OE GUI port 37497)
+- `OEController` (direct HTTP to OE GUI port 37497)
 - `Session` class: three recording modes — standalone / parent / child
-- Entry point via `setup.cfg` (old setuptools — needs migration)
+- Entry point: `oe-remote = msw_open_ephys:run_cli`
 
 `msw --parent openephys` is already wired in `hardware/parent_session.py` and
 works today if `open-ephys-python-tools` is installed.  The base_text parsing
@@ -28,28 +28,41 @@ path/file operations before the OE integration is tightened.  This covers:
 
 Status: tracked in ROADMAP.
 
-## Step 1 — Extract oe_remote as standalone repo
+---
 
-`oe_remote/` is a plain subdirectory of `msw_open_ephys` (not a sub-repo).
-Extraction is straightforward:
+## Design constraint: `base_text` uses forward slashes only — not OS path separators
 
-```bash
-cp -r external/msw_open_ephys/oe_remote /tmp/oe-remote
-cd /tmp/oe-remote
-git init && git add . && git commit -m "feat: initial extraction from msw_open_ephys"
-git remote add origin https://github.com/MurineShiftWork/oe-remote
-git push -u origin main
+`OEController.set_base_text()` sends a string to the Open Ephys GUI over HTTP.
+Open Ephys interprets this string as a path fragment on the *recording machine*
+(usually Linux), not on the machine running MSW (which may be Windows).
+
+**The separator must always be `/` (forward slash).**
+
+- `oe_remote` sets `base_text` to `"{subject}/{acquisition_name}/{oe_session_name}"`.
+- `OpenEphysParentSession.attach()` in MSW splits the returned `base_text` on `"/"`.
+- A backslash separator would make `split("/")` return the whole string as one token,
+  silently setting `acquisition_name` to the full path instead of just the middle component.
+
+**Consequence:** when extending or testing `parent_session.py`, never use `os.path.join()`
+or `Path` to construct `base_text` — those use `\\` on Windows. Always build explicitly:
+```python
+base_text = f"{subject}/{acquisition_name}/{oe_session_name}"
 ```
 
-Then inside the extracted repo:
+**Namespace builder wiring note:** `extract_level_values("acquisition", base_text)` via
+`NamespaceBuilder` will handle this correctly as long as the namespace spec uses `"/"` as
+the separator token in the `acquisition`-level template. Verify this when wiring namespace
+into `OpenEphysParentSession.attach()` (tracked in ROADMAP urgent fixes).
 
-1. Migrate `setup.cfg` → `pyproject.toml` (hatchling + hatch-vcs,
-   `name = "oe-remote"`, `requires-python = ">=3.10"`)
-2. Remove `setup.py`; keep `setup.cfg` only for `[flake8]` if needed (then drop)
-3. Apply copier template: `.pre-commit-config.yaml`, CI workflows,
-   `.gitleaks.toml`, `CITATION.cff`, `mkdocs.yml`
-4. Fix all URLs (currently point to `larsrollik/murineshiftwork`)
-5. Dependencies: `requests`, `rich`
+## Step 1 — Extract and restructure ✓ DONE 2026-05-26
+
+`external/msw-open-ephys/` is now a flat src-layout package:
+- `src/msw_open_ephys/` (renamed from `oe_remote`)
+- `pyproject.toml` with hatchling+hatch-vcs, `name = "msw-open-ephys"`
+- `.pre-commit-config.yaml`, `VERSION`, `.gitignore`, `README.md`
+- All internal imports updated from `oe_remote.*` → `msw_open_ephys.*`
+
+Still needs: `git init` + push to `MurineShiftWork/msw-open-ephys`; CI workflows; `.gitleaks.toml`; `CITATION.cff`.
 
 ## Step 2 — `msw oe` subcommand
 
@@ -68,8 +81,8 @@ Implementation:
 
 - Add `oe` subparser group in `cli/parser.py`
 - Delegate directly to `oe_remote.cli.commands.cmd_*` functions (no subprocess)
-- Default `--ip` / `--port` read from `msw_machine.yaml` key `open_ephys_url`
-  (already used by `--parent openephys`)
+- Default `--ip` / `--port` read from active setup config `open_ephys_url`
+  (now in `SetupConfig`, falls back to machine config; already used by `--parent openephys`)
 - `oe_remote` becomes an optional dependency:
   ```toml
   [project.optional-dependencies]
@@ -153,12 +166,12 @@ validation to the base_text parser.
 
 ## Sequencing
 
-| # | Task | Effort | Prerequisite |
-|---|---|---|---|
-| 0 | Namespace wiring (paths.py, parent_session.py) | done first | — |
-| 1 | `git init` + extract + push `MurineShiftWork/oe-remote` | ~30 min | GitHub repo exists |
-| 2 | `setup.cfg` → `pyproject.toml`, copier template | ~1 h | step 1 |
-| 3 | Add `get_recording_info()` to `OEController` | 5 min | step 1 |
-| 4 | Replace `open_ephys.control` with `oe_remote.controller` in `parent_session.py` | 10 min | step 3 |
-| 5 | Add `msw oe` subparser + wire to `oe_remote.cli.commands` | ~1 h | step 2 |
-| 6 | `oe = ["oe-remote"]` optional dep + docs | 15 min | step 5 |
+| # | Task | Effort | Prerequisite | Status |
+|---|---|---|---|---|
+| 0 | Namespace wiring (paths.py, parent_session.py) | done first | — | ✓ done |
+| 1 | Extract + restructure to flat `src/msw_open_ephys/` layout | ~1 h | — | ✓ done 2026-05-26 |
+| 2 | `git init` + push `MurineShiftWork/msw-open-ephys`; CI workflows; `.gitleaks.toml`; `CITATION.cff` | ~30 min | GitHub repo exists | TODO |
+| 3 | Add `get_recording_info()` to `OEController` | 5 min | — | TODO |
+| 4 | Replace `open_ephys.control` with `msw_open_ephys.controller` in `parent_session.py` | 10 min | step 3 | TODO |
+| 5 | Add `msw oe` subparser + wire to `msw_open_ephys.cli.commands` | ~1 h | step 2 | TODO |
+| 6 | `oe = ["msw-open-ephys"]` optional dep + docs | 15 min | step 5 | TODO |
