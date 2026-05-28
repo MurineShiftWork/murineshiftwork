@@ -71,88 +71,93 @@ class Task(TaskRunner):
 
         trial_index = 0
         max_trials = task_settings["n_max_trials"]
-        while self.continue_task and trial_index < max_trials:
-            logging.info(f"Trial: {trial_index}")
+        try:
+            while self.continue_task and trial_index < max_trials:
+                logging.info(f"Trial: {trial_index}")
 
-            barcode_value = None
-            barcode_wall_time = None
+                barcode_value = None
+                barcode_wall_time = None
 
-            if trial_index == 0 and not task_settings["testing"]:
-                barcode_value, barcode_wall_time, timing_seq = barcoder.prepare()
-                sma = StateMachine(bpod=self.bpod)
-                sma = inject_barcode_states(
-                    sma, timing_seq, bnc_channel, last_state_name="exit"
-                )
-            else:
-                sma = task_control.draw_next_trial()
+                if trial_index == 0 and not task_settings["testing"]:
+                    barcode_value, barcode_wall_time, timing_seq = barcoder.prepare()
+                    sma = StateMachine(bpod=self.bpod)
+                    sma = inject_barcode_states(
+                        sma, timing_seq, bnc_channel, last_state_name="exit"
+                    )
+                else:
+                    sma = task_control.draw_next_trial()
 
-            try:
-                self.bpod.send_state_machine(sma)
-                has_run = self.bpod.run_state_machine(sma)
-            except TypeError:
-                has_run = False
-            except OSError as exc:
-                logging.error(
-                    f"Bpod serial connection lost on trial #{trial_index}"
-                    f" — USB I/O error: {exc}"
-                )
-                self.input_kwargs["objects"]["kill_queue"].put(True)
-                break
+                try:
+                    self.bpod.send_state_machine(sma)
+                    has_run = self.bpod.run_state_machine(sma)
+                except TypeError:
+                    has_run = False
+                except OSError as exc:
+                    logging.error(
+                        f"Bpod serial connection lost on trial #{trial_index}"
+                        f" — USB I/O error: {exc}"
+                    )
+                    self.input_kwargs["objects"]["kill_queue"].put(True)
+                    break
 
-            if not has_run:
-                logging.warning(
-                    f"No data returned on trial #{trial_index}. Terminating protocol."
-                )
-                trial_index += 1
+                if not has_run:
+                    logging.warning(
+                        f"No data returned on trial #{trial_index}. Terminating protocol."
+                    )
+                    trial_index += 1
 
-            trial_data = self.bpod.session.current_trial.export()
-            task_control.update(
-                trial_index=trial_index,
-                trial_data=trial_data,
-                barcode_value=barcode_value,
-                barcode_wall_time=barcode_wall_time,
-            )
-            if task_settings["show_live_plot"] and trial_index > 0:
-                self.input_kwargs["objects"]["data_queue"].put(
-                    {
-                        "trial_index": task_control.trial_index,
-                        "moving_average": task_control.moving_average.avg,
-                        "block_probability_left": task_control.probability_left,
-                        "block_probability_right": task_control.probability_right,
-                        "choice": task_control.last_choice,
-                        "rewarded": task_control.last_rewarded,
-                        "was_stop": task_control.last_stop,
-                        "punished": task_control.last_punish,
-                        "forced_choice": task_control.last_forced_choice,
-                    }
-                )
-
-            task_control.save()
-            trial_index += 1
-
-        if not task_settings["testing"]:
-            try:
-                bv_end, bwt_end, timing_seq_end = barcoder.prepare()
-                sma_end = StateMachine(bpod=self.bpod)
-                sma_end = inject_barcode_states(
-                    sma_end,
-                    timing_seq_end,
-                    bnc_channel,
-                    last_state_name="exit",
-                )
-                self.bpod.send_state_machine(sma_end)
-                self.bpod.run_state_machine(sma_end)
-                trial_data_end = self.bpod.session.current_trial.export()
+                trial_data = self.bpod.session.current_trial.export()
                 task_control.update(
                     trial_index=trial_index,
-                    trial_data=trial_data_end,
-                    barcode_value=bv_end,
-                    barcode_wall_time=bwt_end,
+                    trial_data=trial_data,
+                    barcode_value=barcode_value,
+                    barcode_wall_time=barcode_wall_time,
                 )
+                if task_settings["show_live_plot"] and trial_index > 0:
+                    self.input_kwargs["objects"]["data_queue"].put(
+                        {
+                            "trial_index": task_control.trial_index,
+                            "moving_average": task_control.moving_average.avg,
+                            "block_probability_left": task_control.probability_left,
+                            "block_probability_right": task_control.probability_right,
+                            "choice": task_control.last_choice,
+                            "rewarded": task_control.last_rewarded,
+                            "was_stop": task_control.last_stop,
+                            "punished": task_control.last_punish,
+                            "forced_choice": task_control.last_forced_choice,
+                        }
+                    )
+
                 task_control.save()
-                logging.info("Session-end barcode sent.")
-            except Exception:
-                logging.warning("Session-end barcode failed to send.", exc_info=True)
+                trial_index += 1
+
+            if not task_settings["testing"]:
+                try:
+                    bv_end, bwt_end, timing_seq_end = barcoder.prepare()
+                    sma_end = StateMachine(bpod=self.bpod)
+                    sma_end = inject_barcode_states(
+                        sma_end,
+                        timing_seq_end,
+                        bnc_channel,
+                        last_state_name="exit",
+                    )
+                    self.bpod.send_state_machine(sma_end)
+                    self.bpod.run_state_machine(sma_end)
+                    trial_data_end = self.bpod.session.current_trial.export()
+                    task_control.update(
+                        trial_index=trial_index,
+                        trial_data=trial_data_end,
+                        barcode_value=bv_end,
+                        barcode_wall_time=bwt_end,
+                    )
+                    task_control.save()
+                    logging.info("Session-end barcode sent.")
+                except Exception:
+                    logging.warning(
+                        "Session-end barcode failed to send.", exc_info=True
+                    )
+        finally:
+            task_control.stop()
 
         self.input_kwargs["objects"]["kill_queue"].put(True)
         logging.debug("Exiting Task.")

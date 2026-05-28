@@ -24,8 +24,8 @@ TTL_IDENTIFIER_SEQUENCES = {
     "optotagging": "LsLsss",
     "periodic_trigger": "Lsssss",
     "periodic_trigger_with_video": "LLssss",
+    "sleep_homecage": "sLsLss",
     "openfield": "sLssss",
-    "homecage_sleep": "sLsLss",
     "tests": "ssssss",
 }
 

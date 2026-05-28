@@ -888,19 +888,10 @@ class TaskControl:
         save_trial_data(self.trial_data, str(self.save_path_data) + ".df.jsonl")
         logging.debug(f"Saved data in {np.round(time.time() - dt, 2)}s.")
 
-    def on_exit(self):
-        self.save()
-
-    def __del__(self):
+    def stop(self):
+        """Move stage to back, stop stage thread, and save data. Call at end of Task.run()."""
         if self._stage_queue is not None:
             self._stage_queue.put("back")
         self._stop_stage_thread()
-        logging.debug("Moved stage BACK on exit")
-        self.save()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._stage_queue is not None:
-            self._stage_queue.put("back")
-        self._stop_stage_thread()
-        logging.debug("Moved stage BACK on exit")
+        logging.debug("Stage moved to 'back' on stop")
         self.save()

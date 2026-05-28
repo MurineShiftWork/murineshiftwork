@@ -63,10 +63,10 @@ Use `msw run -t <partial_name>` — names are matched by partial string. Run `ms
 | `airpuff` | Airpuff conditioning |
 | `optotagging` | Optogenetic tagging — multi-protocol loop (laser + TTL). PulsePal channels use 0-based indexing (`channels_stimulation: [0]` = output channel 1). |
 | `exp_trn_spindle` | Spindle-induction training protocol |
-| `homecage_sleep` | Homecage sleep recording |
+| `sleep_homecage` | Homecage sleep recording with periodic sync barcodes |
 | `openfield` | Open-field tracking |
-| `periodic_trigger` | Periodic TTL trigger |
-| `periodic_trigger_with_video` | Periodic TTL trigger with camera recording |
+| `periodic_trigger` | Periodic TTL trigger with sync barcodes at configurable intervals |
+| `periodic_trigger_with_video` | Periodic TTL trigger + camera recording with sync barcodes |
 
 ### Calibration tasks
 

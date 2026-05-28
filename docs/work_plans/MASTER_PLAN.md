@@ -785,7 +785,7 @@ Full design and sprint breakdown in `docs/work_plans/PLAN_namespace_unification.
 
 ### Other open items (no branch yet)
 
-- [ ] **Blockout timing log** — `airpuff`, `sequence_automated`, `homecage_sleep`, `openfield`, `periodic_trigger`
+- [ ] **Blockout timing log** — `airpuff`, `sequence_automated`, `sleep_homecage`, `openfield`, `periodic_trigger`
 - [ ] **`msw-oe` plugin package** — separate repo, registers `msw oe status/attach` via `msw.cli` entry-point group; plugin contract already live in MSW (see §5)
 - [ ] **Calibration write-back** — `_calibration_liquid_*` tasks write results back to setup YAML
 - [ ] **Session file schema doc** — complete skeleton at `docs/concepts/session_files.md`

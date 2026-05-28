@@ -69,6 +69,15 @@ class OptoTaggingRecord:
 class Task(TaskRunner):
     _bnc_channel_trial_onset = Bpod.OutputChannels.BNC1
     _bnc_channel_stimulation = Bpod.OutputChannels.BNC2
+    _stim: "Stimulation | None" = None
+
+    def stop(self):
+        self.continue_task = False
+        if self._stim is not None:
+            import contextlib
+
+            with contextlib.suppress(Exception):
+                self._stim.off()
 
     def _start_protocol_video(
         self, conductor, protocol_name: str, warmup_s: float = 5.0
@@ -156,6 +165,7 @@ class Task(TaskRunner):
 
             stim = Stimulation(port=serial_port_pulsepal, in_dict=params)
             stim.connect(handle=pulsepal_handle)
+            self._stim = stim
 
             if record_video and conductor is not None:
                 self._start_protocol_video(conductor, protocol_name)
@@ -258,34 +268,40 @@ class Task(TaskRunner):
                     )
                     trial_index += 1
 
-                # Protocol-end barcode
-                try:
-                    bv_end, bwt_end, timing_seq_end = barcoder.prepare()
-                    sma_end = StateMachine(bpod=self.bpod)
-                    sma_end = inject_barcode_states(
-                        sma_end,
-                        timing_seq_end,
-                        self._bnc_channel_trial_onset,
-                        last_state_name="exit",
+                # Protocol-end barcode — skip if session was aborted mid-trial
+                if not self.continue_task:
+                    logging.info(
+                        f"Protocol {protocol_name!r}: aborted, skipping end barcode."
                     )
-                    self.bpod.send_state_machine(sma_end)
-                    self.bpod.run_state_machine(sma_end)
-                    record.update(
-                        trial_index=trial_index,
-                        trial_data=self.bpod.session.current_trial.export(),
-                        barcode_value=bv_end,
-                        barcode_wall_time=bwt_end,
-                        protocol=protocol_name,
-                    )
-                    record.save()
-                    proto_status = "complete"
-                    logging.info(f"Protocol {protocol_name!r}: end barcode sent.")
-                except Exception:
-                    logging.warning(
-                        f"Protocol {protocol_name!r}: end barcode failed.",
-                        exc_info=True,
-                    )
+                else:
+                    try:
+                        bv_end, bwt_end, timing_seq_end = barcoder.prepare()
+                        sma_end = StateMachine(bpod=self.bpod)
+                        sma_end = inject_barcode_states(
+                            sma_end,
+                            timing_seq_end,
+                            self._bnc_channel_trial_onset,
+                            last_state_name="exit",
+                        )
+                        self.bpod.send_state_machine(sma_end)
+                        self.bpod.run_state_machine(sma_end)
+                        record.update(
+                            trial_index=trial_index,
+                            trial_data=self.bpod.session.current_trial.export(),
+                            barcode_value=bv_end,
+                            barcode_wall_time=bwt_end,
+                            protocol=protocol_name,
+                        )
+                        record.save()
+                        proto_status = "complete"
+                        logging.info(f"Protocol {protocol_name!r}: end barcode sent.")
+                    except Exception:
+                        logging.warning(
+                            f"Protocol {protocol_name!r}: end barcode failed.",
+                            exc_info=True,
+                        )
             finally:
+                self._stim = None
                 stim.disconnect()
                 finalize_subprotocol(
                     session_folder,
