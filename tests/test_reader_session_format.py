@@ -25,15 +25,27 @@ from murineshiftwork.readers.namespace import (
 FIXTURES_DIR = Path(__file__).parent / "data"
 
 # (fixture_dir_name, expected_namespace_version, expected_artifact_format)
+# fixture_dir_name may be a sub-path (e.g. "fixture_legacy/session_dir") when the
+# fixture parent dir is not itself the session dir.
 FIXTURE_EXPECTATIONS = [
     ("fixture_pkl", NAMESPACE_LEGACY, ARTIFACT_FORMAT_SEPARATE_JSON),
     ("fixture_jsonl", NAMESPACE_V1, ARTIFACT_FORMAT_SEPARATE_JSON),
     ("fixture_v2", NAMESPACE_V1, ARTIFACT_FORMAT_SESSION_YAML),
     ("fixture_fixedsubjects", NAMESPACE_V1, ARTIFACT_FORMAT_SESSION_YAML),
     ("fixture_sequence", NAMESPACE_V1, ARTIFACT_FORMAT_SESSION_YAML),
+    (
+        "fixture_legacy/subject003__20210426_183409__probabilistic_switching",
+        NAMESPACE_LEGACY,
+        ARTIFACT_FORMAT_LEGACY,
+    ),
+    (
+        "fixture_optotagging/_test_subject__20260527_133053_901389__optotagging",
+        NAMESPACE_V1,
+        ARTIFACT_FORMAT_SESSION_YAML,
+    ),
 ]
 
-_FIXTURE_IDS = [f[0] for f in FIXTURE_EXPECTATIONS]
+_FIXTURE_IDS = [Path(f[0]).name for f in FIXTURE_EXPECTATIONS]
 
 
 def _dir(name: str) -> Path:

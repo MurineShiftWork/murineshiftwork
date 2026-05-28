@@ -9,9 +9,9 @@ from pybpodapi.protocol import Bpod, StateMachine
 
 from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.calibration import CalibrationDataSound
-from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.maths import ExponentialMovingAverage, withprob
 from murineshiftwork.logic.sounds import StereoSound
+from murineshiftwork.readers.io import save_trial_data
 
 
 class TaskControl:

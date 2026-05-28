@@ -232,7 +232,11 @@ A future `msw_format_version: 3` needs a branch inside `_read_session_yaml()` on
 | `tests/data/fixture_v2/` | `NAMESPACE_V1` + `ARTIFACT_FORMAT_SESSION_YAML` |
 | `tests/data/fixture_fixedsubjects/` | `NAMESPACE_V1` + `ARTIFACT_FORMAT_SESSION_YAML` |
 | `tests/data/fixture_sequence/` | `NAMESPACE_V1` + `ARTIFACT_FORMAT_SESSION_YAML` |
-| `tests/data/fixture_legacy/` | **MISSING** — copy from ceph (see §2a) |
+| `src/murineshiftwork/readers/models.py` | `MswSession` pydantic model + `to_dict()` |
+| `src/murineshiftwork/readers/batch.py` | `load_session`, `load_acquisition`, `load_subject` |
+| `tests/test_reader_batch.py` | Batch API tests covering all 4 fixture types |
+| `tests/data/fixture_legacy/` | `NAMESPACE_LEGACY` + `ARTIFACT_FORMAT_LEGACY` (s001 2021 session, subject003) |
+| `tests/data/fixture_optotagging/` | `NAMESPACE_V1` + `ARTIFACT_FORMAT_SESSION_YAML` + `parent_acquisition` + `session_manifest` |
 
 ---
 
@@ -311,18 +315,35 @@ If no `session_manifest.yaml`: current behaviour (load single JSONL/PKL) is unch
 
 ---
 
-## Phase 2 status (2026-05-27)
+## Phase 2 status — ALL DONE (2026-05-27/28)
 
 | Sub-task | Status |
 |---|---|
-| 2a. `fixture_legacy` copy from ceph | **In progress** — user is copying s080–s090 sessions to `tests/data/`; add one line to `FIXTURE_EXPECTATIONS` when done |
+| 2a. `fixture_legacy` copy from ceph | **DONE** · 2026-05-28 — `s001` 2021 session (26KB pkl), sanitized to `subject003__20210426_183409__probabilistic_switching` |
 | 2b. `_READER_DISPATCH` refactor | **DONE** · 2026-05-27 |
-| 2c. `is_complete_session` `"raw"` key bug | **DONE** · 2026-05-27 — `raw` / `load_raw` removed from `session.py` entirely |
+| 2c. `is_complete_session` `"raw"` key bug | **DONE** · 2026-05-27 |
 | 2d. `artifact_format` + `namespace_version` at top level | **DONE** · 2026-05-27 |
+
+Also done in same sprint:
+
+- `fixture_optotagging` added — SESSION_YAML + `parent_acquisition` + `session_manifest.yaml` + multi-protocol JSONL
+- `_infer_session_basename()` fixed to prefer `.msw.session.yaml` over subprotocol JSONL files (multi-protocol basename was wrong before)
 
 ---
 
-## Phase 3 — Full reader interface
+## Phase 3 — Full reader interface (2026-05-28)
+
+### Phase 3 status
+
+| Sub-task | Status |
+|---|---|
+| 3a. `MswSession` pydantic model | **DONE** · 2026-05-28 — `readers/models.py` |
+| 3b. Batch API (`load_session`, `load_acquisition`, `load_subject`) | **DONE** · 2026-05-28 — `readers/batch.py` |
+| 3b-ext. Multi-protocol reader (session_manifest.yaml) | **PENDING** — `_read_session_yaml` extension |
+| 3c. Alignment check script | **PENDING** — needs real OE session on acquisition machine |
+| `find_sessions()` in batch.py | **PENDING** — not yet implemented |
+
+Exported from `readers/__init__.py`: `MswSession`, `load_session`, `load_acquisition`, `load_subject`, `read_session_data`.
 
 ### Package placement decision
 
@@ -489,7 +510,7 @@ No manifest → current single-JSONL behaviour unchanged.
 
 ### 3c. New fixtures needed
 
-Current fixture coverage matrix:
+Current fixture coverage matrix — **all gaps closed** (2026-05-28):
 
 | Fixture | ns_version | artifact_format | task | ephys | multi-protocol | manifest |
 |---|---|---|---|---|---|---|
@@ -498,29 +519,14 @@ Current fixture coverage matrix:
 | fixture_v2 | V1 | SESSION_YAML | fixedsubjects | ✗ | ✗ | ✗ |
 | fixture_fixedsubjects | V1 | SESSION_YAML | fixedsubjects | ✗ | ✗ | ✗ |
 | fixture_sequence | V1 | SESSION_YAML | sequence | ✗ | ✗ | ✗ |
-| **fixture_legacy** | LEGACY | **LEGACY** | prob_switch | ✗ | ✗ | ✗ |
-| **fixture_optotagging** | V1 | SESSION_YAML | optotagging | **✓** | **✓** | **✓** |
+| fixture_legacy | LEGACY | **LEGACY** | prob_switch | ✗ | ✗ | ✗ |
+| fixture_optotagging | V1 | SESSION_YAML | optotagging | **✓** | **✓** | **✓** |
 
-`fixture_legacy`: user copying s080–s090 session from `/ceph/sjones/users/lars/data/`.
+`fixture_legacy`: s001 2021 session sanitized to `subject003__20210426_183409__probabilistic_switching/`.
+`fixture_optotagging`: `_test_subject/_test_oe_controller.../optotagging/` — session.yaml sanitized, JSONL truncated to 1 trial (6KB).
 
-`fixture_optotagging`: copy from `/ceph/sjones/users/lars/data/_test_subject/_test_oe_controller__20260527_132639__ephys/` — one of the complete optotagging sessions.  Sanitize hostnames/paths; keep `parent_acquisition` block and `session_manifest.yaml` intact.  Must include subprotocol JSONL files (flat or subdir).
-
-Once added:
-```python
-# test_reader_session_format.py FIXTURE_EXPECTATIONS:
-("fixture_legacy",     NAMESPACE_LEGACY, ARTIFACT_FORMAT_LEGACY),
-("fixture_optotagging", NAMESPACE_V1,    ARTIFACT_FORMAT_SESSION_YAML),
-```
-
-```python
-# test_reader_task_fixtures.py — new test class:
-class TestOptotTaggingFixture:
-    def test_is_ephys_session(self)           # settings.ephys populated
-    def test_subprotocols_loaded(self)         # data["subprotocols"] present
-    def test_df_has_subprotocol_column(self)   # "subprotocol" col in df
-    def test_all_subprotocol_dfs_merged(self)  # df rows = sum of subprotocol rows
-    def test_parent_acquisition_backend(self)  # settings.ephys["backend"] == "open_ephys"
-```
+Remaining gap (test_reader_task_fixtures.py `TestOptotaggingFixture`):
+- `test_subprotocols_loaded` / `test_df_has_subprotocol_column` / `test_all_subprotocol_dfs_merged` require 3b-ext multi-protocol reader (pending).
 
 ---
 

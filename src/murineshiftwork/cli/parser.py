@@ -13,7 +13,6 @@ from murineshiftwork.cli.defaults import (
 )
 from murineshiftwork.cli.execute import (
     run_action,
-    run_agent,
     run_calibration,
     run_init,
     run_setup,
@@ -685,62 +684,6 @@ def make_subparser_tasks(sub_parsers):
     pi.set_defaults(func=run_tasks_init_configs)
 
 
-def make_subparser_agent(sub_parsers):
-    p = sub_parsers.add_parser(
-        "agent",
-        help="Start the MSW hardware agent (FastAPI)",
-        formatter_class=ArgparseFormatter,
-        description=dedent(
-            """\
-            MSW Agent — long-lived hardware owner and event broadcaster.
-
-            The agent opens the Bpod once at startup and holds the connection
-            across sessions.  Sessions are still started from the CLI (``msw run``),
-            but can optionally be delegated to a running agent.  A WebSocket
-            endpoint broadcasts trial events to read-only UI observers.
-
-            Commands:
-              msw agent start --setup <name>   Start the agent for a named setup
-
-            Examples:
-              msw agent start --setup npx2
-              msw agent start --setup npx2 --port 8765
-              MSW_AGENT_PASSWORD=secret msw agent start --setup npx2
-            """
-        ),
-        epilog=_CREDIT_EPILOG,
-    )
-    sub = p.add_subparsers(metavar="subcommand", dest="subcommand")
-    sub.required = True
-
-    ps = sub.add_parser(
-        "start", help="Start the agent", formatter_class=ArgparseFormatter
-    )
-    ps.add_argument(
-        "--setup",
-        "-S",
-        required=True,
-        metavar="setup_name",
-        help="Name of the setup config to load (from config_dir/setups/)",
-    )
-    ps.add_argument(
-        "--port",
-        type=int,
-        default=8765,
-        dest="agent_port",
-        help="TCP port for the FastAPI server (default: 8765)",
-    )
-    ps.add_argument(
-        "--host",
-        type=str,
-        default="0.0.0.0",
-        dest="agent_host",
-        help="Bind host (default: 0.0.0.0)",
-    )
-    ps.add_argument("-cd", "--config-dir", type=str, default="", dest="config_dir")
-    ps.set_defaults(func=run_agent)
-
-
 def parse_args(args=None):
     main_parser = ArgumentParser(
         prog="msw",
@@ -768,7 +711,6 @@ def parse_args(args=None):
     make_subparser_action(sub_parsers)
     make_subparser_post(sub_parsers)
     make_subparser_tasks(sub_parsers)
-    make_subparser_agent(sub_parsers)
 
     # Load plugin subcommands registered under the "msw.cli" entry-point group.
     # Each plugin calls register(sub_parsers) to add its own subparser(s).

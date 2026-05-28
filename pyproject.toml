@@ -74,16 +74,6 @@ agent = [
     "uvicorn[standard]>=0.29",
     "websockets>=12",
 ]
-labwatch = [
-    # msw-labwatch will be listed here once released on PyPI.
-    # labwatch_client (the server SDK) is from a private registry — install separately:
-    #   pip install labwatch-client --index-url https://<private-registry>
-    # Configure in ~/.murineshiftwork/msw_machine.yaml:
-    #   labwatch:
-    #     url: https://labwatch.example.com
-    #     username: myuser
-    #     token: mytoken
-]
 full = [
     "murineshiftwork[calibration,keyboard,qt,agent]",
 ]

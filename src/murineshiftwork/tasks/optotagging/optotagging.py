@@ -6,6 +6,7 @@ from pybpodapi.protocol import Bpod, StateMachine
 
 from murineshiftwork.hardware.bpod import BpodFactory
 from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
+from murineshiftwork.hardware.stimulation import Stimulation
 from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
     BarcodeTTL,
@@ -13,11 +14,10 @@ from murineshiftwork.logic.barcode import (
     inject_barcode_states,
 )
 from murineshiftwork.logic.config.ini import deep_merge
-from murineshiftwork.logic.io import save_trial_data
-from murineshiftwork.logic.stimulation import Stimulation
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 from murineshiftwork.namespace.manifest import append_subprotocol, finalize_subprotocol
 from murineshiftwork.namespace.msw_files import msw_file
+from murineshiftwork.readers.io import save_trial_data
 
 
 class OptoTaggingRecord:

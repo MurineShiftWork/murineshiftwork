@@ -17,10 +17,10 @@ from murineshiftwork.logic.barcode import (
     inject_barcode_states,
 )
 from murineshiftwork.logic.calibration import CalibrationDataSound
-from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.maths import ExponentialMovingAverage, withprob
 from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.sounds import StereoSound
+from murineshiftwork.readers.io import save_trial_data
 
 
 class TaskControl:

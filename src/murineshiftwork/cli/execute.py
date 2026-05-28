@@ -435,50 +435,6 @@ def run_action(**args_dict):
 # murineshiftwork calibration
 
 
-def run_agent(**args_dict):
-    """msw agent start --setup <name> [--port 8765]
-
-    Starts a long-lived FastAPI agent that owns the Bpod connection across
-    sessions.  The CLI (``msw run``) remains the primary session entry point;
-    the agent adds hardware persistence and a WebSocket event bus for read-only
-    UI observers.
-    """
-    try:
-        import uvicorn
-    except ImportError as exc:
-        raise SystemExit(
-            "The 'agent' extra is not installed.\n"
-            "Run: pip install 'murineshiftwork[agent]'"
-        ) from exc
-
-    from murineshiftwork.agent.app import create_app
-    from murineshiftwork.logic.config.io import load_setup_config
-    from murineshiftwork.logic.machine_config import resolve_config_dir
-
-    subcommand = args_dict.get("subcommand")
-    if subcommand != "start":
-        raise ValueError(f"Unknown agent subcommand: {subcommand!r}")
-
-    setup_name = args_dict["setup"]
-    port = args_dict.get("agent_port", 8765)
-    host = args_dict.get("agent_host", "0.0.0.0")
-
-    config_dir = resolve_config_dir(args_dict.get("config_dir", ""))
-    setup_cfg = load_setup_config(config_dir, setup_name)
-    if setup_cfg is None:
-        raise ValueError(f"Setup '{setup_name}' not found in {config_dir}/setups/")
-
-    bpod_device = setup_cfg.devices.get("bpod")
-    serial_port = args_dict.get("serial_port_bpod") or (
-        bpod_device.port
-        if bpod_device and hasattr(bpod_device, "port")
-        else "/dev/ttyACM0"
-    )
-
-    app = create_app(setup=setup_name, serial_port=serial_port, config_dir=config_dir)
-    uvicorn.run(app, host=host, port=port)
-
-
 def run_calibration(**args_dict):
     """Plot and save calibration charts as PDF."""
     from murineshiftwork.logic.calibration import save_calibration_pdfs

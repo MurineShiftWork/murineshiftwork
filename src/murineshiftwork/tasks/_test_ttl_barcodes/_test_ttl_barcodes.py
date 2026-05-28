@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 
 from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
-from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
+from murineshiftwork.readers.io import save_trial_data
 
 
 class TaskData:

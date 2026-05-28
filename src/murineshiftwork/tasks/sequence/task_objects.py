@@ -9,9 +9,9 @@ import pandas as pd
 from pybpodapi.protocol import Bpod, StateMachine
 
 from murineshiftwork.logic.barcode import BARCODE_FIRST_STATE_NAME
-from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.sounds import StereoSound
 from murineshiftwork.namespace.msw_files import msw_file
+from murineshiftwork.readers.io import save_trial_data
 
 log = logging.getLogger(__name__)
 
@@ -216,67 +216,6 @@ class TaskControl:
                 )
             except Exception as exc:
                 log.warning(f"Could not write level to subject YAML: {exc}")
-
-        if not subject.startswith("_test_"):
-            self._push_to_labwatch()
-
-    def _push_to_labwatch(self) -> None:
-        from murineshiftwork.adapters.labwatch import (
-            LabwatchPusher,
-            build_labwatch_payload,
-            push_session_threaded,
-        )
-        from murineshiftwork.logic.machine_config import read_machine_config
-
-        pusher = LabwatchPusher.from_machine_config(read_machine_config())
-        if pusher is None:
-            return
-
-        session_paths = self.task_settings.get("session_paths", {})
-        session_folder = session_paths.get("session_folder", str(self.save_path.parent))
-        session_basename = session_paths.get("session_basename", self.save_path.name)
-
-        session_yaml_path = msw_file(self.save_path, "session.yaml")
-        try:
-            import yaml as _yaml  # type: ignore[import-untyped]
-
-            session_yaml: dict = (
-                _yaml.safe_load(session_yaml_path.read_text()) or {}
-                if session_yaml_path.exists()
-                else {}
-            )
-        except Exception:
-            session_yaml = {}
-
-        if not session_yaml.get("process", {}).get("session_basename"):
-            session_yaml.setdefault("process", {})["session_basename"] = (
-                session_basename
-            )
-            session_yaml["process"].setdefault("session_folder", session_folder)
-            session_yaml["process"].setdefault(
-                "subject", self.task_settings.get("subject", "")
-            )
-            session_yaml["process"].setdefault("task", "sequence")
-            session_yaml["process"].setdefault(
-                "setup", self.task_settings.get("setup", "")
-            )
-            session_yaml["process"].setdefault(
-                "datetime", time.strftime("%Y-%m-%dT%H:%M:%S")
-            )
-
-        task_summary = {
-            "total_trials": self.trial_index,
-            "task_trials": self._session_task_trials,
-            "no_response_trials": self._session_no_response_count,
-            "end_level": self.current_level,
-            "start_level": self._session_start_level,
-            "session_reward_count": self._session_reward_count,
-            "session_liquid_ul": round(self._session_liquid_ul, 2),
-        }
-
-        retry_path = Path(session_folder) / "labwatch_pending.json"
-        payload = build_labwatch_payload(session_yaml, task_summary)
-        push_session_threaded(pusher, payload, retry_path)
 
     def _register_subject(self, subject: str):
         """Keep a JSON registry of all subjects and their last session."""

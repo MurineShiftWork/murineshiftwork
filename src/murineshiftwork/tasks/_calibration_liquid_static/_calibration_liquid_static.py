@@ -6,12 +6,12 @@ import numpy as np
 from tqdm import tqdm
 
 from murineshiftwork.hardware.bpod.valve import make_sma_for_drop_of_water
+from murineshiftwork.hardware.scale import make_scale
 from murineshiftwork.logic.calibration import (
     CalibrationDataWater,
     flag_outlier_points,
 )
 from murineshiftwork.logic.config import update_valve_calibration
-from murineshiftwork.logic.scale import make_scale
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 

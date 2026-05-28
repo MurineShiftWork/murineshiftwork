@@ -73,11 +73,22 @@ def _infer_session_basename(session_dir: Path) -> str | None:
 
     Works for both real sessions (where dir name IS the basename) and test
     fixtures (where the dir has a generic name like 'fixture_pkl').
+
+    Prefers .msw.session.yaml (canonical) over other .msw. files so that
+    multi-protocol sessions (which have subprotocol .msw.df.jsonl files with
+    longer names) resolve to the correct session-level basename.
     """
-    for f in session_dir.iterdir():
-        if ".msw." in f.name:
+    candidates = [f for f in session_dir.iterdir() if ".msw." in f.name]
+    if not candidates:
+        return None
+    # session.yaml is authoritative; use it when present
+    for f in candidates:
+        if f.name.endswith(".msw.session.yaml"):
             return f.name.split(".msw.")[0]
-    return None
+    # fallback: shortest basename (session-level file, not subprotocol file)
+    return min(candidates, key=lambda f: len(f.name.split(".msw.")[0])).name.split(
+        ".msw."
+    )[0]
 
 
 def detect_artifact_format(session_dir: Path) -> str:

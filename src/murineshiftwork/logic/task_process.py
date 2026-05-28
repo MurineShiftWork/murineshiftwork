@@ -14,7 +14,7 @@ import yaml
 from pybpodapi.protocol import Bpod, StateMachine
 
 from murineshiftwork.hardware.bpod import BpodFactory
-from murineshiftwork.logic.hooks import (
+from murineshiftwork.hooks import (
     HookContext,
     SessionAbortError,
     collect_hooks,
@@ -328,10 +328,10 @@ class TaskProcess:
             raise post_exc
 
     def _start_relay(self) -> None:
-        from murineshiftwork.logic.machine_config import read_machine_config
+        from murineshiftwork.logic.machine_config import read_log_config
 
-        mc = read_machine_config()
-        log_url = mc.get("log_url", "")
+        log_cfg = read_log_config()
+        log_url = log_cfg["log_url"]
         if not log_url:
             return
 
@@ -340,7 +340,7 @@ class TaskProcess:
 
         from murineshiftwork.logagent.logagent import LogAgent
 
-        bearer_token = mc.get("log_bearer_token", "")
+        bearer_token = log_cfg["log_bearer_token"]
         self._relay_queue = multiprocessing.Queue(maxsize=500)
         setup = self.input_kwargs.get("setup", "") or self.input_kwargs.get(
             "metadata", {}

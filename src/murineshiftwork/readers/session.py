@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+import pandas as pd
 import yaml
 
 from murineshiftwork.readers.files import (
@@ -59,7 +60,13 @@ def _check_completeness(data: dict, is_legacy: bool) -> bool:
 
 
 def _read_session_yaml(session_dir: Path, fmt: dict) -> dict:
-    """ARTIFACT_FORMAT_SESSION_YAML — single .msw.session.yaml (v2+)."""
+    """ARTIFACT_FORMAT_SESSION_YAML — single .msw.session.yaml (v2+).
+
+    When session_manifest.yaml is present (multi-protocol sessions), loads each
+    subprotocol df and concatenates them with a "subprotocol" column added.
+    data["subprotocols"] carries the raw manifest subprotocol list for callers
+    that need barcode anchors or per-subprotocol status.
+    """
     files = _msw_files_dict(session_dir)
     data: dict = {}
 
@@ -82,6 +89,28 @@ def _read_session_yaml(session_dir: Path, fmt: dict) -> dict:
             pass  # pybpod CSV present but not loaded; use ttl_barcoder for alignment
         else:
             logging.debug("session_yaml reader: unrecognised key %r — %s", k, v)
+
+    # Multi-protocol: merge subprotocol dfs when session_manifest.yaml present.
+    # Overrides the single-file df loaded above (which would be one arbitrary subprotocol).
+    manifest_path = session_dir / "session_manifest.yaml"
+    if manifest_path.exists():
+        manifest = yaml.safe_load(manifest_path.read_text()) or {}
+        subprotocols = manifest.get("subprotocols", [])
+        if subprotocols:
+            sp_dfs = []
+            for sp in subprotocols:
+                sp_file = session_dir / sp["file"]
+                if sp_file.exists():
+                    sp_df = read_trial_df(sp_file)
+                    if sp_df is not None:
+                        sp_df = sp_df.assign(subprotocol=sp["name"])
+                        sp_dfs.append(sp_df)
+                else:
+                    logging.debug(
+                        "session_yaml reader: subprotocol file missing %s", sp_file
+                    )
+            data["df"] = pd.concat(sp_dfs, ignore_index=True) if sp_dfs else None
+            data["subprotocols"] = subprotocols
 
     return data
 

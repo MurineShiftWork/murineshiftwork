@@ -11,8 +11,8 @@ from pybpodapi.bpod.hardware.channels import ChannelName, ChannelType
 
 from murineshiftwork.hardware.bpod.actions import BpodActionDriver
 from murineshiftwork.hardware.bpod.sim import SimBpod
+from murineshiftwork.hardware.scale import SimWeighingScale, make_scale
 from murineshiftwork.logic.config.models import ActionRequest
-from murineshiftwork.logic.scale import SimWeighingScale, make_scale
 
 # ---------------------------------------------------------------------------
 # SimBpod

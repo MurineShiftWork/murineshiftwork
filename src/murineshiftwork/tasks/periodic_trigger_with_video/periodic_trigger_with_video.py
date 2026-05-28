@@ -11,8 +11,8 @@ from murineshiftwork.hardware.bpod.ttl import (
     add_trial_onset_ttl,
     make_ttl_identifier_sequences,
 )
-from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
+from murineshiftwork.readers.io import save_trial_data
 
 
 class TaskData:

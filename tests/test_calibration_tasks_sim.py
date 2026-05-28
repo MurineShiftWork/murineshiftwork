@@ -9,7 +9,7 @@ Tests run without hardware.  They verify that:
 from pathlib import Path
 
 from murineshiftwork.hardware.bpod.sim import SimBpod
-from murineshiftwork.logic.scale import SimWeighingScale
+from murineshiftwork.hardware.scale import SimWeighingScale
 
 # ---------------------------------------------------------------------------
 # Helpers

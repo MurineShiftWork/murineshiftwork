@@ -9,7 +9,7 @@ pytest.importorskip("pypulsepal")  # skip whole module if pypulsepal not install
 
 import pytest
 
-from murineshiftwork.logic.stimulation import (
+from murineshiftwork.hardware.stimulation import (
     DORIC_MAX_CURRENT_MA,
     DORIC_MAX_VOLTAGE,
     Stimulation,
