@@ -27,7 +27,7 @@ Design details live in memory files or separate docs — not here.
 1. ~~**Open Ephys URL validation**~~ — **DONE** · 2026-05-26 · `open_ephys_url` moved from machine config to `SetupConfig` + setup YAML; `OpenEphysParentSession.attach()` now stores `fail_reason` and promotes inner errors to ERROR level; outer warning includes reason + `--child-of ACQUISITION_NAME` hint. Remaining: `--force-standalone` escape hatch.
 2. **Split msw** — extract `murineshiftwork` monolith into namespace sub-packages per IMPLEMENTATION_PLAN.md extraction order; see MASTER_PLAN §namespace
 2. ~~**Namespace — `file` level + `get_path(artifact=)`**~~ — **DONE** · 2026-05-24
-3. **Opto debug** — review PR TODO items; hardware-verify optotagging TTL barcodes; confirm airpuff TTL barcodes; test on acquisition machine
+3. ~~**Opto debug**~~ — **DONE** · 2026-05-28 · hardware-verified on rig: TTL barcodes fire, PulsePal abort clean. Remaining (not blocking merge): reader integration test with real opto fixture; airpuff barcode verify on acq machine; alignment script.
 4. ~~**msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py`; wire into `RceConductorAdapter`~~ — **DONE** · 2026-05-25
 5. ~~**Namespace — mandatory acquisition level + session_folder_relative**~~ — **DONE** · 2026-05-27 · `namespace.msw.yaml` acquisition now non-optional; standalone sessions get `subject__dt__session_{task}` acquisition dir; `level_overrides` added to `NamespaceBuilder.generate_path()`; `session_folder_relative` + `acquisition_name` in session_paths dict; `session_basename_behav` removed; all conductor calls use `session_folder_relative`; v1/v2/v3 YAML fixtures moved to `tests/data/`. See `PLAN_namespace_unification.md`.
 6. ~~**Session/acquisition manifest writer**~~ — **DONE** · 2026-05-27 · `namespace/manifest.py`: atomic `acquisition_manifest.yaml` + `session_manifest.yaml` writes (tmp+replace); wired into `TaskProcess.__init__` + `__exit__`. See `PLAN_session_manifests.md`.
@@ -57,8 +57,8 @@ Design details live in memory files or separate docs — not here.
       """Check conductor + agent files present; run barcode or legacy TTL alignment."""
   ```
   Callers run `msw.validate_session(dir)` then optionally `rce.validate_session(dir, msw_df=...)` for camera checks. Requires rce package to be public first (see [[project_github_org_migration]]).
-- [ ] **Opto — hardware verification** — test optotagging and airpuff TTL barcodes on acquisition machine; alignment script for `sequence_automated` piecewise per-trial TTL edges not written
-- [ ] **Opto — PR TODOs** — review opto PR notes for outstanding test items before closing branch
+- [x] **Opto — hardware verification** — TTL barcodes + PulsePal abort confirmed on rig · 2026-05-28. Airpuff barcode verify + `sequence_automated` alignment script still pending (tracked separately, not blocking merge).
+- [x] **Opto — PR TODOs** — all code items resolved · 2026-05-28
 - [x] **msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py` · 2026-05-25
 - [ ] **msw-flir-bonsai — tests & fixes**
   - [ ] Acquisition machine smoke test — set `BONSAI_EXE`, run `pytest tests/integration/ -v`; smoke-test CLI (`msw-flir find-bonsai`, `msw-flir list-cameras`, `msw-flir test-record`); run via `msw` task with `cameras.backend: flir_bonsai` to verify full `FlirBonsaiClient` path
