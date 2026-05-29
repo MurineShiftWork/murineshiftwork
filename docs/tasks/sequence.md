@@ -26,12 +26,14 @@ hippocampal and prefrontal contributions to sequential behaviour.
 ## Trial structure
 
 ```
-[TTL pulse]  →  wait_poke_0  →  reward_poke_0  →  wait_poke_1  →  ...
-                      ↓ wrong port / timeout
-                   punish  →  exit_seq  →  ITI  →  [next trial]
+[free_reward_state]  →  wait_poke_0  →  [delay_poke_0]  →  reward_poke_0  →  wait_poke_1  →  ...
+      (optional)              ↓ wrong port / timeout
+                           punish  →  exit_seq  →  ITI  →  [next trial]
 ```
 
-- **`wait_poke_i`** — all 8 Bpod ports active; correct port → `reward_poke_i`, any other port → `punish`; Tup → `punish` (unless `init_port_timeout_s = 0`)
+- **`free_reward_state`** *(optional)* — delivers a non-contingent reward at trial start before the sequence begins; only present when `free_reward_probability > 0` and the draw fires
+- **`wait_poke_i`** — all 8 Bpod ports active; correct port → `delay_poke_i` or `reward_poke_i`, any other port → `punish`; Tup → `punish` (unless `init_port_timeout_s = 0`)
+- **`delay_poke_i`** *(optional)* — blank gap between correct poke and valve opening; only present when `reward_delay_s > 0`
 - **`reward_poke_i`** — opens valve for calibrated reward; fires SoftCode for chirp sound; advances to next wait state or `exit_seq` after last poke
 - **No-response trials** — if the animal does not poke within `init_port_timeout_s` on the first port, the trial is marked `no_response`: buffers and level evaluation are skipped entirely
 
@@ -138,11 +140,94 @@ Session end — 'mouse001': level 12, trials 312 (289 task, 23 no-response)
 
 ---
 
+## Reward probe features
+
+Three optional features for probing dopamine reward prediction error signals. All are disabled by default and can be combined or activated per-mode.
+
+### Reward perturbation
+
+Probabilistically replaces the level-determined reward for specific poke positions or ports on a per-trial draw.
+
+```yaml
+reward_perturbation:
+  enabled: true
+  target: position          # "position" (0-indexed slot) or "port" (hardware port 1–8)
+  matched_omission_duration: false  # see below
+  distribution:
+    4:                      # apply to the final poke (position index 4)
+      - {amount_ul: 0.0,  probability: 0.15}  # 15% omission
+      - {amount_ul: 3.6,  probability: 0.15}  # 15% doubled reward
+      # remaining 70% → nominal level amount (no entry needed)
+```
+
+- `amount_ul: null` is the explicit sentinel for "use nominal"; can also be omitted (remainder logic)
+- Probabilities may sum to < 1.0; the residual probability is implicitly assigned to the nominal level amount
+- Positions not listed in `distribution` always receive nominal rewards
+
+**Per-trial output fields added to `info`:**
+
+| Field | Description |
+|---|---|
+| `reward_amounts` | Delivered amounts (perturbed or nominal) |
+| `reward_amounts_nominal` | Level-table amounts (always nominal) |
+| `reward_perturbation_applied` | `true` if any poke was non-nominal this trial |
+| `reward_perturbation_draws` | List of `{position, port, nominal_ul, delivered_ul, perturbed}` per poke |
+
+### Matched omission duration
+
+When `matched_omission_duration: true` inside `reward_perturbation`, omitted pokes (amount 0) hold the `reward_poke_i` state open for the same duration the nominal reward would have taken rather than the minimum 1 ms. This anchors the negative prediction error to the same time point as normal reward delivery.
+
+Only meaningful when `reward_perturbation.enabled: true` and omissions are in the distribution.
+
+### Reward delay
+
+Inserts a blank delay state between a correct poke and valve opening. Useful for studying how animals track temporal reward expectations.
+
+```yaml
+reward_delay_s: 0.5          # fixed delay applied every trial
+```
+
+Or a linearly ramped delay that increases over the session:
+
+```yaml
+reward_delay_ramp:
+  start_s: 0.0
+  increment_s: 0.002         # +2 ms per completed task trial
+  max_s: 2.0
+```
+
+When `reward_delay_ramp` is set (and `increment_s > 0`) it overrides `reward_delay_s`.
+
+The actual delay used is recorded in each trial's `info.reward_delay_s`.
+
+### Non-contingent reward
+
+Occasionally delivers a free reward at trial start, before the sequence begins. The reward is dispensed by opening the valve at `free_reward_port` (defaults to the last sequence port). The trial then proceeds normally.
+
+```yaml
+free_reward_probability: 0.05   # 5% of trials receive a free reward
+free_reward_ul: 1.8
+free_reward_port: null           # null = last port in sequence
+```
+
+**Per-trial output fields:**
+
+| Field | Description |
+|---|---|
+| `free_reward_given` | `true` if a non-contingent reward was delivered this trial |
+| `liquid_ul_trial` | Includes free reward in the trial total |
+| `liquid_ul_cumulative` | Includes free reward in the session total |
+
+---
+
 ## Modes
 
 | Mode | Description |
 |---|---|
 | `habituation` | Reset to level 1 (`reset_level: true, start_level: 1`) |
+| `expert` | High trial cap; prevents regression below session start level |
+| `probe` | Lower trial cap; strict progression threshold (0.95); no regression floor |
+| `reward_probe` | Activates reward perturbation on the final poke (15% omission / 15% doubled); regression locked at session start level |
 
 ---
 

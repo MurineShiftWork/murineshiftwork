@@ -23,6 +23,76 @@ LEVEL_STORE_DIR = Path("~/.murineshiftwork/sequence").expanduser()
 _LEGACY_LEVEL_STORE_DIR = Path("~/.murineshiftwork/sequence_automated").expanduser()
 
 
+class RewardPerturbation:
+    """Probabilistic per-poke reward override for probe/deviant-reward experiments.
+
+    Config keys (from task_settings["reward_perturbation"]):
+      enabled   bool   activate feature (default False)
+      target    str    "position" (0-indexed slot) or "port" (hardware port 1-8)
+      distribution  dict[int, list[{amount_ul, probability}]]
+                    amount_ul: float µL, or null = nominal level amount
+                    probabilities may sum to < 1.0; remainder is implicitly nominal
+    """
+
+    enabled: bool
+
+    def __init__(self, config: dict, rng=None):
+        self.enabled = bool(config.get("enabled", False))
+        self._target = config.get("target", "position")
+        self.matched_omission_duration = bool(
+            config.get("matched_omission_duration", False)
+        )
+        self._rng = rng if rng is not None else np.random.default_rng()
+        self._distributions: dict[int, tuple[list, list]] = {}
+        for k, entries in (config.get("distribution") or {}).items():
+            probs = [float(e["probability"]) for e in entries]
+            amounts = [e["amount_ul"] for e in entries]  # float or None
+            remainder = 1.0 - sum(probs)
+            if remainder > 1e-9:
+                amounts = amounts + [None]
+                probs = probs + [remainder]
+            self._distributions[int(k)] = (amounts, probs)
+
+    def draw_trial_rewards(
+        self, sequence: list[int], nominal_rewards: list[float]
+    ) -> tuple[list[float], list[dict]]:
+        """Draw perturbed reward amounts for one trial.
+
+        Returns (delivered_rewards, draw_records).
+        draw_records: [{position, port, nominal_ul, delivered_ul, perturbed}]
+        """
+        delivered: list[float] = []
+        records: list[dict] = []
+        for i, (port, nominal_ul) in enumerate(zip(sequence, nominal_rewards)):
+            key = i if self._target == "position" else port
+            if key not in self._distributions:
+                delivered.append(nominal_ul)
+                records.append(
+                    {
+                        "position": i,
+                        "port": port,
+                        "nominal_ul": nominal_ul,
+                        "delivered_ul": nominal_ul,
+                        "perturbed": False,
+                    }
+                )
+                continue
+            amounts, probs = self._distributions[key]
+            chosen = amounts[int(self._rng.choice(len(amounts), p=probs))]
+            delivered_ul = nominal_ul if chosen is None else float(chosen)
+            delivered.append(delivered_ul)
+            records.append(
+                {
+                    "position": i,
+                    "port": port,
+                    "nominal_ul": nominal_ul,
+                    "delivered_ul": delivered_ul,
+                    "perturbed": delivered_ul != nominal_ul,
+                }
+            )
+        return delivered, records
+
+
 class TaskControl:
     trial_data: list = []
     trial_index = 0
@@ -89,6 +159,13 @@ class TaskControl:
         self._session_liquid_ul = 0.0
         self._session_task_trials = 0  # trials with a poke response (scored)
         self._session_no_response_count = 0  # uninitiated / init-timeout trials
+
+        self._perturbation = RewardPerturbation(
+            task_settings.get("reward_perturbation") or {}
+        )
+        self._pending_reward_draw: dict = {}
+        self._pending_trial_meta: dict = {}
+        self._rng = np.random.default_rng()
 
         # Save path: prefer session_paths if provided
         session_paths = task_settings.get("session_paths", {})
@@ -306,6 +383,21 @@ class TaskControl:
             self._valve_time_cache[key] = valve_s_for_ul(port, amount_ul)
         return self._valve_time_cache[key]
 
+    def _get_reward_delay_s(self) -> float:
+        """Return the reward delay for the current trial.
+
+        If reward_delay_ramp is configured, the delay grows linearly with completed
+        task trials up to max_s (useful for gradually introducing temporal uncertainty).
+        Otherwise returns the fixed reward_delay_s (default 0.0).
+        """
+        ramp = self.task_settings.get("reward_delay_ramp") or {}
+        if ramp and float(ramp.get("increment_s", 0.0)) > 0:
+            start = float(ramp.get("start_s", 0.0))
+            increment = float(ramp.get("increment_s", 0.0))
+            max_s = float(ramp.get("max_s", start))
+            return min(start + increment * self._session_task_trials, max_s)
+        return float(self.task_settings.get("reward_delay_s", 0.0))
+
     @staticmethod
     def _scale_led(matlab_val: float) -> int:
         """Scale MATLAB LED intensity (0-90) to Bpod PWM range (0-255)."""
@@ -398,6 +490,39 @@ class TaskControl:
             leds.append(leds[-1])
         response_window = params["response_window_s"]
 
+        # Reward perturbation: draw per-poke amounts, overriding nominal level amounts
+        nominal_rewards = list(rewards)
+        if self._perturbation.enabled:
+            delivered, draws = self._perturbation.draw_trial_rewards(
+                self.sequence, nominal_rewards
+            )
+            self._pending_reward_draw = {
+                "nominal": nominal_rewards,
+                "delivered": delivered,
+                "draws": draws,
+            }
+            rewards = delivered
+        else:
+            self._pending_reward_draw = {}
+
+        # Reward delay: fixed gap between correct poke and valve opening
+        current_delay_s = self._get_reward_delay_s()
+        matched_omission = self._perturbation.matched_omission_duration
+
+        # Non-contingent reward: free delivery before the sequence begins
+        free_reward_prob = float(self.task_settings.get("free_reward_probability", 0.0))
+        free_reward_ul = float(self.task_settings.get("free_reward_ul", 1.8))
+        free_port_cfg = self.task_settings.get("free_reward_port")
+        free_port = int(free_port_cfg) if free_port_cfg else self.sequence[-1]
+        give_free = (
+            free_reward_prob > 0 and float(self._rng.random()) < free_reward_prob
+        )
+        self._pending_trial_meta = {
+            "delay_s": current_delay_s,
+            "free_reward_given": give_free,
+            "free_reward_ul": free_reward_ul if give_free else 0.0,
+        }
+
         # strict_sequence=True: any wrong poke immediately triggers punish (strict mode)
         # strict_sequence=False (default): wrong pokes ignored; only timeout or correct
         # poke causes a state transition — equivalent to the original MATLAB behaviour
@@ -406,8 +531,20 @@ class TaskControl:
 
         sma = StateMachine(bpod=self.bpod)
 
-        for i, (port, reward_ul, led_val) in enumerate(
-            zip(self.sequence, rewards, leds)
+        # Free-reward state: dispense before sequence starts, no BNC marker
+        if give_free:
+            free_valve_time = self._get_valve_time(free_port, free_reward_ul)
+            sma.add_state(
+                state_name="free_reward_state",
+                state_timer=max(free_valve_time, 0.001),
+                state_change_conditions={Bpod.Events.Tup: "wait_poke_0"},
+                output_actions=[(Bpod.OutputChannels.Valve, free_port)]
+                if free_valve_time > 0
+                else [],
+            )
+
+        for i, (port, reward_ul, led_val, nominal_ul) in enumerate(
+            zip(self.sequence, rewards, leds, nominal_rewards)
         ):
             led_pwm = self._scale_led(led_val)
             pwm_ch = getattr(Bpod.OutputChannels, f"PWM{port}")
@@ -415,12 +552,16 @@ class TaskControl:
             next_state_after_reward = (
                 f"wait_poke_{i + 1}" if i < self.n_pokes - 1 else "exit_seq"
             )
+            # With a delay, a correct poke goes to a delay state before the reward state
+            correct_next = (
+                f"delay_poke_{i}" if current_delay_s > 0 else f"reward_poke_{i}"
+            )
 
             if i == 0:
                 # First poke: Tup must only be present when state_timer > 0 — at
                 # timer=0 it fires immediately and must not be in state_change_conditions.
                 wait_conditions = {
-                    getattr(Bpod.Events, f"Port{port}In"): f"reward_poke_{i}",
+                    getattr(Bpod.Events, f"Port{port}In"): correct_next,
                 }
                 if init_timeout > 0:
                     wait_conditions[Bpod.Events.Tup] = "punish"
@@ -437,14 +578,12 @@ class TaskControl:
                 wait_conditions = {Bpod.Events.Tup: "punish"}
                 for p in _ALL_PORTS:
                     event = getattr(Bpod.Events, f"Port{p}In")
-                    wait_conditions[event] = (
-                        f"reward_poke_{i}" if p == port else "punish"
-                    )
+                    wait_conditions[event] = correct_next if p == port else "punish"
                 state_timer = response_window
             else:
                 wait_conditions = {
                     Bpod.Events.Tup: "punish",
-                    getattr(Bpod.Events, f"Port{port}In"): f"reward_poke_{i}",
+                    getattr(Bpod.Events, f"Port{port}In"): correct_next,
                 }
                 state_timer = response_window
 
@@ -458,6 +597,22 @@ class TaskControl:
                 + ([(pwm_ch, led_pwm)] if led_pwm > 0 else []),
             )
 
+            # Delay state: blank gap between correct poke and valve opening
+            if current_delay_s > 0:
+                sma.add_state(
+                    state_name=f"delay_poke_{i}",
+                    state_timer=current_delay_s,
+                    state_change_conditions={Bpod.Events.Tup: f"reward_poke_{i}"},
+                    output_actions=[],
+                )
+
+            # Matched omission: hold the reward state open for the nominal valve
+            # duration so the negative RPE is anchored to the expected reward time.
+            if matched_omission and reward_ul == 0.0 and nominal_ul > 0.0:
+                reward_state_timer = max(self._get_valve_time(port, nominal_ul), 0.001)
+            else:
+                reward_state_timer = max(valve_time, 0.001)
+
             # Open valve (if reward > 0) and play chirp
             reward_actions = []
             if valve_time > 0:
@@ -467,7 +622,7 @@ class TaskControl:
 
             sma.add_state(
                 state_name=f"reward_poke_{i}",
-                state_timer=max(valve_time, 0.001),
+                state_timer=reward_state_timer,
                 state_change_conditions={Bpod.Events.Tup: next_state_after_reward},
                 output_actions=reward_actions,
             )
@@ -518,6 +673,12 @@ class TaskControl:
         if not poke_events:
             self.last_outcome = "no_response"
             self._session_no_response_count += 1
+            self._pending_reward_draw = {}
+            _meta_nr = self._pending_trial_meta
+            self._pending_trial_meta = {}
+            # Free reward may still have been delivered at trial start
+            _free_ul_nr = _meta_nr.get("free_reward_ul", 0.0)
+            self._session_liquid_ul += _free_ul_nr
             trial_data["info"] = {
                 "trial_type": "task",
                 "trial_index": trial_index,
@@ -526,11 +687,13 @@ class TaskControl:
                 "is_perfect": False,
                 "is_ordered": False,
                 "scoring_metric": self.task_settings.get("scoring_metric", "ordered"),
+                "reward_delay_s": _meta_nr.get("delay_s", 0.0),
+                "free_reward_given": _meta_nr.get("free_reward_given", False),
                 "poke_events": [],
                 "transition_times": [],
                 "sequence_duration_s": None,
                 "reward_count_trial": 0,
-                "liquid_ul_trial": 0.0,
+                "liquid_ul_trial": round(_free_ul_nr, 2),
                 "liquid_ul_cumulative": round(self._session_liquid_ul, 2),
                 "perf_buffer_mean": float(np.mean(self.perf_buffer))
                 if self.perf_buffer
@@ -572,6 +735,14 @@ class TaskControl:
             else 0.0
         )
 
+        # Consume pending draw and trial metadata set by draw_next_trial
+        _pert = self._pending_reward_draw
+        self._pending_reward_draw = {}
+        _meta = self._pending_trial_meta
+        self._pending_trial_meta = {}
+        _effective_rewards = list(_pert.get("delivered") or params["rewards"])
+        _free_ul = _meta.get("free_reward_ul", 0.0)
+
         # Count rewards/water actually dispensed this trial
         st = trial_data["States timestamps"]
         rewards_this_trial = 0
@@ -581,12 +752,12 @@ class TaskControl:
             if (
                 rkey in st
                 and not np.isnan(np.array(st[rkey][0])).all()
-                and params["rewards"][i] > 0
+                and _effective_rewards[i] > 0
             ):
                 rewards_this_trial += 1
-                liquid_this_trial += params["rewards"][i]
+                liquid_this_trial += _effective_rewards[i]
         self._session_reward_count += rewards_this_trial
-        self._session_liquid_ul += liquid_this_trial
+        self._session_liquid_ul += liquid_this_trial + _free_ul
         transition_times = self._compute_transition_times(poke_events)
         sequence_duration_s = (
             round(poke_events[-1]["time"] - poke_events[0]["time"], 3)
@@ -605,18 +776,26 @@ class TaskControl:
             "is_ordered": is_ordered,
             "sequence": self.sequence,
             "scoring_metric": scoring_metric,
-            "reward_amounts": params["rewards"],
+            "reward_amounts": _effective_rewards,
             "led_intensities": params["leds"],
             "perf_buffer_mean": perf,
             "perf_perfect_mean": perf_perfect,
             "perf_buffer_n": len(self.perf_buffer),
+            "reward_delay_s": _meta.get("delay_s", 0.0),
+            "free_reward_given": _meta.get("free_reward_given", False),
             "reward_count_trial": rewards_this_trial,
-            "liquid_ul_trial": round(liquid_this_trial, 2),
+            "liquid_ul_trial": round(liquid_this_trial + _free_ul, 2),
             "liquid_ul_cumulative": round(self._session_liquid_ul, 2),
             "poke_events": poke_events,
             "transition_times": transition_times,
             "sequence_duration_s": sequence_duration_s,
         }
+        if _pert.get("draws"):
+            trial_data["info"]["reward_amounts_nominal"] = _pert["nominal"]
+            trial_data["info"]["reward_perturbation_applied"] = any(
+                d["perturbed"] for d in _pert["draws"]
+            )
+            trial_data["info"]["reward_perturbation_draws"] = _pert["draws"]
         trial_data["analysis"] = {}
         self.trial_data.append(trial_data)
         self._session_task_trials += 1
