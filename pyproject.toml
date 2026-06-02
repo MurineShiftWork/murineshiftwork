@@ -92,6 +92,10 @@ fallback-version = "0.1.0"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/murineshiftwork"]
+artifacts = [
+    "src/murineshiftwork/**/*.yaml",
+    "src/murineshiftwork/**/*.yml",
+]
 
 [tool.hatch.build.targets.sdist]
 include = [

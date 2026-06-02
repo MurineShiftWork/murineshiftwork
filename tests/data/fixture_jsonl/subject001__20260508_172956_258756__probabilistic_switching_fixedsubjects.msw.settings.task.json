@@ -1,0 +1,173 @@
+{
+    "HARDWARE_BNC_STIMULATION": 2,
+    "HARDWARE_BNC_TRIAL_START": 1,
+    "HARDWARE_PORT_LIGHT_INTENSITY": 50,
+    "HARDWARE_PORT_LIGHT_PORTS": [
+        "center"
+    ],
+    "HARDWARE_PULSEPAL_OUTPUT_CHANNEL": 1,
+    "HARDWARE_PULSEPAL_TRIGGER_CHANNEL": 1,
+    "HARDWARE_VALVES_FOR_AIR": [
+        2,
+        4
+    ],
+    "HARDWARE_VALVES_FOR_WATER": [
+        1,
+        3
+    ],
+    "barcode_bit_duration_ms": 35.0,
+    "barcode_bits": 37,
+    "barcode_init_duration_ms": 10.0,
+    "barcode_tolerance": 0.25,
+    "block_switch_to_different_block_type": true,
+    "calibration_file_sound": "/mnt/data/code/murineshiftwork/murine_shift_work/settings/calibration.sound.default.csv",
+    "calibration_file_water": "/home/testuser/.murineshiftwork/calibration.water.setup1.csv",
+    "criterion_contrast_blocks": 0.25,
+    "criterion_neutral_blocks": 0.25,
+    "criterion_tau": 5,
+    "delay_until_center_init": [
+        0.15,
+        0.2,
+        0.005
+    ],
+    "delay_until_side_timeout": 10,
+    "delay_until_side_timeout_for_stopping": 1.5,
+    "first_block_easy": true,
+    "forced_choice_threshold": 20,
+    "inter_trial_interval": [
+        3,
+        4,
+        0.25
+    ],
+    "lick_detection_events": "ports",
+    "max_block_length": 75,
+    "mean_neutral_block_length": 25,
+    "min_block_length": 20,
+    "min_trials_post_criterion": 5,
+    "n_max_trials": 750,
+    "plot_trial_span": 100,
+    "probabilities": [
+        [
+            10,
+            50
+        ],
+        [
+            50,
+            10
+        ],
+        [
+            10,
+            90
+        ],
+        [
+            90,
+            10
+        ],
+        [
+            50,
+            50
+        ],
+        [
+            50,
+            90
+        ],
+        [
+            90,
+            50
+        ]
+    ],
+    "punish_air_duration": 0.02,
+    "punish_stop_trials": true,
+    "punish_stop_trials_proportion": 1,
+    "record_video": true,
+    "reset_bias_on_block_switch": false,
+    "reward_amount_ul": 2.5,
+    "reward_delay": 0,
+    "serial_port_stage": "/dev/ttyUSB3",
+    "settings.stage": {
+        "axes": {
+            "x": {
+                "id": 51,
+                "name": "x",
+                "operating_mode": "OP_POSITION",
+                "position_max": 820,
+                "position_min": 250,
+                "position_raw": 641,
+                "velocity_max": 0
+            },
+            "y": {
+                "id": 52,
+                "name": "y",
+                "operating_mode": "OP_POSITION",
+                "position_max": 640,
+                "position_min": 110,
+                "position_raw": 479,
+                "velocity_max": 0
+            },
+            "z": {
+                "id": 53,
+                "name": "z",
+                "operating_mode": "OP_POSITION",
+                "position_max": 930,
+                "position_min": 520,
+                "position_raw": 824,
+                "velocity_max": 0
+            }
+        },
+        "connection": {
+            "baudrate": 115200,
+            "serial_port": "/dev/ttyUSB3",
+            "timeout": 0.1
+        },
+        "known_positions": {
+            "back": {
+                "y": {
+                    "position_raw": 620
+                }
+            },
+            "center": {
+                "y": {
+                    "position_raw": 400
+                }
+            },
+            "front": {
+                "x": {
+                    "position_raw": 640
+                },
+                "y": {
+                    "position_raw": 478
+                },
+                "z": {
+                    "position_raw": 820
+                }
+            }
+        },
+        "stage_id": 4
+    },
+    "show_live_plot": true,
+    "stage_anti_bias_bool": false,
+    "stage_anti_bias_max": 50,
+    "stage_anti_bias_n_back": 5,
+    "state_duration_final": 1,
+    "stimulation_pulse_delay": 0,
+    "stimulation_pulse_duration": 0.005,
+    "stimulation_pulse_frequency": 30,
+    "stimulation_pulse_train": 0.5,
+    "stimulation_timepoint": "ACTION_INIT",
+    "stimulation_trial_proportion": 0.2,
+    "stop_cue_amplitude": 0.2,
+    "stop_cue_duration": 0.1,
+    "stop_cue_onset_ramp": 0.05,
+    "stop_trial_delay_adaptive_step": 0.01,
+    "stop_trial_delay_initial": 0.035,
+    "stop_trial_min_max": [
+        0.05,
+        0.3
+    ],
+    "stop_trial_proportion": 0.2,
+    "testing": false,
+    "ttl_pulse_duration": 0.01,
+    "use_piezo_lick_detection": false,
+    "use_stimulation": false,
+    "use_stop_trials": false
+}

@@ -1,0 +1,20 @@
+msw_format_version: 2
+process:
+  msw_version: 2.6.1.dev20+gdcc962563.d20260526
+  git_commit: ''
+  session_uuid: de543c37-4bf3-451a-93e3-68c9f60bc6d6
+  task: optotagging
+  subject: _test_subject
+  setup: setup-test01
+  serial_port: /dev/ttyACM0
+  out_path: /test/data
+  session_folder: /test/data/_test_subject/_test_oe_controller__20260527_132639__ephys/_test_subject__20260527_133053_901389__optotagging
+  session_basename: _test_subject__20260527_133053_901389__optotagging
+  datetime: '20260527_133053_901389'
+parent_acquisition:
+  backend: open_ephys
+  acquisition_name: _test_oe_controller__20260527_132639__ephys
+  subject: _test_oe_controller
+  parent_directory: D:\DATA
+  oe_session_name: _test_oe_controller__20260527_132639__pxi
+  status: IDLE

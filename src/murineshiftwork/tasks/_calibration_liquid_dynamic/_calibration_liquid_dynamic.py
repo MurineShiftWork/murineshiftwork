@@ -17,7 +17,10 @@ from pybpodapi.exceptions.bpod_error import BpodErrorException
 from scipy.optimize import OptimizeWarning, curve_fit
 from tqdm import tqdm
 
-from murineshiftwork.hardware.bpod.valve import make_sma_for_drop_of_water
+from murineshiftwork.hardware.bpod.valve import (
+    _MAX_PULSES_PER_SMA,
+    make_sma_for_valve_train,
+)
 from murineshiftwork.hardware.scale import make_scale
 from murineshiftwork.logic.calibration import (
     CalibrationDataWater,
@@ -209,8 +212,9 @@ class Task(TaskRunner):
 
         scale_noise_g = float(s.get("SCALE_NOISE_G", 0.05))
         min_snr = float(s.get("MIN_SNR", 10))
+        _VALVE_PULSE_HARD_CAP = 500  # thermal safety limit
         min_pulses = int(s.get("MIN_PULSES", 50))
-        max_pulses = int(s.get("MAX_PULSES", 1000))
+        max_pulses = min(int(s.get("MAX_PULSES", 500)), _VALVE_PULSE_HARD_CAP)
 
         max_adaptive_rounds = int(s.get("MAX_ADAPTIVE_ROUNDS", 3))
         n_target = int(s.get("COVERAGE_N_POINTS_TARGET", 5))
@@ -243,6 +247,7 @@ class Task(TaskRunner):
             serial_port=self.input_kwargs.get("serial_port_scale", ""),
             scale_type=self.input_kwargs.get("scale_type", "hx711"),
             baudrate=self.input_kwargs.get("scale_baudrate"),
+            protocol=self.input_kwargs.get("scale_protocol"),
         )
         scale.start()
         self._tare_verified(scale, max_retries=2, threshold_g=1.0)
@@ -593,20 +598,24 @@ class Task(TaskRunner):
 
         weight_before = scale.read_weight_blocking()
 
-        for _ in tqdm(
-            range(n_pulses), leave=False, desc=f"valve {valve_id} {open_s:.4f}s"
-        ):
-            if not self.continue_task:
-                break
-            sma = make_sma_for_drop_of_water(
-                bpod=self.bpod,
-                valve_opening_time=open_s,
-                valve_ids=valve_id,
-                inter_drop_interval=inter_pulse_s,
-            )
-            self.bpod.send_state_machine(sma)
-            if not self.bpod.run_state_machine(sma):
-                break
+        remaining = n_pulses
+        with tqdm(
+            total=n_pulses, leave=False, desc=f"valve {valve_id} {open_s:.4f}s"
+        ) as pbar:
+            while remaining > 0 and self.continue_task:
+                batch = min(remaining, _MAX_PULSES_PER_SMA)
+                sma = make_sma_for_valve_train(
+                    bpod=self.bpod,
+                    valve_opening_time=open_s,
+                    valve_ids=valve_id,
+                    inter_drop_interval=inter_pulse_s,
+                    n_pulses=batch,
+                )
+                self.bpod.send_state_machine(sma)
+                if not self.bpod.run_state_machine(sma):
+                    break
+                remaining -= batch
+                pbar.update(batch)
 
         time.sleep(settle_s)
         weight_g = round(scale.read_weight_blocking() - weight_before, 4)
