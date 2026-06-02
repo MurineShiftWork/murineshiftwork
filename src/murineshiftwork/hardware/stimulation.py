@@ -321,14 +321,18 @@ class Stimulation:
             pulse_voltages=voltages,
         )
 
-        # In gated mode the waveform must loop while the gate is high (customTrainLoop=1).
-        # customTrainLoop=0 plays the waveform exactly once per trigger rising-edge.
-        _loop = 1 if self.in_dict.get("trigger_mode") == "gated" else 0
         for ch in self.in_dict["channels_stimulation"]:
             ch = int(ch)
             self.pulsePal.program_one_param(ch, "customTrainID", slot + 1)
             self.pulsePal.program_one_param(ch, "customTrainTarget", 0)
-            self.pulsePal.program_one_param(ch, "customTrainLoop", _loop)
+            # customTrainLoop=0: play waveform once per pulse event, repeated by the
+            # standard pulse train timing (phase1Duration + interPulseInterval).
+            # customTrainLoop=1 loops at sample rate (20 kHz) — do not use.
+            self.pulsePal.program_one_param(ch, "customTrainLoop", 0)
+            if self.in_dict.get("trigger_mode") == "gated":
+                # Prevent pulseTrainDuration from expiring mid-gate; gate-low is the
+                # only stop signal. 3600 s is safe for any realistic session.
+                self.pulsePal.program_one_param(ch, "pulseTrainDuration", 3600.0)
 
         logging.info(
             "PulsePal: waveform slot %d — %d samples / %.2f ms "
@@ -373,13 +377,18 @@ class Stimulation:
 
         self.off()
 
-        # Gated trigger mode requires continuous=1 so the pulse train repeats for the
-        # full gate duration. The config `continuous` flag still controls non-gated modes.
         _gated = self.in_dict.get("trigger_mode") == "gated"
         _cont_state = 1 if (_gated or self.in_dict.get("continuous")) else 0
-        for channel in list(self.in_dict["channels_stimulation"]) + list(
-            self.in_dict["channels_ttl_copy"]
-        ):
+
+        # set_continuous on a custom-waveform stim channel causes the waveform to loop
+        # at sample rate (20 kHz) producing a constant-high output — not a pulse train.
+        # For custom waveform channels in gated mode, the trigger start/stop and a large
+        # pulseTrainDuration handle repetition; set_continuous must be skipped.
+        for channel in self.in_dict["channels_stimulation"]:
+            if not (self._use_custom_waveform and _gated):
+                self.pulsePal.set_continuous(channel=int(channel), state=_cont_state)
+
+        for channel in self.in_dict["channels_ttl_copy"]:
             self.pulsePal.set_continuous(channel=int(channel), state=_cont_state)
 
         # Set trigger links: 1 only for active channels, 0 for all others.

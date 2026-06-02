@@ -436,3 +436,83 @@ def test_setup_custom_waveform_noop_without_waveform_params():
     assert result == 0.0
     stim.pulsePal.upload_custom_waveform.assert_not_called()
     stim.pulsePal.program_one_param.assert_not_called()
+
+
+def test_setup_custom_waveform_gated_sets_large_pulse_train_duration():
+    stim = _make_stim_with_mock_pp(
+        waveform_on_ramp_type=WAVEFORM_LINEAR,
+        waveform_on_ramp_duration_s=0.001,
+        waveform_center_duration_s=0.003,
+        trigger_mode="gated",
+    )
+    stim.setup_custom_waveform()
+    calls = stim.pulsePal.program_one_param.call_args_list
+    ptd_calls = [c for c in calls if c.args[1] == "pulseTrainDuration"]
+    assert ptd_calls
+    assert ptd_calls[0].args[2] == pytest.approx(3600.0)
+
+
+def test_setup_custom_waveform_non_gated_no_pulse_train_duration_override():
+    stim = _make_stim_with_mock_pp(
+        waveform_on_ramp_type=WAVEFORM_LINEAR,
+        waveform_on_ramp_duration_s=0.001,
+        waveform_center_duration_s=0.003,
+        trigger_mode="normal",
+    )
+    stim.setup_custom_waveform()
+    calls = stim.pulsePal.program_one_param.call_args_list
+    ptd_calls = [c for c in calls if c.args[1] == "pulseTrainDuration"]
+    assert not ptd_calls
+
+
+def test_connect_skips_set_continuous_for_custom_waveform_in_gated_mode():
+    stim = _make_stim(
+        waveform_on_ramp_type=WAVEFORM_LINEAR,
+        waveform_on_ramp_duration_s=0.001,
+        waveform_center_duration_s=0.003,
+        trigger_mode="gated",
+        trigger_channels_for_stimulation=[0],
+    )
+    mock_pp = MagicMock()
+    mock_pp.nr_output_channels = 4
+    mock_pp.channel_configs = [MagicMock() for _ in range(4)]
+    mock_pp.trigger_configs = [MagicMock() for _ in range(2)]
+    stim.connect(handle=mock_pp)
+    set_cont_calls = [c for c in mock_pp.set_continuous.call_args_list]
+    stim_ch = stim.in_dict["channels_stimulation"][0]
+    stim_ch_calls = [
+        c
+        for c in set_cont_calls
+        if c.kwargs.get("channel") == stim_ch or (c.args and c.args[0] == stim_ch)
+    ]
+    assert not stim_ch_calls, (
+        "set_continuous must not be called for custom waveform stim channels in gated mode"
+    )
+
+
+def test_connect_still_sets_continuous_for_ttl_copy_in_gated_mode():
+    stim = Stimulation(
+        port="/dev/null",
+        in_dict={
+            "channels_stimulation": [0],
+            "channels_ttl_copy": [3],
+            "pulse_frequency": 40,
+            "trigger_mode": "gated",
+            "trigger_channels_for_stimulation": [0],
+            "waveform_on_ramp_type": WAVEFORM_LINEAR,
+            "waveform_on_ramp_duration_s": 0.001,
+            "waveform_center_duration_s": 0.003,
+        },
+    )
+    mock_pp = MagicMock()
+    mock_pp.nr_output_channels = 4
+    mock_pp.channel_configs = [MagicMock() for _ in range(4)]
+    mock_pp.trigger_configs = [MagicMock() for _ in range(2)]
+    stim.connect(handle=mock_pp)
+    set_cont_calls = mock_pp.set_continuous.call_args_list
+    copy_ch_calls = [
+        c
+        for c in set_cont_calls
+        if c.kwargs.get("channel") == 3 or (c.args and c.args[0] == 3)
+    ]
+    assert copy_ch_calls, "set_continuous must still be called for TTL copy channels"
