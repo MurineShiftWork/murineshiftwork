@@ -330,8 +330,13 @@ class Stimulation:
             pulse_voltages=padded_voltages,
         )
 
+        _pulse_width = 1.0 / _PULSEPAL_SAMPLE_RATE
         for ch in self.in_dict["channels_stimulation"]:
             ch = int(ch)
+            # Each waveform sample must last exactly one sample period; the gap
+            # between repetitions is the trailing zero-padding in padded_voltages.
+            self.pulsePal.program_one_param(ch, "phase1Duration", _pulse_width)
+            self.pulsePal.program_one_param(ch, "interPulseInterval", 0.0)
             self.pulsePal.program_one_param(ch, "customTrainID", slot + 1)
             self.pulsePal.program_one_param(ch, "customTrainTarget", 0)
             self.pulsePal.program_one_param(ch, "customTrainLoop", 1)

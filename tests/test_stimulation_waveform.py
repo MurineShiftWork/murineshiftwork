@@ -417,6 +417,34 @@ def test_setup_custom_waveform_sets_custom_train_loop_one():
     assert loop_calls[0].args[2] == 1
 
 
+def test_setup_custom_waveform_sets_phase1_duration_to_sample_period():
+    """phase1Duration must be one sample period so every sample plays correctly."""
+    stim = _make_stim_with_mock_pp(
+        waveform_on_ramp_type=WAVEFORM_LINEAR,
+        waveform_on_ramp_duration_s=0.001,
+        waveform_center_duration_s=0.003,
+    )
+    stim.setup_custom_waveform()
+    calls = stim.pulsePal.program_one_param.call_args_list
+    p1d_calls = [c for c in calls if c.args[1] == "phase1Duration"]
+    assert p1d_calls
+    assert p1d_calls[0].args[2] == pytest.approx(1.0 / _PULSEPAL_SAMPLE_RATE)
+
+
+def test_setup_custom_waveform_sets_inter_pulse_interval_zero():
+    """IPI must be 0 because the loop gap is embedded in the zero-padded waveform."""
+    stim = _make_stim_with_mock_pp(
+        waveform_on_ramp_type=WAVEFORM_LINEAR,
+        waveform_on_ramp_duration_s=0.001,
+        waveform_center_duration_s=0.003,
+    )
+    stim.setup_custom_waveform()
+    calls = stim.pulsePal.program_one_param.call_args_list
+    ipi_calls = [c for c in calls if c.args[1] == "interPulseInterval"]
+    assert ipi_calls
+    assert ipi_calls[0].args[2] == pytest.approx(0.0)
+
+
 def test_setup_custom_waveform_pads_to_full_cycle():
     """Uploaded waveform must be exactly one pulse cycle long for looping at pulse_frequency."""
     pulse_frequency = 40  # 25 ms cycle = 500 samples at 20 kHz
