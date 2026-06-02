@@ -357,6 +357,11 @@ class Stimulation:
             self._waveform_off_ramp_type or "none",
             self._waveform_off_ramp_duration_s * 1000,
         )
+        # Reset channel state so trial 1 starts in the same clean condition as
+        # all subsequent trials (which are preceded by stim.off() after each trial).
+        # Without this, set_continuous=1 + customTrainLoop=1 causes the waveform
+        # to play immediately after upload, and the first gate opens mid-loop.
+        self.off()
         return total_s
 
     def _sync_channel_configs(self) -> None:
@@ -432,6 +437,10 @@ class Stimulation:
             if not self._owns_connection
             else f"PulsePal: connected on {self.port}"
         )
+        # Ensure clean stopped state after set_continuous armed the channels.
+        # Without this, rectangular channels fire before the first gate trigger,
+        # producing an extra pulse at the start of the first trial.
+        self.off()
 
     def on(self):
         if not self.emergency_off_bool:
