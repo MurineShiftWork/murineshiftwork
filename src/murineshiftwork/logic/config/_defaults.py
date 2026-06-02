@@ -1,15 +1,15 @@
 from murineshiftwork.logic.config.models import ValveCalibration
 
 # Fallback used when a setup has no valve calibration at all.
-# Derived from setup-npx2 valve 2 (2026-05-18).  Debug use only.
+# Generic approximate values — for debug/smoke-test runs only.
+# Do not use for experiments; calibrate the actual setup first.
 _FALLBACK_VALVE_CALIBRATION = ValveCalibration(
-    updated="2026-05-18",
+    updated="2026-06-01",
     points=[
-        [0.005, 0.3],
-        [0.034, 3.4],
-        [0.041, 4.5],
-        [0.077, 10.7],
-        [0.102, 13.0],
-        [0.150, 21.2],
+        [0.010, 1.0],
+        [0.030, 3.0],
+        [0.060, 7.0],
+        [0.100, 12.0],
+        [0.150, 20.0],
     ],
 )

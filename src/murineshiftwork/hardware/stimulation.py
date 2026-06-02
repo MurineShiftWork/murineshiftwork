@@ -4,11 +4,12 @@ Supports optional laser power control via Doric LDFL5 (0-5V analog input).
 Set laser_power=None (default) for fixed 5V TTL output; 0.0-1.0 for Doric power mapping.
 
 Channel indices are 0-based throughout (pypulsepal native).
-Output channels: 0–3 (firmware channels 1–4).
-Trigger channels: 0–1 (firmware trigger inputs 1–2).
+Output channels: 0-3 (firmware channels 1-4).
+Trigger channels: 0-1 (firmware trigger inputs 1-2).
 """
 
 import logging
+import math
 import time
 from typing import Any, ClassVar
 
@@ -27,10 +28,79 @@ DORIC_CURRENT_SENSITIVITY = 80.0  # mA per volt (from manual spec)
 DORIC_MAX_CURRENT_MA = 120.0  # mA — specific laser diode max
 DORIC_MAX_VOLTAGE = DORIC_MAX_CURRENT_MA / DORIC_CURRENT_SENSITIVITY
 
+WAVEFORM_LINEAR = "linear"
+WAVEFORM_SINE = "sine"
+WAVEFORM_RAISED_COSINE = "raised_cosine"
+_PULSEPAL_SAMPLE_RATE = 20000  # 50 us per cycle
+
 
 def power_to_voltage(laser_power: float) -> float:
-    """Map 0.0–1.0 power fraction to volts for Doric LDFL5_450_0.75."""
+    """Map 0.0-1.0 power fraction to volts for Doric LDFL5_450_0.75."""
     return round(float(laser_power) * DORIC_MAX_VOLTAGE, 4)
+
+
+def _ramp_envelope(n_samples: int, ramp_type: str, rising: bool) -> list[float]:
+    """Normalized [0,1] ramp of length n_samples. rising=False returns the mirror (1 down to 0)."""
+    if n_samples == 0:
+        return []
+    if n_samples == 1:
+        return [1.0]
+    t = [i / (n_samples - 1) for i in range(n_samples)]
+    if ramp_type == WAVEFORM_LINEAR:
+        vals = t
+    elif ramp_type == WAVEFORM_SINE:
+        vals = [math.sin(math.pi / 2 * x) for x in t]
+    elif ramp_type == WAVEFORM_RAISED_COSINE:
+        vals = [(1 - math.cos(math.pi * x)) / 2 for x in t]
+    else:
+        raise ValueError(
+            f"Unknown waveform type {ramp_type!r}; valid: linear, sine, raised_cosine"
+        )
+    return vals if rising else list(reversed(vals))
+
+
+def generate_waveform_voltages(
+    target_voltage: float,
+    on_ramp_type: str | None,
+    on_ramp_duration_s: float,
+    center_duration_s: float,
+    off_ramp_type: str | None,
+    off_ramp_duration_s: float,
+    sample_rate: int = _PULSEPAL_SAMPLE_RATE,
+) -> tuple[list[float], float]:
+    """Build shaped-pulse voltage samples for PulsePal custom waveform upload.
+
+    Three phases: on-ramp (0 to target), flat center (target), off-ramp (target to 0).
+    Any phase can be zero duration. Set center_duration_s=0 with matching ramps to get
+    a pure bump with no flat top.
+
+    Returns (voltage_samples, total_duration_s).
+    """
+    dt = 1.0 / sample_rate
+    n_on = round(on_ramp_duration_s * sample_rate) if on_ramp_type else 0
+    n_center = round(center_duration_s * sample_rate)
+    n_off = round(off_ramp_duration_s * sample_rate) if off_ramp_type else 0
+
+    samples = (
+        (
+            [
+                v * target_voltage
+                for v in _ramp_envelope(n_on, on_ramp_type, rising=True)
+            ]
+            if on_ramp_type
+            else []
+        )
+        + [target_voltage] * n_center
+        + (
+            [
+                v * target_voltage
+                for v in _ramp_envelope(n_off, off_ramp_type, rising=False)
+            ]
+            if off_ramp_type
+            else []
+        )
+    )
+    return samples, len(samples) * dt
 
 
 class Stimulation:
@@ -68,6 +138,43 @@ class Stimulation:
         self.in_dict = dict(self._DEFAULT_IN_DICT)
         for k, v in (in_dict or {}).items():
             self.in_dict[k] = v
+
+        self._waveform_on_ramp_type: str | None = self.in_dict.pop(
+            "waveform_on_ramp_type", None
+        )
+        self._waveform_on_ramp_duration_s: float = float(
+            self.in_dict.pop("waveform_on_ramp_duration_s", 0.0)
+        )
+        self._waveform_center_duration_s: float = float(
+            self.in_dict.pop("waveform_center_duration_s", 0.0)
+        )
+        self._waveform_off_ramp_type: str | None = self.in_dict.pop(
+            "waveform_off_ramp_type", None
+        )
+        self._waveform_off_ramp_duration_s: float = float(
+            self.in_dict.pop("waveform_off_ramp_duration_s", 0.0)
+        )
+        self._use_custom_waveform: bool = bool(
+            self._waveform_on_ramp_type or self._waveform_off_ramp_type
+        )
+
+        if self._use_custom_waveform:
+            _, total_s = generate_waveform_voltages(
+                target_voltage=1.0,
+                on_ramp_type=self._waveform_on_ramp_type,
+                on_ramp_duration_s=self._waveform_on_ramp_duration_s,
+                center_duration_s=self._waveform_center_duration_s,
+                off_ramp_type=self._waveform_off_ramp_type,
+                off_ramp_duration_s=self._waveform_off_ramp_duration_s,
+            )
+            cycle_s = 1.0 / float(self.in_dict.get("pulse_frequency", 30))
+            if total_s > cycle_s:
+                raise ValueError(
+                    f"Waveform duration {total_s * 1000:.2f} ms exceeds pulse cycle "
+                    f"{cycle_s * 1000:.2f} ms (1/pulse_frequency). "
+                    "Reduce ramp/center durations or lower pulse_frequency."
+                )
+            self.in_dict["pulse_duration"] = total_s
 
         laser_power = self.in_dict.get("laser_power")
         if laser_power is not None:
@@ -186,6 +293,53 @@ class Stimulation:
                         param_name=param_name,
                         param_value=value,
                     )
+
+    def setup_custom_waveform(self, slot: int = 0) -> float:
+        """Upload shaped waveform to PulsePal and configure stim channels to use it.
+
+        Call after connect(). No-op if no waveform params were set.
+        Returns total waveform duration in seconds (0 if no waveform).
+        """
+        if not self._use_custom_waveform:
+            return 0.0
+
+        first_ch = int(self.in_dict["channels_stimulation"][0])
+        target_v = self._channel_params[first_ch]["phase1Voltage"]
+
+        voltages, total_s = generate_waveform_voltages(
+            target_voltage=target_v,
+            on_ramp_type=self._waveform_on_ramp_type,
+            on_ramp_duration_s=self._waveform_on_ramp_duration_s,
+            center_duration_s=self._waveform_center_duration_s,
+            off_ramp_type=self._waveform_off_ramp_type,
+            off_ramp_duration_s=self._waveform_off_ramp_duration_s,
+        )
+
+        self.pulsePal.upload_custom_waveform(
+            pulse_train_id=slot,
+            pulse_width=1.0 / _PULSEPAL_SAMPLE_RATE,
+            pulse_voltages=voltages,
+        )
+
+        for ch in self.in_dict["channels_stimulation"]:
+            ch = int(ch)
+            self.pulsePal.program_one_param(ch, "customTrainID", slot + 1)
+            self.pulsePal.program_one_param(ch, "customTrainTarget", 0)
+            self.pulsePal.program_one_param(ch, "customTrainLoop", 0)
+
+        logging.info(
+            "PulsePal: waveform slot %d — %d samples / %.2f ms "
+            "(on %s %.1f ms | center %.1f ms | off %s %.1f ms)",
+            slot,
+            len(voltages),
+            total_s * 1000,
+            self._waveform_on_ramp_type or "none",
+            self._waveform_on_ramp_duration_s * 1000,
+            self._waveform_center_duration_s * 1000,
+            self._waveform_off_ramp_type or "none",
+            self._waveform_off_ramp_duration_s * 1000,
+        )
+        return total_s
 
     def _sync_channel_configs(self) -> None:
         """Write _channel_params into pulsePal.channel_configs and unlink inactive channels."""

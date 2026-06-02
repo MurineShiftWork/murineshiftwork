@@ -75,8 +75,18 @@ Thumbs.db
 docs/_build/
 
 # Project-specific: session data and external sub-repos
-data/
+/data/
 external/
 <MagicMock*
-*.json
 *.conf.custom
+
+# Session output files (runtime data — never committed)
+*.msw.df.jsonl
+*.msw.settings.task.json
+*.msw.settings.process.json
+*.msw.session.yaml
+
+# Safety: always track package yaml and test fixture data
+!src/**/*.yaml
+!src/**/*.yml
+!tests/data/**

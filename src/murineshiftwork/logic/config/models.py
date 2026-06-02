@@ -58,6 +58,7 @@ class ScaleDevice(SerialDevice):
     type: Literal["scale"]
     scale_type: Literal["hx711", "bench"] = "hx711"
     baudrate: int = 9600
+    scale_protocol: int | None = None
 
 
 DeviceUnion = Annotated[

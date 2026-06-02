@@ -36,8 +36,13 @@ class SerialWeighingScaleAdapter(WeighingScaleBase):
     """Wraps `serial_scale_hx711.Scale` behind the shared interface."""
 
     def __init__(self, serial_port: str) -> None:
-        from serial_scale_hx711 import Scale
-
+        try:
+            from serial_scale_hx711 import Scale
+        except ImportError as _e:
+            raise ImportError(
+                "serial-scale-hx711 is required for HX711 scale support. "
+                "Install with: pip install murineshiftwork[calibration]"
+            ) from _e
         self._scale = Scale(serial_port=serial_port)
 
     def start(self) -> None:
@@ -89,10 +94,19 @@ class SerialWeighingScaleAdapter(WeighingScaleBase):
 class BenchScaleAdapter(WeighingScaleBase):
     """Wraps `serial_scale_bench.Scale` (RS-232/USB bench scale) behind the shared interface."""
 
-    def __init__(self, serial_port: str, baudrate: int = 9600) -> None:
-        from serial_scale_bench import Scale
-
-        self._scale = Scale(serial_port=serial_port, baudrate=baudrate)
+    def __init__(
+        self, serial_port: str, baudrate: int = 9600, protocol: int | None = None
+    ) -> None:
+        try:
+            from serial_scale_bench import Scale
+        except ImportError as _e:
+            raise ImportError(
+                "serial-scale-bench is required for bench scale support. "
+                "Install with: pip install murineshiftwork[calibration]"
+            ) from _e
+        self._scale = Scale(
+            serial_port=serial_port, baudrate=baudrate, protocol=protocol
+        )
 
     def start(self) -> None:
         self._scale.start()
@@ -146,6 +160,7 @@ def make_scale(
     serial_port: str = "",
     scale_type: str = "hx711",
     baudrate: int | None = None,
+    protocol: int | None = None,
 ) -> WeighingScaleBase:
     """Factory: return the appropriate scale adapter for *scale_type*.
 
@@ -157,7 +172,9 @@ def make_scale(
     if scale_type == "hx711":
         return SerialWeighingScaleAdapter(serial_port=serial_port)
     if scale_type == "bench":
-        return BenchScaleAdapter(serial_port=serial_port, baudrate=baudrate or 9600)
+        return BenchScaleAdapter(
+            serial_port=serial_port, baudrate=baudrate or 9600, protocol=protocol
+        )
     if scale_type == "sim":
         return SimWeighingScale()
     raise ValueError(

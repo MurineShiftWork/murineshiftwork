@@ -17,6 +17,8 @@ Human-facing contribution notes are in CONTRIBUTING.md.
 
 - No comments unless the WHY is non-obvious (hidden constraint, workaround, subtle invariant).
 - No multi-line docstrings or comment blocks.
+- No em dashes in docstrings, comments, or prose. Use `:` or rephrase.
+- No `# ====` or `# ----` section-divider lines in Python source.
 - No backwards-compatibility shims for removed code — delete cleanly.
 - No error handling for impossible cases; trust framework guarantees.
 - Default: no new files unless the feature genuinely requires them.

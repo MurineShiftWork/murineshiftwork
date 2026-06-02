@@ -165,6 +165,7 @@ class Task(TaskRunner):
 
             stim = Stimulation(port=serial_port_pulsepal, in_dict=params)
             stim.connect(handle=pulsepal_handle)
+            stim.setup_custom_waveform()
             self._stim = stim
 
             if record_video and conductor is not None:

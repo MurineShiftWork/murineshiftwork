@@ -22,6 +22,17 @@ Design details live in memory files or separate docs — not here.
 
 ## TODO
 
+### Decisions needed before extraction sprint (2026-05-30)
+
+See `PLAN_package_graph.md` for full context on each.
+
+- [ ] **Decision: `msw-namespace` fate** — absorbed into `acquisition-namespace` (shared layer) or `msw-core` (internal)? Affects Sprint 3 of `PLAN_namespace_unification.md`.
+- [ ] **Decision: `msw-logic` → `msw-core` rename** — confirm name + scope (does it include `namespace/` or not?).
+- [ ] **Decision: task package granularity** — single `msw-tasks` package, or keep `msw-tasks-{core,sequence,switching,other}` with `[tasks]` extra pulling all? Extraction order unchanged either way.
+- [ ] **Decision: `msw-agent` install scope** — `[agent]` opt-in extra (keeps base install lean) or always-installed core dep?
+
+---
+
 ### Sprint order (2026-05-27)
 
 1. ~~**Open Ephys URL validation**~~ — **DONE** · 2026-05-26 · `open_ephys_url` moved from machine config to `SetupConfig` + setup YAML; `OpenEphysParentSession.attach()` now stores `fail_reason` and promotes inner errors to ERROR level; outer warning includes reason + `--child-of ACQUISITION_NAME` hint. Remaining: `--force-standalone` escape hatch.
@@ -57,6 +68,7 @@ Design details live in memory files or separate docs — not here.
       """Check conductor + agent files present; run barcode or legacy TTL alignment."""
   ```
   Callers run `msw.validate_session(dir)` then optionally `rce.validate_session(dir, msw_df=...)` for camera checks. Requires rce package to be public first (see [[project_github_org_migration]]).
+- [ ] **Opto — shaped waveform** — `generate_waveform_voltages()` + `_ramp_envelope()` in `hardware/stimulation.py`; three-phase (on-ramp, center, off-ramp) with independent types per side (`linear`, `sine`, `raised_cosine`); `Stimulation.setup_custom_waveform()` uploads to PulsePal slot and sets `customTrainID/Target/Loop`; five `waveform_*` YAML defaults in optotagging `task.yaml`; `ramp_sweep` diagnostic mode; 55 tests in `test_stimulation_waveform.py`. Branch: `ft/opto-waveform`.
 - [x] **Opto — hardware verification** — TTL barcodes + PulsePal abort confirmed on rig · 2026-05-28. Airpuff barcode verify + `sequence_automated` alignment script still pending (tracked separately, not blocking merge).
 - [x] **Opto — PR TODOs** — all code items resolved · 2026-05-28
 - [x] **msw-flir-bonsai** — `FlirBonsaiClient`, `make_camera_client()` factory, discriminated `CameraConfig` union in `models.py` · 2026-05-25

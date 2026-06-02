@@ -209,6 +209,7 @@ def _extra_injections_from_args(args_dict: dict) -> dict:
         "serial_port_scale",
         "scale_type",
         "scale_baudrate",
+        "scale_protocol",
         "settings.stage",
     ):
         if key in args_dict:
@@ -237,7 +238,7 @@ def _inject_valve_calibration(setup_config, patched) -> None:
         logging.warning(
             "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
             "NO VALVE CALIBRATION in setup '%s'.\n"
-            "Using built-in fallback (setup-npx2 reference data).\n"
+            "Using built-in fallback (generic approximate values).\n"
             "DO NOT USE THIS DATA FOR EXPERIMENTS — calibrate first.\n"
             "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
             setup_config.name,
@@ -323,8 +324,10 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
             )
         scale_type = getattr(scale_dev, "scale_type", "hx711")
         scale_baudrate = getattr(scale_dev, "baudrate", 4800)
+        scale_protocol = getattr(scale_dev, "scale_protocol", None)
         args_dict["scale_type"] = scale_type
         args_dict["scale_baudrate"] = scale_baudrate
+        args_dict["scale_protocol"] = scale_protocol
         patched["scale_type"] = scale_type
 
     if setup_config and "pulsepal" in setup_config.devices:
