@@ -251,6 +251,7 @@ class Task(TaskRunner):
                         )
                         break
 
+                    stim.off()  # ensure PulsePal stops between trials
                     _t_bpod_done = time.perf_counter()
 
                     record.update(

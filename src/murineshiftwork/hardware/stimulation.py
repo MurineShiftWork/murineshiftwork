@@ -321,11 +321,14 @@ class Stimulation:
             pulse_voltages=voltages,
         )
 
+        # In gated mode the waveform must loop while the gate is high (customTrainLoop=1).
+        # customTrainLoop=0 plays the waveform exactly once per trigger rising-edge.
+        _loop = 1 if self.in_dict.get("trigger_mode") == "gated" else 0
         for ch in self.in_dict["channels_stimulation"]:
             ch = int(ch)
             self.pulsePal.program_one_param(ch, "customTrainID", slot + 1)
             self.pulsePal.program_one_param(ch, "customTrainTarget", 0)
-            self.pulsePal.program_one_param(ch, "customTrainLoop", 0)
+            self.pulsePal.program_one_param(ch, "customTrainLoop", _loop)
 
         logging.info(
             "PulsePal: waveform slot %d — %d samples / %.2f ms "
