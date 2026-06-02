@@ -14,6 +14,7 @@ tasks where Bpod-timed pulses and trial recording are needed. Here we just want
 firmware-level open/close with host-side sleep for timing.
 """
 
+import contextlib
 import logging
 import time
 
@@ -88,10 +89,8 @@ class BpodActionDriver:
                     time.sleep(inter_pulse_s)
         finally:
             # Ensure valve is closed even if interrupted mid-pulse
-            try:
+            with contextlib.suppress(Exception):
                 self._bpod.manual_override(
                     ChannelType.OUTPUT, ChannelName.VALVE, valve_id, 0
                 )
-            except Exception:
-                pass
         logging.info("BpodAction: complete")

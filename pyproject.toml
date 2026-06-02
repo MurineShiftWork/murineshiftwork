@@ -11,8 +11,10 @@ license = { file = "LICENSE" }
 authors = [
     { name = "Lars B. Rollik", email = "L.B.Rollik@protonmail.com" },
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.14"
 dependencies = [
+    "acquisition-namespace>=1.0",
+    "ttl-barcoder>=0.3.0,<1.0",
     "pydantic>=2.0",
     "tqdm",
     "rich",
@@ -24,13 +26,14 @@ dependencies = [
     "pybpod-api",
     "safe-and-collaborative-architecture",
     "sounddevice",
-    "opencv-python-headless",
     "seaborn",
     "plotly>=5.0",
+    "pre-commit>=4.6.0",
 ]
 
 [project.urls]
-Repository = "https://github.com/larsrollik/murineshiftwork"
+Homepage = "https://github.com/larsrollik/murineshiftwork"
+Documentation = "https://larsrollik.github.io/murineshiftwork/"
 "Issue Tracker" = "https://github.com/larsrollik/murineshiftwork/issues"
 
 [project.optional-dependencies]
@@ -39,14 +42,16 @@ dev = [
     "pytest",
     "pytest-cov",
     "pre-commit",
-    "black",
-    "flake8",
-    "mkdocs-material",
-    "mkdocs",
+    "ruff",
+    "mypy",
     "gitpython",
     "fastapi",
     "httpx",
     "uvicorn",
+    "pyarrow",
+]
+docs = [
+    "mkdocs-material",
 ]
 calibration = [
     "serial-scale-hx711",
@@ -59,6 +64,7 @@ qt = [
     "PyQt6",
     "pyqtgraph",
     "myterial",
+    "opencv-python-headless",
 ]
 rce = [
     "rpi_camera_ensemble",
@@ -68,10 +74,8 @@ agent = [
     "uvicorn[standard]>=0.29",
     "websockets>=12",
 ]
-labwatch = [
-    # labwatch_client is served from a private registry — install separately:
-    # pip install labwatch-client --index-url https://<private-registry>
-    # or: pip install 'labwatch-client @ git+https://github.com/MurineShiftWork/labwatch-client.git'
+full = [
+    "murineshiftwork[calibration,keyboard,qt,agent]",
 ]
 
 [project.scripts]
@@ -84,12 +88,21 @@ msw = "murineshiftwork.cli:run_cli"
 
 [tool.hatch.version]
 source = "vcs"
+fallback-version = "0.1.0"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/murineshiftwork"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]
+include = [
+    "/src/murineshiftwork",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+    "/CITATION.cff",
+    "/VERSION",
+]
 
 # ---------------------------------------------------------------------------
 # Commitizen
@@ -115,6 +128,7 @@ include = ["/src", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
+version_provider = "commitizen"
 version = "2.6.0"
 tag_format = "v$version"
 update_changelog_on_bump = false
@@ -129,25 +143,24 @@ testpaths = ["tests"]
 addopts = "--cov=murineshiftwork --durations=0"
 
 # ---------------------------------------------------------------------------
-# Black
-# ---------------------------------------------------------------------------
-
-[tool.black]
-target-version = ["py312", "py313"]
-line-length = 88
-skip-string-normalization = false
-
-# ---------------------------------------------------------------------------
 # Ruff
 # ---------------------------------------------------------------------------
 
 [tool.ruff]
 line-length = 88
+indent-width = 4
 exclude = ["external", "playground", "scripts"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
+select = ["E", "W", "F", "I", "UP", "YTT", "SIM", "PTH", "TCH", "PYI"]
+fixable = ["ALL"]
 ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 # ---------------------------------------------------------------------------
 # Mypy
@@ -159,3 +172,13 @@ namespace_packages = true
 explicit_package_bases = true
 ignore_missing_imports = true
 exclude = ["external"]
+
+# ---------------------------------------------------------------------------
+# uv
+# ---------------------------------------------------------------------------
+
+[tool.uv]
+environments = [
+    "sys_platform == 'linux'",
+    "sys_platform == 'darwin'",
+]

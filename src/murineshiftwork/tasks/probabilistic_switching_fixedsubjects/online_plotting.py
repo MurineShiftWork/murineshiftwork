@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import socket
 import time
@@ -62,7 +63,7 @@ class QueueMonitor(QtCore.QThread):
     kill_queue: Any = None
 
     def __init__(self, monitoring_queue=None, kill_queue=None):
-        super(QueueMonitor, self).__init__()
+        super().__init__()
         self.monitoring_queue = monitoring_queue
         self.kill_queue = kill_queue
 
@@ -227,8 +228,8 @@ class OnlinePlottingForPS(Process):
         max_trials=None,
         video_stream_config: dict | None = None,
     ):
-        super(OnlinePlottingForPS, self).__init__()
-        self.name = self.__class__.__name__ if not name else name
+        super().__init__()
+        self.name = name if name else self.__class__.__name__
 
         if not is_simulation and not data_queue:
             raise ValueError("Choose either simulation or provide data_queue")
@@ -434,10 +435,8 @@ class OnlinePlottingForPS(Process):
         """
         if dict_for_update is None:
             return
-        try:
+        with contextlib.suppress(KeyboardInterrupt):
             self._update_data(dict_for_update)
-        except KeyboardInterrupt:
-            pass
 
     def _update_data(self, dict_for_update):
         self.trial_index = dict_for_update["trial_index"]

@@ -25,9 +25,18 @@ if __name__ == "__main__":
 
     args = (
         sys.argv
-        + "run -t prob -d --experiment important-stuff --setup b1 --metadata researcher=LBR".split(
-            " "
-        )
+        + [
+            "run",
+            "-t",
+            "prob",
+            "-d",
+            "--experiment",
+            "important-stuff",
+            "--setup",
+            "b1",
+            "--metadata",
+            "researcher=LBR",
+        ]
         + ['bla_var="split word"', "some_other_var=243"]
     )  # .split(" ")
     run_cli(*args)

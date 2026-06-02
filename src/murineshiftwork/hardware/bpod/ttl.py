@@ -39,11 +39,7 @@ def _add_protocol_ttl(
     starting_pulse_index=0,
     exit_state="exit",
 ):
-    assert (
-        isinstance(sequence, str)
-        or isinstance(sequence, list)
-        or isinstance(sequence, tuple)
-    )
+    assert isinstance(sequence, str | list | tuple)
     iti_state_name = "pulse_post_protocol_identifier"
 
     if isinstance(sequence, str):

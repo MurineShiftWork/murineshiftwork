@@ -15,16 +15,15 @@ from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
     barcode_config_from_settings,
     inject_barcode_states,
-    prepare_barcode,
 )
 from murineshiftwork.logic.calibration import CalibrationDataSound
-from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.maths import ExponentialMovingAverage, withprob
 from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.sounds import StereoSound
+from murineshiftwork.readers.io import save_trial_data
 
 
-class TaskControl(object):
+class TaskControl:
     bpod: Any = None
     _stage_queue = None
     _stage_thread = None
@@ -90,16 +89,16 @@ class TaskControl(object):
         task_settings=None,
         barcoder=None,
     ):
-        super(TaskControl, self).__init__()
+        super().__init__()
 
         if not bpod:
             raise ValueError("Required input argument: bpod")
         self.bpod = bpod
 
         self.save_path_data = (
-            Path(self.bpod.workspace_path) / self.bpod.session_name
-            if not save_path_data
-            else save_path_data
+            save_path_data
+            if save_path_data
+            else Path(self.bpod.workspace_path) / self.bpod.session_name
         )
         logging.info(f"Session: {Path(self.save_path_data).name}")
 
@@ -546,7 +545,7 @@ class TaskControl(object):
         n_back_crit = self.task_settings["forced_choice_threshold"]
         key = "choice"
         td_info = [td["info"] for td in self.trial_data if td and key in td["info"]]
-        choice_vector = [c[key] for c in td_info if key in c.keys()]
+        choice_vector = [c[key] for c in td_info if key in c]
         unique_choices = np.unique(choice_vector[-n_back_crit:])
         unique_choices_non_nan = np.array(unique_choices)[~np.isnan(unique_choices)]
         unique_choices_n_back = unique_choices_non_nan.__len__()
@@ -854,7 +853,7 @@ class TaskControl(object):
             raise ValueError
 
         if self.barcoder is not None:
-            bv, bwt, timing_seq = prepare_barcode(self.barcoder)
+            bv, bwt, timing_seq = self.barcoder.prepare()
             self._pending_barcode_value = bv
             self._pending_barcode_wall_time = bwt
             iti_post_barcode = max(0.05, iti_this_trial - self.barcode_duration_s)
@@ -889,19 +888,10 @@ class TaskControl(object):
         save_trial_data(self.trial_data, str(self.save_path_data) + ".df.jsonl")
         logging.debug(f"Saved data in {np.round(time.time() - dt, 2)}s.")
 
-    def on_exit(self):
-        self.save()
-
-    def __del__(self):
+    def stop(self):
+        """Move stage to back, stop stage thread, and save data. Call at end of Task.run()."""
         if self._stage_queue is not None:
             self._stage_queue.put("back")
         self._stop_stage_thread()
-        logging.debug("Moved stage BACK on exit")
-        self.save()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._stage_queue is not None:
-            self._stage_queue.put("back")
-        self._stop_stage_thread()
-        logging.debug("Moved stage BACK on exit")
+        logging.debug("Stage moved to 'back' on stop")
         self.save()

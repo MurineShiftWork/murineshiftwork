@@ -1,14 +1,19 @@
 # Namespace Unification Plan
 
-*Created 2026-05-23. Branch target: ft/namespace-unification.*
-*Pre-requisite: ft/extras-restructure (see MASTER_PLAN) must land first — it defines which install
-extras provide fastapi/httpx and restructures CI matrix variants.*
+*Created 2026-05-23. **Option B implemented 2026-05-27** — `generate_session_paths()` is now a thin wrapper over `NamespaceBuilder`; mandatory acquisition level added; `session_folder_relative` + `acquisition_name` in session_paths dict. See commit `449a36a`.*
 
 ---
 
-## Problem statement
+## Status: Option B complete
 
-The codebase has three parallel, unconnected systems doing overlapping jobs:
+All three sprint blocks below are done. The remaining work is the manifest writer and reader dispatch
+(tracked in `PLAN_session_manifests.md` and `PLAN_retrograde_reader.md`).
+
+---
+
+## Problem statement (resolved)
+
+The codebase previously had three parallel, unconnected systems doing overlapping jobs:
 
 | System | File | What it does |
 |---|---|---|
@@ -16,7 +21,7 @@ The codebase has three parallel, unconnected systems doing overlapping jobs:
 | `NamespaceBuilder` + YAML specs | `namespace/spec.py` + `namespace.v*.yaml` | General-purpose YAML-driven path builder with hierarchy, templates, regex — not used in the operational session path generation |
 | `msw_files.py` | `namespace/msw_files.py` | Standalone artifact registry + `msw_file()` builder — not yet wired to either above |
 
-The `.msw.` separator and artifact names are scattered as raw string literals across `task_process.py`, `log.py`, and every task file.  There is no single definition of what the separator is or what files are valid.
+The `.msw.` separator and artifact names were scattered as raw string literals across `task_process.py`, `log.py`, and every task file.  There was no single definition of what the separator is or what files are valid.
 
 ---
 
@@ -130,33 +135,36 @@ Reader uses `_MSW_BUILDER.is_msw_file()`, `_MSW_BUILDER.extract_artifact()`.
 
 ---
 
-## Recommended sequence
+## Implementation status
 
 ```
-Sprint 1 (ft/namespace-unification):
-  [x] msw_files.py already created — DELETE it; merge into NamespaceBuilder
-  [ ] Add msw_separator + core_artifacts to NamespaceSpec (Pydantic + YAML optional fields)
-  [ ] Add get_artifact_file(), is_msw_file(), extract_artifact() to NamespaceBuilder
-  [ ] Update existing namespace.v1/v2/v3.yaml — add msw_separator field (with default .msw.)
-  [ ] generate_session_paths(): use NamespaceBuilder instance for artifact methods; add
-      session_yaml + session_log pre-built keys to returned dict
-  [ ] Update task_process.py + log.py to use builder methods (no raw string concat)
-  [ ] Update test_namespace.py + test_namespace_builder.py for new methods
-  [ ] Pre-commit + all tests green
+Sprint 1 (ft/namespace-unification) — DONE:
+  [x] msw_files.py — kept as thin convenience wrapper (msw_file(), is_msw_file(), msw_artifact())
+  [x] namespace.msw.yaml created — operational MSW spec: subject/acquisition/session/file hierarchy
+  [x] generate_session_paths() is now a thin wrapper over NamespaceBuilder
+  [x] Acquisition level mandatory (optional_levels: []); standalone gets subject__dt__session_{task}
+  [x] level_overrides added to NamespaceBuilder.generate_path() for external parent names (OE)
+  [x] session_folder_relative + acquisition_name added to session_paths dict
+  [x] session_basename_behav removed; inlined at Bpod call site
+  [x] All conductor initialize_acquisition() calls use session_folder_relative
+  [x] v1/v2/v3 YAML duplicates removed from src/namespace/; test fixtures in tests/data/
+  [x] test_namespace_builder.py, test_namespace.py, test_msw_files.py updated
 
-Sprint 2 (same branch or ft/namespace-msw-yaml):
-  [ ] Create namespace/namespace.msw.yaml — operational MSW spec with msw_separator +
-      core_artifacts + hierarchy + levels for {subject}__{datetime}__{task}
-  [ ] Refactor generate_session_paths() to thin wrapper over _MSW_BUILDER
-  [ ] Update reader (readers/namespace.py, readers/session.py) to use
-      _MSW_BUILDER.is_msw_file() / extract_artifact() instead of raw string checks
-  [ ] Update all task files (airpuff, optotagging, exp_trn_spindle, sequence/task_objects)
-      to call builder.get_artifact_file() — remove all raw ".msw." concatenation
-  [ ] Pre-commit + all tests green
+Sprint 2 (same branch) — DONE as part of Sprint 1:
+  [x] namespace/namespace.msw.yaml shipped with package
+  [x] generate_session_paths() routes all path construction through NamespaceBuilder
 
 Sprint 3 (ft/namespace-standalone — future):
   [ ] Extract NamespaceBuilder to msw-namespace package (pyproject.toml split)
   [ ] murineshiftwork depends on msw-namespace; installs namespace.msw.yaml as package data
+  [ ] Currently: acquisition-namespace is the external package (in external/); once published
+      to PyPI as a dependency, the external/ copy is dropped
+
+## What remains
+
+- Session/acquisition manifest writer: see PLAN_session_manifests.md
+- Reader dispatch skeleton: see PLAN_retrograde_reader.md §Phase 2b
+- Opto per-subprotocol JSONL split: see PLAN_session_manifests.md
 ```
 
 ---

@@ -74,11 +74,12 @@ def test_v1_session_folder_path():
     assert "__flush" in paths["session_folder"]
 
 
-def test_v1_session_basename_behav_suffix():
+def test_v1_standalone_acquisition_name():
     paths = generate_session_paths(
         "mouse_01", "flush", "/data", version=NAMESPACE_V1, printout=False
     )
-    assert paths["session_basename_behav"] == paths["session_basename"] + ".msw"
+    assert paths["acquisition_name"].endswith("__session_flush")
+    assert f"/{paths['acquisition_name']}/" in paths["session_folder"]
 
 
 def test_v1_child_session_nesting():
@@ -215,5 +216,7 @@ def test_parse_wrong_separator_count_raises():
 
 
 def test_parse_bad_datetime_raises():
-    with pytest.raises(ValueError, match="Cannot parse datetime"):
+    # "notadatetime" fails the session regex (no \d{8}_\d{6} match), so the
+    # builder catches it before the version-detection loop.
+    with pytest.raises(ValueError):
         parse_session_basename("mouse_01__notadatetime__flush")

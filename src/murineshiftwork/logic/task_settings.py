@@ -12,7 +12,7 @@ Priority chain (lowest → highest):
 import ast
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 
 def parse_key_value_list(kv_list: list) -> dict:
@@ -38,8 +38,8 @@ def build_task_settings(
     task_modes: dict,
     subject_config: Any = None,
     task_mode: str = "",
-    cli_overrides: Optional[list] = None,
-    extra_injections: Optional[dict] = None,
+    cli_overrides: list | None = None,
+    extra_injections: dict | None = None,
 ) -> dict:
     """Return the fully resolved task-settings dict.
 

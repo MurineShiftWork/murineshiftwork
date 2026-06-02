@@ -53,6 +53,32 @@ default:
     - '#FFD062'
     - '#ED6F5D'
     - '#ABBAB3'
+  # Reward delay: fixed gap inserted between correct poke and valve opening.
+  # reward_delay_ramp, if set, grows the delay linearly over completed task trials.
+  reward_delay_s: 0.0
+  reward_delay_ramp:
+    start_s: 0.0
+    increment_s: 0.0          # added per completed task trial; 0 = no ramp
+    max_s: 0.0
+
+  # Non-contingent reward: occasional free delivery at trial start before poke sequence.
+  # free_reward_port: null = use the last port in sequence; or set to a port number (1–8).
+  free_reward_probability: 0.0
+  free_reward_ul: 1.8
+  free_reward_port: null
+
+  # Probabilistic reward perturbation — probe deviant reward amounts per poke.
+  # target: "position" (0-indexed slot in sequence) or "port" (hardware port 1-8)
+  # distribution: map from position/port index to list of {amount_ul, probability}
+  #   amount_ul: float µL, or null = use nominal level amount
+  #   probabilities may sum to < 1.0; remainder is implicitly nominal
+  # matched_omission_duration: hold omission state open for the nominal valve duration
+  #   so the negative prediction error is anchored to the expected reward time.
+  reward_perturbation:
+    enabled: false
+    target: position
+    matched_omission_duration: false
+    distribution: {}
 mode:
   # Named overrides — select with: msw run ... --task-mode <name>
   # Only params that differ from 'default:' need to be listed.
@@ -71,3 +97,14 @@ mode:
     reset_level: false
     prevent_regression_below_start: false
     progression_threshold: 0.95
+  reward_probe:
+    n_max_trials: 500
+    prevent_regression_below_start: true
+    reward_perturbation:
+      enabled: true
+      target: position
+      distribution:
+        4:                                      # final poke (position 4)
+          - {amount_ul: 0.0,  probability: 0.15}   # 15% omission
+          - {amount_ul: 3.6,  probability: 0.15}   # 15% doubled
+          # remaining 70% → nominal level amount

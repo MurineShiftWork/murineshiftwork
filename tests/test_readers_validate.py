@@ -1,7 +1,7 @@
 """Tests for readers.validate.validate_session using checked-in fixture sessions.
 
-Tests run against both JSONL and PKL fixtures. RCE file checks are skipped
-because rpi_camera_ensemble is not installed in the test environment.
+MSW validate_session() checks only MSW file completeness. Camera/RCE file
+validation belongs in rpi_camera_ensemble.validate.
 """
 
 from pathlib import Path
@@ -35,7 +35,7 @@ def test_validate_returns_validation_result_pkl():
 
 
 # ---------------------------------------------------------------------------
-# MSW completeness (no RCE → no TTL checks; just file presence)
+# MSW completeness
 
 
 def test_validate_jsonl_msw_complete():
@@ -67,9 +67,3 @@ def test_validate_pkl_passes():
 def test_validate_jsonl_version_known():
     result = validate_session(_session_dir("jsonl"), verbose=False)
     assert result.msw_version != "unknown"
-
-
-def test_validate_rce_not_present_in_fixtures():
-    # Fixture sessions have no RCE files — validator should not fail on absence
-    result = validate_session(_session_dir("jsonl"), verbose=False)
-    assert not result.is_rce_session

@@ -103,19 +103,13 @@ def run_task(**args_dict):
         ensemble_cfg_file = args_dict.get("config_file_camera", "")
         if ensemble_cfg_file and Path(ensemble_cfg_file).exists():
             ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
-            conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
+            conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path"))
             conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
             conductor.start()
             conductor.setup_agents()
-            _session = tp.session_paths["session_basename"]
-            _subject = tp.session_paths["subject"]
             conductor.initialize_acquisition(
-                acquisition_path=(
-                    f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
-                    if args_dict.get("is_child_session_to")
-                    else f"{_subject}/{_session}"
-                ),
-                acquisition_name=_session,
+                acquisition_path=tp.session_paths["session_folder_relative"],
+                acquisition_name=tp.session_paths["session_basename"],
             )
             conductor.start_preview()
             conductor.start_recording()

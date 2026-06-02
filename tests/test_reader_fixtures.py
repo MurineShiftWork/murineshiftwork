@@ -28,7 +28,7 @@ def _session_dir(variant="jsonl"):
 
 
 def test_load_trial_data_jsonl_returns_list():
-    from murineshiftwork.logic.io import load_trial_data
+    from murineshiftwork.readers.io import load_trial_data
 
     sdir = _session_dir("jsonl")
     jsonl = next(sdir.glob("*.df.jsonl"))
@@ -37,7 +37,7 @@ def test_load_trial_data_jsonl_returns_list():
 
 
 def test_load_trial_data_jsonl_nonempty():
-    from murineshiftwork.logic.io import load_trial_data
+    from murineshiftwork.readers.io import load_trial_data
 
     sdir = _session_dir("jsonl")
     jsonl = next(sdir.glob("*.df.jsonl"))
@@ -47,7 +47,7 @@ def test_load_trial_data_jsonl_nonempty():
 
 
 def test_load_trial_data_jsonl_no_version_header():
-    from murineshiftwork.logic.io import load_trial_data
+    from murineshiftwork.readers.io import load_trial_data
 
     sdir = _session_dir("jsonl")
     jsonl = next(sdir.glob("*.df.jsonl"))
@@ -56,7 +56,7 @@ def test_load_trial_data_jsonl_no_version_header():
 
 
 def test_save_reload_roundtrip_jsonl(tmp_path):
-    from murineshiftwork.logic.io import load_trial_data, save_trial_data
+    from murineshiftwork.readers.io import load_trial_data, save_trial_data
 
     sdir = _session_dir("jsonl")
     jsonl = next(sdir.glob("*.df.jsonl"))
@@ -163,4 +163,114 @@ def test_read_session_data_pkl_df_is_dataframe():
 
     d = read_session_data(str(_session_dir("pkl")))
     assert isinstance(d.get("df"), pd.DataFrame)
+    assert d["df"].shape[0] > 0
+
+
+# ---------------------------------------------------------------------------
+# LEGACY: read_session_data (ARTIFACT_FORMAT_LEGACY — task_settings.py + pkl)
+
+
+def _legacy_session_dir():
+    d = (
+        FIXTURES_DIR
+        / "fixture_legacy"
+        / "subject003__20210426_183409__probabilistic_switching"
+    )
+    if not d.exists():
+        pytest.skip(f"Fixture dir absent: {d}")
+    return d
+
+
+def test_read_session_data_legacy_is_legacy():
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_legacy_session_dir()))
+    assert d["is_legacy_session"] is True
+
+
+def test_read_session_data_legacy_artifact_format():
+    from murineshiftwork.readers.namespace import ARTIFACT_FORMAT_LEGACY
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_legacy_session_dir()))
+    assert d["artifact_format"] == ARTIFACT_FORMAT_LEGACY
+
+
+def test_read_session_data_legacy_complete():
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_legacy_session_dir()))
+    assert d["is_complete_session"] is True
+
+
+def test_read_session_data_legacy_df_nonempty():
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_legacy_session_dir()))
+    assert isinstance(d.get("df"), pd.DataFrame)
+    assert d["df"].shape[0] > 0
+
+
+def test_read_session_data_legacy_msw_version():
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_legacy_session_dir()))
+    assert d["msw_version"] == "legacy"
+
+
+def test_read_session_data_legacy_has_task_settings():
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_legacy_session_dir()))
+    ts = d.get("settings.task")
+    assert ts is not None
+    assert "PROBABILITIES" in ts
+
+
+# ---------------------------------------------------------------------------
+# OPTOTAGGING: read_session_data (SESSION_YAML with parent_acquisition)
+
+
+def _optotagging_session_dir():
+    d = (
+        FIXTURES_DIR
+        / "fixture_optotagging"
+        / "_test_subject__20260527_133053_901389__optotagging"
+    )
+    if not d.exists():
+        pytest.skip(f"Fixture dir absent: {d}")
+    return d
+
+
+def test_read_session_data_opto_is_ephys():
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_optotagging_session_dir()))
+    assert d["is_ephys_session"] is True
+
+
+def test_read_session_data_opto_settings_ephys_keys():
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_optotagging_session_dir()))
+    ephys = d.get("settings.ephys", {})
+    assert ephys.get("backend") == "open_ephys"
+    assert (
+        ephys.get("acquisition_name") == "_test_oe_controller__20260527_132639__ephys"
+    )
+
+
+def test_read_session_data_opto_artifact_format():
+    from murineshiftwork.readers.namespace import ARTIFACT_FORMAT_SESSION_YAML
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_optotagging_session_dir()))
+    assert d["artifact_format"] == ARTIFACT_FORMAT_SESSION_YAML
+
+
+def test_read_session_data_opto_df_loaded():
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_optotagging_session_dir()))
+    assert d.get("df") is not None
     assert d["df"].shape[0] > 0

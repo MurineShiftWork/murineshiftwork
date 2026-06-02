@@ -2,17 +2,29 @@
 
 Each physical setup has a YAML file at `msw_configs/setups/<setup_name>.yaml`.
 
-## Minimal skeleton
+## Skeleton
+
+`msw setup create <name>` generates a complete skeleton showing all fields with their
+defaults.  Edit `port_by_path` and add devices as needed.
 
 ```yaml
-name: setup-1
+name: my-setup
 devices:
   bpod:
     type: bpod
-    port_by_path: pci-0000:00:14.0-usb-0:10.1:1.0
+    port_by_path: FILL_IN_PORT_BY_PATH
+cameras: null
 calibrations:
   bpod_valve: {}
+  stale_days: 180
+hooks:
+  pre_task: []
+  post_task: []
 ```
+
+`cameras: null` means no cameras configured.  See the Camera config section below.
+`stale_days` and empty hook lists are the defaults — omit them if you don't need to
+override.
 
 ## Full example
 
@@ -58,8 +70,102 @@ calibrations:
 
 ## Camera config
 
-The `cameras.config` path can be absolute or relative to the `msw_configs/` directory.
-MSW resolves it automatically when the setup is loaded.
+### RCE backend (RPi camera colony)
+
+```yaml
+cameras:
+  backend: rce
+  config: /mnt/maindata/msw_configs/device_configs/cameras/setup-1.cameras.yaml
+```
+
+`config` is the path to the RCE ensemble YAML. Absolute or relative to `msw_configs/`.
+
+### FLIR + Bonsai backend
+
+One Bonsai subprocess is launched per camera entry.  Each camera is specified
+with its SDK index and (for FlyCapture) its frame rate:
+
+```yaml
+cameras:
+  backend: flir_bonsai
+  driver: flycap                # flycap (FlyCapture2) or spinnaker (Spinnaker SDK)
+  bonsai_exe: C:\Users\lab\AppData\Local\Bonsai\Bonsai.exe
+  cameras:
+    - index: 0
+      fps: 60
+    - index: 1
+      fps: 60
+```
+
+| Field | Default | Description |
+|---|---|---|
+| `driver` | `flycap` | `flycap` (FlyCapture2 SDK) or `spinnaker` (Spinnaker SDK) |
+| `bonsai_exe` | `""` | Full path to `Bonsai.exe`. Falls back to `BONSAI_EXE` env var. |
+| `workflow` | `""` | Override workflow stem. Defaults to `run-flir-{driver}-1cam`. |
+| `cameras` | `[]` | List of per-camera specs. Each entry: `index` (int) + `fps` (int, default 60). |
+
+**`index`** is the SDK enumeration index. Run `msw flir list-cameras --driver flycap`
+on the acquisition machine to see which index maps to which serial number, then
+set them here explicitly.  Non-consecutive indices (e.g. 0 and 2, skipping a
+disconnected camera) are valid.
+
+**`fps` (FlyCapture only)**: passed as `-p cam1fps=N` to the Bonsai workflow at
+launch, which sets the `FramesPerSecond` property on the FlyCapture node.
+For Spinnaker, `fps` is ignored — frame rate is configured inside the workflow
+XML in the Bonsai editor.
+
+**Finding `bonsai_exe`**: run `msw flir find-bonsai` on the acquisition machine.
+The printed path goes directly into this field. Alternatively export `BONSAI_EXE`
+as a system environment variable and omit the field from the YAML.
+
+**Shorthand** (all cameras same fps, consecutive indices from 0):
+
+```yaml
+cameras:
+  backend: flir_bonsai
+  driver: flycap
+  bonsai_exe: C:\Users\lab\AppData\Local\Bonsai\Bonsai.exe
+  n_cameras: 2
+  fps: 60
+```
+
+**Per-camera optical parameters** (gain, shutter, exposure) are set inside the
+Bonsai workflow XML — open it in the Bonsai editor on the acquisition machine.
+
+## Open Ephys integration
+
+Set `open_ephys_url` to the IP or hostname of the Open Ephys GUI process for this rig:
+
+```yaml
+open_ephys_url: 172.24.42.168
+```
+
+This enables `--parent openephys` without passing the address on the CLI each time.
+`msw run` reads the URL from the active setup config, so setups without OE simply omit the field.
+Machine config (`~/.murineshiftwork/msw_machine.yaml`) is checked as a fallback for backward compatibility.
+
+## Hooks
+
+Pre- and post-task hooks are Python classes registered by dotted import path.
+See `docs/concepts/hook_system.md` for the full API.
+
+```yaml
+hooks:
+  pre_task:
+    - mypackage.hooks.FetchSubjectLevel
+  post_task:
+    - mypackage.hooks.UploadResults
+```
+
+Empty lists (the default) mean no hooks run.
+
+## Valve calibration behaviour
+
+`msw run` injects `valve_s_for_ul` into task settings from the setup's `bpod_valve` calibration.
+
+- **Staleness warning**: if a valve's `updated` timestamp is older than `stale_days` (default 180), a warning is logged at session start. The calibration is still used — recalibrate before data collection. Override per-setup with `calibrations.stale_days: 90`.
+- **Missing calibration (empty `bpod_valve: {}`)**: a built-in fallback is used and a loud warning printed. This is for debug runs only — never use for experiments.
+- **Partial calibration (some ports missing)**: hard error at session start. If you have any valve entries, all ports used by the task must be present.
 
 ## Calibration migration
 

@@ -24,18 +24,17 @@ from pybpodapi.state_machine import StateMachine
 from rpi_camera_ensemble.conductor.conductor import Conductor
 from rpi_camera_ensemble.config.acquisition import EnsembleAcquisitionConfig
 from rpi_camera_ensemble.config.conductor import ConductorConfig
-from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
 from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
+    BarcodeTTL,
     barcode_config_from_settings,
     inject_barcode_states,
-    prepare_barcode,
 )
-from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
+from murineshiftwork.readers.io import save_trial_data
 
 _DEFAULTS = {
     "n_max_trials": 20,
@@ -79,14 +78,12 @@ class Task(TaskRunner):
             iti_spec = s["inter_trial_interval"]
             iti_this_trial = (
                 draw_jittered_trial_time(*iti_spec)
-                if isinstance(iti_spec, (list, tuple)) and len(iti_spec) == 3
+                if isinstance(iti_spec, list | tuple) and len(iti_spec) == 3
                 else float(iti_spec)
             )
             iti_post_barcode = max(0.05, iti_this_trial - barcode_duration_s)
 
-            barcode_value, barcode_wall_time, timing_sequence = prepare_barcode(
-                barcoder
-            )
+            barcode_value, barcode_wall_time, timing_sequence = barcoder.prepare()
 
             logging.info(
                 f"  barcode={barcode_value}  iti={iti_this_trial:.2f}s  "
@@ -163,22 +160,15 @@ def run_task(**args_dict):
         f"Camera config not found: {ensemble_cfg_file}"
     )
     ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
-    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
+    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path"))
     conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
     conductor.start()
     conductor.setup_agents()
 
     with TaskProcess(**args_dict) as tp:
-        _session = tp.session_paths["session_basename"]
-        _subject = tp.session_paths["subject"]
-
         conductor.initialize_acquisition(
-            acquisition_path=(
-                f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
-                if args_dict["is_child_session_to"] is not None
-                else f"{_subject}/{_session}"
-            ),
-            acquisition_name=_session,
+            acquisition_path=tp.session_paths["session_folder_relative"],
+            acquisition_name=tp.session_paths["session_basename"],
         )
         conductor.start_preview()
         conductor.start_recording()

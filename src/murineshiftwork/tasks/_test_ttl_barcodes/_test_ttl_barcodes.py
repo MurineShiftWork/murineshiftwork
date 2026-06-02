@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 
 from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
-from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
+from murineshiftwork.readers.io import save_trial_data
 
 
 class TaskData:
@@ -14,7 +14,7 @@ class TaskData:
     data: list = []
 
     def __init__(self, save_path=None):
-        super(TaskData, self).__init__()
+        super().__init__()
         self.save_path = save_path
 
     def append(self, trial_index=None, trial_data=None, **info_dict_extension):

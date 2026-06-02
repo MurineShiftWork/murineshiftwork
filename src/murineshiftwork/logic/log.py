@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 from datetime import datetime
@@ -7,6 +8,7 @@ from rich import get_console
 from rich.logging import RichHandler
 
 from murineshiftwork.logic.paths import MSW_DATETIME_FORMAT
+from murineshiftwork.namespace.msw_files import msw_file
 
 # IDs of handlers that MSW owns on the root logger — anything else is third-party.
 _MSW_ROOT_HANDLER_IDS: set[int] = set()
@@ -26,8 +28,10 @@ def setup_logging(level=None, log_file=None, task="", subject="", setup=""):
 
     logger = logging.getLogger()
 
-    if logger.handlers:
+    if any(id(h) in _MSW_ROOT_HANDLER_IDS for h in logger.handlers):
         return
+    for h in list(logger.handlers):
+        logger.removeHandler(h)
 
     logger.setLevel(getattr(logging, level))
 
@@ -46,10 +50,8 @@ def setup_logging(level=None, log_file=None, task="", subject="", setup=""):
         central_log_path = _CENTRAL_LOG_DIR / f"{stem}.log"
         all_logs = sorted(_CENTRAL_LOG_DIR.glob("*.log"))
         for old in all_logs[:-_MAX_LOG_FILES]:
-            try:
+            with contextlib.suppress(OSError):
                 old.unlink()
-            except OSError:
-                pass
 
     file_handler = logging.FileHandler(filename=str(central_log_path))
     file_handler.setLevel(logging.DEBUG)
@@ -74,7 +76,7 @@ def setup_logging(level=None, log_file=None, task="", subject="", setup=""):
 
 def add_session_log_handler(session_file_path: str, level: str = "INFO"):
     """Add a per-session FileHandler writing INFO+ records to the session folder."""
-    log_path = Path(str(session_file_path) + ".msw.log")
+    log_path = msw_file(session_file_path, "log")
     handler = logging.FileHandler(filename=str(log_path))
     handler.setLevel(getattr(logging, level.upper()))
     formatter = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
@@ -129,7 +131,7 @@ def json_dumps_type_safe(data):
 
 def write_json(data=None, save_path=None):
     try:
-        with open(save_path, "w") as f:
+        with Path(save_path).open("w") as f:
             txt = json_dumps_type_safe(data)
             f.write(txt)
             return True

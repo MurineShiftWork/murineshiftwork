@@ -31,7 +31,7 @@ def test_serial_port_is_accessible(port=None, baudrate=115200, timeout=1):
             rtscts=False,
         )
         device.close()
-    except IOError:
+    except OSError:
         return False
     return True
 
@@ -52,13 +52,16 @@ def list_available_tasks(detailed=False):
 
     summary = {}
     for item in sorted(tasks_dir.iterdir()):
-        if item.is_dir() and (
-            not item.name.startswith("_")
-            or item.name.startswith("_test_")
-            or item.name.startswith("_calibration_")
+        if (
+            item.is_dir()
+            and (
+                not item.name.startswith("_")
+                or item.name.startswith("_test_")
+                or item.name.startswith("_calibration_")
+            )
+            and (item / f"{item.name}.py").exists()
         ):
-            if (item / f"{item.name}.py").exists():
-                summary[item.name] = item
+            summary[item.name] = item
 
     if detailed:
         return summary

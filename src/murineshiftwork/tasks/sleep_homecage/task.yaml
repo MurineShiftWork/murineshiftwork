@@ -1,0 +1,9 @@
+default:
+  TRIGGER_ITI: 5
+  MAX_RUNTIME: 28800
+  BARCODE_INTERVAL_S: 60
+  HARDWARE_BNC_TRIAL_START: 1
+  barcode_bits: 37
+  barcode_bit_duration_ms: 35.0
+  barcode_init_duration_ms: 10.0
+  barcode_tolerance: 0.25

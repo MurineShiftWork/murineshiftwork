@@ -10,7 +10,7 @@ from murineshiftwork.namespace.spec import (
     NamespaceSpec,
 )
 
-_SPEC_DIR = Path(__file__).parent.parent / "src" / "murineshiftwork" / "namespace"
+_SPEC_DIR = Path(__file__).parent / "data"
 
 VALUES_V3 = {
     "subject_prefix": "s",

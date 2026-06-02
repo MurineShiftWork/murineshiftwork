@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from murineshiftwork.logic.plot_spec import VALID_PANEL_TYPES, PanelSpec, PlotSpec
+from murineshiftwork.logagent.plot_spec import VALID_PANEL_TYPES, PanelSpec, PlotSpec
 
 TASKS_DIR = Path(__file__).parent.parent / "src/murineshiftwork/tasks"
 

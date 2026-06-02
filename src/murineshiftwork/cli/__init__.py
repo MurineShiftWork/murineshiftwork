@@ -44,7 +44,6 @@ def run_cli(*args):
         "calibration",
         "action",
         "tasks",
-        "agent",
         "post",
     ):
         args_dict["func"](**args_dict)
@@ -56,7 +55,7 @@ def run_cli(*args):
 
     args_dict = evaluate_args(args_dict=args_dict)
 
-    if "exit_flag" in args_dict.keys():
+    if "exit_flag" in args_dict:
         return
 
     # Call module

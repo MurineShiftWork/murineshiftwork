@@ -69,6 +69,15 @@ def _make_tc(sequence=None, task_settings=None, current_level=1, n_levels=5):
     tc._session_task_trials = 0
     tc._session_no_response_count = 0
 
+    import numpy as np
+
+    from murineshiftwork.tasks.sequence.task_objects import RewardPerturbation
+
+    tc._perturbation = RewardPerturbation(settings.get("reward_perturbation") or {})
+    tc._pending_reward_draw = {}
+    tc._pending_trial_meta = {}
+    tc._rng = np.random.default_rng(42)
+
     # Valve calibration injected by CLI/agent — always return 0.05 s
     tc.task_settings["valve_s_for_ul"] = lambda port, ul: 0.05
 

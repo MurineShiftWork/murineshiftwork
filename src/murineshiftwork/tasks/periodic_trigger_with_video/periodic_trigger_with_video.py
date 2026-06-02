@@ -7,12 +7,15 @@ from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
 from rpi_camera_colony.control.conductor import Conductor
 
-from murineshiftwork.hardware.bpod.ttl import (
-    add_trial_onset_ttl,
-    make_ttl_identifier_sequences,
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
+from murineshiftwork.logic.barcode import (
+    BARCODE_FIRST_STATE_NAME,
+    BarcodeTTL,
+    barcode_config_from_settings,
+    inject_barcode_states,
 )
-from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
+from murineshiftwork.readers.io import save_trial_data
 
 
 class TaskData:
@@ -20,24 +23,31 @@ class TaskData:
     data: list = []
 
     def __init__(self, save_path=None):
-        super(TaskData, self).__init__()
+        super().__init__()
         self.save_path = save_path
+        self.data = []
 
-    def append(self, trial_index=None, trial_data=None, **info_dict_extension):
-        # If is TTL trial
+    def append(
+        self,
+        trial_index=None,
+        trial_data=None,
+        barcode_value=None,
+        barcode_wall_time=None,
+        **info_dict_extension,
+    ):
         first_state_name = str(list(trial_data["States timestamps"].keys())[0]).lower()
-        if trial_index < 1 and first_state_name.startswith("pulse"):
-            trial_type = "ttl"
+        if first_state_name == BARCODE_FIRST_STATE_NAME.lower():
+            trial_type = "barcode"
         else:
             trial_type = "task"
-            # trial_data["info"] = {"trial_type": "ttl", "trial_index": trial_index}
 
         trial_data["info"] = {
             "trial_type": trial_type,
             "trial_index": trial_index,
+            "barcode_value": barcode_value,
+            "barcode_wall_time": barcode_wall_time,
             **info_dict_extension,
         }
-
         self.data.append(trial_data)
 
     def save(self, save_path=None):
@@ -49,19 +59,29 @@ class TaskData:
 
 
 class Task(TaskRunner):
-    _bnc_channel_trial_onset = Bpod.OutputChannels.BNC1
-
     def run(self) -> None:
-        ttl_identifier_sequence = self.input_kwargs.get(
-            "ttl_identifier_sequence", "LLssss"
+        patched = self.input_kwargs.get("settings.task.patched", {})
+        trigger_iti = patched.get(
+            "TRIGGER_ITI", self.input_kwargs.get("trigger_iti", 5)
         )
-        trigger_iti = self.input_kwargs.get("trigger_iti", 5)
-        max_runtime = self.input_kwargs.get("max_runtime", 7200)
-        n_max_trials = self.input_kwargs.get(
-            "n_max_trials", np.ceil(max_runtime / trigger_iti)
+        max_runtime = patched.get(
+            "MAX_RUNTIME", self.input_kwargs.get("max_runtime", 7200)
         )
+        barcode_interval_s = patched.get("BARCODE_INTERVAL_S", 60)
+        bnc_ch = patched.get("HARDWARE_BNC_TRIAL_START", 1)
+        bnc_channel = getattr(self.bpod.OutputChannels, f"BNC{bnc_ch}")
+
+        n_max_trials = int(
+            patched.get("N_MAX_TRIALS", self.input_kwargs.get("n_max_trials", None))
+            or np.ceil(max_runtime / trigger_iti)
+        )
+        barcode_every_n = max(1, round(barcode_interval_s / trigger_iti))
+
+        barcoder = BarcodeTTL(barcode_config_from_settings(patched))
+
         logging.info(
-            f"Using TTL '{ttl_identifier_sequence}' with ITI of {trigger_iti}s for {n_max_trials} trials."
+            f"periodic_trigger_with_video: iti={trigger_iti}s max={max_runtime}s "
+            f"barcode every {barcode_every_n} trials ({barcode_interval_s}s)"
         )
 
         save_path = Path(self.bpod.workspace_path) / self.bpod.session_name
@@ -70,26 +90,34 @@ class Task(TaskRunner):
         trial_index = 0
         while self.continue_task and trial_index <= n_max_trials:
             logging.info(
-                f"Executing trial {trial_index}/{n_max_trials} "
-                f"[Runtime: {np.round(trial_index * trigger_iti / 60, 3)}min / {np.round(max_runtime / 60, 3)}min]"
+                f"Trial {trial_index}/{n_max_trials} "
+                f"[{np.round(trial_index * trigger_iti / 60, 1)} min / "
+                f"{np.round(max_runtime / 60, 1)} min]"
             )
 
-            if trial_index == 0:
-                sma = make_ttl_identifier_sequences(
-                    bpod=self.bpod,
-                    sequence=ttl_identifier_sequence,
-                    output_chanel_pulse=self._bnc_channel_trial_onset,
+            barcode_value = None
+            barcode_wall_time = None
+
+            if trial_index == 0 or trial_index % barcode_every_n == 0:
+                barcode_value, barcode_wall_time, timing_seq = barcoder.prepare()
+                sma = StateMachine(bpod=self.bpod)
+                sma = inject_barcode_states(
+                    sma, timing_seq, bnc_channel, last_state_name="iti"
+                )
+                sma.add_state(
+                    state_name="iti",
+                    state_timer=trigger_iti,
+                    state_change_conditions={Bpod.Events.Tup: "exit"},
+                    output_actions=[],
                 )
             else:
                 sma = StateMachine(bpod=self.bpod)
-                # Trial onset == main event of this convenience task
                 sma = add_trial_onset_ttl(
                     sma=sma,
                     ttl_pulse_duration=0.001,
-                    bnc_channel=self._bnc_channel_trial_onset,
+                    bnc_channel=bnc_channel,
                     next_state="iti",
                 )
-
                 sma.add_state(
                     state_name="iti",
                     state_timer=trigger_iti,
@@ -101,30 +129,46 @@ class Task(TaskRunner):
                 self.bpod.send_state_machine(sma)
                 if not self.bpod.run_state_machine(sma):
                     logging.warning(
-                        f"No data returned on trial #{trial_index}. Terminating protocol."
+                        f"No data returned on trial #{trial_index}. Terminating."
                     )
                     break
             except OSError as exc:
-                logging.error(
-                    f"Bpod serial connection lost on trial #{trial_index}"
-                    f" — USB I/O error: {exc}"
-                )
+                logging.error(f"Bpod connection lost on trial #{trial_index}: {exc}")
                 break
 
             task_data.append(
                 trial_index=trial_index,
                 trial_data=self.bpod.session.current_trial.export(),
+                barcode_value=barcode_value,
+                barcode_wall_time=barcode_wall_time,
             )
             task_data.save()
             trial_index += 1
 
+        try:
+            bv_end, bwt_end, timing_seq_end = barcoder.prepare()
+            sma_end = StateMachine(bpod=self.bpod)
+            sma_end = inject_barcode_states(
+                sma_end, timing_seq_end, bnc_channel, last_state_name="exit"
+            )
+            self.bpod.send_state_machine(sma_end)
+            self.bpod.run_state_machine(sma_end)
+            task_data.append(
+                trial_index=trial_index,
+                trial_data=self.bpod.session.current_trial.export(),
+                barcode_value=bv_end,
+                barcode_wall_time=bwt_end,
+            )
+            task_data.save()
+            logging.info("Session-end barcode sent.")
+        except Exception:
+            logging.warning("Session-end barcode failed to send.", exc_info=True)
+
 
 def run_task(**args_dict):
-    # Do not auto start, so that camera can start first
     args_dict.update({"auto_start": False})
 
     with TaskProcess(**args_dict) as tp:
-        # Video
         conductor_args = {
             "config_file": args_dict["config_file_camera"],
             "acquisition_group": args_dict["is_child_session_to"]
@@ -135,10 +179,8 @@ def run_task(**args_dict):
         c = Conductor(**conductor_args)
         c.start_acquisition()
 
-        # Delay for video to start
         time.sleep(5)
 
-        # Start task
         tp.run_task()
         while tp.is_running():
             try:
@@ -146,7 +188,6 @@ def run_task(**args_dict):
             except KeyboardInterrupt:
                 tp.stop_task()
 
-    # Stop video
     c.stop_acquisition()
     c.cleanup()
 

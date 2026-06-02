@@ -23,7 +23,7 @@ from murineshiftwork.logic.config import (
     validate_config_file_path,
 )
 from murineshiftwork.logic.log import setup_logging
-from murineshiftwork.logic.machine_config import resolve_config_dir
+from murineshiftwork.logic.machine_config import resolve_config_dir, resolve_data_dir
 from murineshiftwork.logic.misc import find_task_by_name
 from murineshiftwork.logic.paths import get_host_ip, get_host_name
 from murineshiftwork.logic.task_settings import build_task_settings
@@ -102,6 +102,8 @@ def _evaluate_and_load_configs(args_dict=None):
     if not Path(config_dir).exists():
         args_dict["config_dir"] = ""
 
+    args_dict["out_path"] = resolve_data_dir(cli_override=args_dict.get("out_path", ""))
+
     args_dict["config_file_subjects"] = validate_config_file_path(
         config_file=args_dict.get("config_file_subjects", ""),
         default_dir=args_dict["config_dir"],
@@ -155,7 +157,7 @@ def _evaluate_and_load_configs(args_dict=None):
         Path(calibration_file_stage).expanduser().as_posix()
     )
     if Path(args_dict["calibration_file_stage"]).exists():
-        with open(args_dict["calibration_file_stage"], "r") as _f:
+        with Path(args_dict["calibration_file_stage"]).open() as _f:
             args_dict["settings.stage"] = yaml.full_load(_f)
     else:
         args_dict["settings.stage"] = {}
@@ -216,6 +218,70 @@ def _extra_injections_from_args(args_dict: dict) -> dict:
     return injections
 
 
+def _inject_valve_calibration(setup_config, patched) -> None:
+    """Inject valve_s_for_ul into patched task settings with three-tier fallback.
+
+    Tier 1 — setup has calibration for the requested port: use it, warn if stale.
+    Tier 2 — setup bpod_valve dict is entirely empty: use hardcoded fallback,
+              print a loud warning; intended for debug runs only.
+    Tier 3 — setup has some calibration but the requested port is missing:
+              hard fail — partial config is a misconfiguration, not an absence.
+    """
+    from datetime import datetime, timedelta
+
+    from murineshiftwork.logic.config._defaults import _FALLBACK_VALVE_CALIBRATION
+
+    cal = setup_config.calibrations.bpod_valve
+
+    if not cal:
+        logging.warning(
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+            "NO VALVE CALIBRATION in setup '%s'.\n"
+            "Using built-in fallback (setup-npx2 reference data).\n"
+            "DO NOT USE THIS DATA FOR EXPERIMENTS — calibrate first.\n"
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+            setup_config.name,
+        )
+        fallback = _FALLBACK_VALVE_CALIBRATION
+        patched["valve_s_for_ul"] = lambda vol, port=None: fallback.s_for_ul(vol)
+        return
+
+    # Build a lookup using the SetupConfig method but also check staleness per port.
+    stale_threshold = datetime.now() - timedelta(
+        days=setup_config.calibrations.stale_days
+    )
+    for port, vc in cal.items():
+        if vc.updated:
+            try:
+                updated_dt = datetime.fromisoformat(vc.updated)
+                if updated_dt < stale_threshold:
+                    age_days = (datetime.now() - updated_dt).days
+                    logging.warning(
+                        "Valve %s calibration on setup '%s' is %d days old "
+                        "(last updated %s) — recalibrate before data collection.",
+                        port,
+                        setup_config.name,
+                        age_days,
+                        vc.updated[:10],
+                    )
+            except ValueError:
+                pass
+
+    available_ports = sorted(cal.keys())
+
+    def _valve_s_for_ul_checked(port, volume_ul, _cal=cal, _sc=setup_config):
+        if str(port) not in _cal:
+            raise ValueError(
+                f"Valve port {port!r} has no calibration in setup '{_sc.name}'. "
+                f"Calibrated ports: {available_ports}. "
+                "Calibrate this valve before running a session with reward delivery."
+            )
+        return _sc.valve_s_for_ul(port, volume_ul)
+
+    patched["valve_s_for_ul"] = _valve_s_for_ul_checked
+    logging.debug("Injected valve_s_for_ul from SetupConfig into task settings")
+
+
 def _resolve_setup_config_ports(args_dict, setup_config, patched):
     """Apply port and camera overrides from SetupConfig into args_dict and patched."""
     if setup_config and "bpod" in setup_config.devices:
@@ -261,6 +327,22 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
         args_dict["scale_baudrate"] = scale_baudrate
         patched["scale_type"] = scale_type
 
+    if setup_config and "pulsepal" in setup_config.devices:
+        try:
+            resolved_pp = setup_config.device_port("pulsepal")
+            args_dict["serial_port_pulsepal"] = resolved_pp
+            patched["serial_port_pulsepal"] = resolved_pp
+            logging.debug(f"Resolved pulsepal port from SetupConfig: {resolved_pp}")
+        except ValueError as exc:
+            logging.warning(
+                f"SetupConfig pulsepal port resolution failed ({exc}); skipping pulsepal"
+            )
+            args_dict["serial_port_pulsepal"] = ""
+            patched.pop("serial_port_pulsepal", None)
+    elif setup_config:
+        args_dict["serial_port_pulsepal"] = ""
+        patched.pop("serial_port_pulsepal", None)
+
     if setup_config and setup_config.cameras:
         cam_path = setup_config.cameras.config
         if cam_path and (
@@ -271,9 +353,94 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
             logging.debug(f"Resolved camera config from SetupConfig: {cam_path}")
         args_dict["cameras_config"] = setup_config.cameras
 
-    if setup_config and setup_config.calibrations.bpod_valve:
-        patched["valve_s_for_ul"] = setup_config.valve_s_for_ul
-        logging.debug("Injected valve_s_for_ul from SetupConfig into task settings")
+    if setup_config:
+        _inject_valve_calibration(setup_config, patched)
+
+
+def _parse_parent_flag(value: str) -> tuple[str, str]:
+    """Parse ``TYPE`` or ``TYPE:URL`` from --parent flag value."""
+    parts = value.strip().split(":", 1)
+    return parts[0].strip().lower(), (parts[1].strip() if len(parts) > 1 else "")
+
+
+def _resolve_parent_session(args_dict: dict) -> None:
+    """Attach to a parent acquisition session and populate is_child_session_to.
+
+    Reads ``--parent TYPE[:URL]`` from args_dict.  URL is optional: if omitted,
+    the backend-specific address is read from ``~/.murineshiftwork/msw_machine.yaml``.
+
+    Supported types: ``openephys``  (open_ephys_url machine-config key)
+
+    No-op when ``--parent`` is absent.  Does not overwrite ``--child-of`` if already set.
+    """
+    parent_flag = args_dict.get("parent_session_flag", "")
+    if not parent_flag:
+        return
+
+    session_type, url_override = _parse_parent_flag(parent_flag)
+
+    if session_type == "openephys":
+        url = url_override
+        if not url:
+            setup_config = args_dict.get("setup_config")
+            if setup_config is not None:
+                url = getattr(setup_config, "open_ephys_url", "") or ""
+        if not url:
+            from murineshiftwork.logic.machine_config import read_open_ephys_url
+
+            url = read_open_ephys_url()
+        if not url:
+            logging.warning(
+                "--parent openephys: no URL — pass as openephys:HOST or set "
+                "open_ephys_url in the setup YAML"
+            )
+            return
+    else:
+        logging.warning("--parent: unknown backend %r — skipping", session_type)
+        return
+
+    from murineshiftwork.hardware.parent_session import make_parent_session
+
+    client = make_parent_session(session_type, url=url)
+    info = client.attach()
+
+    if info is None:
+        reason = getattr(client, "fail_reason", "") or "unknown reason"
+        if not args_dict.get("force_standalone"):
+            raise RuntimeError(
+                f"\n\n  --parent {session_type} @ {url} could not attach:\n"
+                f"  {reason}\n\n"
+                f"  Session paths cannot be determined — aborting to avoid saving\n"
+                f"  data to the wrong location.\n\n"
+                f"  Options:\n"
+                f"    1. Fix the issue (run oe_remote session first, check URL)\n"
+                f"    2. Use --child-of ACQUISITION_NAME to set the path manually\n"
+                f"    3. Pass --force-standalone to intentionally run without a parent\n"
+            )
+        logging.warning(
+            "--force-standalone: parent session (%s @ %s) unavailable (%s) — "
+            "saving to standalone path",
+            session_type,
+            url,
+            reason,
+        )
+        return
+
+    if args_dict.get("is_child_session_to"):
+        logging.debug(
+            "is_child_session_to already set to %r — --parent result discarded",
+            args_dict["is_child_session_to"],
+        )
+        return
+
+    args_dict["is_child_session_to"] = info.acquisition_name
+    args_dict["parent_session_info"] = info
+    logging.info(
+        "Parent session attached [%s]: acquisition=%r subject=%r",
+        info.backend,
+        info.acquisition_name,
+        info.subject,
+    )
 
 
 def evaluate_args(args_dict=None):
@@ -349,6 +516,7 @@ def evaluate_args(args_dict=None):
 
     setup_config = args_dict.get("setup_config")
     _resolve_setup_config_ports(args_dict, setup_config, patched)
+    _resolve_parent_session(args_dict)
     subject_config = args_dict.get("subject_config")
     args_dict["execution_config"] = ExecutionConfig(
         setup=setup_config,

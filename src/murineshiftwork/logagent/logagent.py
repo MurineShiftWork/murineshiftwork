@@ -23,11 +23,11 @@ import json
 import logging
 import multiprocessing
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 class LogAgent(multiprocessing.Process):

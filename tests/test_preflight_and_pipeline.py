@@ -98,7 +98,7 @@ def _write_subject_yaml(path, subject_name, task_overrides=None):
     }
     p = path / "subjects" / f"{subject_name}.yaml"
     p.parent.mkdir(parents=True, exist_ok=True)
-    with open(p, "w") as f:
+    with p.open("w") as f:
         yaml.dump(data, f)
     return p
 
@@ -111,7 +111,7 @@ def _write_setup_yaml(path, setup_name):
     }
     p = path / "setups" / f"{setup_name}.yaml"
     p.parent.mkdir(parents=True, exist_ok=True)
-    with open(p, "w") as f:
+    with p.open("w") as f:
         yaml.dump(data, f)
     return p
 

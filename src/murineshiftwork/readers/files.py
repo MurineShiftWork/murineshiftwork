@@ -1,14 +1,12 @@
 import json
 import logging
-import os
 import subprocess
-from glob import glob
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
 
 import pandas as pd
 
-from murineshiftwork.logic.io import load_trial_data
+from murineshiftwork.readers.io import load_trial_data
 
 
 def _exec_sys_cmd(cmd=None, shell=True, stdout=subprocess.PIPE):
@@ -28,15 +26,13 @@ def _exec_sys_cmd(cmd=None, shell=True, stdout=subprocess.PIPE):
 
 
 def read_settings_py(file=None):
-    tmp_module = SourceFileLoader(
-        os.path.splitext(Path(file).name)[0], str(file)
-    ).load_module()
+    tmp_module = SourceFileLoader(Path(file).stem, str(file)).load_module()
     module_vars = {k: v for k, v in vars(tmp_module).items() if not k.startswith("__")}
     return module_vars
 
 
 def read_json(file=None):
-    with open(file, "r") as f:
+    with Path(file).open() as f:
         data = f.read()
     return json.loads(data)
 
@@ -46,7 +42,7 @@ def read_pybpod_csv(filepath=None, clean_events=True, return_trial_structure_onl
     Optional: clean up irrelevant events, but make backup with sed.
     """
     # Clean file
-    backup_file = glob(str(Path(filepath).parent / "*.csv.bak.*"))
+    backup_file = list(Path(filepath).parent.glob("*.csv.bak.*"))
     if clean_events and len(backup_file) == 0:
         current_dt = _exec_sys_cmd("date +%Y%m%d_%H%M%S")
         cleaning_cmd = f"sed '-i.bak.{current_dt}' '/Port4/d' {str(filepath)}"

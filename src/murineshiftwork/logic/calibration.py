@@ -1,5 +1,4 @@
 import logging
-import os.path
 import shutil
 import warnings
 from datetime import datetime
@@ -21,7 +20,7 @@ class CalibrationData:
 
     def __init__(self, file_path=None, **kwargs):
         """ """
-        super(CalibrationData, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.file_path = file_path or self.file_path
         logging.debug(f"Calibration data path: {self.file_path}")
 
@@ -76,6 +75,9 @@ class CalibrationData:
     def save(self, file_path=None, overwrite=False):
         if file_path is not None:
             self.file_path = file_path
+
+        if self.file_path is None:
+            return
 
         file_path = Path(self.file_path)
         if self.calibration_data is not None and not self.calibration_data.empty:
@@ -201,7 +203,7 @@ class CalibrationDataLiquid(CalibrationData):
             plt.title("Valve opening times to pass water volume [uL].")
             plt.ylabel("Volume [uL]")
             plt.xlabel("Valve opening time [ms]")
-            f.savefig(os.path.splitext(self.file_path)[0] + ".png")
+            f.savefig(str(Path(self.file_path).with_suffix(".png")))
 
     def to_valve_calibration(self, valve_id: int):
         """Convert collected measurements for one valve into a ValveCalibration.
@@ -222,11 +224,13 @@ class CalibrationDataLiquid(CalibrationData):
             raise ValueError(f"No calibration data for valve {valve_id}")
 
         df["_ul"] = np.round((df["liquid_weight_g"] / df["n_drops"]) * 1e3, 3)
-        # Average repeated measurements at the same opening time before converting
-        # to points — duplicate times arise when adaptive rounds revisit a time slot.
+        # Normalise valve_opening_time to 4 d.p. before groupby so that floating-point
+        # near-duplicates (e.g. np.linspace artifact 0.07999… vs round()-produced 0.08)
+        # are treated as the same key.  .last() then keeps the most-recent measurement.
+        df["valve_opening_time"] = df["valve_opening_time"].round(4)
         df = (
             df.groupby("valve_opening_time", as_index=False)["_ul"]
-            .mean()
+            .last()
             .sort_values("valve_opening_time")
         )
         df["_ul"] = np.round(df["_ul"], 3)
@@ -298,7 +302,7 @@ class CalibrationDataSound(CalibrationData):
             )
             plt.ylabel("Delay [ms]")
             plt.xlabel("Trial [#]")
-            f.savefig(os.path.splitext(self.file_path)[0] + ".png")
+            f.savefig(str(Path(self.file_path).with_suffix(".png")))
 
 
 def _exponential_function(x, a, b, c):
@@ -447,7 +451,7 @@ def plot_setup_valve_calibrations(
         if not yf.exists():
             logging.warning(f"Setup YAML not found: {yf}")
             continue
-        with open(yf) as f:
+        with yf.open() as f:
             raw = yaml.safe_load(f) or {}
         cal = raw.get("calibrations", {}).get("bpod_valve", {})
         if not cal:
@@ -576,7 +580,7 @@ def save_calibration_pdfs(
         if not yf.exists():
             logging.warning(f"Setup YAML not found: {yf}")
             continue
-        with open(yf) as f:
+        with yf.open() as f:
             raw = yaml.safe_load(f) or {}
         sname = raw.get("name", yf.stem)
         if not raw.get("calibrations", {}).get("bpod_valve"):
