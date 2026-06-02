@@ -193,6 +193,9 @@ class Task(TaskRunner):
                 try:
                     self.bpod.send_state_machine(sma)
                     _barcode_ok = self.bpod.run_state_machine(sma)
+                except KeyboardInterrupt:
+                    stim.off()
+                    raise
                 except OSError as exc:
                     logging.error(
                         f"Bpod serial connection lost before protocol {protocol_name!r}"
@@ -244,6 +247,9 @@ class Task(TaskRunner):
                                 "Terminating protocol."
                             )
                             break
+                    except KeyboardInterrupt:
+                        stim.off()
+                        raise
                     except OSError as exc:
                         logging.error(
                             f"Bpod serial connection lost on trial #{trial_index}"

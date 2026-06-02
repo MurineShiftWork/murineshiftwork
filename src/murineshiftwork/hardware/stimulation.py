@@ -478,6 +478,12 @@ class Stimulation:
                 self.pulsePal.stop_all_outputs()
                 if getattr(self, "_owns_connection", True):
                     self.pulsePal.save_settings()
+                else:
+                    fw = getattr(self.pulsePal, "firmware_version", None)
+                    self.pulsePal._pulsepal_set_display(
+                        row1="PulsePal",
+                        row2=f"fw{fw}" if fw else "Ready",
+                    )
             except Exception:
                 pass
             if getattr(self, "_owns_connection", True):
