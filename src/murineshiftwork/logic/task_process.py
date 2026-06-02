@@ -338,7 +338,11 @@ class TaskProcess:
         import multiprocessing
         from datetime import datetime
 
-        from murineshiftwork.logagent.logagent import LogAgent
+        try:
+            from murineshiftwork.logagent.logagent import LogAgent
+        except ImportError:
+            logging.debug("msw-agent not installed — relay disabled")
+            return
 
         bearer_token = log_cfg["log_bearer_token"]
         self._relay_queue = multiprocessing.Queue(maxsize=500)

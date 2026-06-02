@@ -154,3 +154,70 @@ def test_load_acquisition_sessions_sorted():
     sessions = load_acquisition(_opto_acquisition_dir())
     datetimes = [s.datetime_str for s in sessions]
     assert datetimes == sorted(datetimes)
+
+
+# ---------------------------------------------------------------------------
+# load_subject — 2-level (legacy) and 3-level (current) directory layouts
+
+
+def test_load_subject_2level_returns_sessions(tmp_path):
+    from murineshiftwork.readers import load_subject
+
+    # 2-level: subject_dir/session_basename/ — session dir directly under subject
+    session_basename = (
+        "subject001__20260508_172956_258756__probabilistic_switching_fixedsubjects"
+    )
+    (tmp_path / session_basename).symlink_to(FIXTURES_DIR / "fixture_jsonl")
+    sessions = load_subject(tmp_path)
+    assert len(sessions) == 1
+    assert sessions[0].subject == "subject001"
+
+
+def test_load_subject_3level_returns_sessions(tmp_path):
+    from murineshiftwork.readers import load_subject
+
+    # 3-level: subject_dir/acquisition_dir/session_dir/
+    acq_name = "_test_oe_controller__20260527_132639__ephys"
+    session_basename = "_test_subject__20260527_133053_901389__optotagging"
+    acq_dir = tmp_path / acq_name
+    acq_dir.mkdir()
+    (acq_dir / session_basename).symlink_to(
+        FIXTURES_DIR / "fixture_optotagging" / session_basename
+    )
+    sessions = load_subject(tmp_path)
+    assert len(sessions) == 1
+    assert sessions[0].is_ephys is True
+    assert sessions[0].acquisition_name == acq_name
+
+
+def test_load_subject_3level_sets_acquisition_context(tmp_path):
+    from murineshiftwork.readers import load_subject
+
+    acq_name = "_test_oe_controller__20260527_132639__ephys"
+    session_basename = "_test_subject__20260527_133053_901389__optotagging"
+    acq_dir = tmp_path / acq_name
+    acq_dir.mkdir()
+    (acq_dir / session_basename).symlink_to(
+        FIXTURES_DIR / "fixture_optotagging" / session_basename
+    )
+    sessions = load_subject(tmp_path)
+    assert sessions[0].acquisition_dir == acq_dir
+
+
+def test_load_subject_mixed_depths(tmp_path):
+    from murineshiftwork.readers import load_subject
+
+    # One 2-level session alongside one 3-level acquisition
+    s2 = "subject001__20260508_172956_258756__probabilistic_switching_fixedsubjects"
+    (tmp_path / s2).symlink_to(FIXTURES_DIR / "fixture_jsonl")
+
+    acq_dir = tmp_path / "_test_oe_controller__20260527_132639__ephys"
+    acq_dir.mkdir()
+    s3 = "_test_subject__20260527_133053_901389__optotagging"
+    (acq_dir / s3).symlink_to(FIXTURES_DIR / "fixture_optotagging" / s3)
+
+    sessions = load_subject(tmp_path)
+    assert len(sessions) == 2
+    subjects = {s.subject for s in sessions}
+    assert "subject001" in subjects
+    assert "_test_subject" in subjects
