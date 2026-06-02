@@ -542,9 +542,10 @@ def test_setup_custom_waveform_non_gated_no_pulse_train_duration_override():
     assert not ptd_calls
 
 
-def test_connect_sets_continuous_for_custom_waveform_in_gated_mode():
-    """set_continuous=1 must be called for custom waveform channels too.
-    Without it gated mode fires only one shot instead of a repeating pulse train."""
+def test_connect_sets_continuous_zero_in_gated_mode():
+    """Gated mode must use set_continuous=0 so the channel starts from sample 0
+    on each gate rising edge. set_continuous=1 would cause a phase-offset blip
+    on the first gate open because the channel runs internally between gates."""
     stim = _make_stim(
         waveform_on_ramp_type=WAVEFORM_LINEAR,
         waveform_on_ramp_duration_s=0.001,
@@ -566,6 +567,13 @@ def test_connect_sets_continuous_for_custom_waveform_in_gated_mode():
     ]
     assert stim_ch_calls, (
         "set_continuous must be called for stim channels in gated mode"
+    )
+    states = [
+        c.kwargs.get("state", c.args[1] if len(c.args) > 1 else None)
+        for c in stim_ch_calls
+    ]
+    assert all(s == 0 for s in states), (
+        f"set_continuous must be 0 in gated mode, got {states}"
     )
 
 
@@ -594,4 +602,11 @@ def test_connect_still_sets_continuous_for_ttl_copy_in_gated_mode():
         for c in set_cont_calls
         if c.kwargs.get("channel") == 3 or (c.args and c.args[0] == 3)
     ]
-    assert copy_ch_calls, "set_continuous must still be called for TTL copy channels"
+    assert copy_ch_calls, "set_continuous must be called for TTL copy channels"
+    states = [
+        c.kwargs.get("state", c.args[1] if len(c.args) > 1 else None)
+        for c in copy_ch_calls
+    ]
+    assert all(s == 0 for s in states), (
+        f"set_continuous must be 0 in gated mode for TTL copy channels too, got {states}"
+    )

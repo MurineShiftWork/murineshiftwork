@@ -393,8 +393,12 @@ class Stimulation:
 
         self.off()
 
-        _gated = self.in_dict.get("trigger_mode") == "gated"
-        _cont_state = 1 if (_gated or self.in_dict.get("continuous")) else 0
+        # Gated mode: set_continuous=0 so the channel always starts from sample 0
+        # on each gate rising edge. set_continuous=1 runs the channel internally
+        # between gates, causing an arbitrary phase offset on the first gate open.
+        # customTrainLoop=1 (for waveform channels) and pulseTrainDuration=3600s
+        # handle repetition during the gate without needing continuous mode.
+        _cont_state = 1 if self.in_dict.get("continuous") else 0
         for channel in list(self.in_dict["channels_stimulation"]) + list(
             self.in_dict["channels_ttl_copy"]
         ):
