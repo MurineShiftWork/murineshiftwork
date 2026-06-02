@@ -233,8 +233,8 @@ class Stimulation:
             "isBiphasic": isBiphasic,
             "phase1Voltage": phase1Voltage,
             "restingVoltage": restingVoltage,
-            "phase1Duration": round(float(phase1Duration), 3),
-            "interPulseInterval": round(ipi - phase1Duration, 3),
+            "phase1Duration": round(float(phase1Duration), 6),
+            "interPulseInterval": round(ipi - phase1Duration, 6),
             "pulseTrainDuration": float(pulseTrainDuration),
             "pulseTrainDelay": round(float(pulseTrainDelay), 3),
         }
@@ -379,16 +379,9 @@ class Stimulation:
 
         _gated = self.in_dict.get("trigger_mode") == "gated"
         _cont_state = 1 if (_gated or self.in_dict.get("continuous")) else 0
-
-        # set_continuous on a custom-waveform stim channel causes the waveform to loop
-        # at sample rate (20 kHz) producing a constant-high output — not a pulse train.
-        # For custom waveform channels in gated mode, the trigger start/stop and a large
-        # pulseTrainDuration handle repetition; set_continuous must be skipped.
-        for channel in self.in_dict["channels_stimulation"]:
-            if not (self._use_custom_waveform and _gated):
-                self.pulsePal.set_continuous(channel=int(channel), state=_cont_state)
-
-        for channel in self.in_dict["channels_ttl_copy"]:
+        for channel in list(self.in_dict["channels_stimulation"]) + list(
+            self.in_dict["channels_ttl_copy"]
+        ):
             self.pulsePal.set_continuous(channel=int(channel), state=_cont_state)
 
         # Set trigger links: 1 only for active channels, 0 for all others.

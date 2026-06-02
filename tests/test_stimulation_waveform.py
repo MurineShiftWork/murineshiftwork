@@ -465,7 +465,9 @@ def test_setup_custom_waveform_non_gated_no_pulse_train_duration_override():
     assert not ptd_calls
 
 
-def test_connect_skips_set_continuous_for_custom_waveform_in_gated_mode():
+def test_connect_sets_continuous_for_custom_waveform_in_gated_mode():
+    """set_continuous=1 must be called for custom waveform channels too.
+    Without it gated mode fires only one shot instead of a repeating pulse train."""
     stim = _make_stim(
         waveform_on_ramp_type=WAVEFORM_LINEAR,
         waveform_on_ramp_duration_s=0.001,
@@ -478,15 +480,15 @@ def test_connect_skips_set_continuous_for_custom_waveform_in_gated_mode():
     mock_pp.channel_configs = [MagicMock() for _ in range(4)]
     mock_pp.trigger_configs = [MagicMock() for _ in range(2)]
     stim.connect(handle=mock_pp)
-    set_cont_calls = [c for c in mock_pp.set_continuous.call_args_list]
+    set_cont_calls = mock_pp.set_continuous.call_args_list
     stim_ch = stim.in_dict["channels_stimulation"][0]
     stim_ch_calls = [
         c
         for c in set_cont_calls
         if c.kwargs.get("channel") == stim_ch or (c.args and c.args[0] == stim_ch)
     ]
-    assert not stim_ch_calls, (
-        "set_continuous must not be called for custom waveform stim channels in gated mode"
+    assert stim_ch_calls, (
+        "set_continuous must be called for stim channels in gated mode"
     )
 
 
