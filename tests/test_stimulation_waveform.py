@@ -404,7 +404,7 @@ def test_setup_custom_waveform_sets_custom_train_target_zero():
     assert target_calls[0].args[2] == 0
 
 
-def test_setup_custom_waveform_sets_custom_train_loop_zero():
+def test_setup_custom_waveform_sets_custom_train_loop_one():
     stim = _make_stim_with_mock_pp(
         waveform_on_ramp_type=WAVEFORM_LINEAR,
         waveform_on_ramp_duration_s=0.001,
@@ -414,7 +414,56 @@ def test_setup_custom_waveform_sets_custom_train_loop_zero():
     calls = stim.pulsePal.program_one_param.call_args_list
     loop_calls = [c for c in calls if c.args[1] == "customTrainLoop"]
     assert loop_calls
-    assert loop_calls[0].args[2] == 0
+    assert loop_calls[0].args[2] == 1
+
+
+def test_setup_custom_waveform_pads_to_full_cycle():
+    """Uploaded waveform must be exactly one pulse cycle long for looping at pulse_frequency."""
+    pulse_frequency = 40  # 25 ms cycle = 500 samples at 20 kHz
+    stim = Stimulation(
+        port="/dev/null",
+        in_dict={
+            "channels_stimulation": [0],
+            "channels_ttl_copy": [],
+            "pulse_frequency": pulse_frequency,
+            "waveform_on_ramp_type": WAVEFORM_LINEAR,
+            "waveform_on_ramp_duration_s": 0.001,
+            "waveform_center_duration_s": 0.003,
+            "waveform_off_ramp_type": WAVEFORM_LINEAR,
+            "waveform_off_ramp_duration_s": 0.001,
+        },
+    )
+    stim.pulsePal = MagicMock()
+    stim.setup_custom_waveform()
+    _, kwargs = stim.pulsePal.upload_custom_waveform.call_args
+    uploaded = kwargs["pulse_voltages"]
+    expected_n = round(_PULSEPAL_SAMPLE_RATE / pulse_frequency)
+    assert len(uploaded) == expected_n
+
+
+def test_setup_custom_waveform_padded_tail_is_zero():
+    """Trailing silence samples must be 0V (not residual ramp voltage)."""
+    pulse_frequency = 40
+    stim = Stimulation(
+        port="/dev/null",
+        in_dict={
+            "channels_stimulation": [0],
+            "channels_ttl_copy": [],
+            "pulse_frequency": pulse_frequency,
+            "waveform_on_ramp_type": WAVEFORM_LINEAR,
+            "waveform_on_ramp_duration_s": 0.001,
+            "waveform_center_duration_s": 0.003,
+            "waveform_off_ramp_type": WAVEFORM_LINEAR,
+            "waveform_off_ramp_duration_s": 0.001,
+        },
+    )
+    stim.pulsePal = MagicMock()
+    stim.setup_custom_waveform()
+    _, kwargs = stim.pulsePal.upload_custom_waveform.call_args
+    uploaded = kwargs["pulse_voltages"]
+    n_shaped = round((0.001 + 0.003 + 0.001) * _PULSEPAL_SAMPLE_RATE)
+    tail = uploaded[n_shaped:]
+    assert all(v == pytest.approx(0.0) for v in tail)
 
 
 def test_setup_custom_waveform_returns_total_duration():

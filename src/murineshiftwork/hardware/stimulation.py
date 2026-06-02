@@ -315,20 +315,26 @@ class Stimulation:
             off_ramp_duration_s=self._waveform_off_ramp_duration_s,
         )
 
+        # Pad waveform to exactly one pulse cycle with trailing zeros.
+        # customTrainLoop=1 then repeats the full cycle (pulse + silence) at
+        # pulse_frequency during the gate — set_continuous alone does not repeat
+        # custom waveform channels.
+        pulse_frequency = float(self.in_dict.get("pulse_frequency", 30))
+        n_cycle = round(_PULSEPAL_SAMPLE_RATE / pulse_frequency)
+        n_pad = max(0, n_cycle - len(voltages))
+        padded_voltages = voltages + [0.0] * n_pad
+
         self.pulsePal.upload_custom_waveform(
             pulse_train_id=slot,
             pulse_width=1.0 / _PULSEPAL_SAMPLE_RATE,
-            pulse_voltages=voltages,
+            pulse_voltages=padded_voltages,
         )
 
         for ch in self.in_dict["channels_stimulation"]:
             ch = int(ch)
             self.pulsePal.program_one_param(ch, "customTrainID", slot + 1)
             self.pulsePal.program_one_param(ch, "customTrainTarget", 0)
-            # customTrainLoop=0: play waveform once per pulse event, repeated by the
-            # standard pulse train timing (phase1Duration + interPulseInterval).
-            # customTrainLoop=1 loops at sample rate (20 kHz) — do not use.
-            self.pulsePal.program_one_param(ch, "customTrainLoop", 0)
+            self.pulsePal.program_one_param(ch, "customTrainLoop", 1)
             if self.in_dict.get("trigger_mode") == "gated":
                 # Prevent pulseTrainDuration from expiring mid-gate; gate-low is the
                 # only stop signal. 3600 s is safe for any realistic session.
