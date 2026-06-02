@@ -9,9 +9,9 @@ import pandas as pd
 from pybpodapi.protocol import Bpod, StateMachine
 
 from murineshiftwork.logic.barcode import BARCODE_FIRST_STATE_NAME
+from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.sounds import StereoSound
 from murineshiftwork.namespace.msw_files import msw_file
-from murineshiftwork.readers.io import save_trial_data
 
 log = logging.getLogger(__name__)
 

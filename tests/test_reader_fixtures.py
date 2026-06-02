@@ -28,7 +28,7 @@ def _session_dir(variant="jsonl"):
 
 
 def test_load_trial_data_jsonl_returns_list():
-    from murineshiftwork.readers.io import load_trial_data
+    from murineshiftwork.logic.io import load_trial_data
 
     sdir = _session_dir("jsonl")
     jsonl = next(sdir.glob("*.df.jsonl"))
@@ -37,7 +37,7 @@ def test_load_trial_data_jsonl_returns_list():
 
 
 def test_load_trial_data_jsonl_nonempty():
-    from murineshiftwork.readers.io import load_trial_data
+    from murineshiftwork.logic.io import load_trial_data
 
     sdir = _session_dir("jsonl")
     jsonl = next(sdir.glob("*.df.jsonl"))
@@ -47,7 +47,7 @@ def test_load_trial_data_jsonl_nonempty():
 
 
 def test_load_trial_data_jsonl_no_version_header():
-    from murineshiftwork.readers.io import load_trial_data
+    from murineshiftwork.logic.io import load_trial_data
 
     sdir = _session_dir("jsonl")
     jsonl = next(sdir.glob("*.df.jsonl"))
@@ -56,7 +56,7 @@ def test_load_trial_data_jsonl_no_version_header():
 
 
 def test_save_reload_roundtrip_jsonl(tmp_path):
-    from murineshiftwork.readers.io import load_trial_data, save_trial_data
+    from murineshiftwork.logic.io import load_trial_data, save_trial_data
 
     sdir = _session_dir("jsonl")
     jsonl = next(sdir.glob("*.df.jsonl"))

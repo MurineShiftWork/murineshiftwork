@@ -14,10 +14,10 @@ from murineshiftwork.logic.barcode import (
     inject_barcode_states,
 )
 from murineshiftwork.logic.config.ini import deep_merge
+from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 from murineshiftwork.namespace.manifest import append_subprotocol, finalize_subprotocol
 from murineshiftwork.namespace.msw_files import msw_file
-from murineshiftwork.readers.io import save_trial_data
 
 
 class OptoTaggingRecord:

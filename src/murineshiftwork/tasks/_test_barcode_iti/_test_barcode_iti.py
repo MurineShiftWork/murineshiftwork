@@ -37,9 +37,9 @@ from murineshiftwork.logic.barcode import (
     barcode_config_from_settings,
     inject_barcode_states,
 )
+from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
-from murineshiftwork.readers.io import save_trial_data
 
 _DEFAULTS = {
     "n_max_trials": 20,

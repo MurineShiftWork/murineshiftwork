@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from murineshiftwork.readers.io import load_trial_data
+from murineshiftwork.logic.io import load_trial_data
 
 
 def _exec_sys_cmd(cmd=None, shell=True, stdout=subprocess.PIPE):
