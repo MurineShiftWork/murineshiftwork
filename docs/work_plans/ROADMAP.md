@@ -22,6 +22,15 @@ Design details live in memory files or separate docs — not here.
 
 ## TODO
 
+### Readers / logic cleanup (pre-extraction)
+
+- [x] **`readers/io.py` → `logic/io.py`** — `save_trial_data` + `load_trial_data` moved to `logic/`; all 10 task callers + `readers/files.py` + `tests/test_reader_fixtures.py` updated; `readers/io.py` deleted. · 2026-06-02
+- [ ] **`logic/io.py` — generic ABC for trial data serialisation** — define `TrialDataWriter` / `TrialDataReader` ABC in `logic/io.py`; current JSONL implementation becomes the concrete `JsonlTrialDataWriter` / `JsonlTrialDataReader`; hardware backends (Bpod) register their own save/load via the ABC so the device layer is independently replaceable. Design goal: tasks and `TaskProcess` depend only on the ABC, not the JSONL impl. Prerequisite for Bpod-agnostic hardware abstraction.
+- [ ] **Task isolation: `emit_trial()` + writer injection** — tasks should call a generic `emit_trial(dict)` on their context object rather than directly calling `save_trial_data()` or `relay_queue.put_nowait()`. `TaskProcess` owns the write (swappable writer via `TrialDataWriter` ABC) and the relay dispatch (swappable via agent hook). Tasks become pure state-machine + scoring logic with no knowledge of persistence or transport. Prerequisite for hardware-agnostic task definition. See `PLAN_package_graph.md §Task isolation`.
+- [ ] **`readers/` — resolve `murineshiftwork.namespace.*` imports** — `readers/namespace.py` and `readers/batch.py` import `is_msw_file` + `parse_session_basename` from `murineshiftwork.namespace.*`; these must come from `msw-core` once extracted. No code change needed now — tracked here so the extraction sprint doesn't forget it.
+
+---
+
 ### Decisions needed before extraction sprint (2026-05-30)
 
 See `PLAN_package_graph.md` for full context on each.

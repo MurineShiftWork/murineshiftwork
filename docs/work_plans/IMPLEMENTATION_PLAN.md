@@ -224,7 +224,10 @@ standalone pip packages with extras groups on the `murineshiftwork` meta-package
 
 ## 4. Package split plan
 
-Package prefix: **`msw-tasks-`** (plural — each package may contain more than one task file).
+> **See `PLAN_package_graph.md` for current expected graph, per-package status, and four open decisions (naming/scope) that must be resolved before the extraction sprint.**
+> The table below records original design intent; `PLAN_package_graph.md` is authoritative for current state.
+
+Package prefix: **`msw-tasks-`** (plural — open decision: may flatten to single `msw-tasks`, see `PLAN_package_graph.md`).
 
 | pip name | Python namespace | Contents | Status |
 |---|---|---|---|

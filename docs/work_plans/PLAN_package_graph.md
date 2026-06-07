@@ -5,38 +5,80 @@
 
 ---
 
-## Expected package graph
+## Package hierarchy
 
 ```
-murineshiftwork                      ← metapackage; install this
-  core deps (always):
-    acquisition-namespace ≥ 1.0      ← hardware abstraction namespace (standalone)
-    ttl-barcoder                     ← TTL barcode pipeline (standalone)
-    msw-core          [TBD name]     ← config, task_process, hardware, barcode logic (from monolith)
+msw-core                             ← acquisition stack; always installed on rigs
+  cli/                               ← argparse entrypoints; task discovery via entry-points
+  hardware/                          ← Bpod, PulsePal, scale, camera, stage, parent session
+  hooks/                             ← pre/post session hooks
+  logic/                             ← TaskProcess, config, barcode, IO, calibration, maths
+  namespace/                         ← session path building, MSW file naming, manifest
 
-  extras:
-    [tasks]       → msw-tasks        ← task definitions (sequence, switching, calibration, …)
-    [readers]     → msw-readers      ← session readers + alignment
-    [agent]       → msw-agent        ← FastAPI rig agent
-    [flir]        → msw-flir-bonsai  ← FLIR camera via Bonsai (Windows only)
-    [rce]         → rpi-camera-ensemble
-    [calibration] → serial-scale-hx711, serial-scale-bench
-    [labwatch]    → msw-labwatch     ← thin wrapper over private labwatch_client
-    [dev]         → pytest, ruff, mypy, ... (unchanged)
-    [docs]        → mkdocs-material (unchanged)
+msw-agent                            ← [agent] opt-in extra
+  logagent/                          ← FastAPI ingest server + LogAgent daemon
 
-Standalone packages (MurineShiftWork org, not MSW namespace):
-  acquisition-namespace
-  pypulsepal
-  ttl-barcoder
-  rpi-camera-ensemble
-  msw-flir-bonsai
-  one-axis-stage
-  serial-scale-bench
-  serial-scale-hx711
-  rfid-to-url
-  msw-oe              ← OE plugin (entry-point group; separate repo, not yet created)
+msw-readers                          ← [readers] opt-in extra
+  readers/                           ← session readers, batch API, alignment
+
+msw-tasks-core                       ← [tasks] core; calibration + hardware test tasks
+  tasks/calibration/
+  tasks/_test_*/  (no cross-task imports)
+
+msw-tasks-sequence                   ← [tasks-sequence]; reference task for external authors
+  tasks/sequence/
+
+msw-tasks-tab                        ← lab-specific; separate repo, not on PyPI
+  tasks/probabilistic_switching/
+  tasks/probabilistic_switching_fixedsubjects/
+  tasks/optotagging/
+  tasks/airpuff/
+  tasks/exp_trn_spindle/
+  tasks/periodic_trigger/
+  tasks/periodic_trigger_with_video/
+  tasks/openfield/                   ← thin wrapper; delegates to periodic_trigger_with_video
+  tasks/sleep_homecage/              ← thin wrapper; delegates to periodic_trigger_with_video
+  tasks/_test_trigger_with_video/    ← must move here (imports periodic_trigger_with_video)
+  tasks/_test_video/                 ← must move here or delete (imports probabilistic_switching)
 ```
+
+### Dependency graph
+
+```
+msw-tasks-tab      → msw-core, acquisition-namespace, ttl-barcoder
+msw-tasks-sequence → msw-core, acquisition-namespace, ttl-barcoder
+msw-tasks-core     → msw-core, acquisition-namespace
+msw-readers        → msw-core, acquisition-namespace, ttl-barcoder, pydantic, pandas
+msw-agent          → (stdlib + fastapi only; zero MSW imports)
+msw-core           → acquisition-namespace, ttl-barcoder, pypulsepal, one-axis-stage, …
+```
+
+No circular deps. `msw-tasks-tab` and `msw-tasks-sequence` both depend on `msw-core` only;
+they do not depend on each other. External task packages follow the same pattern.
+
+### Standalone packages (MurineShiftWork org)
+
+```
+acquisition-namespace   pypulsepal        ttl-barcoder
+rpi-camera-ensemble     msw-flir-bonsai   one-axis-stage
+serial-scale-bench      serial-scale-hx711  rfid-to-url
+msw-oe                  ← OE plugin (entry-point group; separate repo, not yet created)
+```
+
+### `murineshiftwork` metapackage extras
+
+| Extra | Pulls in |
+|---|---|
+| *(base)* | `msw-core` + `acquisition-namespace` + `ttl-barcoder` |
+| `[tasks]` | `msw-tasks-core` + `msw-tasks-sequence` |
+| `[readers]` | `msw-readers` |
+| `[agent]` | `msw-agent` |
+| `[flir]` | `msw-flir-bonsai` |
+| `[rce]` | `rpi-camera-ensemble` |
+| `[calibration]` | `serial-scale-hx711`, `serial-scale-bench` |
+| `[labwatch]` | `msw-labwatch` |
+| `[dev]` | pytest, ruff, mypy, … |
+| `[docs]` | mkdocs-material |
 
 ---
 
@@ -62,53 +104,75 @@ Standalone packages (MurineShiftWork org, not MSW namespace):
 
 ---
 
-## Open decisions (needed before extraction sprint)
+## Locked decisions (2026-06-02)
 
-### 1. `msw-namespace` fate
-IMPLEMENTATION_PLAN.md §4 plans `msw-namespace` as a standalone pip package containing `NamespaceBuilder` + `namespace.msw.yaml`.
-PLAN_namespace_unification.md Sprint 3 describes the extraction.
+### 1. No `msw-namespace` package — absorbed into `msw-core`
 
-**Question:** Is `msw-namespace` still extracted as a separate package, or is `NamespaceBuilder` absorbed into:
-- (a) `acquisition-namespace` — makes it the shared namespace layer for all acq tools, or
-- (b) `msw-core` — keeps it internal to the MSW stack
+`msw-namespace` will NOT be extracted as a standalone package.
+The MSW namespace layer (`namespace/`, including `NamespaceBuilder` usage,
+`namespace.msw.yaml`, `parse_session_basename`, `is_msw_file`) is
+MSW-specific and belongs inside `msw-core`.
 
-> **→ Decision needed.** Current code: `NamespaceBuilder` lives in `src/murineshiftwork/namespace/`.
+`acquisition-namespace` remains the only general-purpose namespace dep.
+It is not extended with MSW-specific constants or parsing logic.
 
----
-
-### 2. `msw-logic` → `msw-core` rename
-IMPLEMENTATION_PLAN.md §4 names the core logic package `msw-logic`.
-Working name in this discussion: `msw-core`.
-
-**Question:** Confirm rename to `msw-core`, and clarify scope:
-- Does `msw-core` include only `logic/` + `hardware/`, or also `namespace/` (i.e. it absorbs decision 1b)?
-- Python namespace: `murineshiftwork.logic` + `murineshiftwork.hardware`, or a new root?
-
-> **→ Decision needed.**
+PLAN_namespace_unification.md Sprint 3 (msw-namespace extraction) is cancelled.
 
 ---
 
-### 3. Task package granularity
-IMPLEMENTATION_PLAN.md §4 locks `msw-tasks-{core,sequence,switching,other}` (4 packages, prefix `msw-tasks-`).
-Working name in this discussion: `msw-tasks` (singular).
+### 2. Package name: `msw-core`; scope includes `namespace/`
 
-**Options:**
-- (a) Single `msw-tasks` package containing all tasks — simpler; `[tasks]` extra on metapackage is just this one package
-- (b) Keep four `msw-tasks-*` packages; `[tasks]` on metapackage pulls all four; `[tasks-sequence]` etc. for fine-grained installs
-- (c) Keep four packages but expose only `[tasks]` (pulls all) on the metapackage; internal granularity hidden from users
+`msw-logic` → **`msw-core`** (confirmed rename).
 
-> **→ Decision needed.** Extraction order (core → sequence → switching → other) is unchanged regardless of naming.
+Scope: `logic/` + `hardware/` + `namespace/`.
+Python import paths (`murineshiftwork.logic.*`, `murineshiftwork.hardware.*`,
+`murineshiftwork.namespace.*`) are unchanged — no new root namespace.
 
 ---
 
-### 4. `msw-agent` install scope
-Current plan: `[agent]` extra on the metapackage.
+### 3. Task package split: `msw-tasks-core`, `msw-tasks-sequence`, external repo for the rest
 
-**Question:** Should `msw-agent` (FastAPI rig agent) be a core dep (always installed) or remain an opt-in extra?
-- Core dep means every `pip install murineshiftwork` pulls in FastAPI + uvicorn
-- Extra keeps base install lightweight for analysis/reader-only use cases
+- **`msw-tasks-core`**: calibration tasks + hardware test tasks only. Minimal
+  deps; ships with the main install as the reference task set.
+- **`msw-tasks-sequence`**: sequence task, extracted as its own package.
+  Self-contained enough to serve as an example for external task authors.
+- **Everything else** (probabilistic_switching, fixedsubjects, optotagging,
+  airpuff, spindle, periodic): moves to a separate `msw-tasks-lab` repo
+  (or similar) outside the main org. Not a PyPI requirement; installed
+  directly by the lab.
+- **Goal**: anyone can author and install their own task package alongside
+  `msw-core` without forking the main repo. `msw-tasks-core` + `msw-tasks-sequence`
+  are the published reference implementations that show the pattern.
 
-> **→ Decision needed.**
+`[tasks]` extra on the metapackage pulls `msw-tasks-core` + `msw-tasks-sequence`.
+Lab-specific tasks are installed separately (`pip install ./msw-tasks-lab`).
+
+---
+
+### 4. `msw-agent` is `[agent]` opt-in extra
+
+`msw-agent` stays an opt-in `[agent]` extra.
+`msw-core` (task_process.py) guards the LogAgent import with `try/ImportError`
+so the relay is silently disabled when the package is absent.
+Analysis machines and CI installs stay lean (no FastAPI/uvicorn in base).
+
+---
+
+## Task isolation roadmap item
+
+Tasks are currently coupled to `TaskProcess` internals for two concerns:
+
+1. **Trial data save** — tasks call `save_trial_data()` directly from `logic/io.py`.
+   Goal: `TaskProcess` owns the write (via a registered writer); tasks emit
+   trial dicts into a result callback; the writer is swappable (JSONL today,
+   anything tomorrow). Relates to the `TrialDataWriter` ABC item in ROADMAP.
+
+2. **Log dispatch / relay** — only `sequence` calls `relay_queue.put_nowait()`.
+   Goal: `TaskProcess` hooks the relay; tasks call a generic `emit_trial(dict)`
+   method on their context object without knowing about queues or HTTP.
+
+Both are prerequisites for a task definition language that is hardware-agnostic
+and backend-replaceable (Bpod today, NI-DAQ or Teensy tomorrow).
 
 ---
 
@@ -132,17 +196,46 @@ Current extras vs. planned:
 
 ---
 
-## Extraction order (unchanged)
+## Extraction order
 
-1. `msw-tasks-core` (minimal deps — good first split test)
-2. `msw-tasks-sequence` (self-contained; agent path must stay PyQt-free)
-3. `msw-core` / `msw-logic` + namespace layer (base; unblocks all others)
-4. `msw-agent` (already structurally isolated)
-5. `msw-readers` (no hardware deps)
-6. `msw-tasks-switching` (depends on camera client stable)
-7. `msw-tasks-other` (internal-use, no urgency)
+1. `msw-tasks-core` (calibration + test tasks; minimal deps — good first split test)
+2. `msw-tasks-sequence` (self-contained reference task; validates task packaging pattern)
+3. `msw-core` (`logic/` + `hardware/` + `namespace/` + `hooks/`; unblocks readers and agent)
+4. `msw-agent` (already structurally isolated; import guard already in place)
+5. `msw-readers` (no hardware deps; needs `msw-core` for namespace imports)
+6. `msw-tasks-lab` (lab-specific tasks; separate repo, not a PyPI requirement)
 
-Blocked on: decisions 1–4 above, and msw-agent Stage 2+ work being stable.
+---
+
+## Extraction blockers — from boundary review (2026-06-02)
+
+**Blocker for step 1 (`msw-tasks-core`):**
+
+Two test tasks have cross-task imports into lab tasks and cannot be extracted into `msw-tasks-core` as-is:
+
+- `tasks/_test_trigger_with_video/...:1` — entire file is a re-import of `periodic_trigger_with_video.run_task`. → Delete; the base task can be run directly via CLI flags.
+- `tasks/_test_video/_test_video.py:11` — imports `OnlinePlottingForPS` from `probabilistic_switching`. → Remove the plot import; `_test_video` does not need a real renderer.
+
+**Scope gap:**
+
+- `hooks/` was missing from the `msw-core` scope; now included explicitly in step 3 above.
+
+**Prerequisite for all task extraction — CLI task discovery:**
+
+`list_available_tasks()` and `find_task_by_name()` in `logic/misc.py` currently walk
+the filesystem at `murineshiftwork/tasks/`. Once tasks are in separate installed packages
+there is no single directory to walk.
+
+Required change before any task package can be extracted:
+
+1. Each task package declares an entry point in its `pyproject.toml`:
+   ```toml
+   [project.entry-points."msw.tasks"]
+   sequence = "murineshiftwork.tasks.sequence.sequence:run_task"
+   ```
+2. `list_available_tasks()` is rewritten to use `importlib.metadata.entry_points(group="msw.tasks")`.
+3. `find_task_by_name()` resolves against that registry instead of a path scan.
+4. Move both functions from `logic/misc.py` to `cli/tasks.py` (they are CLI concerns, not logic).
 
 ---
 

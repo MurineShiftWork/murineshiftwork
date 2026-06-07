@@ -492,6 +492,62 @@ Store a project-scoped PyPI API token as a Forgejo secret named `PYPI_API_TOKEN`
 
 ---
 
+## CI maintenance: upgrading GitHub Actions runtime
+
+### Node.js runtime upgrades
+
+GitHub periodically forces a new Node.js version as the default runtime for JavaScript-based Actions. When this happens, any workflow using an Action pinned to a version that has not been updated causes a warning or failure.
+
+**Checklist — apply to every repo in the org when a Node.js cutover is announced:**
+
+1. Find all affected Actions:
+   ```sh
+   grep 'uses:' .github/workflows/*.yml .github/workflows/*.yaml | sort -u
+   ```
+   Any `uses:` line that is not a Docker image (`docker://`) or a pure `run:` step is a JS Action and is affected.
+
+2. Common affected actions (as of 2026):
+   - `actions/checkout`
+   - `actions/setup-python`
+   - `astral-sh/setup-uv`
+   - `softprops/action-gh-release`
+   - `pypa/gh-action-pypi-publish`
+   - Any third-party action pinned by tag
+
+3. **Quick fix** — add to the top-level `env:` block of every workflow file:
+   ```yaml
+   env:
+     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+   ```
+   If no top-level `env:` block exists, add one directly before the `jobs:` line. If one exists (e.g. containing secrets), add the key to it.
+
+4. **Long-term fix** — bump action versions to the current template standard (these bundle Node.js 24 natively):
+   ```yaml
+   actions/checkout          @v4  →  @v6
+   astral-sh/setup-uv        @v5  →  @v7
+   softprops/action-gh-release  @v2  →  @v3
+   ```
+   `pypa/gh-action-pypi-publish@release/v1` tracks the `release/v1` floating tag — no pin change needed.
+   Once all actions are on these versions, `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` can be removed.
+   The canonical version reference is `larsrollik/templatepy` — check `template/.github/workflows/` there.
+
+5. **Do not apply to:**
+   - `run:` shell steps (unaffected)
+   - Docker image steps (`uses: docker://...`)
+   - Commented-out steps
+
+6. Commit in each repo separately:
+   ```
+   ci: force javascript actions to node.js 24
+   ```
+
+### Tracking which repos need the update
+
+Repos in this org that carry `.github/workflows/`:
+`murineshiftwork`, `pypulsepal`, `ttl-barcoder`, `acquisition-namespace`, `serial-scale-bench`, `serial-scale-hx711`, `msw-flir-bonsai`, `rpi-camera-ensemble`, `msw-agent`, `msw-interface`, `msw-namespace`, `msw-server`, `msw-tasks`, `one-axis-stage`, `larsrollik/templatepy`, `larsrollik/templatevue`
+
+---
+
 ## Tool licensing policy
 
 **Do not use GitHub Actions or CI tools that require a paid license for non-commercial or open-source use.**
