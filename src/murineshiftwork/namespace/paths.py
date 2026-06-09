@@ -127,9 +127,9 @@ def generate_session_paths(
         "namespace_version": version,
         "acquisition_name": acquisition_name,
         "session_basename": session_basename,
-        "session_folder": str(session_folder),
-        "session_folder_relative": str(session_folder.relative_to(basepath)),
-        "session_file_path": str(session_folder / session_basename),
+        "session_folder": session_folder.as_posix(),
+        "session_folder_relative": session_folder.relative_to(basepath).as_posix(),
+        "session_file_path": (session_folder / session_basename).as_posix(),
     }
 
     if printout:

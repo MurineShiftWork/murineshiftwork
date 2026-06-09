@@ -1,5 +1,6 @@
 """Tests for pre-flight hardware check, data_dir resolution, and settings pipeline."""
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -317,6 +318,10 @@ def test_preflight_fails_on_missing_camera_config(tmp_path):
         )
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="no portable always-unwritable path on Windows; writability logic is OS-agnostic",
+)
 def test_preflight_fails_on_nonwritable_output():
     from murineshiftwork.cli.preflight import (
         preflight_hardware_check as _preflight_hardware_check,

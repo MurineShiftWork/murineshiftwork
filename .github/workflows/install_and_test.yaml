@@ -2,7 +2,7 @@ name: Install and test
 
 on:
   push:
-    branches: ["main", "ft/**", "fix/**"]
+    branches: [main]
   pull_request:
 
 permissions:
@@ -55,7 +55,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
