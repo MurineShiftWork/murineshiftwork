@@ -1,19 +1,108 @@
 """msw tasks subcommand handlers: list, defaults, init-configs."""
 
+import importlib
+import logging
 import shutil
 import sys
+from importlib.metadata import entry_points
 from pathlib import Path
 
 import yaml
 
 from murineshiftwork.logic.machine_config import resolve_config_dir
-from murineshiftwork.logic.misc import find_task_by_name, list_available_tasks
+
+# ---------------------------------------------------------------------------
+# Task discovery
+
+
+def list_available_tasks(detailed=False):
+    """Return available task names.
+
+    Bundled tasks are discovered by filesystem scan — no registration needed.
+    External task packages register via the ``msw.tasks`` entry-point group;
+    those are merged in additively (bundled tasks take precedence on name clash).
+
+    detailed=True returns {name: task_dir_path} instead of a list of names.
+    """
+    result = _list_tasks_filesystem(detailed=True)
+
+    for ep in entry_points(group="msw.tasks"):
+        if ep.name not in result:
+            try:
+                mod = importlib.import_module(ep.value)
+                assert mod.__file__ is not None
+                result[ep.name] = Path(mod.__file__).parent
+            except Exception:
+                logging.debug("msw.tasks entry point %r failed to load", ep.name)
+
+    return result if detailed else sorted(result.keys())
+
+
+def _list_tasks_filesystem(detailed=False):
+    """Filesystem scan fallback — used when no msw.tasks entry points are registered."""
+    try:
+        import murineshiftwork.tasks as _tasks_pkg
+
+        tasks_dir = (
+            Path(_tasks_pkg.__path__[0]) if hasattr(_tasks_pkg, "__path__") else None
+        )
+    except ImportError:
+        tasks_dir = None
+
+    if tasks_dir is None or not tasks_dir.exists():
+        try:
+            import murineshiftwork
+
+            tasks_dir = Path(list(murineshiftwork.__path__)[0]) / "tasks"
+        except ImportError:
+            return {} if detailed else []
+
+    summary = {}
+    for item in sorted(tasks_dir.iterdir()):
+        if (
+            item.is_dir()
+            and (
+                not item.name.startswith("_")
+                or item.name.startswith("_test_")
+                or item.name.startswith("_calibration_")
+            )
+            and (item / f"{item.name}.py").exists()
+        ):
+            summary[item.name] = item
+
+    return summary if detailed else list(summary.keys())
+
+
+def find_task_by_name(task_name=None, ignore_error=True):
+    available_tasks = list_available_tasks()
+    if task_name in available_tasks:
+        return task_name
+    found = [x for x in available_tasks if task_name in x]
+    if len(found) == 1:
+        return found[0]
+    if len(found) == 0:
+        return None
+    msg = f"Task name '{task_name}' matches multiple tasks: {sorted(found)} — selecting {sorted(found)[0]}"
+    logging.debug(msg)
+    if ignore_error:
+        return sorted(found)[0]
+    raise ValueError(msg)
+
+
+def load_task_module(task_name: str):
+    """Import the module for a task, using entry points when available."""
+    eps = {ep.name: ep for ep in entry_points(group="msw.tasks")}
+    if task_name in eps:
+        return importlib.import_module(eps[task_name].value)
+    return importlib.import_module(f"murineshiftwork.tasks.{task_name}.{task_name}")
+
+
+# ---------------------------------------------------------------------------
+# Subcommand handlers
 
 
 def _task_yaml_path(task_name: str) -> Path:
-    import importlib
-
-    mod = importlib.import_module(f"murineshiftwork.tasks.{task_name}.{task_name}")
+    mod = load_task_module(task_name)
     assert mod.__file__ is not None
     return Path(mod.__file__).parent / "task.yaml"
 

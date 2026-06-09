@@ -82,6 +82,11 @@ full = [
 murineshiftwork = "murineshiftwork.cli:run_cli"
 msw = "murineshiftwork.cli:run_cli"
 
+# External task packages register here — bundled tasks need no entry-point.
+# Example (in an external package's pyproject.toml):
+#   [project.entry-points."msw.tasks"]
+#   my_task = "my_package.tasks.my_task.my_task"
+
 # ---------------------------------------------------------------------------
 # Build
 # ---------------------------------------------------------------------------

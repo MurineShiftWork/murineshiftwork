@@ -52,7 +52,7 @@ def test_resolve_data_dir_machine_config(tmp_path, monkeypatch):
 
 
 def test_list_available_tasks_nonempty():
-    from murineshiftwork.logic.misc import list_available_tasks
+    from murineshiftwork.cli.tasks import list_available_tasks
 
     tasks = list_available_tasks()
     assert len(tasks) >= 5
@@ -62,10 +62,7 @@ def test_list_available_tasks_nonempty():
 
 
 def test_find_task_by_name():
-    from murineshiftwork.logic.misc import (
-        find_task_by_name,
-        list_available_tasks,
-    )
+    from murineshiftwork.cli.tasks import find_task_by_name, list_available_tasks
 
     assert find_task_by_name("flush") == "_test_flush_valves"
     assert (

@@ -12,6 +12,11 @@ from murineshiftwork.cli.defaults import (
     default_out_path,
 )
 from murineshiftwork.cli.preflight import preflight_hardware_check
+from murineshiftwork.cli.tasks import (
+    find_task_by_name,
+    list_available_tasks,
+    load_task_module,
+)
 from murineshiftwork.logic.config import (
     ExecutionConfig,
     deep_merge,
@@ -24,7 +29,6 @@ from murineshiftwork.logic.config import (
 )
 from murineshiftwork.logic.log import setup_logging
 from murineshiftwork.logic.machine_config import resolve_config_dir, resolve_data_dir
-from murineshiftwork.logic.misc import find_task_by_name
 from murineshiftwork.logic.paths import get_host_ip, get_host_name
 from murineshiftwork.logic.task_settings import build_task_settings
 
@@ -39,10 +43,8 @@ __all__ = [
 
 
 def get_task_dir(task=None):
-    import importlib
-
     try:
-        mod = importlib.import_module(f"murineshiftwork.tasks.{task}.{task}")
+        mod = load_task_module(task)
         return str(Path(mod.__file__).parent)
     except (ImportError, AttributeError):
         return ""
@@ -81,8 +83,6 @@ def _evaluate_task(args_dict=None):
         requested = args_dict["task"]
         args_dict["task"] = find_task_by_name(task_name=requested)
         if args_dict["task"] is None:
-            from murineshiftwork.logic.misc import list_available_tasks
-
             raise ValueError(
                 f"Unknown task '{requested}'. Available tasks:\n"
                 + "\n".join(f"  {t}" for t in sorted(list_available_tasks()))

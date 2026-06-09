@@ -26,7 +26,6 @@ from murineshiftwork.logic.log import (
     patch_logging_levels,
 )
 from murineshiftwork.logic.misc import (
-    find_task_by_name,
     print_box,
     test_serial_port_is_accessible,
 )
@@ -213,7 +212,7 @@ class TaskProcess:
         self.simulate = simulate
         self.session_uuid = str(uuid.uuid4())
 
-        self.task_name = find_task_by_name(task_name=self.task_in)
+        self.task_name = self.task_in
         self.session_paths = generate_session_paths(
             basepath=Path(self.out_path),
             subject=self.subject,
@@ -444,13 +443,21 @@ class TaskProcess:
 
     def init_task(self):
         """Import specific Task and make self.task_runner Thread."""
-        import importlib
         import shutil
+        from importlib.metadata import entry_points
 
         try:
-            mod = importlib.import_module(
-                f"murineshiftwork.tasks.{self.task_name}.{self.task_name}"
-            )
+            eps = {ep.name: ep for ep in entry_points(group="msw.tasks")}
+            if self.task_name in eps:
+                import importlib
+
+                mod = importlib.import_module(eps[self.task_name].value)
+            else:
+                import importlib
+
+                mod = importlib.import_module(
+                    f"murineshiftwork.tasks.{self.task_name}.{self.task_name}"
+                )
             TaskClass = getattr(mod, "Task")
         except (ImportError, AttributeError) as exc:
             raise ImportError(

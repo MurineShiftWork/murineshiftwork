@@ -6,11 +6,11 @@ full evaluate pipeline, avoiding any risk of a circular dependency.
 
 from pathlib import Path
 
+from murineshiftwork.cli.tasks import list_available_tasks
 from murineshiftwork.logic.machine_config import (
     resolve_config_dir,
     resolve_data_dir,
 )
-from murineshiftwork.logic.misc import list_available_tasks
 
 default_out_path = resolve_data_dir()
 default_config_dir = resolve_config_dir()

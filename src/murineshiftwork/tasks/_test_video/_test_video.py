@@ -1,16 +1,16 @@
 import logging
 import time
 from multiprocessing import Queue
+from pathlib import Path
 
 import numpy as np
 from pybpodapi.protocol import Bpod, StateMachine
-from rpi_camera_colony.control.conductor import Conductor
+from rpi_camera_ensemble.conductor.conductor import Conductor
+from rpi_camera_ensemble.config.acquisition import EnsembleAcquisitionConfig
+from rpi_camera_ensemble.config.conductor import ConductorConfig
 
 from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
-from murineshiftwork.tasks.probabilistic_switching.online_plotting import (
-    OnlinePlottingForPS,
-)
 
 
 class Task(TaskRunner):
@@ -69,7 +69,6 @@ class Task(TaskRunner):
 
 def run_task(**args_dict):
     """Task: test video."""
-    # Make objects
     dq = Queue()
     kq = Queue()
     args_dict.update(
@@ -80,36 +79,28 @@ def run_task(**args_dict):
             },
         },
     )
-
-    # Do not auto start, so that camera can start first
     args_dict.update({"auto_start": False})
 
-    # Enter behaviour context
+    ensemble_cfg_file = args_dict["config_file_camera"]
+    assert Path(ensemble_cfg_file).exists(), (
+        f"Camera config not found: {ensemble_cfg_file}"
+    )
+    ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
+    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path"))
+    conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
+    conductor.start()
+    conductor.setup_agents()
+
     with TaskProcess(**args_dict) as tp:
-        # Video
-        conductor_args = {
-            "config_file": args_dict["config_file_camera"],
-            "acquisition_group": args_dict["is_child_session_to"]
-            if args_dict["is_child_session_to"] is not None
-            else tp.session_paths["session_basename"].split("__")[0],
-            "acquisition_name": tp.session_paths["session_basename"],
-        }
-        c = Conductor(**conductor_args)
-        c.start_acquisition()
-
-        # Online plotting
-        plotting_process = OnlinePlottingForPS(
-            session_name="x",
-            is_simulation=False,
-            data_queue=dq,
-            kill_queue=kq,
+        conductor.initialize_acquisition(
+            acquisition_path=tp.session_paths["session_folder_relative"],
+            acquisition_name=tp.session_paths["session_basename"],
         )
-        plotting_process.start()
+        conductor.start_preview()
+        conductor.start_recording()
 
-        # Delay for video to start
         time.sleep(5)
 
-        # Start task
         tp.run_task()
         while tp.is_running():
             try:
@@ -118,12 +109,8 @@ def run_task(**args_dict):
                 kq.put(True)
                 tp.stop_task()
 
-        # Stop online plotting
-        kq.put(True)
-
-        # Stop video
-        c.stop_acquisition()
-        c.cleanup()
+        conductor.stop_acquisition()
+        conductor.stop()
 
         time.sleep(1)
 

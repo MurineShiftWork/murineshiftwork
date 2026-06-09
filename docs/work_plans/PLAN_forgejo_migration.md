@@ -10,7 +10,7 @@ Forgejo instance with `act_runner`. Also covers multi-repo docs deployment to
 
 | Area | Effort | Blocker? |
 |---|---|---|
-| Workflow directory rename | trivial | yes — Forgejo won't read `.github/workflows/` |
+| Add `.forgejo/workflows/` alongside `.github/` | trivial | yes — Forgejo won't read `.github/workflows/` |
 | `checkout` / `setup-python` / `setup-uv` | none | no — these work as-is |
 | Windows runner | register a Windows `act_runner` | no, but needed for repos that test on Windows |
 | `softprops/action-gh-release` | replace with API call | yes for release.yml |
@@ -27,9 +27,15 @@ Forgejo instance with `act_runner`. Also covers multi-repo docs deployment to
 Forgejo Actions reads from `.forgejo/workflows/` (preferred) or `.gitea/workflows/`.
 It does **not** read `.github/workflows/`.
 
+**Keep `.github/workflows/` in place.** Add `.forgejo/workflows/` alongside it:
+
 ```
-.github/workflows/  →  .forgejo/workflows/
+.forgejo/workflows/ci.yml          ← Forgejo reads this
+.github/workflows/ci.yml           ← GitHub reads this
 ```
+
+Both directories coexist in the same repo without interference. GitHub Actions and
+Forgejo Actions run independently from each mirror.
 
 Issue and PR templates under `.github/ISSUE_TEMPLATE/` and `.github/PULL_REQUEST_TEMPLATE.md`
 are read by Forgejo from the same paths — no change needed there.
@@ -477,8 +483,8 @@ start.
 
 **Changes in templatepy:**
 
-Move template workflow files from `.github/workflows/` to `.forgejo/workflows/` in the
-template output — or generate both and let the user delete whichever they don't need.
+Add `.forgejo/workflows/` output alongside the existing `.github/workflows/` output in
+the template — both coexist in generated repos, same as in murineshiftwork itself.
 
 Add a `forgejo_host` Copier variable alongside `github_username`/`github_repo`:
 
@@ -517,7 +523,7 @@ unchanged — leave them where they are.
 - [ ] Org-level secrets added: `PYPI_API_TOKEN`, `DOCS_DEPLOY_KEY`
 
 ### Per-repo workflow migration
-- [ ] `mkdir -p .forgejo/workflows && cp .github/workflows/*.yml .forgejo/workflows/`
+- [ ] `mkdir -p .forgejo/workflows && cp .github/workflows/*.yml .forgejo/workflows/`  (keep `.github/workflows/` in place)
 - [ ] `ci.yml`: remove `windows-latest` from matrix if Windows runner not registered yet
 - [ ] `install_and_test.yaml`: drop `token:` from namespace-check checkout
 - [ ] `release.yml`: replace `softprops/action-gh-release@v2` with Forgejo API call
@@ -533,7 +539,7 @@ unchanged — leave them where they are.
 - [ ] Add `forgejo_host` Copier variable
 - [ ] Add conditional URL generation in jinja templates
 - [ ] Add `pypi_publish_method` variable for OIDC vs token
-- [ ] Move template workflow output path to `.forgejo/workflows/`
+- [ ] Add `.forgejo/workflows/` output to template (alongside existing `.github/workflows/`)
 - [ ] Update templatepy's own `.github/` → `.forgejo/` for its own CI
 
 ---

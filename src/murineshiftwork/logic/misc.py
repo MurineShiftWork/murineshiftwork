@@ -1,4 +1,3 @@
-import logging
 from pkgutil import iter_modules
 
 import numpy as np
@@ -34,57 +33,6 @@ def test_serial_port_is_accessible(port=None, baudrate=115200, timeout=1):
     except OSError:
         return False
     return True
-
-
-def list_available_tasks(detailed=False):
-    from pathlib import Path
-
-    import murineshiftwork.tasks as _tasks_pkg
-
-    tasks_dir = (
-        Path(_tasks_pkg.__path__[0]) if hasattr(_tasks_pkg, "__path__") else None
-    )
-    if tasks_dir is None or not tasks_dir.exists():
-        # Namespace-package fallback: locate via installed package __path__
-        import murineshiftwork
-
-        tasks_dir = Path(list(murineshiftwork.__path__)[0]) / "tasks"
-
-    summary = {}
-    for item in sorted(tasks_dir.iterdir()):
-        if (
-            item.is_dir()
-            and (
-                not item.name.startswith("_")
-                or item.name.startswith("_test_")
-                or item.name.startswith("_calibration_")
-            )
-            and (item / f"{item.name}.py").exists()
-        ):
-            summary[item.name] = item
-
-    if detailed:
-        return summary
-    else:
-        return list(summary.keys())
-
-
-def find_task_by_name(task_name=None, ignore_error=True):
-    available_tasks = list_available_tasks()
-    if task_name in available_tasks:
-        return task_name
-    found = [x for x in available_tasks if task_name in x]
-    if len(found) == 1:
-        return found[0]
-    elif len(found) == 0:
-        return None
-    else:
-        msg = f"Task name '{task_name}' is not specific to any available task: {available_tasks}\n Selecting first one: {sorted(found)[0]}"
-        logging.debug(msg)
-        if ignore_error:
-            return sorted(found)[0]
-        else:
-            raise ValueError(msg)
 
 
 def print_box(msg=None, indent=2):

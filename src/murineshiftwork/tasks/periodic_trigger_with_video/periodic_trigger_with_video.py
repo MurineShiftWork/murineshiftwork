@@ -5,7 +5,9 @@ from pathlib import Path
 import numpy as np
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
-from rpi_camera_colony.control.conductor import Conductor
+from rpi_camera_ensemble.conductor.conductor import Conductor
+from rpi_camera_ensemble.config.acquisition import EnsembleAcquisitionConfig
+from rpi_camera_ensemble.config.conductor import ConductorConfig
 
 from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.barcode import (
@@ -54,7 +56,7 @@ class TaskData:
         save_path = save_path or self.save_path
         logging.debug("Saving task control data..")
         dt = time.time()
-        save_trial_data(self.data, str(save_path) + ".df.jsonl")
+        save_trial_data(self.data, str(save_path))
         logging.debug(f"Saved data in {np.round(time.time() - dt, 2)}s.")
 
 
@@ -84,8 +86,7 @@ class Task(TaskRunner):
             f"barcode every {barcode_every_n} trials ({barcode_interval_s}s)"
         )
 
-        save_path = Path(self.bpod.workspace_path) / self.bpod.session_name
-        task_data = TaskData(save_path=save_path)
+        task_data = TaskData(save_path=self.get_path("df.jsonl"))
 
         trial_index = 0
         while self.continue_task and trial_index <= n_max_trials:
@@ -168,16 +169,23 @@ class Task(TaskRunner):
 def run_task(**args_dict):
     args_dict.update({"auto_start": False})
 
+    ensemble_cfg_file = args_dict["config_file_camera"]
+    assert Path(ensemble_cfg_file).exists(), (
+        f"Camera config not found: {ensemble_cfg_file}"
+    )
+    ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
+    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path"))
+    conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
+    conductor.start()
+    conductor.setup_agents()
+
     with TaskProcess(**args_dict) as tp:
-        conductor_args = {
-            "config_file": args_dict["config_file_camera"],
-            "acquisition_group": args_dict["is_child_session_to"]
-            if args_dict["is_child_session_to"] is not None
-            else tp.session_paths["session_basename"].split("__")[0],
-            "acquisition_name": tp.session_paths["session_basename"],
-        }
-        c = Conductor(**conductor_args)
-        c.start_acquisition()
+        conductor.initialize_acquisition(
+            acquisition_path=tp.session_paths["session_folder_relative"],
+            acquisition_name=tp.session_paths["session_basename"],
+        )
+        conductor.start_preview()
+        conductor.start_recording()
 
         time.sleep(5)
 
@@ -188,10 +196,10 @@ def run_task(**args_dict):
             except KeyboardInterrupt:
                 tp.stop_task()
 
-    c.stop_acquisition()
-    c.cleanup()
+        conductor.stop_acquisition()
+        conductor.stop()
 
-    time.sleep(1)
+        time.sleep(1)
 
 
 if __name__ == "__main__":

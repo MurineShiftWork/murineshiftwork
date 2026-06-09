@@ -22,6 +22,28 @@ Design details live in memory files or separate docs — not here.
 
 ## TODO
 
+### Task currency fixes (pre-repo-separation)
+
+- [x] **`rpi_camera_colony` → `rpi_camera_ensemble`** — `periodic_trigger_with_video` and `_test_video` updated to new conductor API (`EnsembleAcquisitionConfig`, `ConductorConfig`, `conductor.start()`/`setup_agents()`/`initialize_acquisition()`/`start_preview()`/`start_recording()`/`stop_acquisition()`/`stop()`). · 2026-06-09
+- [x] **`_test_video` + `_test_trigger_with_video` cross-task dep removed** — `OnlinePlottingForPS` import dropped; `_test_trigger_with_video` deleted (was a thin wrapper with test defaults — run base task with `-ts` flags). · 2026-06-08
+- [x] **`periodic_trigger_with_video` save path** — replaced `Path(bpod.workspace_path) / bpod.session_name + ".df.jsonl"` with `self.get_path("df.jsonl")` (uses `msw_file()` via `TaskRunner`). · 2026-06-09
+- [ ] **`task_name/task_name.py` → `task_name/task.py` rename** — rename main module in every task directory from `{name}.py` to `task.py`; update `load_task_module()` fallback in `cli/tasks.py`. Natural moment: during task extraction into `msw-tasks-*` packages. Not urgent.
+- [ ] **`make_ttl_identifier_sequences` → `inject_barcode_states` migration** — 5 tasks still use the deprecated barcode function: `_test_ttl_barcodes`, `_test_ttl_outputs`, `_test_video`, `exp_trn_spindle`, `probabilistic_switching`. `add_trial_onset_ttl` is intentional and stays. See existing roadmap item "TTL barcode audit".
+- [ ] **String-concatenated save paths → `msw_file()`** — 5 tasks use `str(path) + ".df.jsonl"` instead of `msw_file()`: `_test_ttl_barcodes:41`, `probabilistic_switching/task_objects.py:730`, `probabilistic_switching_fixedsubjects/task_objects.py:888`, `_test_barcode_iti:150`, `_test_barcode_iti_with_video:147`.
+
+---
+
+### Package extraction (pre-separation sprint)
+
+- [x] **CLI task discovery → entry points** — `list_available_tasks`/`find_task_by_name` moved from `logic/misc.py` to `cli/tasks.py`; filesystem scan primary (bundled tasks need no registration); `msw.tasks` entry-point group additive for external packages; `load_task_module()` added; `task_process.py` uses entry-point-aware loading. · 2026-06-08
+- [x] **Cross-task dep blockers for `msw-tasks-core` resolved** — `_test_trigger_with_video` deleted; `_test_video` cross-import removed. · 2026-06-08
+- [ ] **Extract `msw-readers`** — boundary clean; move to `external/msw-readers/`; temporary dep on `murineshiftwork` until `msw-core` extracted. Soft-blocked on `msw-core` for final clean dep graph.
+- [ ] **Extract `msw-tasks-core`** — calibration tasks + clean hardware test tasks; self-contained; validates entry-point task registration pattern. Blocked on extraction sprint start.
+- [ ] **Extract `msw-tasks-sequence`** — reference task for external authors. Follows `msw-tasks-core`.
+- [ ] **Org migration: `one-axis-stage`** — only remaining repo under `larsrollik/`; transfer to `MurineShiftWork` org.
+
+---
+
 ### Readers / logic cleanup (pre-extraction)
 
 - [x] **`readers/io.py` → `logic/io.py`** — `save_trial_data` + `load_trial_data` moved to `logic/`; all 10 task callers + `readers/files.py` + `tests/test_reader_fixtures.py` updated; `readers/io.py` deleted. · 2026-06-02
@@ -31,14 +53,14 @@ Design details live in memory files or separate docs — not here.
 
 ---
 
-### Decisions needed before extraction sprint (2026-05-30)
+### Decisions needed before extraction sprint — ALL LOCKED · 2026-06-02
 
-See `PLAN_package_graph.md` for full context on each.
+See `PLAN_package_graph.md §Locked decisions` for full detail.
 
-- [ ] **Decision: `msw-namespace` fate** — absorbed into `acquisition-namespace` (shared layer) or `msw-core` (internal)? Affects Sprint 3 of `PLAN_namespace_unification.md`.
-- [ ] **Decision: `msw-logic` → `msw-core` rename** — confirm name + scope (does it include `namespace/` or not?).
-- [ ] **Decision: task package granularity** — single `msw-tasks` package, or keep `msw-tasks-{core,sequence,switching,other}` with `[tasks]` extra pulling all? Extraction order unchanged either way.
-- [ ] **Decision: `msw-agent` install scope** — `[agent]` opt-in extra (keeps base install lean) or always-installed core dep?
+- [x] **`msw-namespace` fate** — no separate package; absorbed into `msw-core`. · 2026-06-02
+- [x] **`msw-core` name + scope** — `msw-core` = `cli/` + `hardware/` + `hooks/` + `logic/` + `namespace/`. · 2026-06-02
+- [x] **Task package split** — `msw-tasks-core` (calibration+tests) + `msw-tasks-sequence` (reference) + `msw-tasks-tab` (lab repo, not PyPI). · 2026-06-02
+- [x] **`msw-agent` scope** — `[agent]` opt-in extra; `try/ImportError` guard in `task_process.py`. · 2026-06-02
 
 ---
 
@@ -57,13 +79,13 @@ See `PLAN_package_graph.md` for full context on each.
 ---
 
 - [x] **Retrograde reader — Phase 1: detection layer** — `ARTIFACT_FORMAT_*` constants, `detect_artifact_format()`, `detect_session_format()`, `validate_session_namespace()` in `readers/namespace.py`; 38 parametrized tests in `test_reader_session_format.py` covering all 5 fixtures. Full analysis: `docs/work_plans/PLAN_retrograde_reader.md`. · 2026-05-26
-- [ ] **Retrograde reader Phase 2a: `fixture_legacy`** — copy s080–s090 session(s) from `/ceph/sjones/users/lars/data/` to `tests/data/fixture_legacy/`; add one line to `FIXTURE_EXPECTATIONS` in `test_reader_session_format.py`. In progress — user is moving data. Parts (b)+(c)+(d) **DONE** · 2026-05-27. See `PLAN_retrograde_reader.md §Phase 2`.
-- [ ] **Retrograde reader — `fixture_optotagging`** — copy one complete optotagging session from `/ceph/sjones/users/lars/data/_test_subject/_test_oe_controller__20260527_132639__ephys/`; sanitize paths/hostnames; keep `parent_acquisition` block + `session_manifest.yaml` + subprotocol JSOLs; add to `FIXTURE_EXPECTATIONS`; add `TestOptotTaggingFixture` (is_ephys_session, subprotocols merged df, subprotocol column). See `PLAN_retrograde_reader.md §3c`.
-- [ ] **Retrograde reader — multi-protocol loading** — extend `_read_session_yaml` to read `session_manifest.yaml` when present; merge subprotocol JSOLs → single df with `"subprotocol"` column; store `data["subprotocols"]`. See `PLAN_retrograde_reader.md §3b-extension`.
-- [ ] **Retrograde reader Phase 3: full reader interface** — `MswSession` dataclass (`readers/models.py`); `load_session()` / `load_subject()` / `load_acquisition()` / `find_sessions()` batch API (`readers/batch.py`); `load_acquisition()` uses `acquisition_manifest.yaml`; test suite for 2-level and 3-level subject dir layouts. See `PLAN_retrograde_reader.md §Phase 3`.
+- [x] **Retrograde reader Phase 2a: `fixture_legacy`** — `tests/data/fixture_legacy/subject003__20210426_183409__probabilistic_switching/`; wired into `FIXTURE_EXPECTATIONS`; `_read_legacy` reads `task_settings.py` + `.pkl`. · 2026-06-08
+- [x] **Retrograde reader — `fixture_optotagging`** — `tests/data/fixture_optotagging/_test_subject__20260527_133053_901389__optotagging/`; sanitized paths; `parent_acquisition` block + `session_manifest.yaml` + subprotocol JSOLs; added to `FIXTURE_EXPECTATIONS`; opto fixture tests in `test_reader_fixtures.py` (is_ephys, ephys keys, artifact_format, df loaded). · 2026-06-08
+- [x] **Retrograde reader — multi-protocol loading** — `_read_session_yaml` reads `session_manifest.yaml` when present; merges subprotocol dfs with `"subprotocol"` column; stores `data["subprotocols"]`; `MswSession.subprotocols` field carries raw manifest list. · 2026-06-08
+- [x] **Retrograde reader Phase 3: full reader interface** — `MswSession` (pydantic, `readers/models.py`); `load_session()` / `load_subject()` / `load_acquisition()` batch API (`readers/batch.py`); `load_acquisition()` uses `acquisition_manifest.yaml`; 169 tests passing across 8 test files. · 2026-06-08
 - [x] **Reader: surface namespace_version + artifact_format** — `read_session_data()` now returns `namespace_version` and `artifact_format` keys (via `detect_session_format()`). · 2026-05-26
 - [x] **OE parent session path wiring verified** — `attach()` splits on `/` only (OE always uses forward slashes); `acquisition` and `session` levels have identical templates so "session"-level validation of `parts[1]` is correct; second- and microsecond-precision datetimes both parse; integration with `generate_session_paths(is_child_session_to=...)` gives correct 4-level path structure. 6 new tests in `test_parent_session.py`. · 2026-05-27
-- [ ] **Opto alignment check script** *(after retrograde reader Phase 2 done)* — read a joint OE+MSW session: load MSW barcodes via `read_session_data()`; load OE TTL on a specified input channel (arg); align barcode timestamps against OE TTL edges; output alignment table + pass/fail summary. Intended as both a diagnostic script and a regression test for real data from the acquisition machine.
+- [ ] **Opto alignment check script** — read a joint OE+MSW session: load MSW barcodes via `read_session_data()`; load OE TTL on a specified input channel (arg); align barcode timestamps against OE TTL edges; output alignment table + pass/fail summary. Intended as both a diagnostic script and a regression test for real data from the acquisition machine.
 - [x] **FIX — `session.py`: drop `raw` / `load_raw`** — `raw` key and `load_raw` param removed from `read_session_data()` and all per-format readers; `_check_completeness` simplified; `validate.py` scoped to MSW file completeness only (RCE tier removed). · 2026-05-27
 - [x] **FIX — `test_reader_real_sessions.py:97`: stale version assertion** — changed to `not in ("legacy", "< 1.0.0")`. · 2026-05-27
 - [ ] **Camera + device declaration pattern** — `SetupConfig.cameras` → `list[CameraConfig]` with `name:` field; `required_cameras: [rce]` in task.yaml (parallel to `required_devices`); framework creates + tears down camera client in execute.py; tasks receive `args_dict["cameras"]` instead of calling `make_camera_client()` themselves; `MultiCameraClient` fan-out wrapper for mixed-backend rigs. See `docs/work_plans/PLAN_camera_device_pattern.md`. Scale + stage same pattern, lower priority.
@@ -104,7 +126,7 @@ See `PLAN_package_graph.md` for full context on each.
 - [x] **`periodic_trigger` + `sleep_homecage` overhaul** — renamed `homecage_sleep` → `sleep_homecage`; replaced legacy `make_ttl_identifier_sequences` with `inject_barcode_states` (start + every `BARCODE_INTERVAL_S` + session-end); `task.yaml` with defaults for all three tasks; `sleep_homecage` delegates cleanly to `periodic_trigger_with_video`; `openfield` updated to same clean delegate · 2026-05-28
 - [ ] **TTL barcode audit — migrate `make_ttl_identifier_sequences` callers to `inject_barcode_states`** — `hardware/bpod/ttl.py::make_ttl_identifier_sequences` is a legacy pre-ttl_barcoder mechanism still used by: `probabilistic_switching`, `periodic_trigger`, `periodic_trigger_with_video`, `exp_trn_spindle`, `_test_ttl_outputs`, `_test_ttl_barcodes`, `_test_video`. `add_trial_onset_ttl` is intentional (simple onset pulse, not a sync barcode) and can stay. Migration requires replacing the StateMachine-creating call with `inject_barcode_states` on an existing sma; once all callers migrated, `make_ttl_identifier_sequences` + `_add_protocol_ttl` + `_add_random_identifier` can be deleted from `hardware/bpod/ttl.py`. Also clean up redundant direct `from ttl_barcoder.core.barcode_ttl import BarcodeTTL` imports in tasks that already use `logic/barcode.py` (add `BarcodeTTL` + `BarcodeConfig` to `logic/barcode.py` `__all__` first).
 - [ ] **Docs restructure** *(plan only, do not implement yet)* — split `docs/` into `docs/` (user-facing: getting_started, cli, concepts, setup, tasks) and `dev/` (internal: sop, roadmap, work_plans, legacy, impl). ROADMAP and SOP move to `dev/`. All `docs/work_plans/PLAN_*.md` move to `dev/work_plans/`. Legacy docs move to `dev/legacy/`. Update mkdocs.yml nav to reflect new layout.
-- [ ] **Forgejo Actions port** *(infrastructure, not urgent)* — add `.forgejo/workflows/` alongside `.github/workflows/` for all published packages (`pypulsepal`, `ttl-barcoder`, `acquisition-namespace`, `msw-flir-bonsai`, future packages). Forgejo release workflow is identical except PyPI publish uses `uv publish` with `UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}` instead of OIDC; drop `id-token: write` from Forgejo release workflow. See `BUILD_SYSTEM_STANDARD.md §Forgejo Actions support`.
+- [ ] **Forgejo Actions port** *(infrastructure, not urgent)* — add `.forgejo/workflows/` alongside `.github/workflows/` for all published packages (`pypulsepal`, `ttl-barcoder`, `acquisition-namespace`, `msw-flir-bonsai`, future packages). Forgejo release workflow is identical except PyPI publish uses token-based auth (twine or `uv publish --token`) instead of OIDC; drop `id-token: write` from Forgejo release workflow. Also: register Linux + Windows `act_runner` at org level; deploy `*.docs.murineshift.work` via Caddy + rsync; migrate templatepy Copier template to emit `.forgejo/workflows/`. Full plan: `PLAN_forgejo_migration.md`.
 - [ ] **Zenodo DOI — re-register under murineshiftwork org** *(not urgent)* — Zenodo DOI for pypulsepal (`10.5281/zenodo.6379627`) points to the first working version on the old `larsrollik` GitHub account; it is not the concept DOI and does not resolve to the latest release. All Zenodo DOI badges and references have been removed from READMEs, docs, and CITATION.cff files across repos. To fix: re-connect Zenodo webhook to `murineshiftwork/pypulsepal` and any other repos that need citation DOIs; a new release will create a fresh record; add the concept DOI back to CITATION.cff + README badge only after it resolves correctly.
 - [ ] **RCE TTL: replace pigpio → lgpio** *(low priority, RPi 5 blocker)* — pigpio is unmaintained (last release 2021), apt package gone from Bookworm/Trixie, fundamentally incompatible with RPi 5 (RP1 PCIe GPIO). For camera-frame-driven sync pulses at ≤200 Hz / 1 ms, `lgpio` (chardev-based, pip-installable, RPi 4+5) gives ±50 µs jitter — sufficient for hardware clock sync. Work plan: `docs/work_plans/PLAN_rce_ttl_lgpio.md`. Analysis: `external/pigpio/ANALYSIS.md`. **Needs GitHub issue on `murineshiftwork/rpi-camera-ensemble` once repo is public.**
 
