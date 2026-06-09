@@ -103,7 +103,7 @@ def test_msw_file_produces_correct_path():
     from murineshiftwork.namespace.msw_files import msw_file
 
     p = msw_file(_BASE, "session.yaml")
-    assert str(p) == _BASE + ".msw.session.yaml"
+    assert p.as_posix() == _BASE + ".msw.session.yaml"
     assert isinstance(p, Path)
 
 
@@ -111,14 +111,14 @@ def test_msw_file_df_jsonl():
     from murineshiftwork.namespace.msw_files import msw_file
 
     p = msw_file(_BASE, "df.jsonl")
-    assert str(p) == _BASE + ".msw.df.jsonl"
+    assert p.as_posix() == _BASE + ".msw.df.jsonl"
 
 
 def test_msw_file_accepts_path_object():
     from murineshiftwork.namespace.msw_files import msw_file
 
     p = msw_file(Path(_BASE), "log")
-    assert str(p) == _BASE + ".msw.log"
+    assert p.as_posix() == _BASE + ".msw.log"
 
 
 # ---------------------------------------------------------------------------

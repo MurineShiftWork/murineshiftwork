@@ -90,3 +90,7 @@ external/
 !src/**/*.yaml
 !src/**/*.yml
 !tests/data/**
+
+# ...but never track build artifacts, even under tests/data
+tests/data/**/__pycache__/
+*.pyc
