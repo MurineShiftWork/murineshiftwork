@@ -2,7 +2,7 @@
 
 import pytest
 
-from murineshiftwork.logic.hooks import (
+from murineshiftwork.hooks import (
     HookContext,
     SessionAbortError,
     TaskHook,
@@ -150,7 +150,7 @@ def test_empty_hook_list_is_noop():
 
 
 def test_load_hooks_by_dotted_path():
-    hooks = load_hooks(["murineshiftwork.logic.hooks.TaskHook"])
+    hooks = load_hooks(["murineshiftwork.hooks.TaskHook"])
     assert len(hooks) == 1
     assert isinstance(hooks[0], TaskHook)
 
@@ -173,7 +173,7 @@ def test_load_hooks_empty_list():
 
 
 def test_load_hooks_mixed_valid_invalid():
-    hooks = load_hooks(["nonexistent.Hook", "murineshiftwork.logic.hooks.TaskHook"])
+    hooks = load_hooks(["nonexistent.Hook", "murineshiftwork.hooks.TaskHook"])
     assert len(hooks) == 1
     assert isinstance(hooks[0], TaskHook)
 
@@ -184,7 +184,7 @@ def test_load_hooks_mixed_valid_invalid():
 
 def test_collect_hooks_from_task_settings():
     settings = {
-        "HOOKS_PRE_TASK": ["murineshiftwork.logic.hooks.TaskHook"],
+        "HOOKS_PRE_TASK": ["murineshiftwork.hooks.TaskHook"],
         "HOOKS_POST_TASK": [],
     }
     pre, post = collect_hooks(None, settings)
@@ -200,8 +200,8 @@ def test_collect_hooks_none_setup_config():
 
 def test_collect_hooks_from_setup_config():
     class _FakeHooksConfig:
-        pre_task = ["murineshiftwork.logic.hooks.TaskHook"]
-        post_task = ["murineshiftwork.logic.hooks.TaskHook"]
+        pre_task = ["murineshiftwork.hooks.TaskHook"]
+        post_task = ["murineshiftwork.hooks.TaskHook"]
 
     class _FakeSetupConfig:
         hooks = _FakeHooksConfig()
@@ -233,7 +233,7 @@ def test_collect_hooks_global_before_task_specific():
             order.append("task")
 
     class _FakeHooksConfig:
-        pre_task = ["murineshiftwork.logic.hooks.TaskHook"]
+        pre_task = ["murineshiftwork.hooks.TaskHook"]
         post_task = []
 
     class _FakeSetupConfig:
@@ -267,7 +267,8 @@ def test_setup_config_without_hooks_is_valid():
     from murineshiftwork.logic.config.models import SetupConfig
 
     cfg = SetupConfig(name="no_hooks_setup")
-    assert cfg.hooks is None
+    assert cfg.hooks.pre_task == []
+    assert cfg.hooks.post_task == []
 
 
 # ---------------------------------------------------------------------------

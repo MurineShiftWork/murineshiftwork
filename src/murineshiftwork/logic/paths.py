@@ -29,7 +29,7 @@ __all__ = [
 
 def test_path_is_writable(path=None):
     try:
-        with open(path, "w"):
+        with Path(path).open("w"):
             pass
         if Path(path).exists():
             Path(path).unlink()

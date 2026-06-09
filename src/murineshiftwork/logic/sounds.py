@@ -1,8 +1,6 @@
 import logging
-from typing import Optional
 
 import numpy as np
-import sounddevice as sd
 
 sample_rate_dict = {
     "sysdefault": 44100,
@@ -15,7 +13,7 @@ sample_rate_dict = {
 
 
 def get_sample_rate(target_device_name=None):
-    for k in sample_rate_dict.keys():
+    for k in sample_rate_dict:
         if k in str(target_device_name):
             return sample_rate_dict[k]
 
@@ -23,6 +21,8 @@ def get_sample_rate(target_device_name=None):
 
 
 def find_sound_device(target_device=None, return_first=True):
+    import sounddevice as sd
+
     devices = sd.query_devices()
 
     found_device = [(i, d) for i, d in enumerate(devices) if target_device in d["name"]]
@@ -31,7 +31,7 @@ def find_sound_device(target_device=None, return_first=True):
     return found_device
 
 
-class StereoSound(object):
+class StereoSound:
     default_sound_device = "XONAR SOUND CARD"
     default_ttl_channel = 1  # choices: 0 or 1 -> idx of position on
     default_ttl_duration = 0.001  # 1 ms
@@ -42,14 +42,14 @@ class StereoSound(object):
 
     def __init__(
         self,
-        sound_device: Optional[str] = None,
-        sample_rate: Optional[int] = None,
+        sound_device: str | None = None,
+        sample_rate: int | None = None,
         ttl_channel: int = 1,
         ttl_duration: float = 0.001,
         allow_sys_default_device=True,
         **kwargs,
     ):
-        super(StereoSound, self).__init__()
+        super().__init__()
 
         # Instance-level sounds dict (not class-level — avoid cross-instance sharing)
         self._sounds: dict = {}
@@ -81,7 +81,7 @@ class StereoSound(object):
         )
         # Extract int index for explicit device passing to sd.play(); keep full tuple
         # on self.sound_device for backward compatibility with callers that read it.
-        if isinstance(self.sound_device, (list, tuple)):
+        if isinstance(self.sound_device, list | tuple):
             self._device_id = self.sound_device[0]
         else:
             self._device_id = self.sound_device  # string fallback ("sysdefault")
@@ -128,6 +128,8 @@ class StereoSound(object):
 
     def setup_sound_device(self):
         """Set sounddevice global defaults for this device."""
+        import sounddevice as sd
+
         sd.default.device = self._device_id
         sd.default.latency = self.default_sound_latency
         sd.default.channels = self.default_sound_channels
@@ -240,7 +242,9 @@ class StereoSound(object):
         return new_sound_key
 
     def execute_sound_handler(self, sound_code=None, raise_errors=False):
-        if sound_code in self.sounds.keys():
+        import sounddevice as sd
+
+        if sound_code in self.sounds:
             logging.debug(f"Playing sound # {sound_code}.")
             sd.play(
                 self.sounds[sound_code]["sound"],

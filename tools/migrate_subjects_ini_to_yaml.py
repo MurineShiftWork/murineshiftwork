@@ -121,7 +121,7 @@ def main() -> None:
         subject_dict = build_subject_dict(section_name, section_data)
 
         out_path = OUT_DIR / f"{section_name}.yaml"
-        with open(out_path, "w") as fh:
+        with out_path.open("w") as fh:
             yaml.dump(
                 subject_dict,
                 fh,

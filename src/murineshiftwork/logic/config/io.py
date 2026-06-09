@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -14,7 +13,7 @@ from murineshiftwork.logic.config.models import (
 )
 
 
-def load_setup_config(config_dir: str | Path, setup_name: str) -> Optional[SetupConfig]:
+def load_setup_config(config_dir: str | Path, setup_name: str) -> SetupConfig | None:
     """Load SetupConfig from {config_dir}/setups/{setup_name}.yaml.
 
     Returns None silently if the file does not exist, so callers fall through
@@ -28,7 +27,7 @@ def load_setup_config(config_dir: str | Path, setup_name: str) -> Optional[Setup
             f"Setup '{setup_name}' not found at {path} — bpod port from CLI arg only"
         )
         return None
-    with open(path) as f:
+    with path.open() as f:
         data = yaml.safe_load(f)
     cfg = SetupConfig.model_validate(data)
     logging.debug(f"Loaded SetupConfig '{cfg.name}' from {path}")
@@ -74,7 +73,7 @@ def update_valve_calibration(
             )
             return False
 
-    with open(path) as f:
+    with path.open() as f:
         raw = yaml.safe_load(f) or {}
 
     raw.setdefault("calibrations", {}).setdefault("bpod_valve", {})[str(valve_id)] = {
@@ -82,7 +81,7 @@ def update_valve_calibration(
         "points": new_calibration.points,
     }
 
-    with open(path, "w") as f:
+    with path.open("w") as f:
         yaml.dump(
             raw,
             f,
@@ -118,7 +117,7 @@ def save_subject_task_overrides(
     path = subjects_dir / f"{subject_name}.yaml"
 
     if path.exists():
-        with open(path) as f:
+        with path.open() as f:
             raw = yaml.safe_load(f) or {}
         raw = _migrate_subject_config(raw)
     else:
@@ -136,7 +135,7 @@ def save_subject_task_overrides(
     raw["schema_version"] = SUBJECT_CONFIG_SCHEMA_VERSION
     raw.setdefault("task_overrides", {}).setdefault(task_name, {}).update(overrides)
 
-    with open(path, "w") as f:
+    with path.open("w") as f:
         yaml.dump(
             raw,
             f,
@@ -177,7 +176,7 @@ def update_stage_config(
     if not path.exists():
         raise FileNotFoundError(f"Setup config not found: {path}")
 
-    with open(path) as f:
+    with path.open() as f:
         raw = yaml.safe_load(f) or {}
 
     stage = raw.setdefault("devices", {}).setdefault("stage", {})
@@ -197,7 +196,7 @@ def update_stage_config(
     if known_positions:
         stage["known_positions"] = known_positions
 
-    with open(path, "w") as f:
+    with path.open("w") as f:
         yaml.dump(
             raw,
             f,
@@ -230,7 +229,7 @@ def _migrate_subject_config(raw: dict) -> dict:
 
 def load_subject_config(
     config_dir: str | Path, subject_name: str
-) -> Optional[SubjectConfig]:
+) -> SubjectConfig | None:
     """Load SubjectConfig from {config_dir}/subjects/{subject_name}.yaml.
 
     Returns None silently if the file does not exist; INI-based subject
@@ -243,7 +242,7 @@ def load_subject_config(
     if not path.exists():
         logging.debug(f"No subject config at {path} — using INI fallback")
         return None
-    with open(path) as f:
+    with path.open() as f:
         data = yaml.safe_load(f) or {}
     data = _migrate_subject_config(data)
     cfg = SubjectConfig.model_validate(data)

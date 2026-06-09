@@ -1,24 +1,32 @@
 import logging
 import time
 
-from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
+from pybpodapi.state_machine import StateMachine
+
+from murineshiftwork.logic.barcode import (
+    BarcodeConfig,
+    BarcodeTTL,
+    inject_barcode_states,
+)
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class Task(TaskRunner):
     def run(self) -> None:
-        test_sequence = "LLssLLss"
+        bnc_channels_to_test = [1, 2]
+        barcoder = BarcodeTTL(BarcodeConfig.default())
 
-        for bnc_channel in [1, 2]:
+        for bnc_channel in bnc_channels_to_test:
             logging.info(
-                f"Testing BNC outputs with TTL sequence {test_sequence} on BNC channel {bnc_channel}"
+                f"Testing BNC output with TTL barcode on BNC channel {bnc_channel}"
             )
-            sma = make_ttl_identifier_sequences(
-                bpod=self.bpod,
-                sequence=test_sequence,
-                output_chanel_pulse=getattr(
-                    self.bpod.OutputChannels, f"BNC{bnc_channel}"
-                ),
+            _, _, timing_seq = barcoder.prepare()
+            sma = StateMachine(bpod=self.bpod)
+            sma = inject_barcode_states(
+                sma,
+                timing_seq,
+                getattr(self.bpod.OutputChannels, f"BNC{bnc_channel}"),
+                last_state_name="exit",
             )
 
             self.bpod.send_state_machine(sma)

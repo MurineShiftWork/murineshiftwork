@@ -63,12 +63,10 @@ class BpodOverrideAPI:
         """Close all valve ports (defensive cleanup)."""
         with self._lock():
             for port in range(1, n_ports + 1):
-                try:
+                with contextlib.suppress(Exception):
                     self._bpod.manual_override(
                         ChannelType.OUTPUT, ChannelName.VALVE, port, 0
                     )
-                except Exception:
-                    pass
 
     def pulse_valve(self, port: int, duration_ms: float, blocking: bool = True) -> None:
         """Open valve for duration_ms milliseconds then close.

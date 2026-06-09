@@ -61,12 +61,12 @@ Use `msw run -t <partial_name>` — names are matched by partial string. Run `ms
 | `probabilistic_switching` | Two-armed bandit, free-choice ports |
 | `probabilistic_switching_fixedsubjects` | Two-armed bandit, fixed lick-port assignment per subject |
 | `airpuff` | Airpuff conditioning |
-| `optotagging` | Optogenetic tagging — multi-protocol loop (laser + TTL) |
+| `optotagging` | Optogenetic tagging — multi-protocol loop (laser + TTL). PulsePal channels use 0-based indexing (`channels_stimulation: [0]` = output channel 1). |
 | `exp_trn_spindle` | Spindle-induction training protocol |
-| `homecage_sleep` | Homecage sleep recording |
+| `sleep_homecage` | Homecage sleep recording with periodic sync barcodes |
 | `openfield` | Open-field tracking |
-| `periodic_trigger` | Periodic TTL trigger |
-| `periodic_trigger_with_video` | Periodic TTL trigger with camera recording |
+| `periodic_trigger` | Periodic TTL trigger with sync barcodes at configurable intervals |
+| `periodic_trigger_with_video` | Periodic TTL trigger + camera recording with sync barcodes |
 
 ### Calibration tasks
 
@@ -83,6 +83,7 @@ Use `msw run -t <partial_name>` — names are matched by partial string. Run `ms
 | `_test_flush_valves` | Flush water valves (maintenance) |
 | `_test_stage_move` | Manual stage movement test |
 | `_test_bpod_connect` | Minimal Bpod connection test |
+| `_test_pulsepal_connect` | Minimal PulsePal connection test — prints firmware version, model, and channel counts |
 | `_test_minimal_task` | Minimal task smoke test |
 | `_test_video` | Camera/video recording test |
 | `_test_barcode_iti` | TTL barcode + ITI test |
@@ -107,3 +108,41 @@ Run `msw tasks modes <task>` to see the current modes for any task.
 
 See [Tutorial: Adding a Subject](../tutorials/adding_subject.md) for how sticky task modes are
 saved per-subject and persist across sessions.
+
+## Optotagging waveform shaping
+
+By default every protocol uses rectangular pulses. Set waveform params under `stimulation_defaults`
+or per-protocol to replace the rectangular pulse with a three-phase shaped waveform:
+
+```
+|<-- on_ramp -->|<--- center --->|<-- off_ramp -->|
+0               target_voltage   target_voltage   0
+```
+
+The total pulse duration is computed from the three phases — do not set `pulse_duration` manually
+when waveform params are active.
+
+| Parameter | Default | Description |
+|---|---|---|
+| `waveform_on_ramp_type` | `null` | Ramp shape for onset: `linear`, `sine`, `raised_cosine`. `null` disables the on-ramp (hard step). |
+| `waveform_on_ramp_duration_s` | `0.0` | Duration of the on-ramp in seconds. |
+| `waveform_center_duration_s` | `0.0` | Duration of the flat plateau at target voltage. Set to `0.0` with both ramps active for a pure bump (no flat top). |
+| `waveform_off_ramp_type` | `null` | Ramp shape for offset: `linear`, `sine`, `raised_cosine`. `null` = hard step off. |
+| `waveform_off_ramp_duration_s` | `0.0` | Duration of the off-ramp in seconds. |
+
+Ramp shapes (all normalize 0 to 1 over the ramp duration):
+
+| Shape | Formula | Character |
+|---|---|---|
+| `linear` | `t` | Constant slope |
+| `sine` | `sin(pi/2 * t)` | Slow start, fast finish |
+| `raised_cosine` | `(1 - cos(pi*t)) / 2` | Slow start and finish, fastest at midpoint |
+
+**Pure sine bump** (no plateau): set `center_duration_s: 0.0` with the same ramp type on both sides.
+
+**Validation:** the sum of all three phases must not exceed `1 / pulse_frequency`. A startup error
+is raised if the waveform is longer than the pulse cycle.
+
+**Ramp-sweep diagnostic mode:** the built-in `ramp_sweep` mode runs five protocols with
+decreasing on-ramp durations (10 ms down to rectangular reference, 10 trials each) to compare
+artifact profiles before committing to a ramp for real sessions. Activate with `--task-mode ramp_sweep`.

@@ -13,7 +13,6 @@ from murineshiftwork.cli.defaults import (
 )
 from murineshiftwork.cli.execute import (
     run_action,
-    run_agent,
     run_calibration,
     run_init,
     run_setup,
@@ -64,9 +63,9 @@ def _add_session_args(parser):
         "-o",
         "--out-path",
         type=str,
-        default=default_out_path,
+        default="",
         dest="out_path",
-        help="Output directory for session data",
+        help=f"Output directory for session data (default: from machine config; currently: {default_out_path or '~/data'})",
     )
     g.add_argument(
         "--child-of",
@@ -79,6 +78,30 @@ def _add_session_args(parser):
             "--out-path (skips subject dir)"
         ),
     )
+    g.add_argument(
+        "--parent",
+        dest="parent_session_flag",
+        type=str,
+        default="",
+        metavar="TYPE[:URL]",
+        help=(
+            "Attach to a parent acquisition session and nest this session inside it. "
+            "TYPE is the backend name (currently: openephys). "
+            "URL overrides the address from the setup YAML or machine config. "
+            "Examples: --parent openephys  |  --parent openephys:172.24.42.168"
+        ),
+    )
+    g.add_argument(
+        "--force-standalone",
+        dest="force_standalone",
+        action="store_true",
+        default=False,
+        help=(
+            "When --parent is also set and the parent cannot be reached, continue "
+            "as a standalone session instead of aborting. Without this flag, a "
+            "--parent attach failure is a hard error."
+        ),
+    )
 
 
 def _add_config_args(parser):
@@ -87,9 +110,9 @@ def _add_config_args(parser):
         "-cd",
         "--config-dir",
         type=str,
-        default=default_config_dir,
+        default="",
         dest="config_dir",
-        help="Shared config directory containing setups/, subjects/, tasks/",
+        help=f"Shared config directory containing setups/, subjects/, tasks/ (default: from machine config; currently: {default_config_dir or 'not set'})",
     )
     g.add_argument(
         "-ct",
@@ -661,62 +684,6 @@ def make_subparser_tasks(sub_parsers):
     pi.set_defaults(func=run_tasks_init_configs)
 
 
-def make_subparser_agent(sub_parsers):
-    p = sub_parsers.add_parser(
-        "agent",
-        help="Start the MSW hardware agent (FastAPI)",
-        formatter_class=ArgparseFormatter,
-        description=dedent(
-            """\
-            MSW Agent — long-lived hardware owner and event broadcaster.
-
-            The agent opens the Bpod once at startup and holds the connection
-            across sessions.  Sessions are still started from the CLI (``msw run``),
-            but can optionally be delegated to a running agent.  A WebSocket
-            endpoint broadcasts trial events to read-only UI observers.
-
-            Commands:
-              msw agent start --setup <name>   Start the agent for a named setup
-
-            Examples:
-              msw agent start --setup npx2
-              msw agent start --setup npx2 --port 8765
-              MSW_AGENT_PASSWORD=secret msw agent start --setup npx2
-            """
-        ),
-        epilog=_CREDIT_EPILOG,
-    )
-    sub = p.add_subparsers(metavar="subcommand", dest="subcommand")
-    sub.required = True
-
-    ps = sub.add_parser(
-        "start", help="Start the agent", formatter_class=ArgparseFormatter
-    )
-    ps.add_argument(
-        "--setup",
-        "-S",
-        required=True,
-        metavar="setup_name",
-        help="Name of the setup config to load (from config_dir/setups/)",
-    )
-    ps.add_argument(
-        "--port",
-        type=int,
-        default=8765,
-        dest="agent_port",
-        help="TCP port for the FastAPI server (default: 8765)",
-    )
-    ps.add_argument(
-        "--host",
-        type=str,
-        default="0.0.0.0",
-        dest="agent_host",
-        help="Bind host (default: 0.0.0.0)",
-    )
-    ps.add_argument("-cd", "--config-dir", type=str, default="", dest="config_dir")
-    ps.set_defaults(func=run_agent)
-
-
 def parse_args(args=None):
     main_parser = ArgumentParser(
         prog="msw",
@@ -744,7 +711,25 @@ def parse_args(args=None):
     make_subparser_action(sub_parsers)
     make_subparser_post(sub_parsers)
     make_subparser_tasks(sub_parsers)
-    make_subparser_agent(sub_parsers)
+
+    # Load plugin subcommands registered under the "msw.cli" entry-point group.
+    # Each plugin calls register(sub_parsers) to add its own subparser(s).
+    # This is how msw-flir-bonsai adds "msw flir", msw-oe adds "msw oe", etc.
+    # Plugins not installed simply have no entry point — no error, no subcommand.
+    try:
+        from importlib.metadata import entry_points as _entry_points
+
+        for _ep in _entry_points(group="msw.cli"):
+            try:
+                _ep.load()(sub_parsers)
+            except Exception as _exc:
+                import logging as _logging
+
+                _logging.debug(
+                    "msw.cli plugin %r failed to register: %s", _ep.name, _exc
+                )
+    except Exception:
+        pass
 
     parsed_args = main_parser.parse_args(args=args)
     return parsed_args.__dict__

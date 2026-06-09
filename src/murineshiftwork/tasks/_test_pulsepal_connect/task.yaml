@@ -1,0 +1,3 @@
+default:
+  required_devices:
+    - pulsepal

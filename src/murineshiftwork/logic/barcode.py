@@ -8,9 +8,10 @@ from ttl_barcoder.hardware.bpod.sender import (
 )
 
 __all__ = [
+    "BarcodeTTL",
+    "BarcodeConfig",
     "BARCODE_FIRST_STATE_NAME",
     "inject_barcode_states",
-    "prepare_barcode",
     "barcode_config_from_settings",
     "TTL_IDENTIFIER_SEQUENCES",
     "get_ttl_identifier_sequence",
@@ -23,26 +24,15 @@ TTL_IDENTIFIER_SEQUENCES = {
     "optotagging": "LsLsss",
     "periodic_trigger": "Lsssss",
     "periodic_trigger_with_video": "LLssss",
+    "sleep_homecage": "sLsLss",
     "openfield": "sLssss",
-    "homecage_sleep": "sLsLss",
     "tests": "ssssss",
 }
 
 
 def get_ttl_identifier_sequence(file=None):
     key = Path(file).name.replace(".py", "")
-    return TTL_IDENTIFIER_SEQUENCES.get(key, None)
-
-
-def prepare_barcode(barcoder: BarcodeTTL) -> tuple[int, float, list]:
-    """Generate barcode, capture wall time, return timing sequence.
-
-    Delegates to BarcodeTTL.prepare(). Wall time is captured before generate()
-    so it is consistent with the timestamp encoded in the barcode.
-
-    Returns (barcode_value, wall_time, timing_sequence).
-    """
-    return barcoder.prepare()
+    return TTL_IDENTIFIER_SEQUENCES.get(key)
 
 
 def barcode_config_from_settings(settings: dict) -> BarcodeConfig:

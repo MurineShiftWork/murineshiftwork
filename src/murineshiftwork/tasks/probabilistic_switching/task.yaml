@@ -74,7 +74,6 @@ default:
   HARDWARE_VALVES_FOR_AIR:
   - 2
   - 4
-  ttl_identifier_sequence: sssLss
   ttl_pulse_duration: 0.01
 mode:
   # Named overrides — select with: msw run ... --task-mode <name>

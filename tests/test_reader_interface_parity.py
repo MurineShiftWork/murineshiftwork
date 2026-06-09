@@ -152,8 +152,8 @@ def main():
     print(f"  LEGACY : {args.legacy}")
     print("=" * 70)
 
-    sd_new = read_session_data(session_dir=args.new, load_raw=False)
-    sd_leg = read_session_data(session_dir=args.legacy, load_raw=False)
+    sd_new = read_session_data(session_dir=args.new)
+    sd_leg = read_session_data(session_dir=args.legacy)
 
     all_issues = []
 
@@ -162,7 +162,6 @@ def main():
     keys_new = set(sd_new.keys())
     keys_leg = set(sd_leg.keys())
 
-    # 'raw' is None when load_raw=False — presence is what matters
     shared_keys = keys_new & keys_leg
     only_new_k = keys_new - keys_leg
     only_leg_k = keys_leg - keys_new

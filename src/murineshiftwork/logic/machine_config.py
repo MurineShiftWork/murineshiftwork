@@ -1,7 +1,27 @@
 """Machine-local config at ~/.murineshiftwork/msw_machine.yaml.
 
-Stores machine-specific settings that are independent of the shared config dir,
-most importantly `config_dir` — the path to the shared msw_configs repository.
+Stores machine-specific settings that are independent of the shared config dir.
+All external service URLs and credentials use a flat `<service>_api_<key>` naming
+scheme so machine configs across rigs remain consistent.
+
+Expected YAML structure (all keys optional):
+    config_dir: /mnt/maindata/msw_configs
+    data_dir: /mnt/maindata/data
+
+    # MSW LogAgent / monitor backend  — the FastAPI ingest+query server;
+    # msw-ui Vue SPA polls this for live session data
+    logagent_api_url: http://monitor:8080
+    logagent_api_token: <bearer-token>
+
+    # MSW UI frontend — URL to open in browser (served by msw-ui nginx container)
+    msw_ui_url: http://monitor:3000
+
+    # Open Ephys remote control (fallback; prefer setup YAML open_ephys_url)
+    openephys_api_url: <oe-host-ip>
+
+    # labwatch session push — read by msw-labwatch, not by murineshiftwork core
+    labwatch_api_url: https://labwatch.example.com
+    labwatch_api_token: <token>
 
 Priority for config_dir resolution (highest wins):
   1. CLI --config-dir argument
@@ -26,7 +46,7 @@ _HISTORICAL_DATA_DEFAULT = Path("/mnt/maindata/data")
 def _load_machine_config() -> dict:
     if _MACHINE_CONFIG_FILE.exists():
         try:
-            with open(_MACHINE_CONFIG_FILE) as f:
+            with _MACHINE_CONFIG_FILE.open() as f:
                 return yaml.safe_load(f) or {}
         except Exception as exc:
             logging.warning(
@@ -73,7 +93,7 @@ def write_machine_config(config_dir: str | Path, **extra_fields) -> None:
     existing = _load_machine_config()
     existing["config_dir"] = str(Path(config_dir).expanduser().resolve())
     existing.update(extra_fields)
-    with open(_MACHINE_CONFIG_FILE, "w") as f:
+    with _MACHINE_CONFIG_FILE.open("w") as f:
         yaml.dump(
             existing,
             f,
@@ -115,33 +135,40 @@ def read_machine_config() -> dict:
     return _load_machine_config()
 
 
-def read_labwatch_config() -> dict:
-    """Return the ``labwatch:`` block from machine config, or empty dict."""
-    return _load_machine_config().get("labwatch", {})
-
-
 def read_ui_url() -> str:
-    """Return the ``ui_url`` from machine config, or empty string."""
-    return str(_load_machine_config().get("ui_url", ""))
+    """Return the MSW UI frontend URL from machine config.
+
+    Reads new-style key first, falls back to legacy:
+      msw_ui_url (legacy: ui_url)
+    """
+    mc = _load_machine_config()
+    return str(mc.get("msw_ui_url") or mc.get("ui_url", ""))
 
 
 def read_log_config() -> dict:
     """Return LogAgent config from machine config.
 
-    Keys read:
-      log_url          — base URL of the ingest server (e.g. http://monitor:8080)
-      log_bearer_token — bearer token for ingest endpoints; omit to disable auth
-
-    Both keys live at machine level for now (one server per physical rig).
-    FUTURE: consider whether log_url should move to setup config so that
-    multi-rig setups pointing at different servers are supported without
-    per-machine config changes.  Deferring until we have >1 rig using this.
+    Reads new-style prefixed keys first, falls back to legacy names:
+      logagent_api_url   (legacy: log_url)
+      logagent_api_token (legacy: log_bearer_token)
     """
     mc = _load_machine_config()
     return {
-        "log_url": mc.get("log_url", ""),
-        "log_bearer_token": mc.get("log_bearer_token", ""),
+        "log_url": mc.get("logagent_api_url") or mc.get("log_url", ""),
+        "log_bearer_token": mc.get("logagent_api_token")
+        or mc.get("log_bearer_token", ""),
     }
+
+
+def read_open_ephys_url() -> str:
+    """Return the Open Ephys GUI host from machine config (legacy fallback).
+
+    Preferred location is the setup YAML ``open_ephys_url:`` field.
+    Machine config is checked as a fallback; reads new-style key first:
+      openephys_api_url (legacy: open_ephys_url)
+    """
+    mc = _load_machine_config()
+    return str(mc.get("openephys_api_url") or mc.get("open_ephys_url", ""))
 
 
 def get_machine_config_path() -> Path:

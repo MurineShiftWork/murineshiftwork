@@ -1,8 +1,10 @@
+import contextlib
 import logging
 import subprocess
 import sys
 import time
 import uuid
+from datetime import UTC
 from importlib.metadata import version as _get_version
 from pathlib import Path
 from threading import Thread
@@ -12,7 +14,7 @@ import yaml
 from pybpodapi.protocol import Bpod, StateMachine
 
 from murineshiftwork.hardware.bpod import BpodFactory
-from murineshiftwork.logic.hooks import (
+from murineshiftwork.hooks import (
     HookContext,
     SessionAbortError,
     collect_hooks,
@@ -24,11 +26,18 @@ from murineshiftwork.logic.log import (
     patch_logging_levels,
 )
 from murineshiftwork.logic.misc import (
-    find_task_by_name,
     print_box,
     test_serial_port_is_accessible,
 )
-from murineshiftwork.logic.paths import build_data_paths, test_path_is_writable
+from murineshiftwork.logic.paths import test_path_is_writable
+from murineshiftwork.namespace.manifest import (
+    append_session_to_acquisition,
+    finalize_session_in_acquisition,
+    init_acquisition_manifest,
+    init_session_manifest,
+)
+from murineshiftwork.namespace.msw_files import msw_file
+from murineshiftwork.namespace.paths import generate_session_paths
 
 
 def _get_git_commit() -> str:
@@ -51,14 +60,14 @@ def update_session_yaml(session_file_path, **sections):
     Creates the file with msw_format_version: 2 if it does not exist yet.
     Typical callers: task_objects writing task_settings or stage after init.
     """
-    yaml_path = str(session_file_path) + ".msw.session.yaml"
+    yaml_path = str(msw_file(session_file_path, "session.yaml"))
     p = Path(yaml_path)
     if p.exists():
         data = yaml.safe_load(p.read_text()) or {}
     else:
         data = {"msw_format_version": 2}
     data.update(sections)
-    with open(yaml_path, "w") as f:
+    with Path(yaml_path).open("w") as f:
         yaml.dump(
             data,
             f,
@@ -105,6 +114,12 @@ class TaskRunner(Thread):
     def stop(self):
         self.continue_task = False
 
+    def get_path(self, artifact: str) -> Path:
+        """Return the session file path for *artifact* (e.g. 'df.jsonl', 'log')."""
+        return msw_file(
+            self.input_kwargs["session_paths"]["session_file_path"], artifact
+        )
+
 
 class ExampleTask(TaskRunner):
     def run(self):
@@ -135,7 +150,7 @@ class ExampleTask(TaskRunner):
             trial_index += 1
 
 
-class TaskProcess(object):
+class TaskProcess:
     """Manages one session: paths, bpod connection, task thread lifecycle.
 
     Bpod injection: pass a pre-opened ``RobustBpodSession`` via ``bpod=`` to let
@@ -183,19 +198,22 @@ class TaskProcess(object):
         simulate=False,
         **kwargs,
     ):
-        super(TaskProcess, self).__init__()
+        super().__init__()
         self.serial_port = str(serial_port_bpod) if serial_port_bpod else ""
         self.out_path = str(out_path)
         self.subject = str(subject)
         self.task_in = str(task)
         self.input_kwargs = kwargs
         self.input_kwargs["subject"] = self.subject
+        self.input_kwargs["serial_port_bpod"] = self.serial_port
+        if devices:
+            self.input_kwargs["devices"] = devices
         self.debug = self.input_kwargs.get("debug", False)
         self.simulate = simulate
         self.session_uuid = str(uuid.uuid4())
 
-        self.task_name = find_task_by_name(task_name=self.task_in)
-        self.session_paths = build_data_paths(
+        self.task_name = self.task_in
+        self.session_paths = generate_session_paths(
             basepath=Path(self.out_path),
             subject=self.subject,
             task=self.task_name,
@@ -213,6 +231,15 @@ class TaskProcess(object):
         target_file = Path(self.session_paths["session_folder"]) / ".write_test"
         if not test_path_is_writable(target_file) and not self.debug:
             raise PermissionError(f"Session files not writable at {str(target_file)}")
+
+        _acq_folder = Path(self.session_paths["session_folder"]).parent
+        init_acquisition_manifest(_acq_folder, self.session_paths["acquisition_name"])
+        append_session_to_acquisition(
+            _acq_folder, self.session_paths["session_basename"]
+        )
+        init_session_manifest(
+            self.session_paths["session_folder"], self.session_paths["session_basename"]
+        )
 
         patch_logging_levels()
         add_session_log_handler(self.session_paths["session_file_path"])
@@ -249,7 +276,7 @@ class TaskProcess(object):
                     timeout=1,
                 )
                 if not accessible and not self.debug:
-                    raise IOError(f"Serial port not accessible at {self.serial_port}")
+                    raise OSError(f"Serial port not accessible at {self.serial_port}")
             self.connect_bpod()
 
         # Build hook context and load hooks (after bpod is connected)
@@ -289,24 +316,34 @@ class TaskProcess(object):
                 run_post_hooks(self._post_hooks, self._hook_ctx)
             except SessionAbortError as exc:
                 post_exc = exc
+        status = "aborted" if exc_type is not None else "complete"
+        if self.session_paths:
+            _acq_folder = Path(self.session_paths["session_folder"]).parent
+            finalize_session_in_acquisition(
+                _acq_folder, self.session_paths["session_basename"], status=status
+            )
         self.exit_safely()
         if post_exc is not None:
             raise post_exc
 
     def _start_relay(self) -> None:
-        from murineshiftwork.logic.machine_config import read_machine_config
+        from murineshiftwork.logic.machine_config import read_log_config
 
-        mc = read_machine_config()
-        log_url = mc.get("log_url", "")
+        log_cfg = read_log_config()
+        log_url = log_cfg["log_url"]
         if not log_url:
             return
 
         import multiprocessing
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        from murineshiftwork.logagent.logagent import LogAgent
+        try:
+            from murineshiftwork.logagent.logagent import LogAgent
+        except ImportError:
+            logging.debug("msw-agent not installed — relay disabled")
+            return
 
-        bearer_token = mc.get("log_bearer_token", "")
+        bearer_token = log_cfg["log_bearer_token"]
         self._relay_queue = multiprocessing.Queue(maxsize=500)
         setup = self.input_kwargs.get("setup", "") or self.input_kwargs.get(
             "metadata", {}
@@ -316,7 +353,7 @@ class TaskProcess(object):
             "task": self.task_name,
             "setup": setup,
             "session_uuid": self.session_uuid,
-            "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "started_at": datetime.now(UTC).isoformat(timespec="seconds"),
             "session_paths": {k: str(v) for k, v in (self.session_paths or {}).items()},
         }
         self._relay_proc = LogAgent(
@@ -337,10 +374,8 @@ class TaskProcess(object):
             self.bpod.close_safely()
             self.serial_is_open = False
         if self._relay_queue is not None:
-            try:
+            with contextlib.suppress(Exception):
                 self._relay_queue.put_nowait(None)
-            except Exception:
-                pass
             self._relay_queue = None
 
     def connect_bpod(self, max_try=None, retry_delay_s=None):
@@ -354,7 +389,7 @@ class TaskProcess(object):
             kwargs: dict = dict(
                 serial_port=self.serial_port,
                 workspace_path=self.session_paths["session_folder"],
-                session_name=self.session_paths["session_basename_behav"],
+                session_name=self.session_paths["session_basename"] + ".msw",
             )
             if max_try is not None:
                 kwargs["connect_retries"] = max_try
@@ -385,8 +420,19 @@ class TaskProcess(object):
                 "datetime": self.session_paths.get("datetime", ""),
             },
         }
-        yaml_path = self.session_paths["session_file_path"] + ".msw.session.yaml"
-        with open(yaml_path, "w") as f:
+        ps_info = self.input_kwargs.get("parent_session_info")
+        if ps_info is not None:
+            data["parent_acquisition"] = {
+                "backend": ps_info.backend,
+                "acquisition_name": ps_info.acquisition_name,
+                "subject": ps_info.subject,
+                "parent_directory": ps_info.parent_directory,
+                **ps_info.extra,
+            }
+        yaml_path = str(
+            msw_file(self.session_paths["session_file_path"], "session.yaml")
+        )
+        with Path(yaml_path).open("w") as f:
             yaml.dump(
                 data,
                 f,
@@ -397,13 +443,21 @@ class TaskProcess(object):
 
     def init_task(self):
         """Import specific Task and make self.task_runner Thread."""
-        import importlib
         import shutil
+        from importlib.metadata import entry_points
 
         try:
-            mod = importlib.import_module(
-                f"murineshiftwork.tasks.{self.task_name}.{self.task_name}"
-            )
+            eps = {ep.name: ep for ep in entry_points(group="msw.tasks")}
+            if self.task_name in eps:
+                import importlib
+
+                mod = importlib.import_module(eps[self.task_name].value)
+            else:
+                import importlib
+
+                mod = importlib.import_module(
+                    f"murineshiftwork.tasks.{self.task_name}.{self.task_name}"
+                )
             TaskClass = getattr(mod, "Task")
         except (ImportError, AttributeError) as exc:
             raise ImportError(
@@ -412,7 +466,7 @@ class TaskProcess(object):
 
         plot_spec_src = Path(mod.__file__).parent / "plot_spec.yaml"
         if plot_spec_src.exists():
-            dest = Path(self.session_paths["session_file_path"] + ".msw.plot_spec.yaml")
+            dest = msw_file(self.session_paths["session_file_path"], "plot_spec.yaml")
             shutil.copy2(plot_spec_src, dest)
             logging.debug("plot_spec copied: %s", dest.name)
 
@@ -427,8 +481,9 @@ class TaskProcess(object):
         return self.task_runner.is_alive()
 
     def stop_task(self):
-        if self.task_runner is not None:
-            if self.is_running():
-                self.task_runner.continue_task = False
-                self.bpod.stop_trial()
-                logging.debug("Task stopped.")
+        if self.task_runner is not None and self.is_running():
+            self.task_runner.stop()
+            if self.bpod is not None:
+                with contextlib.suppress(Exception):
+                    self.bpod.stop_trial()
+            logging.debug("Task stopped.")

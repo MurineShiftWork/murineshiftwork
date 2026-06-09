@@ -1,6 +1,8 @@
 import logging
 import sys
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -10,6 +12,24 @@ from murineshiftwork.logic.machine_config import (
     write_machine_config,
 )
 from murineshiftwork.logic.misc import print_box
+
+
+def _make_bpod(port: str) -> Any:
+    from murineshiftwork.hardware.bpod.device import BpodDevice
+
+    return BpodDevice(serial_port=port)
+
+
+def _make_pulsepal(port: str) -> Any:
+    from murineshiftwork.hardware.pulsepal.device import PulsePalDevice
+
+    return PulsePalDevice(serial_port=port)
+
+
+_DEVICE_REGISTRY: dict[str, Callable[[str], Any]] = {
+    "bpod": _make_bpod,
+    "pulsepal": _make_pulsepal,
+}
 
 
 def _apply_stage_position(args_dict: dict) -> None:
@@ -29,7 +49,7 @@ def _apply_stage_position(args_dict: dict) -> None:
 
     from one_axis_stage.controller import StageController
 
-    with open(calib_path) as f:
+    with Path(calib_path).open() as f:
         config = yaml.safe_load(f)
     config["connection"]["serial_port"] = serial_port_stage
     known = config.get("known_positions", {})
@@ -65,11 +85,34 @@ def run_task(**args_dict):
 
     serial_port = args_dict.get("serial_port_bpod", "")
     if serial_port and not args_dict.get("simulate") and not args_dict.get("bpod"):
-        from murineshiftwork.hardware.bpod.device import BpodDevice
         from murineshiftwork.hardware.manager import HardwareManager
 
-        with HardwareManager([BpodDevice(serial_port=serial_port)]) as devices:
-            args_dict["bpod"] = devices["bpod"]
+        setup_config = args_dict.get("setup_config")
+        if setup_config is not None:
+            patched = args_dict.get("settings.task.patched", {})
+            required = set(patched.get("required_devices") or ["bpod"])
+            device_list = []
+            for dev_name, dev_cfg in setup_config.devices.items():
+                if dev_name not in required:
+                    continue
+                factory = _DEVICE_REGISTRY.get(dev_cfg.type)
+                if factory is None:
+                    logging.warning(
+                        "No device factory for type %r (device %r) — skipping",
+                        dev_cfg.type,
+                        dev_name,
+                    )
+                    continue
+                port = args_dict.get(f"serial_port_{dev_cfg.type}", "")
+                if port:
+                    device_list.append(factory(port))
+        else:
+            device_list = [_make_bpod(serial_port)]
+
+        with HardwareManager(device_list) as devices:
+            if "bpod" in devices:
+                args_dict["bpod"] = devices["bpod"]
+            args_dict["devices"] = devices
             mod.run_task(**args_dict)
     else:
         mod.run_task(**args_dict)
@@ -144,17 +187,20 @@ def run_setup(**args_dict):
             return
 
         setups_dir.mkdir(parents=True, exist_ok=True)
-        skeleton = {
-            "name": setup_name,
-            "devices": {
-                "bpod": {
-                    "type": "bpod",
-                    "port_by_path": "FILL_IN_PORT_BY_PATH",
-                },
+        from murineshiftwork.logic.config.models import (
+            BpodDevice as _BpodDevice,
+        )
+        from murineshiftwork.logic.config.models import (
+            SetupConfig as _SetupConfig,
+        )
+
+        skeleton = _SetupConfig(
+            name=setup_name,
+            devices={
+                "bpod": _BpodDevice(type="bpod", port_by_path="FILL_IN_PORT_BY_PATH")
             },
-            "calibrations": {"bpod_valve": {}},
-        }
-        with open(path, "w") as f:
+        ).model_dump()
+        with path.open("w") as f:
             yaml.dump(
                 skeleton,
                 f,
@@ -202,10 +248,10 @@ def run_setup(**args_dict):
             )
             return
         old_path.rename(new_path)
-        with open(new_path) as f:
+        with new_path.open() as f:
             raw = yaml.safe_load(f) or {}
         raw["name"] = new_name
-        with open(new_path, "w") as f:
+        with new_path.open("w") as f:
             yaml.dump(
                 raw, f, default_flow_style=False, allow_unicode=True, sort_keys=False
             )
@@ -250,7 +296,7 @@ def run_subject(**args_dict):
             "aliases": [],
             "task_overrides": {},
         }
-        with open(path, "w") as f:
+        with path.open("w") as f:
             yaml.dump(
                 data,
                 f,
@@ -287,10 +333,10 @@ def run_subject(**args_dict):
             )
             return
         old_path.rename(new_path)
-        with open(new_path) as f:
+        with new_path.open() as f:
             raw = yaml.safe_load(f) or {}
         raw["name"] = new_name
-        with open(new_path, "w") as f:
+        with new_path.open("w") as f:
             yaml.dump(
                 raw,
                 f,
@@ -387,50 +433,6 @@ def run_action(**args_dict):
 
 # ---------------------------------------------------------------------------
 # murineshiftwork calibration
-
-
-def run_agent(**args_dict):
-    """msw agent start --setup <name> [--port 8765]
-
-    Starts a long-lived FastAPI agent that owns the Bpod connection across
-    sessions.  The CLI (``msw run``) remains the primary session entry point;
-    the agent adds hardware persistence and a WebSocket event bus for read-only
-    UI observers.
-    """
-    try:
-        import uvicorn
-    except ImportError as exc:
-        raise SystemExit(
-            "The 'agent' extra is not installed.\n"
-            "Run: pip install 'murineshiftwork[agent]'"
-        ) from exc
-
-    from murineshiftwork.agent.app import create_app
-    from murineshiftwork.logic.config.io import load_setup_config
-    from murineshiftwork.logic.machine_config import resolve_config_dir
-
-    subcommand = args_dict.get("subcommand")
-    if subcommand != "start":
-        raise ValueError(f"Unknown agent subcommand: {subcommand!r}")
-
-    setup_name = args_dict["setup"]
-    port = args_dict.get("agent_port", 8765)
-    host = args_dict.get("agent_host", "0.0.0.0")
-
-    config_dir = resolve_config_dir(args_dict.get("config_dir", ""))
-    setup_cfg = load_setup_config(config_dir, setup_name)
-    if setup_cfg is None:
-        raise ValueError(f"Setup '{setup_name}' not found in {config_dir}/setups/")
-
-    bpod_device = setup_cfg.devices.get("bpod")
-    serial_port = args_dict.get("serial_port_bpod") or (
-        bpod_device.port
-        if bpod_device and hasattr(bpod_device, "port")
-        else "/dev/ttyACM0"
-    )
-
-    app = create_app(setup=setup_name, serial_port=serial_port, config_dir=config_dir)
-    uvicorn.run(app, host=host, port=port)
 
 
 def run_calibration(**args_dict):

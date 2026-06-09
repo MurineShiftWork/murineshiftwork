@@ -1,0 +1,1435 @@
+{
+    "debug": false,
+    "input_kwargs": {
+        "calibration_file_sound": "/mnt/data/code/murineshiftwork/murine_shift_work/settings/calibration.sound.default.csv",
+        "calibration_file_stage": "/home/testuser/.murineshiftwork/calibration.stage.setup.testhost2.yaml",
+        "calibration_file_water": "/home/testuser/.murineshiftwork/calibration.water.setup.testhost2.csv",
+        "command": "run",
+        "config_dir": "/mnt/data/code/murineshiftwork/murine_shift_work/settings",
+        "config_file_camera": "/home/testuser/.murineshiftwork/setup-testhost2-rce.yaml",
+        "config_file_subjects": "/mnt/data/CONFIG_FILES/subject.settings",
+        "config_file_task": "/mnt/data/code/murineshiftwork/murine_shift_work/tasks/probabilistic_switching_fixedsubjects/task.settings",
+        "debug": false,
+        "experiment": "unknown_experiment",
+        "func": "<NoJSON:<class 'function'>>",
+        "host_ip": "192.168.0.2",
+        "host_name": "testhost2",
+        "log_file": "/tmp/murineshiftwork.20260429_153652.log",
+        "log_level": "INFO",
+        "metadata": {
+            "experiment": "unknown_experiment",
+            "researcher": "unknown_researcher",
+            "setup": "testhost2",
+            "x": "31",
+            "y": "32",
+            "z": "33"
+        },
+        "metadata_list": [
+            "x=31",
+            "y=32",
+            "z=33",
+            "setup=testhost2"
+        ],
+        "objects": {
+            "data_queue": "<NoJSON:<class 'multiprocessing.queues.Queue'>>",
+            "kill_queue": "<NoJSON:<class 'multiprocessing.queues.Queue'>>"
+        },
+        "original": {
+            "calibration_file_sound": "calibration.sound.default.csv",
+            "calibration_file_stage": "/home/testuser/.murineshiftwork/calibration.stage.setup.testhost2.yaml",
+            "calibration_file_water": "/home/testuser/.murineshiftwork/calibration.water.setup.testhost2.csv",
+            "command": "run",
+            "config_dir": "/mnt/data/code/murineshiftwork/murine_shift_work/settings",
+            "config_file_camera": "/home/testuser/.murineshiftwork/setup-testhost2-rce.yaml",
+            "config_file_subjects": "/mnt/data/CONFIG_FILES/subject.settings",
+            "config_file_task": "task.settings",
+            "debug": false,
+            "experiment": "unknown_experiment",
+            "func": "<NoJSON:<class 'function'>>",
+            "host_ip": "192.168.0.2",
+            "host_name": "testhost2",
+            "is_child_session_to": "subject002__20260429_153513__ephys_multi_behavior",
+            "log_file": "/tmp/murineshiftwork.20260429_153652.log",
+            "log_level": "INFO",
+            "metadata_list": [
+                "x=31",
+                "y=32",
+                "z=33",
+                "setup=testhost2"
+            ],
+            "out_path": "/mnt/data/data/",
+            "researcher": "unknown_researcher",
+            "serial_port_bpod": "/dev/ttyACM0",
+            "serial_port_pulsepal": "/dev/ttyACM1",
+            "serial_port_scale": "/dev/ttyACM2",
+            "serial_port_stage": "/dev/ttyUSB1",
+            "setup": "unknown_setup",
+            "subject": "subject002",
+            "task": "fixedsubj"
+        },
+        "researcher": "unknown_researcher",
+        "serial_port_pulsepal": "/dev/ttyACM1",
+        "serial_port_scale": "/dev/ttyACM2",
+        "serial_port_stage": "/dev/ttyUSB1",
+        "session_paths": {
+            "basepath": "<NoJSON:<class 'pathlib.PosixPath'>>",
+            "datetime": "20260429_153653",
+            "session_basename": "subject002__20260429_153653__probabilistic_switching_fixedsubjects",
+            "session_basename_behav": "subject002__20260429_153653__probabilistic_switching_fixedsubjects.msw",
+            "session_file_path": "/mnt/data/data/subject002/subject002__20260429_153513__ephys_multi_behavior/subject002__20260429_153653__probabilistic_switching_fixedsubjects/subject002__20260429_153653__probabilistic_switching_fixedsubjects",
+            "session_folder": "/mnt/data/data/subject002/subject002__20260429_153513__ephys_multi_behavior/subject002__20260429_153653__probabilistic_switching_fixedsubjects",
+            "subject": "subject002",
+            "task": "probabilistic_switching_fixedsubjects"
+        },
+        "settings.stage": {
+            "axes": {
+                "x": {
+                    "id": 31,
+                    "name": "x",
+                    "operating_mode": "OP_POSITION",
+                    "position_max": 680,
+                    "position_min": 150,
+                    "position_raw": 420,
+                    "velocity_max": 0
+                },
+                "y": {
+                    "id": 32,
+                    "name": "y",
+                    "operating_mode": "OP_POSITION",
+                    "position_max": 500,
+                    "position_min": 25,
+                    "position_raw": 378,
+                    "velocity_max": 0
+                },
+                "z": {
+                    "id": 33,
+                    "name": "z",
+                    "operating_mode": "OP_POSITION",
+                    "position_max": 580,
+                    "position_min": 250,
+                    "position_raw": 318,
+                    "velocity_max": 0
+                }
+            },
+            "connection": {
+                "baudrate": 115200,
+                "serial_port": "/dev/ttyUSB0",
+                "timeout": 1
+            },
+            "known_positions": {
+                "back": {
+                    "y": {
+                        "position_raw": 100
+                    }
+                }
+            },
+            "stage_id": 7
+        },
+        "settings.subjects.all": {
+            "_test_subject": {
+                "_test_minimal_task": {
+                    "test_argument": "minimal"
+                },
+                "_test_video": {
+                    "test_argument": "vid"
+                },
+                "experiment": "test_experiment",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.1,
+                    "delay_until_center_init": [
+                        0.05,
+                        0.06,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            100,
+                            99
+                        ],
+                        [
+                            99,
+                            100
+                        ]
+                    ],
+                    "reward_amount_ul": 8
+                },
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "inter_trial_interval": [
+                        1,
+                        2,
+                        0.5
+                    ],
+                    "lick_detection_events": "bnc",
+                    "probabilities": [
+                        [
+                            90,
+                            10
+                        ],
+                        [
+                            10,
+                            90
+                        ]
+                    ],
+                    "reward_amount_ul": 2.5
+                },
+                "project": "test_project"
+            },
+            "_test_subject2": {
+                "_test_minimal_task": {
+                    "test_argument": "minimal"
+                },
+                "_test_video": {
+                    "test_argument": "vid"
+                },
+                "experiment": "test_experiment",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.1,
+                    "delay_until_center_init": [
+                        0.05,
+                        0.06,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            100,
+                            99
+                        ],
+                        [
+                            99,
+                            100
+                        ]
+                    ],
+                    "reward_amount_ul": 8
+                },
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "inter_trial_interval": [
+                        1,
+                        2,
+                        0.5
+                    ],
+                    "lick_detection_events": "bnc",
+                    "probabilities": [
+                        [
+                            90,
+                            10
+                        ],
+                        [
+                            10,
+                            90
+                        ]
+                    ],
+                    "reward_amount_ul": 2.5
+                },
+                "project": "test_project"
+            },
+            "_test_subject23": {
+                "experiment": "test_experiment",
+                "project": "test_project"
+            },
+            "testsubject100": {
+                "aliases": "testsubject_tab_001",
+                "comment": "first implant"
+            },
+            "testsubject101": {
+                "aliases": "testsubject_tab_002",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject102": {
+                "aliases": "testsubject_tab_003",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject103": {
+                "aliases": "testsubject_tab_004",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject104": {
+                "aliases": "testsubject104",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject105": {
+                "aliases": "testsubject105",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject106": {
+                "aliases": "testsubject106",
+                "comment": "UC/PV-cre Ai32",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject107": {
+                "aliases": "testsubject107",
+                "comment": "UC/PV-cre Ai32",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject108": {
+                "aliases": "testsubject108",
+                "comment": "UC/PV-cre Ai32",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject109": {
+                "aliases": "testsubject109",
+                "comment": "UC/PV-cre Ai32",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject110": {
+                "aliases": "testsubject110",
+                "comment": "UC/PV-cre Ai32",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject111": {
+                "comment": "HM/PV-cre Chr2-EYFP",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject112": {
+                "comment": "HM/PV-cre Chr2-EYFP",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject113": {
+                "comment": "HM/PV-cre Chr2-EYFP",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject114": {
+                "comment": "HM/PV-cre Chr2-EYFP",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject115": {
+                "comment": "HM/PV-cre Chr2-EYFP",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject116": {
+                "comment": "AN/PV-cre",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject117": {
+                "comment": "AN/PV-cre",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject118": {
+                "comment": "AN/PV-cre",
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.5,
+                    "delay_until_center_init": [
+                        0.15,
+                        0.2,
+                        0.005
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject119": {
+                "comment": "wild-type for behavior figure",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.4,
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject120": {
+                "comment": "wild-type for behavior figure",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.4,
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject121": {
+                "comment": "wild-type for behavior figure",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.4,
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject122": {
+                "comment": "wild-type for behavior figure",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.4,
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject123": {
+                "comment": "wild-type for behavior figure",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "probabilities": [
+                        [
+                            80,
+                            10
+                        ],
+                        [
+                            10,
+                            80
+                        ],
+                        [
+                            60,
+                            10
+                        ],
+                        [
+                            10,
+                            60
+                        ],
+                        [
+                            30,
+                            10
+                        ],
+                        [
+                            10,
+                            30
+                        ],
+                        [
+                            25,
+                            25
+                        ],
+                        [
+                            25,
+                            25
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject124": {
+                "comment": "wild-type for behavior figure",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "probabilities": [
+                        [
+                            80,
+                            10
+                        ],
+                        [
+                            10,
+                            80
+                        ],
+                        [
+                            60,
+                            10
+                        ],
+                        [
+                            10,
+                            60
+                        ],
+                        [
+                            30,
+                            10
+                        ],
+                        [
+                            10,
+                            30
+                        ],
+                        [
+                            25,
+                            25
+                        ],
+                        [
+                            25,
+                            25
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject125": {
+                "comment": "wild-type for behavior figure",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "probabilities": [
+                        [
+                            80,
+                            10
+                        ],
+                        [
+                            10,
+                            80
+                        ],
+                        [
+                            60,
+                            10
+                        ],
+                        [
+                            10,
+                            60
+                        ],
+                        [
+                            30,
+                            10
+                        ],
+                        [
+                            10,
+                            30
+                        ],
+                        [
+                            25,
+                            25
+                        ],
+                        [
+                            25,
+                            25
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject126": {
+                "comment": "wild-type for behavior figure",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "probabilities": [
+                        [
+                            80,
+                            10
+                        ],
+                        [
+                            10,
+                            80
+                        ],
+                        [
+                            60,
+                            10
+                        ],
+                        [
+                            10,
+                            60
+                        ],
+                        [
+                            30,
+                            10
+                        ],
+                        [
+                            10,
+                            30
+                        ],
+                        [
+                            25,
+                            25
+                        ],
+                        [
+                            25,
+                            25
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject127": {
+                "comment": "pv/chr2",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "forced_choice_threshold": 20,
+                    "reward_amount_ul": 2.4,
+                    "stage_anti_bias_bool": true,
+                    "stage_anti_bias_max": 25,
+                    "stage_anti_bias_n_back": 15
+                }
+            },
+            "testsubject128": {
+                "comment": "pv/chr2",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "forced_choice_threshold": 20,
+                    "reward_amount_ul": 2.4,
+                    "stage_anti_bias_bool": true,
+                    "stage_anti_bias_max": 25,
+                    "stage_anti_bias_n_back": 15
+                }
+            },
+            "testsubject129": {
+                "comment": "pv/chr2",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "forced_choice_threshold": 20,
+                    "reward_amount_ul": 2.4,
+                    "stage_anti_bias_bool": true,
+                    "stage_anti_bias_max": 25,
+                    "stage_anti_bias_n_back": 15
+                }
+            },
+            "testsubject130": {
+                "comment": "pv-cre with chrimson-off in GPe",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "reward_amount_ul": 2.4,
+                    "stage_anti_bias_bool": false,
+                    "stage_anti_bias_max": 25,
+                    "stage_anti_bias_n_back": 15
+                }
+            },
+            "testsubject131": {
+                "comment": "pv-cre with chrimson-off in GPe",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "reward_amount_ul": 2.4,
+                    "stage_anti_bias_bool": false,
+                    "stage_anti_bias_max": 25,
+                    "stage_anti_bias_n_back": 15
+                }
+            },
+            "testsubject132": {
+                "comment": "pv-cre with chrimson-off in GPe",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "reward_amount_ul": 2.4,
+                    "stage_anti_bias_bool": false,
+                    "stage_anti_bias_max": 25,
+                    "stage_anti_bias_n_back": 15
+                }
+            },
+            "testsubject133": {
+                "comment": "pv-cre with chrimson-off in GPe",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "reward_amount_ul": 2.4,
+                    "stage_anti_bias_bool": false,
+                    "stage_anti_bias_max": 25,
+                    "stage_anti_bias_n_back": 20
+                }
+            },
+            "testsubject134": {
+                "comment": "pv-cre with chrimson-off in GPe",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "reward_amount_ul": 2.7,
+                    "stage_anti_bias_bool": false,
+                    "stage_anti_bias_max": 25,
+                    "stage_anti_bias_n_back": 5
+                }
+            },
+            "testsubject135": {
+                "comment": "pv-cre with chrimson-off in GPe",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "reward_amount_ul": 2.7,
+                    "stage_anti_bias_bool": false,
+                    "stage_anti_bias_max": 25,
+                    "stage_anti_bias_n_back": 5
+                }
+            },
+            "testsubject136": {
+                "comment": "pv/chr2",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "reward_amount_ul": 2.7,
+                    "stage_anti_bias_bool": false,
+                    "stage_anti_bias_max": 25,
+                    "stage_anti_bias_n_back": 5
+                }
+            },
+            "testsubject137": {
+                "comment": "pv/chr2",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.2,
+                    "reward_amount_ul": 3,
+                    "stage_anti_bias_bool": false,
+                    "stage_anti_bias_max": 25,
+                    "stage_anti_bias_n_back": 5
+                }
+            },
+            "testsubject138": {
+                "comment": "wild-type",
+                "experiment": "gpe-tab-only",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4.5,
+                        5.5,
+                        0.25
+                    ],
+                    "reward_amount_ul": 3
+                },
+                "project": "gpe"
+            },
+            "testsubject139": {
+                "comment": "wild-type",
+                "experiment": "gpe-tab-only",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4.5,
+                        5.5,
+                        0.25
+                    ],
+                    "reward_amount_ul": 3
+                },
+                "project": "gpe"
+            },
+            "testsubject140": {
+                "comment": "wild-type",
+                "experiment": "gpe-tab-only",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4.5,
+                        5.5,
+                        0.25
+                    ],
+                    "reward_amount_ul": 3
+                },
+                "project": "gpe"
+            },
+            "testsubject141": {
+                "comment": "wild-type",
+                "experiment": "gpe-tab-only",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4.5,
+                        5.5,
+                        0.25
+                    ],
+                    "reward_amount_ul": 3
+                },
+                "project": "gpe"
+            },
+            "testsubject142": {
+                "comment": "wild-type",
+                "experiment": "gpe-acute-4sh",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        3,
+                        4,
+                        0.25
+                    ],
+                    "lick_detection_events": "bnc",
+                    "reward_amount_ul": 2.5
+                },
+                "project": "gpe"
+            },
+            "testsubject143": {
+                "comment": "wild-type",
+                "experiment": "gpe-acute-4sh",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        3,
+                        4,
+                        0.25
+                    ],
+                    "reward_amount_ul": 2.5
+                },
+                "project": "gpe"
+            },
+            "testsubject144": {
+                "comment": "wild-type",
+                "experiment": "gpe-acute-4sh",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4,
+                        5,
+                        0.25
+                    ],
+                    "reward_amount_ul": 2.5
+                },
+                "project": "gpe"
+            },
+            "testsubject145": {
+                "comment": "wild-type",
+                "experiment": "gpe-acute-4sh",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4,
+                        5,
+                        0.25
+                    ],
+                    "lick_detection_events": "bnc",
+                    "reward_amount_ul": 2.5
+                },
+                "project": "gpe"
+            },
+            "testsubject146": {
+                "comment": "wild-type",
+                "experiment": "gpe-acute-4sh",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4,
+                        5,
+                        0.25
+                    ],
+                    "lick_detection_events": "bnc",
+                    "reward_amount_ul": 2.5
+                },
+                "project": "gpe"
+            },
+            "testsubject147": {
+                "comment": "wild-type",
+                "experiment": "gpe-acute-4sh",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4,
+                        5,
+                        0.25
+                    ],
+                    "lick_detection_events": "ports",
+                    "probabilities": [
+                        [
+                            90,
+                            10
+                        ],
+                        [
+                            10,
+                            90
+                        ]
+                    ],
+                    "reward_amount_ul": 2.5
+                },
+                "project": "gpe"
+            },
+            "testsubject_sleep_001": {
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.125,
+                        0.15,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            80,
+                            0
+                        ],
+                        [
+                            0,
+                            80
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject_sleep_002": {
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.125,
+                        0.15,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            80,
+                            0
+                        ],
+                        [
+                            0,
+                            80
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject_sleep_003": {
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.125,
+                        0.15,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            80,
+                            0
+                        ],
+                        [
+                            0,
+                            80
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject_sleep_004": {
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.125,
+                        0.15,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            80,
+                            0
+                        ],
+                        [
+                            0,
+                            80
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject_sleep_005": {
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.125,
+                        0.15,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            80,
+                            0
+                        ],
+                        [
+                            0,
+                            80
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject_sleep_006": {
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.125,
+                        0.15,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            80,
+                            0
+                        ],
+                        [
+                            0,
+                            80
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject_sleep_007": {
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.25,
+                    "delay_until_center_init": [
+                        0.1,
+                        0.12,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            80,
+                            0
+                        ],
+                        [
+                            0,
+                            80
+                        ]
+                    ],
+                    "reward_amount_ul": 2.5
+                }
+            },
+            "testsubject_sleep_008": {
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.1,
+                        0.12,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            80,
+                            0
+                        ],
+                        [
+                            0,
+                            80
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject_sleep_009": {
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.1,
+                        0.12,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            80,
+                            0
+                        ],
+                        [
+                            0,
+                            80
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject_sleep_010": {
+                "probabilistic_switching": {
+                    "criterion_contrast_blocks": 0.75,
+                    "delay_until_center_init": [
+                        0.1,
+                        0.12,
+                        0.005
+                    ],
+                    "probabilities": [
+                        [
+                            80,
+                            0
+                        ],
+                        [
+                            0,
+                            80
+                        ]
+                    ],
+                    "reward_amount_ul": 2
+                }
+            },
+            "testsubject001": {
+                "comment": "wild-type",
+                "experiment": "gpe-acute-4sh",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4,
+                        5,
+                        0.25
+                    ],
+                    "lick_detection_events": "bnc",
+                    "reward_amount_ul": 2.75
+                },
+                "project": "gpe"
+            },
+            "testsubject002": {
+                "comment": "wild-type",
+                "experiment": "gpe-acute-4sh",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4,
+                        5,
+                        0.25
+                    ],
+                    "lick_detection_events": "bnc",
+                    "reward_amount_ul": 2.75
+                },
+                "project": "gpe"
+            },
+            "testsubject003": {
+                "comment": "wild-type",
+                "experiment": "gpe-acute-4sh",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4,
+                        5,
+                        0.25
+                    ],
+                    "lick_detection_events": "bnc",
+                    "reward_amount_ul": 2.5
+                },
+                "project": "gpe"
+            },
+            "subject002": {
+                "comment": "wild-type",
+                "experiment": "gpe-acute-4sh",
+                "probabilistic_switching_fixedsubjects": {
+                    "criterion_contrast_blocks": 0.25,
+                    "inter_trial_interval": [
+                        4,
+                        5,
+                        0.25
+                    ],
+                    "lick_detection_events": "bnc",
+                    "reward_amount_ul": 2.5
+                },
+                "project": "gpe"
+            }
+        },
+        "settings.subjects.this": {
+            "criterion_contrast_blocks": 0.25,
+            "inter_trial_interval": [
+                4,
+                5,
+                0.25
+            ],
+            "lick_detection_events": "bnc",
+            "reward_amount_ul": 2.5
+        },
+        "settings.task.default": {
+            "HARDWARE_BNC_STIMULATION": 2,
+            "HARDWARE_BNC_TRIAL_START": 1,
+            "HARDWARE_PORT_LIGHT_INTENSITY": 50,
+            "HARDWARE_PORT_LIGHT_PORTS": [
+                "center"
+            ],
+            "HARDWARE_PULSEPAL_OUTPUT_CHANNEL": 1,
+            "HARDWARE_PULSEPAL_TRIGGER_CHANNEL": 1,
+            "HARDWARE_VALVES_FOR_AIR": [
+                2,
+                4
+            ],
+            "HARDWARE_VALVES_FOR_WATER": [
+                1,
+                3
+            ],
+            "block_switch_to_different_block_type": true,
+            "criterion_contrast_blocks": 0.25,
+            "criterion_neutral_blocks": 0.25,
+            "criterion_tau": 5,
+            "delay_until_center_init": [
+                0.15,
+                0.2,
+                0.005
+            ],
+            "delay_until_side_timeout": 10,
+            "delay_until_side_timeout_for_stopping": 1.5,
+            "first_block_easy": true,
+            "forced_choice_threshold": 20,
+            "inter_trial_interval": [
+                4,
+                5,
+                0.25
+            ],
+            "lick_detection_events": "bnc",
+            "max_block_length": 75,
+            "mean_neutral_block_length": 25,
+            "min_block_length": 20,
+            "min_trials_post_criterion": 5,
+            "n_max_trials": 750,
+            "plot_trial_span": 100,
+            "probabilities": [
+                [
+                    10,
+                    50
+                ],
+                [
+                    50,
+                    10
+                ],
+                [
+                    10,
+                    90
+                ],
+                [
+                    90,
+                    10
+                ],
+                [
+                    50,
+                    50
+                ],
+                [
+                    50,
+                    90
+                ],
+                [
+                    90,
+                    50
+                ]
+            ],
+            "punish_air_duration": 0.02,
+            "punish_stop_trials": true,
+            "punish_stop_trials_proportion": 1,
+            "record_video": true,
+            "reset_bias_on_block_switch": false,
+            "reward_amount_ul": 2.5,
+            "reward_delay": 0,
+            "show_live_plot": true,
+            "stage_anti_bias_bool": false,
+            "stage_anti_bias_max": 50,
+            "stage_anti_bias_n_back": 5,
+            "state_duration_final": 1,
+            "stimulation_pulse_delay": 0,
+            "stimulation_pulse_duration": 0.005,
+            "stimulation_pulse_frequency": 30,
+            "stimulation_pulse_train": 0.5,
+            "stimulation_timepoint": "ACTION_INIT",
+            "stimulation_trial_proportion": 0.2,
+            "stop_cue_amplitude": 0.2,
+            "stop_cue_duration": 0.1,
+            "stop_cue_onset_ramp": 0.05,
+            "stop_trial_delay_adaptive_step": 0.01,
+            "stop_trial_delay_initial": 0.035,
+            "stop_trial_min_max": [
+                0.05,
+                0.3
+            ],
+            "stop_trial_proportion": 0.2,
+            "testing": false,
+            "ttl_identifier_sequence": "sssLss",
+            "ttl_pulse_duration": 0.01,
+            "use_piezo_lick_detection": false,
+            "use_stimulation": false,
+            "use_stop_trials": false
+        },
+        "settings.task.patched": {
+            "HARDWARE_BNC_STIMULATION": 2,
+            "HARDWARE_BNC_TRIAL_START": 1,
+            "HARDWARE_PORT_LIGHT_INTENSITY": 50,
+            "HARDWARE_PORT_LIGHT_PORTS": [
+                "center"
+            ],
+            "HARDWARE_PULSEPAL_OUTPUT_CHANNEL": 1,
+            "HARDWARE_PULSEPAL_TRIGGER_CHANNEL": 1,
+            "HARDWARE_VALVES_FOR_AIR": [
+                2,
+                4
+            ],
+            "HARDWARE_VALVES_FOR_WATER": [
+                1,
+                3
+            ],
+            "block_switch_to_different_block_type": true,
+            "criterion_contrast_blocks": 0.25,
+            "criterion_neutral_blocks": 0.25,
+            "criterion_tau": 5,
+            "delay_until_center_init": [
+                0.15,
+                0.2,
+                0.005
+            ],
+            "delay_until_side_timeout": 10,
+            "delay_until_side_timeout_for_stopping": 1.5,
+            "first_block_easy": true,
+            "forced_choice_threshold": 20,
+            "inter_trial_interval": [
+                4,
+                5,
+                0.25
+            ],
+            "lick_detection_events": "bnc",
+            "max_block_length": 75,
+            "mean_neutral_block_length": 25,
+            "min_block_length": 20,
+            "min_trials_post_criterion": 5,
+            "n_max_trials": 750,
+            "plot_trial_span": 100,
+            "probabilities": [
+                [
+                    10,
+                    50
+                ],
+                [
+                    50,
+                    10
+                ],
+                [
+                    10,
+                    90
+                ],
+                [
+                    90,
+                    10
+                ],
+                [
+                    50,
+                    50
+                ],
+                [
+                    50,
+                    90
+                ],
+                [
+                    90,
+                    50
+                ]
+            ],
+            "punish_air_duration": 0.02,
+            "punish_stop_trials": true,
+            "punish_stop_trials_proportion": 1,
+            "record_video": true,
+            "reset_bias_on_block_switch": false,
+            "reward_amount_ul": 2.5,
+            "reward_delay": 0,
+            "show_live_plot": true,
+            "stage_anti_bias_bool": false,
+            "stage_anti_bias_max": 50,
+            "stage_anti_bias_n_back": 5,
+            "state_duration_final": 1,
+            "stimulation_pulse_delay": 0,
+            "stimulation_pulse_duration": 0.005,
+            "stimulation_pulse_frequency": 30,
+            "stimulation_pulse_train": 0.5,
+            "stimulation_timepoint": "ACTION_INIT",
+            "stimulation_trial_proportion": 0.2,
+            "stop_cue_amplitude": 0.2,
+            "stop_cue_duration": 0.1,
+            "stop_cue_onset_ramp": 0.05,
+            "stop_trial_delay_adaptive_step": 0.01,
+            "stop_trial_delay_initial": 0.035,
+            "stop_trial_min_max": [
+                0.05,
+                0.3
+            ],
+            "stop_trial_proportion": 0.2,
+            "testing": false,
+            "ttl_identifier_sequence": "sssLss",
+            "ttl_pulse_duration": 0.01,
+            "use_piezo_lick_detection": false,
+            "use_stimulation": false,
+            "use_stop_trials": false
+        },
+        "setup": "unknown_setup",
+        "subject.metadata": {
+            "comment": "wild-type",
+            "experiment": "gpe-acute-4sh",
+            "project": "gpe"
+        },
+        "task_dir": "/mnt/data/code/murineshiftwork/murine_shift_work/tasks/probabilistic_switching_fixedsubjects",
+        "task_name": "probabilistic_switching_fixedsubjects"
+    },
+    "out_path": "/mnt/data/data/",
+    "serial_port": "/dev/ttyACM0",
+    "serial_port_accessible": true,
+    "session_paths": {
+        "basepath": "<NoJSON:<class 'pathlib.PosixPath'>>",
+        "datetime": "20260429_153653",
+        "session_basename": "subject002__20260429_153653__probabilistic_switching_fixedsubjects",
+        "session_basename_behav": "subject002__20260429_153653__probabilistic_switching_fixedsubjects.msw",
+        "session_file_path": "/mnt/data/data/subject002/subject002__20260429_153513__ephys_multi_behavior/subject002__20260429_153653__probabilistic_switching_fixedsubjects/subject002__20260429_153653__probabilistic_switching_fixedsubjects",
+        "session_folder": "/mnt/data/data/subject002/subject002__20260429_153513__ephys_multi_behavior/subject002__20260429_153653__probabilistic_switching_fixedsubjects",
+        "subject": "subject002",
+        "task": "probabilistic_switching_fixedsubjects"
+    },
+    "subject": "subject002",
+    "task_in": "probabilistic_switching_fixedsubjects",
+    "task_name": "probabilistic_switching_fixedsubjects"
+}

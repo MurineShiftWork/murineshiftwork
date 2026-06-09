@@ -63,21 +63,31 @@ def generate_session_paths(
 ) -> dict:
     """Generate validated session path dict for a given namespace version.
 
+    Always produces a 4-level path: basepath / subject / acquisition / session.
+
+    For standalone sessions (no parent), the acquisition dir is named
+    ``{subject}__{datetime}__session_{task}`` — the ``session_`` prefix
+    distinguishes it from externally-attached systems (``ephys``, etc.).
+
+    For child sessions (``is_child_session_to`` set), the acquisition dir
+    is the externally-provided basename (e.g. from Open Ephys).
+
     Parameters
     ----------
-    subject:            Subject name (validated against forbidden chars).
-    task:               Task name.
-    basepath:           Root output directory.
-    version:            Namespace version — one of NAMESPACE_V1, NAMESPACE_LEGACY.
-                        Controls the datetime format written into the session basename.
-    default_subject:    Fallback subject name used when *task* starts with '_test__'.
-    is_child_session_to: If set, the session folder is nested inside this parent basename.
-    printout:           Print the path table to stdout.
+    subject:             Subject name (validated against forbidden chars).
+    task:                Task / protocol name.
+    basepath:            Root output directory.
+    version:             Namespace version — controls datetime format.
+    default_subject:     Fallback subject used when *task* starts with ``_test__``.
+    is_child_session_to: Acquisition basename from an external parent system.
+                         When ``None`` a standalone acquisition name is derived.
+    printout:            Print the path table to stdout.
 
     Returns
     -------
     dict with keys: subject, datetime, task, basepath, namespace_version,
-    session_basename, session_basename_behav, session_folder, session_file_path.
+    acquisition_name, session_basename, session_folder, session_folder_relative,
+    session_file_path.
     """
     if version not in _NAMESPACE_FORMATS:
         raise ValueError(
@@ -92,12 +102,22 @@ def generate_session_paths(
     _validate_path_component(subject, "Subject name")
 
     dt = datetime.now().strftime(_NAMESPACE_FORMATS[version])
-    session_basename = "__".join([subject, dt, task])
+    values = {"subject": subject, "datetime": dt, "task": task}
+
+    builder = get_msw_builder()
+    session_basename = builder.build_path("session", values)
 
     if is_child_session_to:
-        session_folder = basepath / subject / is_child_session_to / session_basename
+        acquisition_name = is_child_session_to
     else:
-        session_folder = basepath / subject / session_basename
+        acquisition_name = builder.build_path(
+            "acquisition",
+            {"subject": subject, "datetime": dt, "task": f"session_{task}"},
+        )
+
+    session_folder = basepath / builder.generate_path(
+        "session", values, level_overrides={"acquisition": acquisition_name}
+    )
 
     session_paths = {
         "subject": subject,
@@ -105,9 +125,10 @@ def generate_session_paths(
         "task": task,
         "basepath": basepath,
         "namespace_version": version,
+        "acquisition_name": acquisition_name,
         "session_basename": session_basename,
-        "session_basename_behav": session_basename + ".msw",
         "session_folder": str(session_folder),
+        "session_folder_relative": str(session_folder.relative_to(basepath)),
         "session_file_path": str(session_folder / session_basename),
     }
 
@@ -151,7 +172,8 @@ def build_data_paths(
 def parse_session_basename(basename: str) -> dict:
     """Parse subject, datetime, task from a session basename.
 
-    Identifies the namespace version from the datetime field width and format.
+    Uses the namespace builder to validate structure, then identifies the
+    namespace version from the datetime field format.
 
     Returns dict with keys:
         subject (str), datetime (datetime), datetime_str (str),
@@ -159,22 +181,24 @@ def parse_session_basename(basename: str) -> dict:
 
     Raises ValueError if the basename cannot be parsed.
     """
-    parts = str(basename).split("__")
-    if len(parts) != 3:
+    builder = get_msw_builder()
+    try:
+        values = builder.extract_level_values("session", str(basename))
+    except ValueError:
         raise ValueError(
             f"Expected 3 '__'-separated parts (subject, datetime, task), "
-            f"got {len(parts)} in: {basename!r}"
+            f"cannot parse: {basename!r}"
         )
-    subject, dt_str, task = parts
 
+    dt_str = values["datetime"]
     for version in _PARSE_ORDER:
         try:
             dt = datetime.strptime(dt_str, _NAMESPACE_FORMATS[version])
             return {
-                "subject": subject,
+                "subject": values["subject"],
                 "datetime": dt,
                 "datetime_str": dt_str,
-                "task": task,
+                "task": values["task"],
                 "namespace_version": version,
             }
         except ValueError:
@@ -184,3 +208,22 @@ def parse_session_basename(basename: str) -> dict:
         f"Cannot parse datetime {dt_str!r} in basename {basename!r}. "
         f"Tried namespace versions: {_PARSE_ORDER}"
     )
+
+
+# ---------------------------------------------------------------------------
+# MSW artifact builder
+
+
+_MSW_BUILDER = None
+
+
+def get_msw_builder():
+    """Return the module-level MSW NamespaceBuilder (lazy-loaded from namespace.msw.yaml)."""
+    global _MSW_BUILDER
+    if _MSW_BUILDER is None:
+        from murineshiftwork.namespace.spec import NamespaceBuilder
+
+        _MSW_BUILDER = NamespaceBuilder.from_yaml(
+            Path(__file__).parent / "namespace.msw.yaml"
+        )
+    return _MSW_BUILDER

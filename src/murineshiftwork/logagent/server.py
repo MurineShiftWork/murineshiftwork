@@ -19,12 +19,12 @@ Auth: set log_bearer_token in ~/.murineshiftwork/msw_machine.yaml.
 from __future__ import annotations
 
 from collections import deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 
-_sessions: dict[str, "_SessionState"] = {}
+_sessions: dict[str, _SessionState] = {}
 
 
 class _SessionState:
@@ -54,7 +54,7 @@ class _SessionState:
             return None
         try:
             t0 = datetime.fromisoformat(self.started_at)
-            return (datetime.now(timezone.utc) - t0).total_seconds()
+            return (datetime.now(UTC) - t0).total_seconds()
         except Exception:
             return None
 
@@ -103,7 +103,7 @@ def create_app(bearer_token: str = "") -> FastAPI:
         sess.session_uuid = body.get("session_uuid")
         sess.started_at = body.get(
             "started_at",
-            datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            datetime.now(UTC).isoformat(timespec="seconds"),
         )
         sess.trial_buffer.clear()
 

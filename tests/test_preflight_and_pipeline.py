@@ -52,7 +52,7 @@ def test_resolve_data_dir_machine_config(tmp_path, monkeypatch):
 
 
 def test_list_available_tasks_nonempty():
-    from murineshiftwork.logic.misc import list_available_tasks
+    from murineshiftwork.cli.tasks import list_available_tasks
 
     tasks = list_available_tasks()
     assert len(tasks) >= 5
@@ -62,10 +62,7 @@ def test_list_available_tasks_nonempty():
 
 
 def test_find_task_by_name():
-    from murineshiftwork.logic.misc import (
-        find_task_by_name,
-        list_available_tasks,
-    )
+    from murineshiftwork.cli.tasks import find_task_by_name, list_available_tasks
 
     assert find_task_by_name("flush") == "_test_flush_valves"
     assert (
@@ -98,7 +95,7 @@ def _write_subject_yaml(path, subject_name, task_overrides=None):
     }
     p = path / "subjects" / f"{subject_name}.yaml"
     p.parent.mkdir(parents=True, exist_ok=True)
-    with open(p, "w") as f:
+    with p.open("w") as f:
         yaml.dump(data, f)
     return p
 
@@ -111,7 +108,7 @@ def _write_setup_yaml(path, setup_name):
     }
     p = path / "setups" / f"{setup_name}.yaml"
     p.parent.mkdir(parents=True, exist_ok=True)
-    with open(p, "w") as f:
+    with p.open("w") as f:
         yaml.dump(data, f)
     return p
 

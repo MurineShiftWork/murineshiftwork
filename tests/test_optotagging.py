@@ -9,7 +9,7 @@ pytest.importorskip("pypulsepal")  # skip whole module if pypulsepal not install
 
 import pytest
 
-from murineshiftwork.logic.stimulation import (
+from murineshiftwork.hardware.stimulation import (
     DORIC_MAX_CURRENT_MA,
     DORIC_MAX_VOLTAGE,
     Stimulation,
@@ -36,7 +36,7 @@ def test_power_to_voltage_midpoint():
 
 def test_power_to_voltage_consistent_with_constants():
     # DORIC_MAX_VOLTAGE = DORIC_MAX_CURRENT_MA / DORIC_CURRENT_SENSITIVITY
-    assert DORIC_MAX_VOLTAGE == pytest.approx(DORIC_MAX_CURRENT_MA / 80.0)
+    assert pytest.approx(DORIC_MAX_CURRENT_MA / 80.0) == DORIC_MAX_VOLTAGE
 
 
 # ---------------------------------------------------------------------------
@@ -107,10 +107,10 @@ def test_stimulation_in_dict_isolated_between_instances():
 def test_stimulation_channel_params_built_for_stim_channel():
     stim = Stimulation(
         port="/dev/null",
-        in_dict={"channels_stimulation": [2], "channel_trigger_clock": [4]},
+        in_dict={"channels_stimulation": [2], "channels_ttl_copy": [3]},
     )
     assert 2 in stim._channel_params
-    assert 4 in stim._channel_params
+    assert 3 in stim._channel_params
 
 
 def test_stimulation_ipi_computed_correctly():
@@ -206,48 +206,50 @@ def _make_trial_data(first_state="barcode_start_s0"):
     return {"States timestamps": {first_state: [0.0, 0.1]}, "Events timestamps": {}}
 
 
-def test_record_update_barcode_trial_type():
-    rec = OptoTaggingRecord(out_path="/tmp/x")
+def _make_record(tmp_path, protocol="power_ramp"):
+    basename = "mouse_01__20260524_143022_123456__optotagging"
+    session_file_path = str(tmp_path / basename)
+    return OptoTaggingRecord(session_file_path, protocol)
+
+
+def test_record_update_barcode_trial_type(tmp_path):
+    rec = _make_record(tmp_path)
     rec.update(
         trial_index=0,
         trial_data=_make_trial_data("barcode_start_s0"),
         barcode_value=42,
         barcode_wall_time=1.0,
-        protocol="proto_a",
+        protocol="power_ramp",
     )
     assert rec.trial_data[0]["info"]["trial_type"] == "barcode"
 
 
-def test_record_update_task_trial_type():
-    rec = OptoTaggingRecord(out_path="/tmp/x")
+def test_record_update_task_trial_type(tmp_path):
+    rec = _make_record(tmp_path)
     rec.update(
         trial_index=1,
         trial_data=_make_trial_data("trial_onset"),
         barcode_value=None,
         barcode_wall_time=None,
-        protocol="proto_a",
+        protocol="power_ramp",
     )
     assert rec.trial_data[0]["info"]["trial_type"] == "task"
 
 
-def test_record_update_stores_protocol():
-    rec = OptoTaggingRecord(out_path="/tmp/x")
-    rec.update(
-        trial_index=0,
-        trial_data=_make_trial_data(),
-        protocol="my_protocol",
-    )
+def test_record_update_stores_protocol(tmp_path):
+    rec = _make_record(tmp_path, protocol="my_protocol")
+    rec.update(trial_index=0, trial_data=_make_trial_data(), protocol="my_protocol")
     assert rec.trial_data[0]["info"]["protocol"] == "my_protocol"
 
 
-def test_record_update_stores_trial_index():
-    rec = OptoTaggingRecord(out_path="/tmp/x")
+def test_record_update_stores_trial_index(tmp_path):
+    rec = _make_record(tmp_path)
     rec.update(trial_index=7, trial_data=_make_trial_data(), protocol="p")
     assert rec.trial_data[0]["info"]["trial_index"] == 7
 
 
-def test_record_update_stores_barcode_fields():
-    rec = OptoTaggingRecord(out_path="/tmp/x")
+def test_record_update_stores_barcode_fields(tmp_path):
+    rec = _make_record(tmp_path)
     rec.update(
         trial_index=0,
         trial_data=_make_trial_data(),
@@ -259,28 +261,45 @@ def test_record_update_stores_barcode_fields():
     assert rec.trial_data[0]["info"]["barcode_wall_time"] == pytest.approx(3.14)
 
 
-def test_record_accumulates_across_updates():
-    rec = OptoTaggingRecord(out_path="/tmp/x")
+def test_record_accumulates_across_updates(tmp_path):
+    rec = _make_record(tmp_path)
     for i in range(3):
         rec.update(trial_index=i, trial_data=_make_trial_data(), protocol="p")
     assert len(rec.trial_data) == 3
 
 
-def test_record_instances_have_independent_trial_data():
+def test_record_instances_have_independent_trial_data(tmp_path):
     """Regression: class-variable list would share state between instances."""
-    r1 = OptoTaggingRecord(out_path="/tmp/r1")
-    r2 = OptoTaggingRecord(out_path="/tmp/r2")
+    basename = str(tmp_path / "mouse_01__20260524_143022_123456__optotagging")
+    r1 = OptoTaggingRecord(basename, "power_ramp")
+    r2 = OptoTaggingRecord(basename, "following_test")
     r1.update(trial_index=0, trial_data=_make_trial_data(), protocol="p")
     assert len(r2.trial_data) == 0
 
 
+def test_record_proto_base_includes_protocol_name(tmp_path):
+    basename = str(tmp_path / "mouse_01__20260524_143022_123456__optotagging")
+    rec = OptoTaggingRecord(basename, "power_ramp")
+    assert "power_ramp" in rec.proto_base
+
+
+def test_record_filename_includes_protocol_and_suffix(tmp_path):
+    basename = str(tmp_path / "mouse_01__20260524_143022_123456__optotagging")
+    rec = OptoTaggingRecord(basename, "power_ramp")
+    assert rec.filename.endswith("power_ramp.msw.df.jsonl")
+
+
 def test_record_save_writes_jsonl(tmp_path):
-    rec = OptoTaggingRecord(out_path=str(tmp_path / "session"))
+    _basename = "mouse_01__20260524_143022_123456__optotagging"
+    rec = OptoTaggingRecord(str(tmp_path / _basename), "power_ramp")
     rec.update(
-        trial_index=0, trial_data=_make_trial_data(), barcode_value=1, protocol="p"
+        trial_index=0,
+        trial_data=_make_trial_data(),
+        barcode_value=1,
+        protocol="power_ramp",
     )
     rec.save()
-    out = tmp_path / "session.msw.jsonl"
+    out = tmp_path / f"{_basename}__power_ramp" / f"{_basename}_power_ramp.msw.df.jsonl"
     assert out.exists()
     lines = [json.loads(line) for line in out.read_text().splitlines() if line.strip()]
     trial_lines = [ln for ln in lines if "info" in ln]
@@ -348,36 +367,29 @@ def test_needs_video_handles_none_protocol_value():
 def _make_task_for_video(session_basename, subject, is_child=None):
     from murineshiftwork.tasks.optotagging.optotagging import Task
 
+    # session_folder_relative mirrors the namespace: subject/acquisition/session
+    acq_name = f"{subject}__{session_basename}__session_opto"
+    session_folder_relative = f"{subject}/{acq_name}/{session_basename}"
     t = object.__new__(Task)
     t.input_kwargs = {
         "session_paths": {
             "session_basename": session_basename,
             "subject": subject,
-            "session_file_path": "/tmp/x",
+            "session_file_path": f"/data/{session_folder_relative}/{session_basename}",
+            "session_folder_relative": session_folder_relative,
         },
-        "_is_child_session_to": is_child,
     }
     return t
 
 
-def test_start_protocol_video_path_no_child():
+def test_start_protocol_video_path():
     t = _make_task_for_video("sess_001", "mouse01")
     conductor = MagicMock()
+    rel = t.input_kwargs["session_paths"]["session_folder_relative"]
     with patch("time.sleep"):
         t._start_protocol_video(conductor, "proto_40hz")
     conductor.initialize_acquisition.assert_called_once_with(
-        acquisition_path="mouse01/sess_001/proto_40hz",
-        acquisition_name="sess_001_proto_40hz",
-    )
-
-
-def test_start_protocol_video_path_with_child():
-    t = _make_task_for_video("sess_001", "mouse01", is_child="parent_sess")
-    conductor = MagicMock()
-    with patch("time.sleep"):
-        t._start_protocol_video(conductor, "proto_40hz")
-    conductor.initialize_acquisition.assert_called_once_with(
-        acquisition_path="mouse01/parent_sess/sess_001/proto_40hz",
+        acquisition_path=f"{rel}/sess_001__proto_40hz",
         acquisition_name="sess_001_proto_40hz",
     )
 
@@ -391,12 +403,12 @@ def test_start_protocol_video_calls_preview_then_recording():
     assert conductor.method_calls[2] == call.start_recording()
 
 
-def test_start_protocol_video_sleeps_three_seconds():
+def test_start_protocol_video_sleeps_warmup():
     t = _make_task_for_video("sess_001", "mouse01")
     conductor = MagicMock()
     with patch("time.sleep") as mock_sleep:
-        t._start_protocol_video(conductor, "proto_40hz")
-    mock_sleep.assert_called_once_with(3)
+        t._start_protocol_video(conductor, "proto_40hz", warmup_s=5.0)
+    mock_sleep.assert_called_once_with(5.0)
 
 
 # ---------------------------------------------------------------------------

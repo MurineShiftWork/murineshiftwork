@@ -89,7 +89,7 @@ def _water_cal_for_setup(csv_path: Path) -> dict[str, dict]:
 
 def _stage_axes_and_positions(stage_path: Path) -> tuple[dict, dict]:
     """Return (axes_dict, known_positions_dict) in SetupConfig format."""
-    with open(stage_path) as f:
+    with stage_path.open() as f:
         s = yaml.safe_load(f)
 
     axes = {}
@@ -125,7 +125,7 @@ def migrate_setup(setup_name: str) -> None:
         print(f"[{setup_name}] YAML not found, skipping.")
         return
 
-    with open(yaml_path) as f:
+    with yaml_path.open() as f:
         raw = yaml.safe_load(f) or {}
 
     print(f"\n[{setup_name}]")
@@ -160,7 +160,7 @@ def migrate_setup(setup_name: str) -> None:
     else:
         print(f"  Camera: no RCE config for {setup_name}, skipping.")
 
-    with open(yaml_path, "w") as f:
+    with yaml_path.open("w") as f:
         yaml.dump(
             raw,
             f,

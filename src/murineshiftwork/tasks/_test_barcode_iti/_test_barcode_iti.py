@@ -29,14 +29,13 @@ from pathlib import Path
 
 from pybpodapi.protocol import Bpod
 from pybpodapi.state_machine import StateMachine
-from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
 from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
+    BarcodeTTL,
     barcode_config_from_settings,
     inject_barcode_states,
-    prepare_barcode,
 )
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.misc import draw_jittered_trial_time
@@ -82,14 +81,12 @@ class Task(TaskRunner):
             iti_spec = s["inter_trial_interval"]
             iti_this_trial = (
                 draw_jittered_trial_time(*iti_spec)
-                if isinstance(iti_spec, (list, tuple)) and len(iti_spec) == 3
+                if isinstance(iti_spec, list | tuple) and len(iti_spec) == 3
                 else float(iti_spec)
             )
             iti_post_barcode = max(0.05, iti_this_trial - barcode_duration_s)
 
-            barcode_value, barcode_wall_time, timing_sequence = prepare_barcode(
-                barcoder
-            )
+            barcode_value, barcode_wall_time, timing_sequence = barcoder.prepare()
 
             logging.info(
                 f"  barcode={barcode_value}  iti={iti_this_trial:.2f}s  "

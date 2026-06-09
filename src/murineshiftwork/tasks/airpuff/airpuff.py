@@ -11,21 +11,21 @@ from rpi_camera_ensemble.config.acquisition import (
     EnsembleAcquisitionConfig,
 )
 from rpi_camera_ensemble.config.conductor import ConductorConfig
-from ttl_barcoder.core.barcode_ttl import BarcodeTTL
 
 from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
 from murineshiftwork.logic.barcode import (
     BARCODE_FIRST_STATE_NAME,
+    BarcodeTTL,
     barcode_config_from_settings,
     inject_barcode_states,
-    prepare_barcode,
 )
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
+from murineshiftwork.namespace.msw_files import msw_file
 
 
-class AirPuff(object):
+class AirPuff:
     input_kwargs: dict = {}
     out_path = ""
 
@@ -61,7 +61,7 @@ class AirPuff(object):
         return self.trial_data.append(trial_data)
 
     def save(self):
-        save_trial_data(self.trial_data, str(self.out_path) + ".msw.jsonl")
+        save_trial_data(self.trial_data, str(msw_file(self.out_path, "df.jsonl")))
         logging.debug(f"Saved session data to {str(self.out_path)}")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -122,7 +122,7 @@ class Task(TaskRunner):
             if trial_index == 0:
                 air_puff_duration = None
                 iti_this_trial = None
-                barcode_value, barcode_wall_time, timing_seq = prepare_barcode(barcoder)
+                barcode_value, barcode_wall_time, timing_seq = barcoder.prepare()
                 sma = StateMachine(bpod=self.bpod)
                 sma = inject_barcode_states(
                     sma, timing_seq, bnc_channel, last_state_name="exit"
@@ -131,7 +131,7 @@ class Task(TaskRunner):
             else:
                 air_puff_duration = trial_types[trial_index - 1]
                 iti_this_trial = draw_jittered_trial_time(*inter_trial_interval)
-                barcode_value, barcode_wall_time, timing_seq = prepare_barcode(barcoder)
+                barcode_value, barcode_wall_time, timing_seq = barcoder.prepare()
                 iti_post_barcode = max(0.05, iti_this_trial - barcode_duration_s)
 
                 sma = StateMachine(bpod=self.bpod)
@@ -192,7 +192,7 @@ class Task(TaskRunner):
             trial_index += 1
 
         try:
-            bv_end, bwt_end, timing_seq_end = prepare_barcode(barcoder)
+            bv_end, bwt_end, timing_seq_end = barcoder.prepare()
             sma_end = StateMachine(bpod=self.bpod)
             sma_end = inject_barcode_states(
                 sma_end, timing_seq_end, bnc_channel, last_state_name="exit"
@@ -226,24 +226,16 @@ def run_task(**args_dict):
             "Set via SetupConfig cameras.config or --config-file-camera."
         )
     ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
-    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
+    conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path"))
     conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
     conductor.start()
     conductor.setup_agents()
 
     # Enter behaviour context
     with TaskProcess(**args_dict) as tp:
-        # Paths for video
-        _session = tp.session_paths["session_basename"]
-        _subject = tp.session_paths["subject"]
-
         conductor.initialize_acquisition(
-            acquisition_path=(
-                f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
-                if args_dict["is_child_session_to"] is not None
-                else f"{_subject}/{_session}"
-            ),
-            acquisition_name=_session,
+            acquisition_path=tp.session_paths["session_folder_relative"],
+            acquisition_name=tp.session_paths["session_basename"],
         )
         conductor.start_preview()
         conductor.start_recording()

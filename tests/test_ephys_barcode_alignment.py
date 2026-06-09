@@ -8,14 +8,14 @@ Usage
 -----
 python test_ephys_barcode_alignment.py \
     --session  /data/subject/session_dir \
-    --oe_dir   /data/subject/ephys_dir/Record\ Node\ 101 \
+    --oe_dir   /data/subject/ephys_dir/Record\\ Node\\ 101 \
     --line     8 \
     --ts_col   corrected_timestamps
 
 # Use raw timestamps (no processor alignment):
 python test_ephys_barcode_alignment.py \
     --session /data/subject/session_dir \
-    --oe_dir  /path/to/Record\ Node\ 101 \
+    --oe_dir  /path/to/Record\\ Node\\ 101 \
     --line    8 \
     --ts_col  timestamps
 

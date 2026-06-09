@@ -1,0 +1,67 @@
+msw_format_version: 2
+process:
+  msw_version: 2.1.1.dev3+gdc9b438d4.d20260518
+  git_commit: ''
+  task: sequence
+  subject: _test_subject
+  setup: setup-npx2
+  serial_port: /dev/ttyACM5
+  out_path: /mnt/data/data
+  session_folder: /mnt/data/data/_test_subject/_test_subject__20260520_114516_534465__sequence
+  session_basename: _test_subject__20260520_114516_534465__sequence
+  datetime: '20260520_114516_534465'
+task_settings:
+  testing: false
+  show_live_plot: true
+  online_plot_poke_ymax_s: null
+  record_video: false
+  sequence:
+  - 2
+  - 1
+  - 6
+  - 3
+  - 7
+  training_levels_file: null
+  start_level: 10
+  reset_level: false
+  buffer_trials: 10
+  scoring_metric: ordered
+  progression_threshold: 0.9
+  regression_threshold: 0.2
+  level_1_min_trials: 50
+  prevent_regression_below_start: false
+  n_max_trials: 1500
+  strict_sequence: false
+  init_port_timeout_s: 10.0
+  iti_duration: 0.4
+  punish_duration: 0.5
+  reward_sound: true
+  reward_sound_frequency: -1
+  reward_sound_duration: 0.2
+  reward_sound_amplitude: 0.15
+  reward_sound_device: pipewire
+  HARDWARE_BNC_TRIAL_START: 1
+  HARDWARE_PORT_LEFT: 1
+  HARDWARE_PORT_CENTER: 2
+  HARDWARE_PORT_RIGHT: 3
+  ttl_pulse_duration: 0.01
+  barcode_bits: 37
+  barcode_bit_duration_ms: 35.0
+  barcode_init_duration_ms: 10.0
+  barcode_tolerance: 0.25
+  port_colors:
+  - '#34475C'
+  - '#4BA5BF'
+  - '#90C681'
+  - '#FFD062'
+  - '#ED6F5D'
+  - '#ABBAB3'
+  calibration_file_water: /home/testuser/.murineshiftwork/calibration.water.default.csv
+  calibration_file_sound: ''
+  calibration_file_stage: /home/testuser/.murineshiftwork/calibration.stage.default.yaml
+  serial_port_stage: /dev/ttyUSB0
+  serial_port_pulsepal: /dev/ttyACM1
+  serial_port_scale: /dev/ttyACM6
+  config_dir: /mnt/data/msw_configs
+  scale_type: hx711
+  subject: _test_subject

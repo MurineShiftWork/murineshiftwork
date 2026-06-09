@@ -6,12 +6,15 @@ import numpy as np
 from pybpodapi.protocol import Bpod, StateMachine
 from pypulsepal import PulsePal as PyPulsePal
 
-from murineshiftwork.hardware.bpod.ttl import (
-    add_trial_onset_ttl,
-    make_ttl_identifier_sequences,
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
+from murineshiftwork.logic.barcode import (
+    BarcodeTTL,
+    barcode_config_from_settings,
+    inject_barcode_states,
 )
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
+from murineshiftwork.namespace.msw_files import msw_file
 from murineshiftwork.tasks.exp_trn_spindle.param_sets import (
     stimulation_param_sets,
 )
@@ -44,7 +47,7 @@ class ProtocolObject:
             return self.trial_data.append(trial_data)
 
     def save(self):
-        save_trial_data(self.trial_data, str(self.out_path) + ".msw.jsonl")
+        save_trial_data(self.trial_data, str(msw_file(self.out_path, "df.jsonl")))
         logging.debug(f"Saved session data to {str(self.out_path)}")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -67,7 +70,7 @@ class Task(TaskRunner):
         on_off_periods_n_trial = round(on_off_periods / ITI)
 
         raw_out_path = self.input_kwargs["session_paths"]["session_file_path"]
-        with open(str(raw_out_path) + ".msw.stimulation.json", "w") as f:
+        with msw_file(raw_out_path, "stimulation.json").open("w") as f:
             out_json = json.dumps(stimulation_param_sets, indent=4, sort_keys=True)
             f.write(out_json)
 
@@ -83,6 +86,7 @@ class Task(TaskRunner):
 
         # TRIALS
         trial_index = 0
+        barcoder = BarcodeTTL(barcode_config_from_settings(task_settings))
         while self.continue_task and trial_index <= task_settings.get(
             "N_MAX_TRIALS", N_MAX_TRIALS
         ):
@@ -92,10 +96,13 @@ class Task(TaskRunner):
             trial_stim_settings: dict = {}
 
             if trial_index == 0:
-                sma = make_ttl_identifier_sequences(
-                    bpod=self.bpod,
-                    sequence=task_settings["TTL_IDENTIFIER_SEQUENCE"],
-                    output_chanel_pulse=self._bnc_channel_trial_onset,
+                _, _, timing_seq = barcoder.prepare()
+                sma = StateMachine(bpod=self.bpod)
+                sma = inject_barcode_states(
+                    sma,
+                    timing_seq,
+                    self._bnc_channel_trial_onset,
+                    last_state_name="exit",
                 )
             else:
                 if skip_counter >= on_off_periods_n_trial:

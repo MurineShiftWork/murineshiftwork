@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import Annotated, Any, Literal
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
@@ -56,13 +57,12 @@ class GenericSerialDevice(SerialDevice):
 class ScaleDevice(SerialDevice):
     type: Literal["scale"]
     scale_type: Literal["hx711", "bench"] = "hx711"
-    baudrate: int = 4800
+    baudrate: int = 9600
+    scale_protocol: int | None = None
 
 
 DeviceUnion = Annotated[
-    Union[
-        BpodDevice, PulsePalDevice, StageTowerDevice, GenericSerialDevice, ScaleDevice
-    ],
+    BpodDevice | PulsePalDevice | StageTowerDevice | GenericSerialDevice | ScaleDevice,
     Field(discriminator="type"),
 ]
 
@@ -129,7 +129,25 @@ class ValveCalibration(BaseModel):
                 f"Exponential fit failed — check calibration points for valve.\n{exc}"
             )
 
+    def _calibrated_range_ul(self) -> tuple[float, float]:
+        """Return (min_ul, max_ul) of the calibrated volume range."""
+        pts = sorted(self.points, key=lambda p: p[0])
+        a, b, c = self._fit()
+        ul_min = float(_exp_model(np.array([pts[0][0]]), a, b, c)[0])
+        ul_max = float(_exp_model(np.array([pts[-1][0]]), a, b, c)[0])
+        return ul_min, ul_max
+
     def ul_for_s(self, open_s: float) -> float:
+        pts = sorted(self.points, key=lambda p: p[0])
+        s_min, s_max = pts[0][0], pts[-1][0]
+        if open_s < s_min or open_s > s_max:
+            logging.warning(
+                "ValveCalibration.ul_for_s: open_s=%.4f s is outside calibrated "
+                "range [%.4f, %.4f] s — extrapolating",
+                open_s,
+                s_min,
+                s_max,
+            )
         a, b, c = self._fit()
         return float(_exp_model(np.array([open_s]), a, b, c)[0])
 
@@ -138,12 +156,26 @@ class ValveCalibration(BaseModel):
 
         Sampling is used rather than the analytical inverse (ln((v-c)/a)/b) because
         the analytical form is numerically fragile when a or b are near zero.
+
+        The sample grid extends 50% beyond the calibrated time range so that
+        requests outside the calibrated volume range extrapolate via the fit
+        model rather than clamping silently at the boundary.
         """
         pts = sorted(self.points, key=lambda p: p[0])
         s_min, s_max = pts[0][0], pts[-1][0]
-        s_dense = np.linspace(s_min, s_max, 2000)
+        margin = (s_max - s_min) * 0.5
+        s_dense = np.linspace(max(0.0, s_min - margin), s_max + margin, 4000)
         a, b, c = self._fit()
         ul_dense = _exp_model(s_dense, a, b, c)
+        ul_lo, ul_hi = float(ul_dense.min()), float(ul_dense.max())
+        if volume_ul < ul_lo or volume_ul > ul_hi:
+            logging.warning(
+                "ValveCalibration.s_for_ul: %.3f µL is outside calibrated "
+                "range [%.3f, %.3f] µL — extrapolating",
+                volume_ul,
+                ul_lo,
+                ul_hi,
+            )
         return float(np.interp(volume_ul, ul_dense, s_dense))
 
     def validate(self, r2_threshold: float = 0.95) -> tuple[bool, str]:  # type: ignore[override]
@@ -203,25 +235,31 @@ class ValveCalibration(BaseModel):
 
 class Calibrations(BaseModel):
     bpod_valve: dict[str, ValveCalibration] = {}
+    stale_days: int = 180
 
 
 # ---------------------------------------------------------------------------
-# Camera config (minimal — full spec in design/camera_acquisition.md)
+# Camera config
+
+
+class CameraUnit(BaseModel):
+    """Per-camera specification for the FLIR/Bonsai backend."""
+
+    index: int
+    fps: int = 60
 
 
 class CameraConfig(BaseModel):
     backend: str = "rce"  # "rce" | "flir_bonsai"
-    config: str = ""  # RCE: path to ensemble YAML; flir_bonsai: unused
+    config: str = ""  # RCE only: path to ensemble YAML
     # FLIR/Bonsai-specific (ignored when backend="rce")
-    n_cameras: int = 1
-    fps: int = 60
     driver: str = "flycap"  # "flycap" | "spinnaker"
-    workflow: str = (
-        ""  # workflow stem; auto-derived as "run-flir-{driver}-{n}cam" if empty
-    )
-    bonsai_exe: str = (
-        ""  # path to Bonsai.exe; falls back to BONSAI_EXE env var if empty
-    )
+    bonsai_exe: str = ""  # path to Bonsai.exe; falls back to BONSAI_EXE env var
+    workflow: str = ""  # workflow stem; auto-derived as run-flir-{driver}-1cam if empty
+    cameras: list[CameraUnit] = []  # per-camera index + fps; preferred over n_cameras
+    # Flat shorthand (used when cameras list is empty)
+    n_cameras: int = 1
+    fps: int = 60  # ignored for spinnaker (set in workflow XML)
 
 
 # ---------------------------------------------------------------------------
@@ -240,9 +278,10 @@ class HooksConfig(BaseModel):
 class SetupConfig(BaseModel):
     name: str
     devices: dict[str, DeviceUnion] = {}
-    cameras: Optional[CameraConfig] = None
+    cameras: CameraConfig | None = None
     calibrations: Calibrations = Calibrations()
-    hooks: Optional[HooksConfig] = None
+    hooks: HooksConfig = HooksConfig()
+    open_ephys_url: str = ""
 
     def device_port(self, device_name: str) -> str:
         if device_name not in self.devices:
@@ -280,8 +319,8 @@ class SubjectConfig(BaseModel):
 class ExecutionConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    setup: Optional[SetupConfig] = None
-    subject: Optional[SubjectConfig] = None
+    setup: SetupConfig | None = None
+    subject: SubjectConfig | None = None
     task_name: str = ""
     task_settings: dict[str, Any] = {}
 

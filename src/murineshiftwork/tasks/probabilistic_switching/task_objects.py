@@ -14,7 +14,7 @@ from murineshiftwork.logic.maths import ExponentialMovingAverage, withprob
 from murineshiftwork.logic.sounds import StereoSound
 
 
-class TaskControl(object):
+class TaskControl:
     bpod: Any = None
     sound = None
     sound_delay_correction = 0
@@ -66,16 +66,16 @@ class TaskControl(object):
     last_stop = 0
 
     def __init__(self, bpod=None, save_path_data=None, task_settings=None):
-        super(TaskControl, self).__init__()
+        super().__init__()
 
         if not bpod:
             raise ValueError("Required input argument: bpod")
         self.bpod = bpod
 
         self.save_path_data = (
-            Path(self.bpod.workspace_path) / self.bpod.session_name
-            if not save_path_data
-            else save_path_data
+            save_path_data
+            if save_path_data
+            else Path(self.bpod.workspace_path) / self.bpod.session_name
         )
         print(f"Running session: {Path(self.save_path_data).name}")
 
@@ -415,7 +415,7 @@ class TaskControl(object):
             key = "choice"
             n_back_crit = 20
             td_info = [td["info"] for td in self.trial_data if td and key in td["info"]]
-            choice_vector = [c[key] for c in td_info if key in c.keys()]
+            choice_vector = [c[key] for c in td_info if key in c]
             unique_choices = np.unique(choice_vector[-n_back_crit:])
             unique_choices_n_back = unique_choices.__len__()
 

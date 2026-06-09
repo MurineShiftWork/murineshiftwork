@@ -7,6 +7,11 @@ from rpi_camera_ensemble.conductor.conductor import Conductor
 from rpi_camera_ensemble.config.acquisition import EnsembleAcquisitionConfig
 from rpi_camera_ensemble.config.conductor import ConductorConfig
 
+from murineshiftwork.logic.barcode import (
+    BarcodeTTL,
+    barcode_config_from_settings,
+    inject_barcode_states,
+)
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 from murineshiftwork.tasks.probabilistic_switching.online_plotting import (
     OnlinePlottingForPS,
@@ -24,19 +29,21 @@ class Task(TaskRunner):
 
         trial_index = 0
         max_trials = task_settings["n_max_trials"]
+        barcoder = BarcodeTTL(barcode_config_from_settings(task_settings))
         while self.continue_task and trial_index < max_trials:
             if trial_index == 0 and not task_settings["testing"]:
-                from murineshiftwork.hardware.bpod.ttl import (
-                    make_ttl_identifier_sequences,
-                )
+                from pybpodapi.state_machine import StateMachine
 
-                sma = make_ttl_identifier_sequences(
-                    bpod=self.bpod,
-                    sequence=task_settings["ttl_identifier_sequence"],
-                    output_chanel_pulse=getattr(
+                _, _, timing_seq = barcoder.prepare()
+                sma = StateMachine(bpod=self.bpod)
+                sma = inject_barcode_states(
+                    sma,
+                    timing_seq,
+                    getattr(
                         self.bpod.OutputChannels,
                         f"BNC{task_settings['HARDWARE_BNC_TRIAL_START']}",
                     ),
+                    last_state_name="exit",
                 )
             else:
                 sma = task_control.draw_next_trial()
@@ -103,19 +110,13 @@ def run_task(**args_dict):
         ensemble_cfg_file = args_dict.get("config_file_camera", "")
         if ensemble_cfg_file and Path(ensemble_cfg_file).exists():
             ensemble_cfg = EnsembleAcquisitionConfig.from_yaml(path=ensemble_cfg_file)
-            conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path", None))
+            conductor_cfg = ConductorConfig(data_dir=args_dict.get("out_path"))
             conductor = Conductor(config=conductor_cfg, ensemble_config=ensemble_cfg)
             conductor.start()
             conductor.setup_agents()
-            _session = tp.session_paths["session_basename"]
-            _subject = tp.session_paths["subject"]
             conductor.initialize_acquisition(
-                acquisition_path=(
-                    f"{_subject}/{args_dict['is_child_session_to']}/{_session}"
-                    if args_dict.get("is_child_session_to")
-                    else f"{_subject}/{_session}"
-                ),
-                acquisition_name=_session,
+                acquisition_path=tp.session_paths["session_folder_relative"],
+                acquisition_name=tp.session_paths["session_basename"],
             )
             conductor.start_preview()
             conductor.start_recording()
