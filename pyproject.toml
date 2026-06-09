@@ -9,7 +9,7 @@ description = "Murine Shift Work — behavioural task acquisition with hardware 
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE" }
 authors = [
-    { name = "Lars B. Rollik", email = "L.B.Rollik@protonmail.com" },
+    { name = "Lars B. Rollik", email = "lars@rollik.me" },
 ]
 requires-python = ">=3.12,<3.14"
 dependencies = [

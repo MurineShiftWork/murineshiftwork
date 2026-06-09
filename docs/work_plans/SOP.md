@@ -154,11 +154,13 @@ These are independent questions.
 | `msw-flir-bonsai` | custom noncommercial | ✓ done | |
 | `ttl-barcoder` | custom noncommercial | ✓ done | |
 | `acquisition-namespace` | custom noncommercial | ✓ done | |
+| `msw-open-ephys` | custom noncommercial | ✓ done | |
+| `rpi_camera_ensemble_dev` | custom noncommercial | ✓ done | dev copy in provision_rpi |
 | `pypulsepal` | BSD-3-Clause | ✓ done | hardware wrapper; `_arcom.py` vendored |
-| `serial_scale_hx711` | BSD-3-Clause | needs update | currently BSD-3 (year/email only) |
-| `serial_scale_bench` | BSD-3-Clause | needs update | currently BSD-3 (year/email only) |
-| `one-axis-stage` | BSD-3-Clause | needs update | currently BSD-3 (year/email only) |
-| `rfid-to-url` | BSD-3-Clause | needs update | currently BSD-3 (year/email only) |
+| `serial_scale_hx711` | BSD-3-Clause | ✓ done | |
+| `serial_scale_bench` | BSD-3-Clause | ✓ done | |
+| `one-axis-stage` | BSD-3-Clause | ✓ done | |
+| `rfid-to-url` | BSD-3-Clause | ✓ done | |
 | `templatepy` (outer) | BSD-3-Clause | ✓ done | the template repo itself |
 | `templatevue` (outer) | BSD-3-Clause | ✓ done | |
 | `templatepy` (inner) | conditional via copier | ✓ done | default noncommercial; bsd3 option |
