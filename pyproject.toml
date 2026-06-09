@@ -14,7 +14,7 @@ authors = [
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "acquisition-namespace>=1.2.2",
-    "ttl-barcoder>=0.3.0,<1.0",
+    "ttl-barcoder>=0.4.1",
     "pydantic>=2.0",
     "tqdm",
     "rich",
