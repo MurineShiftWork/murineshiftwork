@@ -67,7 +67,7 @@ qt = [
     "opencv-python-headless",
 ]
 rce = [
-    "rpi_camera_ensemble",
+    "rpi-camera-ensemble[conductor]",
 ]
 agent = [
     "fastapi>=0.110",
@@ -75,7 +75,7 @@ agent = [
     "websockets>=12",
 ]
 full = [
-    "murineshiftwork[calibration,keyboard,qt,agent]",
+    "murineshiftwork[calibration,keyboard,qt,agent,rce]",
 ]
 
 [project.scripts]
@@ -190,4 +190,5 @@ exclude = ["external"]
 environments = [
     "sys_platform == 'linux'",
     "sys_platform == 'darwin'",
+    "sys_platform == 'win32'",
 ]
