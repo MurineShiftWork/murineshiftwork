@@ -189,6 +189,7 @@ def test_update_valve_calibration_writes(tmp_path):
         raw = yaml.safe_load(f)
     assert "1" in raw["calibrations"]["bpod_valve"]
     assert raw["calibrations"]["bpod_valve"]["1"]["updated"] == "2025-08-07T10:00:00"
+    assert path.read_text().startswith("---\n")
 
 
 def test_update_valve_calibration_invalid_rejected(tmp_path):
@@ -339,6 +340,7 @@ def test_save_subject_task_overrides_multiple_keys(tmp_path):
         raw = yaml.safe_load(f)
     assert raw["task_overrides"]["sequence"]["start_level"] == 7
     assert raw["task_overrides"]["sequence"]["task_mode"] == "hard"
+    assert path.read_text().startswith("---\n")
 
 
 def test_save_subject_task_overrides_merge_does_not_wipe_other_tasks(tmp_path):
