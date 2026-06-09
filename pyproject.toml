@@ -28,7 +28,7 @@ version-file = "_version.py"
 [tool.commitizen]
 name = "cz_conventional_commits"
 version_provider = "commitizen"
-version = "0.1.0"
+version = "0.1.1"
 version_files = ["VERSION"]
 tag_format = "v$version"
 update_changelog_on_bump = false
