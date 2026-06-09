@@ -7,6 +7,11 @@ from rpi_camera_ensemble.conductor.conductor import Conductor
 from rpi_camera_ensemble.config.acquisition import EnsembleAcquisitionConfig
 from rpi_camera_ensemble.config.conductor import ConductorConfig
 
+from murineshiftwork.logic.barcode import (
+    BarcodeTTL,
+    barcode_config_from_settings,
+    inject_barcode_states,
+)
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 from murineshiftwork.tasks.probabilistic_switching.online_plotting import (
     OnlinePlottingForPS,
@@ -24,19 +29,21 @@ class Task(TaskRunner):
 
         trial_index = 0
         max_trials = task_settings["n_max_trials"]
+        barcoder = BarcodeTTL(barcode_config_from_settings(task_settings))
         while self.continue_task and trial_index < max_trials:
             if trial_index == 0 and not task_settings["testing"]:
-                from murineshiftwork.hardware.bpod.ttl import (
-                    make_ttl_identifier_sequences,
-                )
+                from pybpodapi.state_machine import StateMachine
 
-                sma = make_ttl_identifier_sequences(
-                    bpod=self.bpod,
-                    sequence=task_settings["ttl_identifier_sequence"],
-                    output_chanel_pulse=getattr(
+                _, _, timing_seq = barcoder.prepare()
+                sma = StateMachine(bpod=self.bpod)
+                sma = inject_barcode_states(
+                    sma,
+                    timing_seq,
+                    getattr(
                         self.bpod.OutputChannels,
                         f"BNC{task_settings['HARDWARE_BNC_TRIAL_START']}",
                     ),
+                    last_state_name="exit",
                 )
             else:
                 sma = task_control.draw_next_trial()

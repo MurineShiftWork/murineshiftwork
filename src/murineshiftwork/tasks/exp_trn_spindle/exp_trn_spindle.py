@@ -6,9 +6,11 @@ import numpy as np
 from pybpodapi.protocol import Bpod, StateMachine
 from pypulsepal import PulsePal as PyPulsePal
 
-from murineshiftwork.hardware.bpod.ttl import (
-    add_trial_onset_ttl,
-    make_ttl_identifier_sequences,
+from murineshiftwork.hardware.bpod.ttl import add_trial_onset_ttl
+from murineshiftwork.logic.barcode import (
+    BarcodeTTL,
+    barcode_config_from_settings,
+    inject_barcode_states,
 )
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
@@ -84,6 +86,7 @@ class Task(TaskRunner):
 
         # TRIALS
         trial_index = 0
+        barcoder = BarcodeTTL(barcode_config_from_settings(task_settings))
         while self.continue_task and trial_index <= task_settings.get(
             "N_MAX_TRIALS", N_MAX_TRIALS
         ):
@@ -93,10 +96,13 @@ class Task(TaskRunner):
             trial_stim_settings: dict = {}
 
             if trial_index == 0:
-                sma = make_ttl_identifier_sequences(
-                    bpod=self.bpod,
-                    sequence=task_settings["TTL_IDENTIFIER_SEQUENCE"],
-                    output_chanel_pulse=self._bnc_channel_trial_onset,
+                _, _, timing_seq = barcoder.prepare()
+                sma = StateMachine(bpod=self.bpod)
+                sma = inject_barcode_states(
+                    sma,
+                    timing_seq,
+                    self._bnc_channel_trial_onset,
+                    last_state_name="exit",
                 )
             else:
                 if skip_counter >= on_off_periods_n_trial:

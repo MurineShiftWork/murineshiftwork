@@ -25,6 +25,7 @@ Design details live in memory files or separate docs — not here.
 ### Task currency fixes (pre-repo-separation)
 
 - [x] **`rpi_camera_colony` → `rpi_camera_ensemble`** — `periodic_trigger_with_video` and `_test_video` updated to new conductor API (`EnsembleAcquisitionConfig`, `ConductorConfig`, `conductor.start()`/`setup_agents()`/`initialize_acquisition()`/`start_preview()`/`start_recording()`/`stop_acquisition()`/`stop()`). · 2026-06-09
+- [x] **`make_ttl_identifier_sequences` → `inject_barcode_states`** — migrated all 5 task callers: `_test_ttl_barcodes`, `_test_ttl_outputs` (now send proper decodable barcodes); `_test_video` (initial camera sync burst removed — `rpi_camera_ensemble` handles sync); `exp_trn_spindle`, `probabilistic_switching` (session-start identifier now a proper barcode). Dead `ttl_identifier_sequence` key removed from `probabilistic_switching/task.yaml`. · 2026-06-09
 - [x] **`_test_video` + `_test_trigger_with_video` cross-task dep removed** — `OnlinePlottingForPS` import dropped; `_test_trigger_with_video` deleted (was a thin wrapper with test defaults — run base task with `-ts` flags). · 2026-06-08
 - [x] **`periodic_trigger_with_video` save path** — replaced `Path(bpod.workspace_path) / bpod.session_name + ".df.jsonl"` with `self.get_path("df.jsonl")` (uses `msw_file()` via `TaskRunner`). · 2026-06-09
 - [ ] **`task_name/task_name.py` → `task_name/task.py` rename** — rename main module in every task directory from `{name}.py` to `task.py`; update `load_task_module()` fallback in `cli/tasks.py`. Natural moment: during task extraction into `msw-tasks-*` packages. Not urgent.
@@ -40,7 +41,7 @@ Design details live in memory files or separate docs — not here.
 - [ ] **Extract `msw-readers`** — boundary clean; move to `external/msw-readers/`; temporary dep on `murineshiftwork` until `msw-core` extracted. Soft-blocked on `msw-core` for final clean dep graph.
 - [ ] **Extract `msw-tasks-core`** — calibration tasks + clean hardware test tasks; self-contained; validates entry-point task registration pattern. Blocked on extraction sprint start.
 - [ ] **Extract `msw-tasks-sequence`** — reference task for external authors. Follows `msw-tasks-core`.
-- [ ] **Org migration: `one-axis-stage`** — only remaining repo under `larsrollik/`; transfer to `MurineShiftWork` org.
+- [ ] **Org migration: `one-axis-stage`** (manual) — only remaining repo under `larsrollik/`; transfer to `MurineShiftWork` org; set up PyPI OIDC trusted publishing after transfer.
 
 ---
 

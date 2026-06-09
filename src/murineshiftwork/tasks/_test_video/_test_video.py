@@ -4,25 +4,17 @@ from multiprocessing import Queue
 from pathlib import Path
 
 import numpy as np
-from pybpodapi.protocol import Bpod, StateMachine
+from pybpodapi.protocol import Bpod
+from pybpodapi.state_machine import StateMachine
 from rpi_camera_ensemble.conductor.conductor import Conductor
 from rpi_camera_ensemble.config.acquisition import EnsembleAcquisitionConfig
 from rpi_camera_ensemble.config.conductor import ConductorConfig
 
-from murineshiftwork.hardware.bpod.ttl import make_ttl_identifier_sequences
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
 
 
 class Task(TaskRunner):
     def run(self):
-        sma = make_ttl_identifier_sequences(
-            bpod=self.bpod,
-            sequence="LsLsLs",
-            output_chanel_pulse=eval("Bpod.OutputChannels.BNC1"),
-        )
-        self.bpod.run_state_machine(sma)
-        logging.info("Protocol sequence sent.")
-
         trial_index = 0
         max_trials = 4
         while self.continue_task and trial_index < max_trials:
