@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "murineshiftwork"
+dynamic = ["version"]
+description = "MurineShiftWork — behavioural neuroscience experiment control suite"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { file = "LICENSE" }
+authors = [
+    { name = "Lars B. Rollik", email = "lars@rollik.me" },
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/MurineShiftWork/murineshiftwork"
+"Issue Tracker" = "https://github.com/MurineShiftWork/murineshiftwork/issues"
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.1.0"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "_version.py"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "commitizen"
+version = "0.1.0"
+version_files = ["VERSION"]
+tag_format = "v$version"
+update_changelog_on_bump = false
