@@ -140,6 +140,30 @@ No PolyForm variants. No CC licences for code.
 
 **Contact for commercial or patent licensing:** lars@rollik.me
 
+### Repo licence status
+
+**Outer licence** = the licence of the repository itself (what the template/tool is).
+**Inner licence** = the licence baked into projects generated from a template.
+These are independent questions.
+
+| Repo | Outer licence | Status | Notes |
+|---|---|---|---|
+| `murineshiftwork` | custom noncommercial | ✓ done | canonical text lives here |
+| `murineshiftwork-blocking` | all rights reserved | ✓ done | name-reservation stub |
+| `rpi-camera-ensemble` | custom noncommercial | needs update | currently BSD-3 |
+| `msw-flir-bonsai` | custom noncommercial | needs update | currently BSD-3 |
+| `ttl-barcoder` | custom noncommercial | needs update | currently BSD-3 |
+| `acquisition-namespace` | custom noncommercial | needs update | template placeholder |
+| `pypulsepal` | BSD-3-Clause | ✓ done | hardware wrapper; `_arcom.py` vendored |
+| `serial_scale_hx711` | BSD-3-Clause | needs update | currently BSD-3 (year/email only) |
+| `serial_scale_bench` | BSD-3-Clause | needs update | currently BSD-3 (year/email only) |
+| `one-axis-stage` | BSD-3-Clause | needs update | currently BSD-3 (year/email only) |
+| `rfid-to-url` | BSD-3-Clause | needs update | currently BSD-3 (year/email only) |
+| `templatepy` (outer) | BSD-3-Clause | ✓ done | the template repo itself |
+| `templatevue` (outer) | BSD-3-Clause | needs update | no licence yet |
+| `templatepy` (inner) | conditional via copier | ✓ done | default noncommercial; bsd3 option |
+| `templatevue` (inner) | BSD-3-Clause | needs update | front-end deployable; no research IP |
+
 ---
 
 ## One-shot useful phrases
