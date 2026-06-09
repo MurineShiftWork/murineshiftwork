@@ -245,11 +245,7 @@ class Calibrations(BaseModel):
 class CameraUnit(BaseModel):
     """Per-camera specification for the FLIR/Bonsai backend."""
 
-    index: int
-    fps: int = 60
-    serial: str = (
-        ""  # manufacturer serial — used in output filenames and .flir.meta.yaml
-    )
+    index: int  # SDK enumeration index; run `msw flir list-cameras` to resolve
 
 
 class CameraConfig(BaseModel):
@@ -259,10 +255,8 @@ class CameraConfig(BaseModel):
     driver: str = "flycap"  # "flycap" | "spinnaker"
     bonsai_exe: str = ""  # path to Bonsai.exe; falls back to BONSAI_EXE env var
     workflow: str = ""  # workflow stem; auto-derived as run-flir-{driver}-1cam if empty
-    cameras: list[CameraUnit] = []  # per-camera index + fps; preferred over n_cameras
-    # Flat shorthand (used when cameras list is empty)
-    n_cameras: int = 1
-    fps: int = 60  # ignored for spinnaker (set in workflow XML)
+    cameras: list[CameraUnit] = []  # preferred; one entry per camera
+    n_cameras: int = 1  # flat shorthand when cameras list is empty
 
 
 # ---------------------------------------------------------------------------

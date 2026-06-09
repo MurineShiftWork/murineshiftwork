@@ -92,11 +92,7 @@ cameras:
   bonsai_exe: C:\Users\lab\AppData\Local\Bonsai\Bonsai.exe
   cameras:
     - index: 0
-      fps: 60
-      serial: "12345678"
     - index: 1
-      fps: 60
-      serial: "87654321"
 ```
 
 | Field | Default | Description |
@@ -104,36 +100,22 @@ cameras:
 | `driver` | `flycap` | `flycap` (FlyCapture2 SDK) or `spinnaker` (Spinnaker SDK) |
 | `bonsai_exe` | `""` | Full path to `Bonsai.exe`. Falls back to `BONSAI_EXE` env var. |
 | `workflow` | `""` | Override workflow stem. Defaults to `run-flir-{driver}-1cam`. |
-| `cameras` | `[]` | List of per-camera specs (see fields below). |
-| `cameras[].index` | required | SDK enumeration index used to select the physical camera. |
-| `cameras[].fps` | `60` | Frame rate (FlyCapture only; ignored for Spinnaker). |
-| `cameras[].serial` | `""` | Manufacturer serial number. Appears directly in output filenames and `.flir.meta.yaml`. Falls back to `cam{index}` if omitted. |
+| `cameras` | `[]` | List of per-camera specs. Each entry requires only `index`. |
+| `cameras[].index` | required | SDK enumeration index. Run `msw flir list-cameras` to resolve. |
 
-**`index`** is the SDK enumeration index. Run `msw flir list-cameras --driver flycap`
-on the acquisition machine to see which index maps to which serial number, then
-set them here explicitly.  Non-consecutive indices (e.g. 0 and 2, skipping a
-disconnected camera) are valid.  The index–serial mapping is not guaranteed stable
-across reboots; `serial` is the authoritative camera identity — update `index` in
-the config if hardware is re-enumerated differently.
+**`index`** is the SDK enumeration index used to select the physical camera.
+It is not guaranteed stable across reboots; if cameras are re-enumerated
+differently, update the indices here.  Serial numbers are discovered at runtime
+by the Bonsai workflow — see the sidecar section below.
 
-**`serial`** appears in the Bonsai output filenames and directory names directly
-(via `cam1vid.name` and `cam1meta.name` workflow properties), so video files are
-self-identifying without any post-hoc lookup.  It is also written to
-`{session}.flir.meta.yaml`.  Obtain it once via `msw flir list-cameras --driver
-flycap` and keep it in the setup YAML permanently — it never changes for a given
-camera body.
-
-**`fps` (FlyCapture only)**: passed as `-p cam1fps=N` to the Bonsai workflow at
-launch, which sets the `FramesPerSecond` property on the FlyCapture node.
-For Spinnaker, `fps` is ignored — frame rate is configured inside the workflow
-XML in the Bonsai editor.
+**Frame rate** must be configured in the SDK GUI (FlyCapture2 / Spinnaker
+Viewer) and saved to camera non-volatile memory, not via this config.
 
 **Finding `bonsai_exe`**: run `msw flir find-bonsai` on the acquisition machine.
 The printed path goes directly into this field. Alternatively export `BONSAI_EXE`
 as a system environment variable and omit the field from the YAML.
 
-**Shorthand** (all cameras same fps, consecutive indices from 0, no per-camera
-name/serial — not recommended for multi-camera rigs):
+**Shorthand** (consecutive indices from 0):
 
 ```yaml
 cameras:
@@ -141,7 +123,6 @@ cameras:
   driver: flycap
   bonsai_exe: C:\Users\lab\AppData\Local\Bonsai\Bonsai.exe
   n_cameras: 2
-  fps: 60
 ```
 
 **Per-camera optical parameters** (gain, shutter, exposure) are set inside the
@@ -149,8 +130,15 @@ Bonsai workflow XML — open it in the Bonsai editor on the acquisition machine.
 
 ### FLIR session metadata sidecar
 
-At the start of each recording a `{session}.flir.meta.yaml` file is written to
-the session output directory.  Example:
+At the start of each recording Python writes `{session}.flir.meta.yaml` to the
+session output directory, merging per-camera meta files written by Bonsai at
+startup.  The Bonsai workflows query the camera serial number via the
+FlyCapture2Managed / Spinnaker .NET API and write
+`{output_dir}/{session}__cam{index}__meta.yaml` before opening the capture
+stream (see `docs/work_plans/PLAN_flir_bonsai_serial.md` for the workflow
+change details).
+
+Example sidecar once the Bonsai workflows are updated:
 
 ```yaml
 flir_acq_format_version: 1
@@ -162,20 +150,16 @@ bonsai_exe: C:\Users\lab\AppData\Local\Bonsai\Bonsai.exe
 cameras:
   - cam_index: 0
     serial: "12345678"
-    label: "12345678"
-    fps: 60
-    bonsai_session: s001__20260609_143022__12345678
+    datetime: "2026-06-09T14:30:23"
+    bonsai_session: s001__20260609_143022__cam0
   - cam_index: 1
     serial: "87654321"
-    label: "87654321"
-    fps: 60
-    bonsai_session: s001__20260609_143022__87654321
+    datetime: "2026-06-09T14:30:23"
+    bonsai_session: s001__20260609_143022__cam1
 ```
 
-`label` is the serial number (or `cam{index}` when no serial is configured).
-It appears verbatim in the output filenames and directory names under the output
-root, so files are self-identifying.  `bonsai_session` is the subdirectory Bonsai
-creates — it contains the `.avi` and `.csv` files for that camera.
+`bonsai_session` is the subdirectory Bonsai creates under `output_dir` for
+that camera.  Post-processing resolves `cam_index → serial` from this file.
 
 ## Open Ephys integration
 

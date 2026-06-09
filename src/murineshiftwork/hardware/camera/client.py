@@ -35,11 +35,6 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-def _cam_label(index: int, serial: str = "") -> str:
-    """Return the camera label used in filenames, session strings, and sidecar metadata."""
-    return serial.strip() if serial.strip() else f"cam{index}"
-
-
 # ---------------------------------------------------------------------------
 # RCE adapter
 
@@ -158,74 +153,76 @@ class FlirBonsaiClient:
         workflow = cfg.workflow or f"run-flir-{cfg.driver}-1cam"
         bonsai_exe = cfg.bonsai_exe or None
 
-        if cfg.cameras:
-            runners = [
-                BonsaiCameraRunner(
-                    workflow=workflow,
-                    output_dir=self._output_dir,
-                    session=f"{self._acq_name}__{_cam_label(cam.index, cam.serial)}",
-                    cam_index=cam.index,
-                    cam_label=_cam_label(cam.index, cam.serial),
-                    fps=cam.fps,
-                    driver=cfg.driver,
-                    bonsai_exe=bonsai_exe,
-                )
-                for cam in cfg.cameras
-            ]
-            n = len(cfg.cameras)
-            fps_summary = ", ".join(
-                f"{_cam_label(c.index, c.serial)}@{c.fps}" for c in cfg.cameras
+        indices = (
+            [cam.index for cam in cfg.cameras]
+            if cfg.cameras
+            else list(range(cfg.n_cameras))
+        )
+        runners = [
+            BonsaiCameraRunner(
+                workflow=workflow,
+                output_dir=self._output_dir,
+                session=f"{self._acq_name}__cam{idx}",
+                cam_index=idx,
+                driver=cfg.driver,
+                bonsai_exe=bonsai_exe,
             )
-        else:
-            runners = [
-                BonsaiCameraRunner(
-                    workflow=workflow,
-                    output_dir=self._output_dir,
-                    session=f"{self._acq_name}__{_cam_label(i)}",
-                    cam_index=i,
-                    cam_label=_cam_label(i),
-                    fps=cfg.fps,
-                    driver=cfg.driver,
-                    bonsai_exe=bonsai_exe,
-                )
-                for i in range(cfg.n_cameras)
-            ]
-            n = cfg.n_cameras
-            fps_summary = f"all@{cfg.fps}"
+            for idx in indices
+        ]
 
         self._runner = MultiCameraRunner(runners)
         log.info(
-            f"FlirBonsaiClient: starting {n} camera(s) "
-            f"driver={cfg.driver} [{fps_summary}] session={self._acq_name!r}"
+            f"FlirBonsaiClient: starting {len(indices)} camera(s) "
+            f"driver={cfg.driver} indices={indices} session={self._acq_name!r}"
         )
         self._runner.start()
-        self._write_flir_meta(runners, cfg)
+        self._write_flir_meta(indices, cfg)
 
-    def _write_flir_meta(self, runners: list[Any], cfg: CameraConfig) -> None:
+    def _write_flir_meta(self, indices: list[int], cfg: CameraConfig) -> None:
+        """Write .flir.meta.yaml, merging per-camera meta written by Bonsai at startup.
+
+        Bonsai writes {output_dir}/{acq_name}__cam{index}__meta.yaml for each
+        camera (see docs/work_plans/PLAN_flir_bonsai_serial.md for workflow changes).
+        This method polls for those files for up to 10 s then writes the combined
+        session-level sidecar.  Missing cam_meta files are included with empty serial.
+        """
+        import time
+
         import yaml
 
-        if cfg.cameras:
-            cams_meta = [
-                {
-                    "cam_index": cam.index,
-                    "serial": cam.serial,
-                    "label": _cam_label(cam.index, cam.serial),
-                    "fps": cam.fps,
-                    "bonsai_session": f"{self._acq_name}__{_cam_label(cam.index, cam.serial)}",
-                }
-                for cam in cfg.cameras
-            ]
-        else:
-            cams_meta = [
-                {
-                    "cam_index": i,
-                    "serial": "",
-                    "label": _cam_label(i),
-                    "fps": cfg.fps,
-                    "bonsai_session": f"{self._acq_name}__{_cam_label(i)}",
-                }
-                for i in range(cfg.n_cameras)
-            ]
+        cam_metas: dict[int, dict[str, Any]] = {}
+        deadline = time.monotonic() + 10.0
+        while time.monotonic() < deadline and len(cam_metas) < len(indices):
+            for idx in indices:
+                if idx not in cam_metas:
+                    p = (
+                        Path(self._output_dir)
+                        / f"{self._acq_name}__cam{idx}__meta.yaml"
+                    )
+                    if p.exists():
+                        try:
+                            cam_metas[idx] = yaml.safe_load(p.read_text()) or {}
+                        except Exception:
+                            cam_metas[idx] = {}
+            if len(cam_metas) < len(indices):
+                time.sleep(0.5)
+
+        if len(cam_metas) < len(indices):
+            missing = [i for i in indices if i not in cam_metas]
+            log.warning(
+                f"FlirBonsaiClient: cam_meta not found for indices {missing} "
+                "after 10 s — serial will be absent from sidecar. "
+                "Update Bonsai workflows per docs/work_plans/PLAN_flir_bonsai_serial.md"
+            )
+
+        cams_meta = [
+            {
+                "cam_index": idx,
+                "bonsai_session": f"{self._acq_name}__cam{idx}",
+                **cam_metas.get(idx, {}),
+            }
+            for idx in indices
+        ]
 
         meta: dict[str, Any] = {
             "flir_acq_format_version": 1,
