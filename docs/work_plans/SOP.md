@@ -154,6 +154,7 @@ These are independent questions.
 | `msw-flir-bonsai` | custom noncommercial | ✓ done | |
 | `ttl-barcoder` | custom noncommercial | ✓ done | |
 | `acquisition-namespace` | custom noncommercial | ✓ done | |
+| `msw-plugin-api` | custom noncommercial | ✓ done | zero-dep; Protocols + HostSessionInfo |
 | `msw-open-ephys` | custom noncommercial | ✓ done | |
 | `rpi_camera_ensemble_dev` | custom noncommercial | ✓ done | dev copy in provision_rpi |
 | `pypulsepal` | BSD-3-Clause | ✓ done | hardware wrapper; `_arcom.py` vendored |

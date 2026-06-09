@@ -164,14 +164,31 @@ The `--parent openephys` path is already functional with `open-ephys-python-tool
 Step 3 replaces that dependency with `oe_remote.controller` and adds namespace
 validation to the base_text parser.
 
+## Updated design (2026-06-09)
+
+Terminology: `--parent` → `--host`, `ParentSessionProtocol` → `HostSessionProtocol`,
+child session → linked session.  Full plugin design: `docs/concepts/plugin_system.md`.
+
+The `make_parent_session()` factory (currently hardcoded) becomes entry-point driven:
+`make_host_session()` iterates `msw.host` entry-points, loads the matching class,
+checks `isinstance(session, HostSessionProtocol)`, and returns it.
+
+`msw-plugin-api` (`external/msw-plugin-api/`) provides `HostSessionInfo`,
+`HostSessionInfoProtocol`, and `HostSessionProtocol`.  Both `msw-open-ephys` and
+`murineshiftwork` depend on it.
+
 ## Sequencing
 
 | # | Task | Effort | Prerequisite | Status |
 |---|---|---|---|---|
 | 0 | Namespace wiring (paths.py, parent_session.py) | done first | — | ✓ done |
 | 1 | Extract + restructure to flat `src/msw_open_ephys/` layout | ~1 h | — | ✓ done 2026-05-26 |
-| 2 | `git init` + push `MurineShiftWork/msw-open-ephys`; CI workflows; `.gitleaks.toml`; `CITATION.cff` | ~30 min | GitHub repo exists | TODO |
-| 3 | Add `get_recording_info()` to `OEController` | 5 min | — | TODO |
-| 4 | Replace `open_ephys.control` with `msw_open_ephys.controller` in `parent_session.py` | 10 min | step 3 | TODO |
-| 5 | Add `msw oe` subparser + wire to `msw_open_ephys.cli.commands` | ~1 h | step 2 | TODO |
-| 6 | `oe = ["msw-open-ephys"]` optional dep + docs | 15 min | step 5 | TODO |
+| 2 | CI workflows + pre-commit added to `msw-open-ephys` | — | — | ✓ done 2026-06-09 |
+| 3 | `msw-plugin-api` package created with Protocols + HostSessionInfo | — | — | ✓ done 2026-06-09 |
+| 4 | `git init` + push `MurineShiftWork/msw-open-ephys` and `MurineShiftWork/msw-plugin-api`; OIDC | ~30 min | GitHub repos | TODO |
+| 5 | Rename `parent_session.py` → `host_session.py`; `--parent` → `--host`; rename Protocol + factory | ~1 h | — | TODO |
+| 6 | `make_host_session()` reads `msw.host` entry-points instead of hardcoded factory | 20 min | step 5 | TODO |
+| 7 | Add `[project.entry-points."msw.host"] openephys = "msw_open_ephys.session:OpenEphysHostSession"` to msw-open-ephys | 5 min | step 6 | TODO |
+| 8 | Add `register(subparsers)` to `msw_open_ephys/cli/__init__.py`; add `[project.entry-points."msw.cli"] oe = ...` | 30 min | — | TODO |
+| 9 | Add `msw-plugin-api` dep to msw-open-ephys and murineshiftwork; `oe = ["msw-open-ephys"]` optional dep | 10 min | steps 6–8 | TODO |
+| 10 | Session YAML: rename `parent_acquisition:` → `host_acquisition:`; update retrograde reader | 20 min | step 5 | TODO |

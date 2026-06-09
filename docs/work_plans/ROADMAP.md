@@ -15,6 +15,7 @@ Design details live in memory files or separate docs — not here.
 - [ ] **GitHub + PyPI: push `serial-scale-hx711`** — create repo under `MurineShiftWork` org, push `external/serial_scale_hx711`; publish to PyPI (OIDC trusted publishing); update `[calibration]` dep pin after release
 - [ ] **GitHub + PyPI: push `serial-scale-bench`** — create repo under `MurineShiftWork` org, push `external/serial_scale_bench`; publish to PyPI; update `[calibration]` dep pin after release
 - [ ] **PyPI: publish RCC deprecation stub** — `rpi-camera-colony` stub pointing users to `rpi-camera-ensemble`; same pattern as `serial-weighing-scale` stub
+- [ ] **RCC: add import deprecation warning** — in `rpi_camera_colony/__init__.py` add `warnings.warn("rpi-camera-colony is deprecated; use rpi-camera-ensemble instead", DeprecationWarning, stacklevel=2)`; bump a patch release so the warning ships to anyone still pinned to the old package
 - [x] **GitHub: create repo + PyPI release for `rpi-camera-ensemble`** — `MurineShiftWork/rpi-camera-ensemble` created and released to PyPI (0.4.3); publicly installable, coexists with FLIR/Bonsai backend. msw `[rce]` extra uses `rpi-camera-ensemble[conductor]`. · 2026-06-09
 - [ ] **git repo for `msw_configs/`** — move `/mnt/maindata/msw_configs` into a dedicated git repo to get clean history of setup/subject/calibration changes; MSW reads config_dir as before, just backed by git
 
