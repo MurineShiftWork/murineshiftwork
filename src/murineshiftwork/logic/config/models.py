@@ -247,6 +247,10 @@ class CameraUnit(BaseModel):
 
     index: int
     fps: int = 60
+    name: str = ""  # role label written to .flir.meta.yaml, e.g. "front", "back"
+    serial: str = (
+        ""  # manufacturer serial written to .flir.meta.yaml for post-hoc identity
+    )
 
 
 class CameraConfig(BaseModel):

@@ -23,7 +23,9 @@ flir_bonsai : BonsaiCameraRunner/MultiCameraRunner from msw_flir_bonsai.  Lazy i
 
 from __future__ import annotations
 
+import datetime
 import logging
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -31,6 +33,11 @@ if TYPE_CHECKING:
     from murineshiftwork.logic.config.models import CameraConfig
 
 log = logging.getLogger(__name__)
+
+
+def _cam_label(index: int, name: str = "") -> str:
+    """Return the camera label used in Bonsai session strings and sidecar metadata."""
+    return name.strip() if name.strip() else f"cam{index}"
 
 
 # ---------------------------------------------------------------------------
@@ -124,6 +131,7 @@ class FlirBonsaiClient:
         self._config = config
         self._output_dir = output_dir
         self._acq_name: str = "session"
+        self._acq_path: str = ""
         self._runner: Any = None
 
     def start(self) -> None:
@@ -135,6 +143,7 @@ class FlirBonsaiClient:
     def initialize_acquisition(
         self, acquisition_path: str = "", acquisition_name: str = "", **_: Any
     ) -> None:
+        self._acq_path = acquisition_path
         self._acq_name = acquisition_name or (
             acquisition_path.split("/")[-1] if acquisition_path else "session"
         )
@@ -154,7 +163,7 @@ class FlirBonsaiClient:
                 BonsaiCameraRunner(
                     workflow=workflow,
                     output_dir=self._output_dir,
-                    session=self._acq_name,
+                    session=f"{self._acq_name}__{_cam_label(cam.index, cam.name)}",
                     cam_index=cam.index,
                     fps=cam.fps,
                     driver=cfg.driver,
@@ -163,13 +172,15 @@ class FlirBonsaiClient:
                 for cam in cfg.cameras
             ]
             n = len(cfg.cameras)
-            fps_summary = ", ".join(f"cam{c.index}@{c.fps}" for c in cfg.cameras)
+            fps_summary = ", ".join(
+                f"{_cam_label(c.index, c.name)}@{c.fps}" for c in cfg.cameras
+            )
         else:
             runners = [
                 BonsaiCameraRunner(
                     workflow=workflow,
                     output_dir=self._output_dir,
-                    session=self._acq_name,
+                    session=f"{self._acq_name}__{_cam_label(i)}",
                     cam_index=i,
                     fps=cfg.fps,
                     driver=cfg.driver,
@@ -186,6 +197,54 @@ class FlirBonsaiClient:
             f"driver={cfg.driver} [{fps_summary}] session={self._acq_name!r}"
         )
         self._runner.start()
+        self._write_flir_meta(runners, cfg)
+
+    def _write_flir_meta(self, runners: list[Any], cfg: CameraConfig) -> None:
+        import yaml
+
+        if cfg.cameras:
+            cams_meta = [
+                {
+                    "cam_index": cam.index,
+                    "name": _cam_label(cam.index, cam.name),
+                    "serial": cam.serial,
+                    "fps": cam.fps,
+                    "bonsai_session": f"{self._acq_name}__{_cam_label(cam.index, cam.name)}",
+                }
+                for cam in cfg.cameras
+            ]
+        else:
+            cams_meta = [
+                {
+                    "cam_index": i,
+                    "name": _cam_label(i),
+                    "serial": "",
+                    "fps": cfg.fps,
+                    "bonsai_session": f"{self._acq_name}__{_cam_label(i)}",
+                }
+                for i in range(cfg.n_cameras)
+            ]
+
+        meta: dict[str, Any] = {
+            "flir_acq_format_version": 1,
+            "session": self._acq_name,
+            "datetime": datetime.datetime.now().isoformat(timespec="seconds"),
+            "driver": cfg.driver,
+            "workflow": cfg.workflow or f"run-flir-{cfg.driver}-1cam",
+            "bonsai_exe": cfg.bonsai_exe or os.environ.get("BONSAI_EXE", ""),
+            "cameras": cams_meta,
+        }
+
+        out_dir = Path(self._output_dir)
+        if self._acq_path:
+            out_dir = out_dir / self._acq_path
+        out_dir.mkdir(parents=True, exist_ok=True)
+        sidecar = out_dir / f"{self._acq_name}.flir.meta.yaml"
+
+        with sidecar.open("w") as fh:
+            yaml.dump(meta, fh, default_flow_style=False, sort_keys=False)
+
+        log.info(f"FlirBonsaiClient: wrote FLIR metadata to {sidecar}")
 
     def stop_acquisition(self) -> None:
         if self._runner is None:

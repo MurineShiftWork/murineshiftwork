@@ -212,50 +212,94 @@ def run_task(**args_dict):
 
     task_settings = args_dict.get("settings.task.patched", {})
 
-    with TaskProcess(**args_dict) as tp:
-        # Online plot (separate process)
-        if task_settings.get("show_live_plot", True):
-            plotting = OnlinePlottingForSeq(
-                session_name=tp.session_paths.get("session_basename", ""),
-                subject=args_dict.get("subject", ""),
-                setup=args_dict.get("setup", "")
-                or args_dict.get("metadata", {}).get("setup", ""),
-                data_queue=dq,
-                kill_queue=kq,
-                n_max_trials=task_settings.get("n_max_trials", 1500),
-                n_levels=50,
-                progression_threshold=task_settings.get("progression_threshold", 0.9),
-                regression_threshold=task_settings.get("regression_threshold", 0.2),
-                sequence=list(task_settings.get("sequence", [])),
-                port_colors=list(task_settings.get("port_colors", [])),
-                poke_ymax_s=task_settings.get("online_plot_poke_ymax_s") or None,
-                poke_xmax_s=float(task_settings.get("online_plot_poke_xmax_s", 6.0)),
-                xlim_trials=int(task_settings.get("online_plot_xlim_trials", 100)),
-                poke_log_scale=bool(
-                    task_settings.get("online_plot_poke_log_scale", True)
-                ),
-                first_poke_offset_s=float(
-                    task_settings.get("online_plot_first_poke_offset_s", 0.5)
-                ),
-                stop_reward_ul=float(task_settings.get("stop_reward_ul", 1000.0)),
-                stop_trials=int(task_settings.get("stop_trials", 500)),
-                stop_time_min=float(task_settings.get("stop_time_min", 60.0)),
-                stop_level_delta=int(task_settings.get("stop_level_delta", 15)),
-                start_level=int(task_settings.get("start_level", 1)),
-            )
-            plotting.start()
+    from murineshiftwork.hardware.camera.client import make_camera_client
 
-        time.sleep(1)
+    conductor = make_camera_client(
+        cameras_config=args_dict.get("cameras_config"),
+        config_file_camera=args_dict.get("config_file_camera", ""),
+        output_dir=args_dict.get("out_path", ""),
+    )
+    if conductor is not None:
+        conductor.start()
+        try:
+            conductor.setup_agents()
+        except ConnectionError as exc:
+            logging.warning(f"Camera agents unreachable — running without video: {exc}")
+            with contextlib.suppress(Exception):
+                conductor.stop()
+            conductor = None
+    else:
+        logging.info("No camera config — running without video.")
 
-        tp.run_task()
-        while tp.is_running():
-            try:
-                time.sleep(1)
-            except KeyboardInterrupt:
-                tp.stop_task()
+    try:
+        with TaskProcess(**args_dict) as tp:
+            if conductor is not None:
+                conductor.initialize_acquisition(
+                    acquisition_path=tp.session_paths["session_folder_relative"],
+                    acquisition_name=tp.session_paths["session_basename"],
+                )
+                conductor.start_preview()
+                conductor.start_recording()
+                time.sleep(3)
 
-        kq.put(True)
-        time.sleep(1)
+            if task_settings.get("show_live_plot", True):
+                plotting = OnlinePlottingForSeq(
+                    session_name=tp.session_paths.get("session_basename", ""),
+                    subject=args_dict.get("subject", ""),
+                    setup=args_dict.get("setup", "")
+                    or args_dict.get("metadata", {}).get("setup", ""),
+                    data_queue=dq,
+                    kill_queue=kq,
+                    n_max_trials=task_settings.get("n_max_trials", 1500),
+                    n_levels=50,
+                    progression_threshold=task_settings.get(
+                        "progression_threshold", 0.9
+                    ),
+                    regression_threshold=task_settings.get("regression_threshold", 0.2),
+                    sequence=list(task_settings.get("sequence", [])),
+                    port_colors=list(task_settings.get("port_colors", [])),
+                    poke_ymax_s=task_settings.get("online_plot_poke_ymax_s") or None,
+                    poke_xmax_s=float(
+                        task_settings.get("online_plot_poke_xmax_s", 6.0)
+                    ),
+                    xlim_trials=int(task_settings.get("online_plot_xlim_trials", 100)),
+                    poke_log_scale=bool(
+                        task_settings.get("online_plot_poke_log_scale", True)
+                    ),
+                    first_poke_offset_s=float(
+                        task_settings.get("online_plot_first_poke_offset_s", 0.5)
+                    ),
+                    stop_reward_ul=float(task_settings.get("stop_reward_ul", 1000.0)),
+                    stop_trials=int(task_settings.get("stop_trials", 500)),
+                    stop_time_min=float(task_settings.get("stop_time_min", 60.0)),
+                    stop_level_delta=int(task_settings.get("stop_level_delta", 15)),
+                    start_level=int(task_settings.get("start_level", 1)),
+                )
+                plotting.start()
+
+            time.sleep(1)
+
+            tp.run_task()
+            while tp.is_running():
+                try:
+                    time.sleep(1)
+                except KeyboardInterrupt:
+                    tp.stop_task()
+
+            if conductor is not None:
+                try:
+                    conductor.stop_acquisition()
+                except Exception as _exc:
+                    logging.warning(
+                        f"conductor.stop_acquisition() did not complete cleanly: {_exc}"
+                    )
+
+            kq.put(True)
+            time.sleep(1)
+    finally:
+        if conductor is not None:
+            with contextlib.suppress(Exception):
+                conductor.stop()
 
 
 if __name__ == "__main__":
