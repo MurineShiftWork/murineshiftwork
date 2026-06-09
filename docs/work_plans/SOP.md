@@ -113,6 +113,35 @@ Exit code: 0 if all reachable setups connected, 1 if any FAIL.
 
 ---
 
+## Licensing policy
+
+**MSW core and research IP** (`murineshiftwork`, `rpi-camera-ensemble`,
+`msw-flir-bonsai`, `ttl-barcoder`, and any package embodying substantial
+operational or research logic): use the **custom noncommercial licence**
+(`LICENSE` in `murineshiftwork`). Restricts commercial use and withholds
+patent rights. Not copyleft — does not reach into code that imports it.
+
+**Hardware-interface and utility packages** (`pypulsepal`, serial-scale-*,
+`rfid-to-url`, `one-axis-stage`): use **BSD-3-Clause**. Allows commercial
+use, non-viral, requires attribution, blocks endorsement use of the
+author's name without permission. PyPI classifier:
+`License :: OSI Approved :: BSD License`.
+
+**New packages** (`templatepy`-derived): default to the custom noncommercial
+licence unless the package is purely a hardware wrapper with no MSW logic,
+in which case BSD-3-Clause.
+
+**Avoid all copyleft licences** (GPL, AGPL, LGPL, EUPL). Copyleft infects
+dependent code and creates ambiguity about whether the custom noncommercial
+terms survive. The goal is to protect authorship and attribution, not to
+impose terms on dependents.
+
+No PolyForm variants. No CC licences for code.
+
+**Contact for commercial or patent licensing:** lars@rollik.me
+
+---
+
 ## One-shot useful phrases
 
 | Say | Means |
