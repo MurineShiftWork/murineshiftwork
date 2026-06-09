@@ -42,6 +42,13 @@ _MACHINE_CONFIG_FILE = Path.home() / ".murineshiftwork" / "msw_machine.yaml"
 _HISTORICAL_DEFAULT = Path("/mnt/maindata/msw_configs")
 _HISTORICAL_DATA_DEFAULT = Path("/mnt/maindata/data")
 
+_YAML_DUMP_KWARGS: dict = {
+    "default_flow_style": False,
+    "allow_unicode": True,
+    "sort_keys": False,
+    "explicit_start": True,
+}
+
 
 def _load_machine_config() -> dict:
     if _MACHINE_CONFIG_FILE.exists():
@@ -94,13 +101,7 @@ def write_machine_config(config_dir: str | Path, **extra_fields) -> None:
     existing["config_dir"] = str(Path(config_dir).expanduser().resolve())
     existing.update(extra_fields)
     with _MACHINE_CONFIG_FILE.open("w") as f:
-        yaml.dump(
-            existing,
-            f,
-            default_flow_style=False,
-            allow_unicode=True,
-            sort_keys=False,
-        )
+        yaml.dump(existing, f, **_YAML_DUMP_KWARGS)
     logging.info(f"Machine config written to {_MACHINE_CONFIG_FILE}")
 
 

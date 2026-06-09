@@ -35,9 +35,9 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-def _cam_label(index: int, name: str = "") -> str:
-    """Return the camera label used in Bonsai session strings and sidecar metadata."""
-    return name.strip() if name.strip() else f"cam{index}"
+def _cam_label(index: int, serial: str = "") -> str:
+    """Return the camera label used in filenames, session strings, and sidecar metadata."""
+    return serial.strip() if serial.strip() else f"cam{index}"
 
 
 # ---------------------------------------------------------------------------
@@ -163,8 +163,9 @@ class FlirBonsaiClient:
                 BonsaiCameraRunner(
                     workflow=workflow,
                     output_dir=self._output_dir,
-                    session=f"{self._acq_name}__{_cam_label(cam.index, cam.name)}",
+                    session=f"{self._acq_name}__{_cam_label(cam.index, cam.serial)}",
                     cam_index=cam.index,
+                    cam_label=_cam_label(cam.index, cam.serial),
                     fps=cam.fps,
                     driver=cfg.driver,
                     bonsai_exe=bonsai_exe,
@@ -173,7 +174,7 @@ class FlirBonsaiClient:
             ]
             n = len(cfg.cameras)
             fps_summary = ", ".join(
-                f"{_cam_label(c.index, c.name)}@{c.fps}" for c in cfg.cameras
+                f"{_cam_label(c.index, c.serial)}@{c.fps}" for c in cfg.cameras
             )
         else:
             runners = [
@@ -182,6 +183,7 @@ class FlirBonsaiClient:
                     output_dir=self._output_dir,
                     session=f"{self._acq_name}__{_cam_label(i)}",
                     cam_index=i,
+                    cam_label=_cam_label(i),
                     fps=cfg.fps,
                     driver=cfg.driver,
                     bonsai_exe=bonsai_exe,
@@ -206,10 +208,10 @@ class FlirBonsaiClient:
             cams_meta = [
                 {
                     "cam_index": cam.index,
-                    "name": _cam_label(cam.index, cam.name),
                     "serial": cam.serial,
+                    "label": _cam_label(cam.index, cam.serial),
                     "fps": cam.fps,
-                    "bonsai_session": f"{self._acq_name}__{_cam_label(cam.index, cam.name)}",
+                    "bonsai_session": f"{self._acq_name}__{_cam_label(cam.index, cam.serial)}",
                 }
                 for cam in cfg.cameras
             ]
@@ -217,8 +219,8 @@ class FlirBonsaiClient:
             cams_meta = [
                 {
                     "cam_index": i,
-                    "name": _cam_label(i),
                     "serial": "",
+                    "label": _cam_label(i),
                     "fps": cfg.fps,
                     "bonsai_session": f"{self._acq_name}__{_cam_label(i)}",
                 }

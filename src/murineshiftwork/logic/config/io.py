@@ -12,6 +12,13 @@ from murineshiftwork.logic.config.models import (
     ValveCalibration,
 )
 
+_YAML_DUMP_KWARGS: dict = {
+    "default_flow_style": False,
+    "allow_unicode": True,
+    "sort_keys": False,
+    "explicit_start": True,
+}
+
 
 def load_setup_config(config_dir: str | Path, setup_name: str) -> SetupConfig | None:
     """Load SetupConfig from {config_dir}/setups/{setup_name}.yaml.
@@ -82,13 +89,7 @@ def update_valve_calibration(
     }
 
     with path.open("w") as f:
-        yaml.dump(
-            raw,
-            f,
-            default_flow_style=False,
-            allow_unicode=True,
-            sort_keys=False,
-        )
+        yaml.dump(raw, f, **_YAML_DUMP_KWARGS)
 
     logging.info(
         f"Wrote calibration for valve {valve_id} of setup '{setup_name}' "
@@ -136,13 +137,7 @@ def save_subject_task_overrides(
     raw.setdefault("task_overrides", {}).setdefault(task_name, {}).update(overrides)
 
     with path.open("w") as f:
-        yaml.dump(
-            raw,
-            f,
-            default_flow_style=False,
-            allow_unicode=True,
-            sort_keys=False,
-        )
+        yaml.dump(raw, f, **_YAML_DUMP_KWARGS)
 
     logging.info(
         f"Saved task_overrides {overrides} for subject '{subject_name}', task '{task_name}' → {path}"
@@ -197,13 +192,7 @@ def update_stage_config(
         stage["known_positions"] = known_positions
 
     with path.open("w") as f:
-        yaml.dump(
-            raw,
-            f,
-            default_flow_style=False,
-            allow_unicode=True,
-            sort_keys=False,
-        )
+        yaml.dump(raw, f, **_YAML_DUMP_KWARGS)
 
     logging.info(f"Updated stage config in setup '{setup_name}' at {path}")
     return True
