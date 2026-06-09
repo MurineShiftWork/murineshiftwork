@@ -55,3 +55,18 @@ msw run -t _test_flush_valves -s _test_subject --setup setup-1 -ts VALVE_OPENING
 # Use the 'wash' mode preset (30 cycles × 2000 ms):
 msw run -t _test_flush_valves -s _test_subject --setup setup-1 --task-mode wash
 ```
+
+## Optional: live session monitor
+
+If a central monitor server is running, add these keys to
+`~/.murineshiftwork/msw_machine.yaml` to forward live session events to it:
+
+```yaml
+log_url: http://monitor-host:8080   # ingest server base URL
+log_bearer_token: <token>           # optional; omit to send without auth
+```
+
+Forwarding is best-effort and fully opt-in: with `log_url` absent the monitor
+agent never starts and sessions run exactly as before. If the server is
+unreachable, events are dropped silently (0.5 s timeout) and the session is
+unaffected — the CLI is always the primary, fully-recorded session interface.
