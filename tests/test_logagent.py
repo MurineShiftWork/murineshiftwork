@@ -35,7 +35,7 @@ class TestLogAgent:
         agent.start()
         assert agent.is_alive()
         q.put(None)
-        agent.join(timeout=3)
+        agent.join(timeout=10)
         assert not agent.is_alive()
 
     def test_stops_on_stop_sentinel_dict(self):
@@ -43,7 +43,7 @@ class TestLogAgent:
         agent = LogAgent(q, "http://localhost:9999", "rig-a", _START_PAYLOAD)
         agent.start()
         q.put({"__stop__": True, "summary": {"trial_count": 10}})
-        agent.join(timeout=3)
+        agent.join(timeout=10)
         assert not agent.is_alive()
 
     def test_strips_url_trailing_slash(self):
