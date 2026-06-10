@@ -6,34 +6,29 @@ from pathlib import Path
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
+from msw_open_ephys.host import OpenEphysHostSession, _parse_host
+from msw_plugin_api import HostSessionInfo, HostSessionProtocol
 
-msw_open_ephys = pytest.importorskip(
-    "msw_open_ephys",
-    reason="msw-open-ephys not installed (pip install msw-open-ephys or uv sync --extra oe)",
-)
-from msw_open_ephys.host import OpenEphysHostSession, _parse_host  # noqa: E402
-from msw_plugin_api import HostSessionInfo, HostSessionProtocol  # noqa: E402
-
-from murineshiftwork.logic.config.models import SetupConfig  # noqa: E402
+from murineshiftwork.logic.config.models import SetupConfig
 
 # ---------------------------------------------------------------------------
 # _parse_host
 
 
 def test_parse_host_bare_ip():
-    assert _parse_host("172.24.42.168") == "172.24.42.168"
+    assert _parse_host("10.0.10.111") == "10.0.10.111"
 
 
 def test_parse_host_with_http():
-    assert _parse_host("http://172.24.42.168") == "172.24.42.168"
+    assert _parse_host("http://10.0.10.111") == "10.0.10.111"
 
 
 def test_parse_host_with_port():
-    assert _parse_host("172.24.42.168:37497") == "172.24.42.168"
+    assert _parse_host("10.0.10.111:37497") == "10.0.10.111"
 
 
 def test_parse_host_full_url():
-    assert _parse_host("http://172.24.42.168:37497") == "172.24.42.168"
+    assert _parse_host("http://10.0.10.111:37497") == "10.0.10.111"
 
 
 def test_parse_host_hostname():
@@ -204,8 +199,8 @@ def test_attach_require_recording_passes_when_recording():
 
 
 def test_attach_host_parsed_from_url():
-    client = OpenEphysHostSession(url="http://172.24.42.168:37497")
-    assert client._host == "172.24.42.168"
+    client = OpenEphysHostSession(url="http://10.0.10.111:37497")
+    assert client._host == "10.0.10.111"
 
 
 def test_start_and_stop_are_noops():

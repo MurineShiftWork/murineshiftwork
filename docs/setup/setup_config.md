@@ -166,7 +166,7 @@ that camera.  Post-processing resolves `cam_index → serial` from this file.
 Set `open_ephys_url` to the IP or hostname of the Open Ephys GUI process for this rig:
 
 ```yaml
-open_ephys_url: 172.24.42.168
+open_ephys_url: 10.0.10.111
 ```
 
 This enables `--host openephys` without passing the address on the CLI each time.

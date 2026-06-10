@@ -16,7 +16,7 @@ Plugins register under the ``msw.host`` entry-point group::
 
 Usage::
 
-    client = make_host_session("openephys", url="172.24.42.168")
+    client = make_host_session("openephys", url="10.0.10.111")
     info = client.attach()
     if info:
         generate_session_paths(..., linked_to=info.acquisition_name)

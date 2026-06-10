@@ -87,7 +87,7 @@ def _add_session_args(parser):
             "Attach to a host acquisition system and nest this session inside it. "
             "TYPE is the backend name (e.g. openephys). "
             "URL overrides the address from the setup YAML or machine config. "
-            "Examples: --host openephys  |  --host openephys:172.24.42.168"
+            "Examples: --host openephys  |  --host openephys:10.0.10.111"
         ),
     )
     g.add_argument(

@@ -16,7 +16,7 @@ copier copy gh:larsrollik/templatepy my-new-project \
   --data "project_slug=my_project" \
   --data "project_description=Short description" \
   --data "author_name=Lars B. Rollik" \
-  --data "author_email=l.b.rollik@protonmail.com" \
+  --data "author_email=lars@rollik.me" \
   --data "github_username=larsrollik" \
   --data "github_repo=my-project" \
   --data "year=2026"
