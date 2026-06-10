@@ -5,8 +5,19 @@ Design details live in memory files or separate docs — not here.
 
 ---
 
+## TOP PRIORITY — blocking public release
+
+- [ ] **Security scrub `src/` files** — replace `172.24.42.168` with `10.0.10.111` in `parser.py`, `host_session.py`, `docs/cli/run.md`, `docs/setup/setup_config.md`; fix protonmail email in `.copier-answers.yml`, `CODE_OF_CONDUCT.md`, `BUILD_SYSTEM_STANDARD.md`. Full checklist: `docs/work_plans/SECURITY_REVIEW.md`
+- [ ] **Move docs + playground upstream** — `docs/`, `playground/` move to project-dir (outside repo) before public orphan branch push; `DHCP.md` and `PROVISION_RPI_SCRIPTS.md` must not appear in public history
+- [ ] **Add mkdocstrings + API ref pages** — `murineshiftwork`, `acquisition-namespace`, `ttl-barcoder`, `pypulsepal` each need mkdocstrings plugin + `docs/api/` pages before polished docs site. Full gap list: `docs/work_plans/DOC_GAPS.md`
+- [ ] **`rpi_camera_ensemble` docs** — README is a TODO stub; docs/ is 90% empty skeleton; full rewrite needed before public release
+- [ ] **Namespace-repo separation sprint** — see `IMPLEMENTATION_PLAN.md`; can begin once security scrub is done; doc quality is a parallel track
+
+---
+
 ## Manual (requires human action)
 
+- [ ] **GitHub + PyPI: merge and publish `msw-open-ephys`** — merge `ft/msw-host-plugin` PR, trigger release workflow; then restore `oe = ["msw-open-ephys"]` optional extra in `murineshiftwork/pyproject.toml` and re-enable `test_host_session.py` full run (currently skipped without the package)
 - [ ] **PyPI: publish deprecation stub** — `serial-weighing-scale 3.0.0` at `/mnt/maindata/code/serial_weighing_scale_stub/`
   ```
   cd /mnt/maindata/code/serial_weighing_scale_stub
