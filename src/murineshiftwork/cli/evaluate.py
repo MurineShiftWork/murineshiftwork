@@ -360,68 +360,68 @@ def _resolve_setup_config_ports(args_dict, setup_config, patched):
         _inject_valve_calibration(setup_config, patched)
 
 
-def _parse_parent_flag(value: str) -> tuple[str, str]:
-    """Parse ``TYPE`` or ``TYPE:URL`` from --parent flag value."""
+def _parse_host_flag(value: str) -> tuple[str, str]:
+    """Parse ``TYPE`` or ``TYPE:URL`` from --host flag value."""
     parts = value.strip().split(":", 1)
     return parts[0].strip().lower(), (parts[1].strip() if len(parts) > 1 else "")
 
 
-def _resolve_parent_session(args_dict: dict) -> None:
-    """Attach to a parent acquisition session and populate is_child_session_to.
+def _resolve_host_session(args_dict: dict) -> None:
+    """Attach to a host acquisition session and populate linked_to.
 
-    Reads ``--parent TYPE[:URL]`` from args_dict.  URL is optional: if omitted,
-    the backend-specific address is read from ``~/.murineshiftwork/msw_machine.yaml``.
+    Reads ``--host TYPE[:URL]`` from args_dict.  URL is optional: if omitted,
+    the backend-specific address is read from setup YAML or machine config.
 
-    Supported types: ``openephys``  (open_ephys_url machine-config key)
-
-    No-op when ``--parent`` is absent.  Does not overwrite ``--child-of`` if already set.
+    No-op when ``--host`` is absent.  Does not overwrite ``--link-to`` if already set.
     """
-    parent_flag = args_dict.get("parent_session_flag", "")
-    if not parent_flag:
+    host_flag = args_dict.get("host_flag", "")
+    if not host_flag:
         return
 
-    session_type, url_override = _parse_parent_flag(parent_flag)
+    session_type, url_override = _parse_host_flag(host_flag)
 
-    if session_type == "openephys":
-        url = url_override
-        if not url:
-            setup_config = args_dict.get("setup_config")
-            if setup_config is not None:
-                url = getattr(setup_config, "open_ephys_url", "") or ""
+    # URL resolution — openephys reads from setup YAML or machine config when not in flag
+    url = url_override
+    if not url and session_type in ("openephys", "open_ephys"):
+        setup_config = args_dict.get("setup_config")
+        if setup_config is not None:
+            url = getattr(setup_config, "open_ephys_url", "") or ""
         if not url:
             from murineshiftwork.logic.machine_config import read_open_ephys_url
 
             url = read_open_ephys_url()
         if not url:
             logging.warning(
-                "--parent openephys: no URL — pass as openephys:HOST or set "
+                "--host openephys: no URL — pass as openephys:HOST or set "
                 "open_ephys_url in the setup YAML"
             )
             return
-    else:
-        logging.warning("--parent: unknown backend %r — skipping", session_type)
+
+    from murineshiftwork.hardware.host_session import make_host_session
+
+    try:
+        client = make_host_session(session_type, **{"url": url} if url else {})
+    except (ValueError, TypeError) as exc:
+        logging.warning("--host: %s", exc)
         return
 
-    from murineshiftwork.hardware.parent_session import make_parent_session
-
-    client = make_parent_session(session_type, url=url)
     info = client.attach()
 
     if info is None:
         reason = getattr(client, "fail_reason", "") or "unknown reason"
         if not args_dict.get("force_standalone"):
             raise RuntimeError(
-                f"\n\n  --parent {session_type} @ {url} could not attach:\n"
+                f"\n\n  --host {session_type} @ {url} could not attach:\n"
                 f"  {reason}\n\n"
                 f"  Session paths cannot be determined — aborting to avoid saving\n"
                 f"  data to the wrong location.\n\n"
                 f"  Options:\n"
-                f"    1. Fix the issue (run oe_remote session first, check URL)\n"
-                f"    2. Use --child-of ACQUISITION_NAME to set the path manually\n"
-                f"    3. Pass --force-standalone to intentionally run without a parent\n"
+                f"    1. Fix the issue (run oe-remote record first, check URL)\n"
+                f"    2. Use --link-to ACQUISITION_NAME to set the path manually\n"
+                f"    3. Pass --force-standalone to intentionally run without a host\n"
             )
         logging.warning(
-            "--force-standalone: parent session (%s @ %s) unavailable (%s) — "
+            "--force-standalone: host session (%s @ %s) unavailable (%s) — "
             "saving to standalone path",
             session_type,
             url,
@@ -429,17 +429,17 @@ def _resolve_parent_session(args_dict: dict) -> None:
         )
         return
 
-    if args_dict.get("is_child_session_to"):
+    if args_dict.get("linked_to"):
         logging.debug(
-            "is_child_session_to already set to %r — --parent result discarded",
-            args_dict["is_child_session_to"],
+            "linked_to already set to %r — --host result discarded",
+            args_dict["linked_to"],
         )
         return
 
-    args_dict["is_child_session_to"] = info.acquisition_name
-    args_dict["parent_session_info"] = info
+    args_dict["linked_to"] = info.acquisition_name
+    args_dict["host_session_info"] = info
     logging.info(
-        "Parent session attached [%s]: acquisition=%r subject=%r",
+        "Host session attached [%s]: acquisition=%r subject=%r",
         info.backend,
         info.acquisition_name,
         info.subject,
@@ -519,7 +519,7 @@ def evaluate_args(args_dict=None):
 
     setup_config = args_dict.get("setup_config")
     _resolve_setup_config_ports(args_dict, setup_config, patched)
-    _resolve_parent_session(args_dict)
+    _resolve_host_session(args_dict)
     subject_config = args_dict.get("subject_config")
     args_dict["execution_config"] = ExecutionConfig(
         setup=setup_config,

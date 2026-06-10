@@ -28,8 +28,8 @@ msw run -s <subject> -t <task> [options]
 | `--simulate` | Use SimBpod — no hardware required |
 | `-l / --log-level <level>` | Log level (INFO, DEBUG, WARNING, …) |
 | `--debug` | Sets log level to DEBUG; if subject YAML not found, falls back to `_test_subject` |
-| `--child-of <basename>` | Manually set the acquisition parent folder (session saved at `<out-path>/<subject>/<basename>/<session>`) |
-| `--parent TYPE[:URL]` | Attach to a parent acquisition session. TYPE=`openephys` reads `open_ephys_url` from machine config; append `:HOST` to override. Example: `--parent openephys` or `--parent openephys:172.24.42.168` |
+| `--link-to <basename>` | Manually set the host acquisition folder (session saved at `<out-path>/<subject>/<basename>/<session>`) |
+| `--host TYPE[:URL]` | Attach to a host acquisition system. TYPE=`openephys` reads `open_ephys_url` from machine config; append `:HOST` to override. Example: `--host openephys` or `--host openephys:172.24.42.168` |
 | `-m / --meta KEY=VALUE` | Arbitrary metadata pairs (e.g. `-m project=myproject cohort=1`) |
 | `--meta-experimenter <name>` | Experimenter name or initials (shorthand for `-m experimenter=NAME`) |
 

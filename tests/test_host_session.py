@@ -1,4 +1,4 @@
-"""Tests for the parent-session attachment system."""
+"""Tests for the host-session plugin system."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
-from murineshiftwork.hardware.parent_session import (
-    OpenEphysParentSession,
-    ParentSessionInfo,
-    ParentSessionProtocol,
-    _parse_host,
-    make_parent_session,
+msw_open_ephys = pytest.importorskip(
+    "msw_open_ephys",
+    reason="msw-open-ephys not installed (pip install msw-open-ephys or uv sync --extra oe)",
 )
-from murineshiftwork.logic.config.models import SetupConfig
+from msw_open_ephys.host import OpenEphysHostSession, _parse_host  # noqa: E402
+from msw_plugin_api import HostSessionInfo, HostSessionProtocol  # noqa: E402
+
+from murineshiftwork.logic.config.models import SetupConfig  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # _parse_host
@@ -41,57 +41,72 @@ def test_parse_host_hostname():
 
 
 # ---------------------------------------------------------------------------
-# ParentSessionInfo
+# HostSessionInfo / HostSessionProtocol
 
 
-def test_parent_session_info_fields():
-    info = ParentSessionInfo(
+def test_host_session_info_fields():
+    info = HostSessionInfo(
+        backend="openephys",
         acquisition_name="m01__20260101_120000__ephys",
         subject="m01",
         parent_directory="/data",
-        backend="open_ephys",
     )
     assert info.acquisition_name == "m01__20260101_120000__ephys"
-    assert info.backend == "open_ephys"
+    assert info.backend == "openephys"
     assert info.extra == {}
 
 
-# ---------------------------------------------------------------------------
-# SetupConfig — no parent_session field
-
-
-def test_setup_config_has_no_parent_session_field():
+def test_setup_config_has_no_host_session_field():
     cfg = SetupConfig(name="rig1")
-    assert not hasattr(cfg, "parent_session")
+    assert not hasattr(cfg, "host_session")
 
 
 # ---------------------------------------------------------------------------
-# make_parent_session factory
+# make_host_session factory — entry-point driven
 
 
-def test_make_parent_session_returns_oe_client():
-    client = make_parent_session("open_ephys", url="127.0.0.1")
-    assert isinstance(client, OpenEphysParentSession)
-    assert isinstance(client, ParentSessionProtocol)
+def test_make_host_session_openephys(monkeypatch):
+    from murineshiftwork.hardware.host_session import make_host_session
+
+    ep = MagicMock()
+    ep.name = "openephys"
+    ep.load.return_value = OpenEphysHostSession
+    monkeypatch.setattr(
+        "murineshiftwork.hardware.host_session.entry_points",
+        lambda group: [ep],
+    )
+    client = make_host_session("openephys", url="127.0.0.1")
+    assert isinstance(client, OpenEphysHostSession)
+    assert isinstance(client, HostSessionProtocol)
 
 
-def test_make_parent_session_name():
-    client = make_parent_session("open_ephys", url="127.0.0.1")
-    assert client.name == "open_ephys"
+def test_make_host_session_unknown_type_raises(monkeypatch):
+    from murineshiftwork.hardware.host_session import make_host_session
+
+    monkeypatch.setattr(
+        "murineshiftwork.hardware.host_session.entry_points",
+        lambda group: [],
+    )
+    with pytest.raises(ValueError, match="No msw.host plugin"):
+        make_host_session("imaging", url="127.0.0.1")
 
 
-def test_make_parent_session_alias_openephys():
-    client = make_parent_session("openephys", url="127.0.0.1")
-    assert isinstance(client, OpenEphysParentSession)
+def test_make_host_session_normalises_name(monkeypatch):
+    from murineshiftwork.hardware.host_session import make_host_session
 
-
-def test_make_parent_session_unknown_type_raises():
-    with pytest.raises(ValueError, match="Unknown parent session type"):
-        make_parent_session("imaging", url="127.0.0.1")
+    ep = MagicMock()
+    ep.name = "openephys"
+    ep.load.return_value = OpenEphysHostSession
+    monkeypatch.setattr(
+        "murineshiftwork.hardware.host_session.entry_points",
+        lambda group: [ep],
+    )
+    client = make_host_session("open-ephys", url="127.0.0.1")
+    assert isinstance(client, OpenEphysHostSession)
 
 
 # ---------------------------------------------------------------------------
-# OpenEphysParentSession.attach — mocked HTTP
+# OpenEphysHostSession.attach — mocked HTTP
 
 
 def _make_gui_mock(
@@ -110,23 +125,7 @@ def _make_gui_mock(
     return gui
 
 
-@patch("murineshiftwork.hardware.parent_session.OpenEphysParentSession.attach")
-def test_attach_import_error(mock_attach):
-    mock_attach.return_value = None
-    client = OpenEphysParentSession(url="127.0.0.1")
-    assert client.attach() is None
-
-
-def test_attach_returns_none_on_connection_error():
-    gui = MagicMock()
-    type(gui).status = PropertyMock(side_effect=Exception("Connection refused"))
-    client = OpenEphysParentSession(url="127.0.0.1")
-    result = _attach_with_mock_gui(client, gui)
-    assert result is None
-
-
 def _attach_with_mock_gui(client, gui_mock):
-    """Helper: patch OEController ctor to return gui_mock, call attach()."""
     with patch.dict(
         "sys.modules",
         {
@@ -137,19 +136,26 @@ def _attach_with_mock_gui(client, gui_mock):
         return client.attach()
 
 
+def test_attach_returns_none_on_connection_error():
+    gui = MagicMock()
+    type(gui).status = PropertyMock(side_effect=Exception("Connection refused"))
+    client = OpenEphysHostSession(url="127.0.0.1")
+    assert _attach_with_mock_gui(client, gui) is None
+
+
 def test_attach_valid_three_part_base_text():
     gui = _make_gui_mock(
         status="RECORD",
         base_text="m01/m01__20260101_120000__ephys/m01__20260101_120000__pxi",
         record_nodes=[{"parent_directory": "/data/rig1"}],
     )
-    client = OpenEphysParentSession(url="127.0.0.1")
+    client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
     assert info.acquisition_name == "m01__20260101_120000__ephys"
     assert info.subject == "m01"
     assert info.parent_directory == "/data/rig1"
-    assert info.backend == "open_ephys"
+    assert info.backend == "openephys"
     assert info.extra["oe_session_name"] == "m01__20260101_120000__pxi"
 
 
@@ -158,7 +164,7 @@ def test_attach_two_part_base_text_still_works():
         status="IDLE",
         base_text="m01/m01__20260101_120000__ephys",
     )
-    client = OpenEphysParentSession(url="127.0.0.1")
+    client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
     assert info.acquisition_name == "m01__20260101_120000__ephys"
@@ -167,16 +173,14 @@ def test_attach_two_part_base_text_still_works():
 
 def test_attach_one_part_base_text_returns_none():
     gui = _make_gui_mock(status="IDLE", base_text="YYYY-MM-DD_HH-MM-SS")
-    client = OpenEphysParentSession(url="127.0.0.1")
-    info = _attach_with_mock_gui(client, gui)
-    assert info is None
+    client = OpenEphysHostSession(url="127.0.0.1")
+    assert _attach_with_mock_gui(client, gui) is None
 
 
 def test_attach_empty_base_text_returns_none():
     gui = _make_gui_mock(status="IDLE", base_text="")
-    client = OpenEphysParentSession(url="127.0.0.1")
-    info = _attach_with_mock_gui(client, gui)
-    assert info is None
+    client = OpenEphysHostSession(url="127.0.0.1")
+    assert _attach_with_mock_gui(client, gui) is None
 
 
 def test_attach_require_recording_blocks_idle():
@@ -184,9 +188,8 @@ def test_attach_require_recording_blocks_idle():
         status="IDLE",
         base_text="m01/m01__20260101_120000__ephys/m01__20260101_120000__pxi",
     )
-    client = OpenEphysParentSession(url="127.0.0.1", require_recording=True)
-    info = _attach_with_mock_gui(client, gui)
-    assert info is None
+    client = OpenEphysHostSession(url="127.0.0.1", require_recording=True)
+    assert _attach_with_mock_gui(client, gui) is None
 
 
 def test_attach_require_recording_passes_when_recording():
@@ -194,75 +197,72 @@ def test_attach_require_recording_passes_when_recording():
         status="RECORD",
         base_text="m01/m01__20260101_120000__ephys/m01__20260101_120000__pxi",
     )
-    client = OpenEphysParentSession(url="127.0.0.1", require_recording=True)
+    client = OpenEphysHostSession(url="127.0.0.1", require_recording=True)
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
     assert info.acquisition_name == "m01__20260101_120000__ephys"
 
 
 def test_attach_host_parsed_from_url():
-    client = OpenEphysParentSession(url="http://172.24.42.168:37497")
+    client = OpenEphysHostSession(url="http://172.24.42.168:37497")
     assert client._host == "172.24.42.168"
+
+
+def test_start_and_stop_are_noops():
+    client = OpenEphysHostSession(url="127.0.0.1")
+    client.start()
+    client.stop()
 
 
 # ---------------------------------------------------------------------------
 # base_text parsing invariants
-# These cover the specific guarantees that make the OE→MSW path handoff safe.
 
 
 def test_attach_second_precision_datetime():
-    # OE uses time.strftime("%Y%m%d_%H%M%S") — no microseconds.
-    # namespace regex has (?:_\d{6})? so second-precision names must parse.
     gui = _make_gui_mock(
         status="IDLE",
         base_text="m01/m01__20260524_143022__ephys/m01__20260524_143022__pxi",
     )
-    client = OpenEphysParentSession(url="127.0.0.1")
+    client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
     assert info.acquisition_name == "m01__20260524_143022__ephys"
 
 
 def test_attach_microsecond_precision_datetime():
-    # MSW-generated acquisition names use microsecond precision; verify roundtrip.
     gui = _make_gui_mock(
         status="IDLE",
         base_text="m01/m01__20260524_143022_123456__ephys/m01__20260524_143022_123456__pxi",
     )
-    client = OpenEphysParentSession(url="127.0.0.1")
+    client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
     assert info.acquisition_name == "m01__20260524_143022_123456__ephys"
 
 
 def test_attach_leading_trailing_slashes_stripped():
-    # OE may include leading/trailing slashes; strip("/") + filter handles them.
     gui = _make_gui_mock(
         status="IDLE",
         base_text="/m01/m01__20260101_120000__ephys/m01__20260101_120000__pxi/",
     )
-    client = OpenEphysParentSession(url="127.0.0.1")
+    client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
     assert info.acquisition_name == "m01__20260101_120000__ephys"
 
 
 def test_attach_invalid_acq_segment_returns_none():
-    # parts[1] is not a valid MSW basename (OE default template not yet replaced).
     gui = _make_gui_mock(
         status="IDLE",
         base_text="m01/YYYY-MM-DD_HH-MM-SS/something",
     )
-    client = OpenEphysParentSession(url="127.0.0.1")
+    client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is None
     assert "not a valid MSW session name" in client.fail_reason
 
 
 def test_attach_acquisition_and_session_levels_have_same_template():
-    # Both acquisition and session levels use {subject}__{datetime}__{task}.
-    # Validating parts[1] through "session" level is equivalent to "acquisition".
-    # Confirmed by checking the namespace builder directly.
     from murineshiftwork.namespace.paths import get_msw_builder
 
     b = get_msw_builder()
@@ -273,12 +273,10 @@ def test_attach_acquisition_and_session_levels_have_same_template():
 
 
 # ---------------------------------------------------------------------------
-# Integration: base_text → acquisition_name → generate_session_paths
+# Integration: base_text -> acquisition_name -> generate_session_paths
 
 
 def test_attach_feeds_generate_session_paths_correctly(tmp_path):
-    # Full roundtrip: OE base_text → ParentSessionInfo → generate_session_paths.
-    # Verifies session folder has structure: basepath/subject/acq_name/session_basename
     from murineshiftwork.namespace.paths import generate_session_paths
 
     gui = _make_gui_mock(
@@ -286,7 +284,7 @@ def test_attach_feeds_generate_session_paths_correctly(tmp_path):
         base_text="m01/m01__20260524_143022__ephys/m01__20260524_143022__pxi",
         record_nodes=[{"parent_directory": "/data/rig1"}],
     )
-    client = OpenEphysParentSession(url="127.0.0.1")
+    client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
 
@@ -294,13 +292,13 @@ def test_attach_feeds_generate_session_paths_correctly(tmp_path):
         subject="m01",
         task="sequence",
         basepath=tmp_path,
-        is_child_session_to=info.acquisition_name,
+        linked_to=info.acquisition_name,
         printout=False,
     )
 
     rel_parts = Path(paths["session_folder_relative"]).parts
-    assert rel_parts[0] == "m01"  # subject
-    assert rel_parts[1] == "m01__20260524_143022__ephys"  # acquisition_name from OE
-    assert rel_parts[2].startswith("m01__")  # session basename
+    assert rel_parts[0] == "m01"
+    assert rel_parts[1] == "m01__20260524_143022__ephys"
+    assert rel_parts[2].startswith("m01__")
     assert rel_parts[2].endswith("__sequence")
     assert paths["acquisition_name"] == "m01__20260524_143022__ephys"

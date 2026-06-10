@@ -58,30 +58,30 @@ def generate_session_paths(
     basepath: str | Path,
     version: str = CURRENT_NAMESPACE_VERSION,
     default_subject: str = "_test_subject",
-    is_child_session_to: str | None = None,
+    linked_to: str | None = None,
     printout: bool = True,
 ) -> dict:
     """Generate validated session path dict for a given namespace version.
 
     Always produces a 4-level path: basepath / subject / acquisition / session.
 
-    For standalone sessions (no parent), the acquisition dir is named
+    For standalone sessions (no host), the acquisition dir is named
     ``{subject}__{datetime}__session_{task}`` — the ``session_`` prefix
     distinguishes it from externally-attached systems (``ephys``, etc.).
 
-    For child sessions (``is_child_session_to`` set), the acquisition dir
+    For linked sessions (``linked_to`` set), the acquisition dir
     is the externally-provided basename (e.g. from Open Ephys).
 
     Parameters
     ----------
-    subject:             Subject name (validated against forbidden chars).
-    task:                Task / protocol name.
-    basepath:            Root output directory.
-    version:             Namespace version — controls datetime format.
-    default_subject:     Fallback subject used when *task* starts with ``_test__``.
-    is_child_session_to: Acquisition basename from an external parent system.
-                         When ``None`` a standalone acquisition name is derived.
-    printout:            Print the path table to stdout.
+    subject:      Subject name (validated against forbidden chars).
+    task:         Task / protocol name.
+    basepath:     Root output directory.
+    version:      Namespace version — controls datetime format.
+    default_subject: Fallback subject used when *task* starts with ``_test__``.
+    linked_to:    Acquisition basename from an external host system.
+                  When ``None`` a standalone acquisition name is derived.
+    printout:     Print the path table to stdout.
 
     Returns
     -------
@@ -107,8 +107,8 @@ def generate_session_paths(
     builder = get_msw_builder()
     session_basename = builder.build_path("session", values)
 
-    if is_child_session_to:
-        acquisition_name = is_child_session_to
+    if linked_to:
+        acquisition_name = linked_to
     else:
         acquisition_name = builder.build_path(
             "acquisition",
@@ -150,7 +150,7 @@ def build_data_paths(
     subject=None,
     task=None,
     default_subject="_test_subject",
-    is_child_session_to=None,
+    linked_to=None,
     printout=True,
 ):
     """Compatibility shim — calls generate_session_paths with CURRENT_NAMESPACE_VERSION."""
@@ -160,7 +160,7 @@ def build_data_paths(
         basepath=basepath,
         version=CURRENT_NAMESPACE_VERSION,
         default_subject=default_subject,
-        is_child_session_to=is_child_session_to,
+        linked_to=linked_to,
         printout=printout,
     )
 

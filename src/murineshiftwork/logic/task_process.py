@@ -193,7 +193,7 @@ class TaskProcess:
         devices: dict | None = None,
         auto_init=True,
         auto_start=True,
-        is_child_session_to=None,
+        linked_to=None,
         require_bpod=True,
         simulate=False,
         **kwargs,
@@ -217,7 +217,7 @@ class TaskProcess:
             basepath=Path(self.out_path),
             subject=self.subject,
             task=self.task_name,
-            is_child_session_to=is_child_session_to,
+            linked_to=linked_to,
         )
         self.input_kwargs["task_name"] = self.task_name
         self.input_kwargs["session_paths"] = self.session_paths
@@ -420,9 +420,9 @@ class TaskProcess:
                 "datetime": self.session_paths.get("datetime", ""),
             },
         }
-        ps_info = self.input_kwargs.get("parent_session_info")
+        ps_info = self.input_kwargs.get("host_session_info")
         if ps_info is not None:
-            data["parent_acquisition"] = {
+            data["host_acquisition"] = {
                 "backend": ps_info.backend,
                 "acquisition_name": ps_info.acquisition_name,
                 "subject": ps_info.subject,

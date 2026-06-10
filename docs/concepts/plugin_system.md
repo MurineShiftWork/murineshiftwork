@@ -1,23 +1,21 @@
 # MSW Plugin System
 
-MSW supports two independent plugin entry-point groups. A package may implement
-one or both depending on its role.
+Plugins extend MSW via Python entry-point groups. A plugin package typically
+registers in two independent groups: one declaring what type of plugin it is,
+and one wiring its commands into the `msw` CLI.
 
 ---
 
-## Plugin types
+## CLI registration — `msw.cli` (all plugin types)
 
-### 1. CLI plugin (`msw.cli`)
-
-Adds subcommands to the `msw` CLI. Loaded at parser construction time.
+Any plugin that exposes user-facing commands registers a `register` function
+under `msw.cli`. This is the universal subcommand mechanism — not a plugin
+type itself. MSW's parser loads all registered `register` functions at startup.
 
 ```toml
 [project.entry-points."msw.cli"]
 oe = "msw_open_ephys.cli:register"
 ```
-
-The `register` function receives the top-level `subparsers` object and adds
-its own subparser(s):
 
 ```python
 def register(subparsers) -> None:
@@ -26,30 +24,32 @@ def register(subparsers) -> None:
     # add status / preview / record / stop subparsers ...
 ```
 
-Result: `msw oe status`, `msw oe record`, etc.
+Result: `msw oe status`, `msw oe record`, etc. Every plugin type that has
+user-facing commands uses this same pattern.
 
-### 2. Host session plugin (`msw.host`)
+---
 
-Provides an acquisition system that MSW can attach to before running a task.
-Used by `msw run --host <name>`.
+## Plugin type: host session (`msw.host`)
+
+A host session plugin manages an external acquisition system that MSW attaches
+to before running a task. The plugin implements `HostSessionProtocol` from
+`msw-plugin-api` and declares itself under `msw.host`:
 
 ```toml
 [project.entry-points."msw.host"]
 openephys = "msw_open_ephys.session:OpenEphysHostSession"
 ```
 
-The class must satisfy `HostSessionProtocol` from `msw-plugin-api`:
-
 ```python
-from msw_plugin_api import HostSessionInfo, HostSessionProtocol  # optional import
+from msw_plugin_api import HostSessionInfo  # optional — may also return structurally
 
 class OpenEphysHostSession:
     def attach(self, **kwargs) -> HostSessionInfo:
-        """Start the acquisition system and return session metadata."""
+        """Connect to the acquisition system and return session metadata."""
         ...
 
     def start(self) -> None:
-        """Begin recording (called after MSW task is ready)."""
+        """Begin recording (called once MSW task is ready)."""
         ...
 
     def stop(self) -> None:
@@ -57,16 +57,21 @@ class OpenEphysHostSession:
         ...
 ```
 
-Result: `msw run -s subject -t sequence --host openephys` discovers
-`OpenEphysHostSession` via the `openephys` entry point, calls `.attach()`,
-and writes the returned `HostSessionInfo` into the session YAML under
-`host_acquisition:`.
+Used via: `msw run -s subject -t sequence --host openephys`
+
+MSW's `make_host_session("openephys", ...)` discovers the class via the
+`msw.host` entry point, instantiates it, checks `isinstance(session,
+HostSessionProtocol)`, calls `.attach()`, and writes the returned
+`HostSessionInfo` into the session YAML under `host_acquisition:`.
+
+A host plugin typically also registers CLI commands via `msw.cli` (e.g.
+`msw oe record`) so the same system can be controlled directly.
 
 ---
 
 ## Plugin API package (`msw-plugin-api`)
 
-`pip install msw-plugin-api` provides the shared types. Zero deps (stdlib only).
+`pip install msw-plugin-api` provides the shared types. Zero dependencies.
 
 ```python
 from msw_plugin_api import HostSessionInfo, HostSessionInfoProtocol, HostSessionProtocol
@@ -74,20 +79,18 @@ from msw_plugin_api import HostSessionInfo, HostSessionInfoProtocol, HostSession
 
 | Symbol | Type | Purpose |
 |---|---|---|
-| `HostSessionInfo` | dataclass | Concrete return type from `.attach()` |
+| `HostSessionInfo` | dataclass | Concrete return value from `.attach()` |
 | `HostSessionInfoProtocol` | `runtime_checkable Protocol` | Structural check on info objects |
-| `HostSessionProtocol` | `runtime_checkable Protocol` | Structural check on session plugins |
+| `HostSessionProtocol` | `runtime_checkable Protocol` | Structural check on host session classes |
 
 Plugins may return `HostSessionInfo` directly or return any object whose
-attributes satisfy `HostSessionInfoProtocol` — MSW accepts either via
-structural typing.
+attributes satisfy `HostSessionInfoProtocol` — MSW accepts both.
 
 ---
 
 ## MSW attach side
 
-`hardware/host_session.py` (renamed from `parent_session.py`) provides the
-factory:
+`hardware/host_session.py` provides the entry-point driven factory:
 
 ```python
 def make_host_session(session_type: str, **kwargs) -> HostSessionProtocol:
@@ -101,21 +104,16 @@ def make_host_session(session_type: str, **kwargs) -> HostSessionProtocol:
     raise ValueError(f"No msw.host plugin registered for {session_type!r}")
 ```
 
-After `make_host_session()` returns, MSW calls:
+After attaching:
 
 ```python
-info = session.attach(
-    subject=subject,
-    local_path=out_path,
-    remote_path=setup_config.open_ephys_remote_path,
-    ...
-)
-# info is HostSessionInfo — written to session YAML under host_acquisition:
+info = session.attach(subject=subject, local_path=out_path, ...)
+# HostSessionInfo written to session YAML under host_acquisition:
 ```
 
-The `host_acquisition:` block in the session YAML mirrors the `HostSessionInfo`
-fields so post-processing can locate the neural data directory without knowing
-which backend was used.
+The `host_acquisition:` block records backend, acquisition name, subject, and
+remote path so post-processing can locate neural data without knowing which
+backend was used.
 
 ---
 
@@ -123,19 +121,20 @@ which backend was used.
 
 1. Implement `attach() / start() / stop()` returning `HostSessionInfo`
 2. Declare `[project.entry-points."msw.host"] myname = "my_pkg.session:MySession"`
-3. Add `msw-plugin-api` to dependencies
-4. Optionally implement a CLI plugin under `msw.cli` for direct control
+3. Optionally add `[project.entry-points."msw.cli"] myname = "my_pkg.cli:register"`
+4. Add `msw-plugin-api` to dependencies
 
 ---
 
 ## Future plugin types
 
-The entry-point group pattern is extensible. Candidate future groups:
+`msw.cli` is the shared registration mechanism across all types. New plugin
+types add a new entry-point group and a new Protocol in `msw-plugin-api`:
 
-| Group | Purpose |
-|---|---|
-| `msw.host` | Acquisition system plugins (implemented) |
-| `msw.cli` | CLI subcommand plugins (implemented) |
-| `msw.task` | External task packages (partially — `msw.tasks` group exists) |
-| `msw.reader` | Session reader plugins for post-processing |
-| `msw.hardware` | Custom hardware device drivers |
+| Group | Type or mechanism | Status |
+|---|---|---|
+| `msw.cli` | CLI registration — all plugin types | implemented |
+| `msw.host` | Host/linked session acquisition systems | implemented |
+| `msw.tasks` | External task packages | partial |
+| `msw.reader` | Session reader plugins for post-processing | planned |
+| `msw.hardware` | Custom hardware device drivers | planned |

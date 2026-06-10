@@ -169,7 +169,7 @@ Set `open_ephys_url` to the IP or hostname of the Open Ephys GUI process for thi
 open_ephys_url: 172.24.42.168
 ```
 
-This enables `--parent openephys` without passing the address on the CLI each time.
+This enables `--host openephys` without passing the address on the CLI each time.
 `msw run` reads the URL from the active setup config, so setups without OE simply omit the field.
 Machine config (`~/.murineshiftwork/msw_machine.yaml`) is checked as a fallback for backward compatibility.
 
