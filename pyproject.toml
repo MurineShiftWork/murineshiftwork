@@ -54,9 +54,6 @@ dev = [
 docs = [
     "mkdocs-material",
 ]
-oe = [
-    "msw-open-ephys",
-]
 calibration = [
     "serial-scale-hx711",
     "serial-scale-bench",
@@ -197,6 +194,5 @@ environments = [
     "sys_platform == 'win32'",
 ]
 
-[tool.uv.sources]
-msw-plugin-api = { workspace = true }
-msw-open-ephys = { workspace = true }
+[tool.uv.workspace]
+exclude = ["external/msw-plugin-api", "external/msw-open-ephys"]

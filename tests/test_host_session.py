@@ -6,10 +6,15 @@ from pathlib import Path
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
-from msw_open_ephys.host import OpenEphysHostSession, _parse_host
-from msw_plugin_api import HostSessionInfo, HostSessionProtocol
 
-from murineshiftwork.logic.config.models import SetupConfig
+msw_open_ephys = pytest.importorskip(
+    "msw_open_ephys",
+    reason="msw-open-ephys not installed (pip install msw-open-ephys or uv sync --extra oe)",
+)
+from msw_open_ephys.host import OpenEphysHostSession, _parse_host  # noqa: E402
+from msw_plugin_api import HostSessionInfo, HostSessionProtocol  # noqa: E402
+
+from murineshiftwork.logic.config.models import SetupConfig  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # _parse_host
