@@ -50,13 +50,16 @@ dev = [
     "httpx",
     "uvicorn",
     "pyarrow",
-    "pypulsepal",
+    "murineshiftwork[pulsepal]",
 ]
 docs = [
     "mkdocs-material",
 ]
 oe = [
     "msw-open-ephys",
+]
+pulsepal = [
+    "pypulsepal",
 ]
 calibration = [
     "serial-scale-hx711",
