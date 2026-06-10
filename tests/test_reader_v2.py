@@ -20,7 +20,7 @@ from murineshiftwork.readers.session import read_session_data
 FIXTURE_V2 = Path(__file__).parent / "data" / "fixture_v2"
 _skip_no_fixture = pytest.mark.skipif(
     not FIXTURE_V2.exists(),
-    reason="fixture_v2 not in repo (tests/data/ is gitignored)",
+    reason="fixture_v2 directory absent",
 )
 
 

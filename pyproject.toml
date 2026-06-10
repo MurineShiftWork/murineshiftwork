@@ -50,6 +50,7 @@ dev = [
     "httpx",
     "uvicorn",
     "pyarrow",
+    "pypulsepal",
 ]
 docs = [
     "mkdocs-material",
