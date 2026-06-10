@@ -68,27 +68,26 @@ def _add_session_args(parser):
         help=f"Output directory for session data (default: from machine config; currently: {default_out_path or '~/data'})",
     )
     g.add_argument(
-        "--child-of",
-        "--is-child-session-to",
-        dest="is_child_session_to",
+        "--link-to",
+        dest="linked_to",
         type=str,
         default="",
         help=(
-            "Parent session basename; when set, saves session directly in "
-            "--out-path (skips subject dir)"
+            "Host acquisition basename; nests this session inside an existing "
+            "acquisition folder (skips subject dir)"
         ),
     )
     g.add_argument(
-        "--parent",
-        dest="parent_session_flag",
+        "--host",
+        dest="host_flag",
         type=str,
         default="",
         metavar="TYPE[:URL]",
         help=(
-            "Attach to a parent acquisition session and nest this session inside it. "
-            "TYPE is the backend name (currently: openephys). "
+            "Attach to a host acquisition system and nest this session inside it. "
+            "TYPE is the backend name (e.g. openephys). "
             "URL overrides the address from the setup YAML or machine config. "
-            "Examples: --parent openephys  |  --parent openephys:172.24.42.168"
+            "Examples: --host openephys  |  --host openephys:172.24.42.168"
         ),
     )
     g.add_argument(
@@ -97,9 +96,9 @@ def _add_session_args(parser):
         action="store_true",
         default=False,
         help=(
-            "When --parent is also set and the parent cannot be reached, continue "
+            "When --host is also set and the host cannot be reached, continue "
             "as a standalone session instead of aborting. Without this flag, a "
-            "--parent attach failure is a hard error."
+            "--host attach failure is a hard error."
         ),
     )
 

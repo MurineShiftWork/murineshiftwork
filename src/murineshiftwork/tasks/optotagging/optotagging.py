@@ -353,9 +353,9 @@ def run_task(**args_dict):
         conductor.start()
         conductor.setup_agents()
 
-    # _is_child_session_to passed through as a plain kwarg so Task.run() can build
+    # _linked_to passed through as a plain kwarg so Task.run() can build
     # the per-protocol acquisition path without needing to reconstruct it.
-    args_dict["_is_child_session_to"] = args_dict.get("is_child_session_to")
+    args_dict["_linked_to"] = args_dict.get("linked_to")
     args_dict["conductor"] = conductor
     args_dict["auto_start"] = False
 

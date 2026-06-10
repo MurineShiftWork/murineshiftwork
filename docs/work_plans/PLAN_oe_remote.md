@@ -185,7 +185,7 @@ checks `isinstance(session, HostSessionProtocol)`, and returns it.
 | 1 | Extract + restructure to flat `src/msw_open_ephys/` layout | ~1 h | — | ✓ done 2026-05-26 |
 | 2 | CI workflows + pre-commit added to `msw-open-ephys` | — | — | ✓ done 2026-06-09 |
 | 3 | `msw-plugin-api` package created with Protocols + HostSessionInfo | — | — | ✓ done 2026-06-09 |
-| 4 | `git init` + push `MurineShiftWork/msw-open-ephys` and `MurineShiftWork/msw-plugin-api`; OIDC | ~30 min | GitHub repos | TODO |
+| 4 | `git init` + push repos; OIDC | — | GitHub repos | ✓ done 2026-06-10 |
 | 5 | Rename `parent_session.py` → `host_session.py`; `--parent` → `--host`; rename Protocol + factory | ~1 h | — | TODO |
 | 6 | `make_host_session()` reads `msw.host` entry-points instead of hardcoded factory | 20 min | step 5 | TODO |
 | 7 | Add `[project.entry-points."msw.host"] openephys = "msw_open_ephys.session:OpenEphysHostSession"` to msw-open-ephys | 5 min | step 6 | TODO |

@@ -43,6 +43,18 @@ Rule: one concern per branch. Open a **draft PR** immediately after the first re
 > Include: type, scope if meaningful, bullet list of changes, test count delta.
 > State the version bump type (major/minor/patch) the message would trigger.
 
+**Multi-line commit messages** — use a heredoc to preserve indentation in the body:
+
+```bash
+git commit -m "$(cat <<'EOF'
+feat(scope): subject line
+
+- bullet one
+- bullet two
+EOF
+)"
+```
+
 **`version`**
 > State the current version, what bump type the uncommitted/unreleased changes warrant,
 > and what the next version would be. One line each.

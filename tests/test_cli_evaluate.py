@@ -73,7 +73,7 @@ def _base_args(tmp_path, subject, task="_test_flush_valves", **overrides):
         "setup": "unknown_setup",
         "experiment": "unknown_experiment",
         "out_path": str(tmp_path / "data"),
-        "is_child_session_to": "",
+        "linked_to": "",
         "serial_port_pulsepal": "/dev/ttyACM1",
         "serial_port_scale": "/dev/ttyACM2",
         "serial_port_stage": "/dev/ttyUSB0",

@@ -15,6 +15,7 @@ requires-python = ">=3.12,<3.14"
 dependencies = [
     "acquisition-namespace>=1.2.2",
     "ttl-barcoder>=0.4.1",
+    "msw-plugin-api>=0.1.0",
     "pydantic>=2.0",
     "tqdm",
     "rich",
@@ -52,6 +53,9 @@ dev = [
 ]
 docs = [
     "mkdocs-material",
+]
+oe = [
+    "msw-open-ephys",
 ]
 calibration = [
     "serial-scale-hx711",
@@ -192,3 +196,7 @@ environments = [
     "sys_platform == 'darwin'",
     "sys_platform == 'win32'",
 ]
+
+[tool.uv.sources]
+msw-plugin-api = { workspace = true }
+msw-open-ephys = { workspace = true }

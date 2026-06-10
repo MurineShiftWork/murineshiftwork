@@ -89,7 +89,7 @@ def test_v1_child_session_nesting():
         "child_task",
         "/data",
         version=NAMESPACE_V1,
-        is_child_session_to=parent,
+        linked_to=parent,
         printout=False,
     )
     assert f"/{parent}/" in paths["session_folder"]

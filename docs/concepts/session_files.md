@@ -37,9 +37,9 @@ task_settings:
   start_level: 1
   stop_trials: 500
   ...
-# present only when --parent openephys was passed
-parent_acquisition:
-  backend: open_ephys
+# present only when --host openephys was passed
+host_acquisition:
+  backend: openephys
   acquisition_name: "mouse001__20260525_074402__ephys_multi_behavior"
   subject: mouse001
   parent_directory: "/data/rig1"
@@ -47,11 +47,11 @@ parent_acquisition:
   status: IDLE
 ```
 
-`parent_acquisition` is written at session start when `--parent openephys` is
+`host_acquisition` is written at session start when `--host openephys` is
 passed. It captures exactly which Open Ephys acquisition this behavioural
 session was nested inside, linking back to the ephys data directory.
 `acquisition_name` matches the second path component of `base_text` as set by
-`oe_remote`, which is also the folder name used as `is_child_session_to` in
+`oe-remote`, which is also the folder name used as `linked_to` in
 `generate_session_paths()`.
 
 ## `.msw.df.jsonl` structure
@@ -117,8 +117,8 @@ Current format (v2.6+, mandatory acquisition level):
             └── <basename>.msw.plot_spec.yaml
 ```
 
-When attached to an external parent (e.g. Open Ephys via `--parent openephys`),
-the acquisition dir name comes from the parent system:
+When linked to a host acquisition system (e.g. Open Ephys via `--host openephys`),
+the acquisition dir name comes from the host system:
 
 ```
 <data_dir>/
