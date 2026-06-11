@@ -7,17 +7,17 @@ Design details live in memory files or separate docs — not here.
 
 ## TOP PRIORITY — blocking public release
 
-- [ ] **Security scrub `src/` files** — replace `172.24.42.168` with `10.0.10.111` in `parser.py`, `host_session.py`, `docs/cli/run.md`, `docs/setup/setup_config.md`; fix protonmail email in `.copier-answers.yml`, `CODE_OF_CONDUCT.md`, `BUILD_SYSTEM_STANDARD.md`. Full checklist: `docs/work_plans/SECURITY_REVIEW.md`
+- [x] **Security scrub `src/` files** — replace `172.24.42.168` with `10.0.10.111` in `parser.py`, `host_session.py`, `docs/cli/run.md`, `docs/setup/setup_config.md`; fix protonmail email in `.copier-answers.yml`, `CODE_OF_CONDUCT.md`, `BUILD_SYSTEM_STANDARD.md`, and all external repo `CODE_OF_CONDUCT.md` files. · 2026-06-10
 - [ ] **Move docs + playground upstream** — `docs/`, `playground/` move to project-dir (outside repo) before public orphan branch push; `DHCP.md` and `PROVISION_RPI_SCRIPTS.md` must not appear in public history
 - [ ] **Add mkdocstrings + API ref pages** — `murineshiftwork`, `acquisition-namespace`, `ttl-barcoder`, `pypulsepal` each need mkdocstrings plugin + `docs/api/` pages before polished docs site. Full gap list: `docs/work_plans/DOC_GAPS.md`
 - [ ] **`rpi_camera_ensemble` docs** — README is a TODO stub; docs/ is 90% empty skeleton; full rewrite needed before public release
-- [ ] **Namespace-repo separation sprint** — see `IMPLEMENTATION_PLAN.md`; can begin once security scrub is done; doc quality is a parallel track
+- [ ] **Namespace-repo separation sprint** — see `IMPLEMENTATION_PLAN.md` and `PLAN_package_graph.md`. First step: write `tests/test_task_discovery.py` covering `msw.tasks` entry-point path (mocked external package); then extract `msw-tasks-core`. Doc quality is a parallel track. Tests in each extracted package; cross-package integration tests stay in `murineshiftwork/tests/`.
 
 ---
 
 ## Manual (requires human action)
 
-- [ ] **GitHub + PyPI: merge and publish `msw-open-ephys`** — merge `ft/msw-host-plugin` PR, trigger release workflow; then restore `oe = ["msw-open-ephys"]` optional extra in `murineshiftwork/pyproject.toml` and re-enable `test_host_session.py` full run (currently skipped without the package)
+- [x] **GitHub + PyPI: merge and publish `msw-open-ephys`** — merged `ft/msw-host-plugin`; published 3.1.1 to PyPI; `oe = ["msw-open-ephys"]` restored; `test_host_session.py` runs fully (25 tests). · 2026-06-10
 - [ ] **PyPI: publish deprecation stub** — `serial-weighing-scale 3.0.0` at `/mnt/maindata/code/serial_weighing_scale_stub/`
   ```
   cd /mnt/maindata/code/serial_weighing_scale_stub
