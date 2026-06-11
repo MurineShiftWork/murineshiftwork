@@ -8,7 +8,11 @@ Design details live in memory files or separate docs — not here.
 ## TOP PRIORITY — blocking public release
 
 - [x] **Security scrub `src/` files** — replace `172.24.42.168` with `10.0.10.111` in `parser.py`, `host_session.py`, `docs/cli/run.md`, `docs/setup/setup_config.md`; fix protonmail email in `.copier-answers.yml`, `CODE_OF_CONDUCT.md`, `BUILD_SYSTEM_STANDARD.md`, and all external repo `CODE_OF_CONDUCT.md` files. · 2026-06-10
-- [ ] **Move docs + playground upstream** — `docs/`, `playground/` move to project-dir (outside repo) before public orphan branch push; `DHCP.md` and `PROVISION_RPI_SCRIPTS.md` must not appear in public history
+- [ ] **Project-dir restructure** *(in progress — user doing manually)* — flatten all repos into `project-dir/[repo-name]/` layout. After move:
+  1. Create `project-dir/pyproject.toml` (or `uv.toml`) as uv workspace root declaring all repos as members — replaces the current per-repo workspace hacks
+  2. Move `docs/work_plans/SOP.md`, `ROADMAP.md`, `IMPLEMENTATION_PLAN.md`, `PLAN_*.md`, `SECURITY_REVIEW.md`, `DOC_GAPS.md` and `playground/` out of `murineshiftwork/` into `project-dir/docs/` — these are project-level artefacts, not part of the public package
+  3. `murineshiftwork/docs/` keeps only user-facing package docs (setup, CLI reference, concepts, tasks) — what ships with the public release
+  4. Update `mkdocs.yml` nav to remove moved files
 - [ ] **Add mkdocstrings + API ref pages** — `murineshiftwork`, `acquisition-namespace`, `ttl-barcoder`, `pypulsepal` each need mkdocstrings plugin + `docs/api/` pages before polished docs site. Full gap list: `docs/work_plans/DOC_GAPS.md`
 - [ ] **`rpi_camera_ensemble` docs** — README is a TODO stub; docs/ is 90% empty skeleton; full rewrite needed before public release
 - [ ] **Namespace-repo separation sprint** — see `IMPLEMENTATION_PLAN.md` and `PLAN_package_graph.md`. First step: write `tests/test_task_discovery.py` covering `msw.tasks` entry-point path (mocked external package); then extract `msw-tasks-core`. Doc quality is a parallel track. Tests in each extracted package; cross-package integration tests stay in `murineshiftwork/tests/`.
