@@ -864,7 +864,7 @@ class TaskControl:
     # ------------------------------------------------------------------ #
 
     def save(self):
-        save_trial_data(self.trial_data, str(msw_file(self.save_path, "df.jsonl")))
+        save_trial_data(self.trial_data, msw_file(self.save_path, "df.jsonl"))
 
     def __del__(self):
         if hasattr(self, "save_path"):

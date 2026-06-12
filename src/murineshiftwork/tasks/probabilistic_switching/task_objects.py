@@ -12,6 +12,7 @@ from murineshiftwork.logic.calibration import CalibrationDataSound
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.maths import ExponentialMovingAverage, withprob
 from murineshiftwork.logic.sounds import StereoSound
+from murineshiftwork.namespace.msw_files import msw_file
 
 
 class TaskControl:
@@ -727,7 +728,7 @@ class TaskControl:
     def save(self):
         logging.debug("Saving task control data..")
         dt = time.time()
-        save_trial_data(self.trial_data, str(self.save_path_data) + ".df.jsonl")
+        save_trial_data(self.trial_data, msw_file(self.save_path_data, "df.jsonl"))
         logging.debug(f"Saved data in {np.round(time.time() - dt, 2)}s.")
 
     def __del__(self):

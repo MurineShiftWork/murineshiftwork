@@ -21,6 +21,7 @@ from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.maths import ExponentialMovingAverage, withprob
 from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.sounds import StereoSound
+from murineshiftwork.namespace.msw_files import msw_file
 
 
 class TaskControl:
@@ -146,40 +147,50 @@ class TaskControl:
 
         serial_port_stage = task_settings.get("serial_port_stage")
         stage_cfg = task_settings.get("settings.stage")
-        if not stage_cfg or not stage_cfg.get("axes"):
-            raise RuntimeError(
-                f"Stage config missing or has no axes. "
-                f"serial_port_stage={serial_port_stage!r}, "
-                f"settings.stage={stage_cfg!r}. "
-                f"Check setup YAML has a 'stage' device with axes defined."
+        if task_settings.get("testing"):
+            logging.warning(
+                "testing=True: stage disabled, softcodes 15/25 will be ignored"
             )
-        stage_cfg["connection"]["serial_port"] = serial_port_stage
-        self.stage = StageController.from_config(stage_cfg)
-        self.stage.small_increment = 20
-        self.stage.large_increment = 40
+            self.stage = None
+        else:
+            if not stage_cfg or not stage_cfg.get("axes"):
+                raise RuntimeError(
+                    f"Stage config missing or has no axes. "
+                    f"serial_port_stage={serial_port_stage!r}, "
+                    f"settings.stage={stage_cfg!r}. "
+                    f"Check setup YAML has a 'stage' device with axes defined."
+                )
+            stage_cfg["connection"]["serial_port"] = serial_port_stage
+            self.stage = StageController.from_config(stage_cfg)
+            self.stage.small_increment = 20
+            self.stage.large_increment = 40
 
-        logging.debug(f"Stage known_positions at init: {self.stage.known_positions}")
-        self.stage.save_as_known_position("front")
-        logging.debug(
-            f"Stage known_positions after save 'front': {self.stage.known_positions}"
-        )
-        if (
-            "front" not in self.stage.known_positions
-            or not self.stage.known_positions["front"]
-        ):
-            raise RuntimeError(
-                "[stage] save_as_known_position('front') produced empty result — "
-                "stage axes may not be responding. Check motor IDs and connection."
+            logging.debug(
+                f"Stage known_positions at init: {self.stage.known_positions}"
             )
+            self.stage.save_as_known_position("front")
+            logging.debug(
+                f"Stage known_positions after save 'front': {self.stage.known_positions}"
+            )
+            if (
+                "front" not in self.stage.known_positions
+                or not self.stage.known_positions["front"]
+            ):
+                raise RuntimeError(
+                    "[stage] save_as_known_position('front') produced empty result — "
+                    "stage axes may not be responding. Check motor IDs and connection."
+                )
 
-        self.stage.move_to_known_position("back")
-        logging.debug("Stage moved to 'back' (init)")
+            self.stage.move_to_known_position("back")
+            logging.debug("Stage moved to 'back' (init)")
 
-        self._stage_queue = queue.Queue()
-        self._stage_thread = threading.Thread(target=self._stage_worker, daemon=True)
-        self._stage_thread.start()
+            self._stage_queue = queue.Queue()
+            self._stage_thread = threading.Thread(
+                target=self._stage_worker, daemon=True
+            )
+            self._stage_thread.start()
 
-        logging.info(self.stage)
+            logging.info(self.stage)
 
         self.MOVE_TO_FRONT = 15
         self.MOVE_TO_BACK = 25
@@ -234,12 +245,13 @@ class TaskControl:
 
         self.sound.execute_sound_handler(sound_code=softcode, raise_errors=False)
 
-        if softcode == self.MOVE_TO_FRONT:
-            logging.debug("Stage: queuing move to front")
-            self._stage_queue.put("front")
-        elif softcode == self.MOVE_TO_BACK:
-            logging.debug("Stage: queuing move to back")
-            self._stage_queue.put("back")
+        if self.stage is not None:
+            if softcode == self.MOVE_TO_FRONT:
+                logging.debug("Stage: queuing move to front")
+                self._stage_queue.put("front")
+            elif softcode == self.MOVE_TO_BACK:
+                logging.debug("Stage: queuing move to back")
+                self._stage_queue.put("back")
 
     def switch_block(self):
         logging.debug("Resetting block.")
@@ -885,7 +897,7 @@ class TaskControl:
     def save(self):
         logging.debug("Saving task control data..")
         dt = time.time()
-        save_trial_data(self.trial_data, str(self.save_path_data) + ".df.jsonl")
+        save_trial_data(self.trial_data, msw_file(self.save_path_data, "df.jsonl"))
         logging.debug(f"Saved data in {np.round(time.time() - dt, 2)}s.")
 
     def stop(self):

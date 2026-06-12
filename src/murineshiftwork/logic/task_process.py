@@ -54,6 +54,15 @@ def _get_git_commit() -> str:
         return ""
 
 
+def _strip_unserializable(obj):
+    """Recursively remove callables and other non-YAML-safe objects from dicts/lists."""
+    if isinstance(obj, dict):
+        return {k: _strip_unserializable(v) for k, v in obj.items() if not callable(v)}
+    if isinstance(obj, list):
+        return [_strip_unserializable(v) for v in obj if not callable(v)]
+    return obj
+
+
 def update_session_yaml(session_file_path, **sections):
     """Add or update top-level sections in .msw.session.yaml.
 
@@ -66,9 +75,9 @@ def update_session_yaml(session_file_path, **sections):
         data = yaml.safe_load(p.read_text()) or {}
     else:
         data = {"msw_format_version": 2}
-    data.update(sections)
+    data.update(_strip_unserializable(sections))
     with Path(yaml_path).open("w") as f:
-        yaml.dump(
+        yaml.safe_dump(
             data,
             f,
             default_flow_style=False,
@@ -233,7 +242,7 @@ class TaskProcess:
             raise PermissionError(f"Session files not writable at {str(target_file)}")
 
         _acq_folder = Path(self.session_paths["session_folder"]).parent
-        init_acquisition_manifest(_acq_folder, self.session_paths["acquisition_name"])
+        init_acquisition_manifest(_acq_folder, self.session_paths["session_basename"])
         append_session_to_acquisition(
             _acq_folder, self.session_paths["session_basename"]
         )
@@ -422,9 +431,9 @@ class TaskProcess:
         }
         ps_info = self.input_kwargs.get("host_session_info")
         if ps_info is not None:
-            data["host_acquisition"] = {
+            data["host_session"] = {
                 "backend": ps_info.backend,
-                "acquisition_name": ps_info.acquisition_name,
+                "session_name": ps_info.session_name,
                 "subject": ps_info.subject,
                 "parent_directory": ps_info.parent_directory,
                 **ps_info.extra,

@@ -255,9 +255,8 @@ def test_read_session_data_opto_settings_ephys_keys():
     d = read_session_data(str(_optotagging_session_dir()))
     ephys = d.get("settings.ephys", {})
     assert ephys.get("backend") == "open_ephys"
-    assert (
-        ephys.get("acquisition_name") == "_test_oe_controller__20260527_132639__ephys"
-    )
+    assert ephys.get("session_name") == "_test_oe_controller__20260527_132639__ephys"
+    assert "acquisition_name" not in ephys
 
 
 def test_read_session_data_opto_artifact_format():
@@ -274,3 +273,130 @@ def test_read_session_data_opto_df_loaded():
     d = read_session_data(str(_optotagging_session_dir()))
     assert d.get("df") is not None
     assert d["df"].shape[0] > 0
+
+
+def test_read_session_data_opto_subprotocols_populated():
+    """session_manifest.yaml subprotocol list is surfaced in data["subprotocols"]."""
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_optotagging_session_dir()))
+    sps = d.get("subprotocols")
+    assert sps is not None and len(sps) > 0
+    first = sps[0]
+    assert "name" in first
+    assert "file" in first
+    assert "barcode_start" in first
+
+
+def test_read_session_data_opto_subprotocol_names():
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_optotagging_session_dir()))
+    names = [sp["name"] for sp in d["subprotocols"]]
+    assert "power_ramp_1mw" in names
+    assert "power_ramp_2mw" in names
+
+
+def test_read_session_data_opto_df_has_subprotocol_column():
+    """df is merged from per-protocol files; 'subprotocol' column added."""
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_optotagging_session_dir()))
+    df = d["df"]
+    assert "subprotocol" in df.columns
+    assert set(df["subprotocol"].unique()) == {"power_ramp_1mw"}
+
+
+def test_read_session_data_opto_missing_subprotocol_file_does_not_crash():
+    """power_ramp_2mw df.jsonl is absent from the fixture (aborted protocol).
+    The reader must skip it without raising and still return a valid df."""
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_optotagging_session_dir()))
+    assert d.get("df") is not None
+
+
+def test_read_session_data_opto_without_task_settings_not_complete():
+    """The fixture pre-dates the update_session_yaml call in optotagging.
+    It has no task_settings section, so is_complete must be False — not an error."""
+    from murineshiftwork.readers.session import read_session_data
+
+    d = read_session_data(str(_optotagging_session_dir()))
+    assert d["is_complete_session"] is False
+    assert d.get("settings.task") is None
+
+
+def test_read_session_data_opto_with_task_settings_is_complete(tmp_path):
+    """A session YAML that includes task_settings gives is_complete=True."""
+    import shutil
+
+    import yaml
+
+    from murineshiftwork.readers.session import read_session_data
+
+    # Copy the optotagging fixture into tmp_path and patch in task_settings
+    src = _optotagging_session_dir()
+    dst = tmp_path / src.name
+    shutil.copytree(src, dst)
+
+    session_yaml_path = dst / f"{src.name}.msw.session.yaml"
+    data = yaml.safe_load(session_yaml_path.read_text()) or {}
+    data["task_settings"] = {"n_trials": 10, "stimulation_defaults": {}}
+    with session_yaml_path.open("w") as f:
+        yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
+
+    d = read_session_data(str(dst))
+    assert d["is_complete_session"] is True
+    assert d.get("settings.task") is not None
+
+
+# ---------------------------------------------------------------------------
+# _normalize_host_block — direct unit tests (all three legacy key variants)
+
+
+def test_normalize_host_block_parent_acquisition_key():
+    """Old parent_acquisition block: acquisition_name → session_name."""
+    from murineshiftwork.readers.session import _normalize_host_block
+
+    block = {
+        "backend": "open_ephys",
+        "acquisition_name": "m01__20260101__ephys",
+        "subject": "m01",
+    }
+    out = _normalize_host_block(block)
+    assert out["session_name"] == "m01__20260101__ephys"
+    assert "acquisition_name" not in out
+    assert out["backend"] == "open_ephys"
+
+
+def test_normalize_host_block_already_session_name_unchanged():
+    """New-style block already has session_name — must not be touched."""
+    from murineshiftwork.readers.session import _normalize_host_block
+
+    block = {
+        "backend": "open_ephys",
+        "session_name": "m01__20260101__ephys",
+        "subject": "m01",
+    }
+    out = _normalize_host_block(block)
+    assert out["session_name"] == "m01__20260101__ephys"
+    assert "acquisition_name" not in out
+
+
+def test_normalize_host_block_both_keys_session_name_wins():
+    """If both keys somehow present (shouldn't happen), session_name is preserved as-is."""
+    from murineshiftwork.readers.session import _normalize_host_block
+
+    block = {"session_name": "new_name", "acquisition_name": "old_name"}
+    out = _normalize_host_block(block)
+    assert out["session_name"] == "new_name"
+    assert "acquisition_name" not in out
+
+
+def test_normalize_host_block_does_not_mutate_input():
+    from murineshiftwork.readers.session import _normalize_host_block
+
+    block = {"acquisition_name": "foo", "backend": "test"}
+    original = dict(block)
+    _normalize_host_block(block)
+    assert block == original

@@ -40,7 +40,7 @@ class TaskData:
         save_path = save_path or self.save_path
         logging.debug("Saving task control data..")
         dt = time.time()
-        save_trial_data(self.data, str(save_path))
+        save_trial_data(self.data, save_path)
         logging.debug(f"Saved data in {np.round(time.time() - dt, 2)}s.")
 
 

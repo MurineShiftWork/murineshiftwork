@@ -19,6 +19,35 @@ from murineshiftwork.readers.namespace import (
 )
 
 
+class _PermissiveLoader(yaml.SafeLoader):
+    """SafeLoader that maps !!python/name: tags to None.
+
+    Historical session YAMLs may contain callables (e.g. valve_s_for_ul lambda)
+    serialised with !!python/name: by PyYAML's default Dumper. SafeLoader raises
+    on those; this loader silently drops them so old files remain readable.
+    """
+
+
+_PermissiveLoader.add_multi_constructor(
+    "tag:yaml.org,2002:python/name:",
+    lambda loader, tag_suffix, node: None,
+)
+
+
+def _normalize_host_block(block: dict) -> dict:
+    """Canonicalize the host/ephys block to current field names.
+
+    Handles old on-disk keys so callers always see the v3 vocabulary:
+      acquisition_name  →  session_name  (renamed in namespace v3.0)
+    """
+    out = dict(block)
+    if "acquisition_name" in out:
+        if "session_name" not in out:
+            out["session_name"] = out["acquisition_name"]
+        del out["acquisition_name"]
+    return out
+
+
 def _msw_files_dict(session_dir: Path) -> dict[str, str]:
     """Return {artifact_key: filepath} for all recognised MSW files in session_dir.
 
@@ -72,7 +101,7 @@ def _read_session_yaml(session_dir: Path, fmt: dict) -> dict:
 
     for k, v in files.items():
         if k == "session.yaml" and ".msw." in v:
-            payload = yaml.safe_load(Path(v).read_text()) or {}
+            payload = yaml.load(Path(v).read_text(), Loader=_PermissiveLoader) or {}
             if payload.get("msw_format_version", 1) >= 2:
                 if "process" in payload:
                     data["settings.process"] = payload["process"]
@@ -80,11 +109,13 @@ def _read_session_yaml(session_dir: Path, fmt: dict) -> dict:
                     data["settings.task"] = payload["task_settings"]
                 if "stage" in payload:
                     data["settings.stage"] = payload["stage"]
-                host_acq = payload.get("host_acquisition") or payload.get(
-                    "parent_acquisition"
+                host_acq = (
+                    payload.get("host_session")
+                    or payload.get("host_acquisition")
+                    or payload.get("parent_acquisition")
                 )
                 if host_acq is not None:
-                    data["settings.ephys"] = host_acq
+                    data["settings.ephys"] = _normalize_host_block(host_acq)
         elif Path(k).name.endswith("pkl") or Path(k).name.endswith("jsonl"):
             if "df" not in data:
                 data["df"] = read_trial_df(filepath=v)

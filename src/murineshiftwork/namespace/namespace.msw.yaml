@@ -1,9 +1,9 @@
-version: "2.0"
-description: "MSW acquisition + session file namespace: subject > acquisition > session > file."
+version: "3.0"
+description: "MSW acquisition namespace: subject > session > acquisition > file."
 hierarchy:
   - subject
-  - acquisition
   - session
+  - acquisition
   - file
 optional_levels: []
 levels:
@@ -11,11 +11,11 @@ levels:
     template: "{subject}"
     regex: "(?P<subject>[\\w\\-]+)"
     optional_fields: []
-  acquisition:
+  session:
     template: "{subject}__{datetime}__{task}"
     regex: "(?P<subject>[\\w\\-]+)__(?P<datetime>\\d{8}_\\d{6}(?:_\\d{6})?)__(?P<task>[\\w\\-]+)"
     optional_fields: []
-  session:
+  acquisition:
     template: "{subject}__{datetime}__{task}"
     regex: "(?P<subject>[\\w\\-]+)__(?P<datetime>\\d{8}_\\d{6}(?:_\\d{6})?)__(?P<task>[\\w\\-]+)"
     optional_fields: []

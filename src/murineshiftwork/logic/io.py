@@ -84,7 +84,7 @@ class _NumpyEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def save_trial_data(trial_data_list: list, filepath) -> None:
+def save_trial_data(trial_data_list: list, filepath: str | Path) -> None:
     """Save list of trial dicts to JSONL (overwrites existing file)."""
     filepath = Path(filepath)
     filepath.parent.mkdir(parents=True, exist_ok=True)

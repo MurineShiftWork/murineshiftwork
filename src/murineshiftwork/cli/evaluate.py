@@ -436,12 +436,12 @@ def _resolve_host_session(args_dict: dict) -> None:
         )
         return
 
-    args_dict["linked_to"] = info.acquisition_name
+    args_dict["linked_to"] = info.session_name
     args_dict["host_session_info"] = info
     logging.info(
-        "Host session attached [%s]: acquisition=%r subject=%r",
+        "Host session attached [%s]: session=%r subject=%r",
         info.backend,
-        info.acquisition_name,
+        info.session_name,
         info.subject,
     )
 

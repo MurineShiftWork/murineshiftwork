@@ -40,6 +40,7 @@ from murineshiftwork.logic.barcode import (
 from murineshiftwork.logic.io import save_trial_data
 from murineshiftwork.logic.misc import draw_jittered_trial_time
 from murineshiftwork.logic.task_process import TaskProcess, TaskRunner
+from murineshiftwork.namespace.msw_files import msw_file
 
 _DEFAULTS = {
     "n_max_trials": 20,
@@ -147,7 +148,7 @@ class Task(TaskRunner):
             }
             trial_data_list.append(trial_data)
 
-            save_trial_data(trial_data_list, str(save_path) + ".df.jsonl")
+            save_trial_data(trial_data_list, msw_file(save_path, "df.jsonl"))
 
             trial_index += 1
 

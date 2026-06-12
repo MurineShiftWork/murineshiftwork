@@ -63,14 +63,20 @@ def generate_session_paths(
 ) -> dict:
     """Generate validated session path dict for a given namespace version.
 
-    Always produces a 4-level path: basepath / subject / acquisition / session.
+    All sessions use a 3-level layout::
 
-    For standalone sessions (no host), the acquisition dir is named
-    ``{subject}__{datetime}__session_{task}`` — the ``session_`` prefix
-    distinguishes it from externally-attached systems (``ephys``, etc.).
+        basepath / subject / session_container / acquisition_basename
 
-    For linked sessions (``linked_to`` set), the acquisition dir
-    is the externally-provided basename (e.g. from Open Ephys).
+    ``session_container`` (returned as ``host_session_name``) is the outer
+    directory that groups one or more acquisitions.  For host-linked sessions
+    (``linked_to`` set) it is the externally-provided name (e.g. the Open Ephys
+    recording folder).  For standalone sessions MSW derives a name with a
+    ``session_`` prefix in the task component (e.g.
+    ``subject__datetime__session_flush``) so that container dirs are visually
+    distinct from acquisition dirs.
+
+    ``acquisition_basename`` (``acquisition_name`` in the return dict, equal to
+    ``session_basename``) is the MSW protocol run dir nested inside the container.
 
     Parameters
     ----------
@@ -79,15 +85,16 @@ def generate_session_paths(
     basepath:     Root output directory.
     version:      Namespace version — controls datetime format.
     default_subject: Fallback subject used when *task* starts with ``_test__``.
-    linked_to:    Acquisition basename from an external host system.
-                  When ``None`` a standalone acquisition name is derived.
+    linked_to:    Session container name from an external host system (e.g. Open
+                  Ephys recording folder basename).  When ``None`` a standalone
+                  container name is derived automatically.
     printout:     Print the path table to stdout.
 
     Returns
     -------
     dict with keys: subject, datetime, task, basepath, namespace_version,
-    acquisition_name, session_basename, session_folder, session_folder_relative,
-    session_file_path.
+    host_session_name, acquisition_name, session_basename, session_folder,
+    session_folder_relative, session_file_path.
     """
     if version not in _NAMESPACE_FORMATS:
         raise ValueError(
@@ -107,17 +114,27 @@ def generate_session_paths(
     builder = get_msw_builder()
     session_basename = builder.build_path("session", values)
 
+    # session_container is the outer SESSION directory — always present at depth-2
+    # under basepath/subject.  For host-linked sessions this is the externally-
+    # provided name (e.g. the OE recording folder).  For standalone sessions MSW
+    # derives a name with the "session_" prefix so that session containers are
+    # visually distinct from acquisition dirs.
     if linked_to:
-        acquisition_name = linked_to
+        session_container = linked_to
     else:
-        acquisition_name = builder.build_path(
-            "acquisition",
-            {"subject": subject, "datetime": dt, "task": f"session_{task}"},
+        session_container = builder.build_path(
+            "session", {**values, "task": f"session_{task}"}
         )
 
-    session_folder = basepath / builder.generate_path(
-        "session", values, level_overrides={"acquisition": acquisition_name}
-    )
+    # host_session_name: always the session container dir name (never None).
+    host_session_name = session_container
+
+    # acquisition_name is always the MSW run basename — nested inside the
+    # session container.
+    acquisition_name = session_basename
+
+    # 3-level path for ALL sessions: basepath / subject / session_container / acquisition
+    session_folder = basepath / subject / session_container / session_basename
 
     session_paths = {
         "subject": subject,
@@ -125,6 +142,7 @@ def generate_session_paths(
         "task": task,
         "basepath": basepath,
         "namespace_version": version,
+        "host_session_name": host_session_name,
         "acquisition_name": acquisition_name,
         "session_basename": session_basename,
         "session_folder": session_folder.as_posix(),

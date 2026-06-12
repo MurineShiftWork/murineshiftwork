@@ -75,14 +75,22 @@ def test_v1_session_folder_path():
 
 
 def test_v1_standalone_acquisition_name():
+    # Standalone: auto-generated session container (3-level, same as host-linked).
     paths = generate_session_paths(
         "mouse_01", "flush", "/data", version=NAMESPACE_V1, printout=False
     )
-    assert paths["acquisition_name"].endswith("__session_flush")
-    assert f"/{paths['acquisition_name']}/" in paths["session_folder"]
+    # host_session_name is the auto-generated session container (never None)
+    assert paths["host_session_name"] is not None
+    assert "session_flush" in paths["host_session_name"]
+    assert paths["acquisition_name"] == paths["session_basename"]
+    # session folder is nested: subject / session_container / acquisition
+    assert paths["session_folder"].startswith(
+        f"/data/mouse_01/{paths['host_session_name']}/"
+    )
 
 
 def test_v1_child_session_nesting():
+    # linked_to becomes the host session container; acquisition is nested inside it.
     parent = "mouse_01__20260514_143022_123456__parent_task"
     paths = generate_session_paths(
         "mouse_01",
@@ -92,7 +100,11 @@ def test_v1_child_session_nesting():
         linked_to=parent,
         printout=False,
     )
+    assert paths["host_session_name"] == parent
+    assert paths["acquisition_name"] == paths["session_basename"]
+    # MSW acquisition folder is nested inside the host session dir
     assert f"/{parent}/" in paths["session_folder"]
+    assert paths["session_folder"].startswith(f"/data/mouse_01/{parent}/")
 
 
 # ---------------------------------------------------------------------------

@@ -44,6 +44,13 @@ class MswSession(BaseModel):
     acquisition_name: str | None = None
     acquisition_dir: Path | None = None
 
+    @property
+    def host_session_name(self) -> str | None:
+        """Name of the host/ephys session container, or None if standalone."""
+        if self.settings_ephys is None:
+            return None
+        return self.settings_ephys.get("session_name")
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "session_dir": str(self.session_dir),

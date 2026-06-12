@@ -1,13 +1,18 @@
-"""Host-session plugin system for nesting behavioural sessions inside an
-overarching acquisition process.
+"""Host-session plugin system for nesting behavioural acquisitions inside an
+overarching session container.
 
 Activated via ``--host TYPE[:URL]`` and ``--link-to BASENAME`` CLI flags.
 No permanent setup-YAML config — sessions opt-in per run.
 
-A host session supplies an acquisition name that MSW passes as ``linked_to``
-when building session paths, following the v2 namespace::
+All sessions use the same 3-level directory layout::
 
-    subject/acquisition_name/session_name/
+    basepath / subject / session_container / acquisition_basename /
+
+For host-linked sessions ``session_container`` is provided by the external
+system (e.g. the Open Ephys recording folder).  For standalone sessions MSW
+auto-generates a ``session_container`` with a ``session_`` prefix in the task
+component (e.g. ``mouse001__20260101__session_sequence``), keeping the
+hierarchy consistent for readers regardless of whether a host is attached.
 
 Plugins register under the ``msw.host`` entry-point group::
 
@@ -19,7 +24,7 @@ Usage::
     client = make_host_session("openephys", url="10.0.10.111")
     info = client.attach()
     if info:
-        generate_session_paths(..., linked_to=info.acquisition_name)
+        generate_session_paths(..., linked_to=info.session_name)
 
 Plugin contract: docs/concepts/plugin_system.md
 """

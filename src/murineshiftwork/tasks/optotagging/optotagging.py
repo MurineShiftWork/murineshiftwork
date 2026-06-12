@@ -56,7 +56,7 @@ class OptoTaggingRecord:
         self.trial_data.append(trial_data)
 
     def save(self):
-        save_trial_data(self.trial_data, str(msw_file(self.proto_base, "df.jsonl")))
+        save_trial_data(self.trial_data, msw_file(self.proto_base, "df.jsonl"))
         logging.debug(f"Saved protocol data to {self.proto_base}")
 
     @property
@@ -138,6 +138,10 @@ class Task(TaskRunner):
         session_file_path = session_paths["session_file_path"]
         session_folder = session_paths["session_folder"]
         session_basename = session_paths["session_basename"]
+
+        from murineshiftwork.logic.task_process import update_session_yaml
+
+        update_session_yaml(session_file_path, task_settings=task_settings)
 
         barcode_cfg = barcode_config_from_settings(task_settings)
         barcoder = BarcodeTTL(barcode_cfg)

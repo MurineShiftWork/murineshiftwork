@@ -61,7 +61,7 @@ class AirPuff:
         return self.trial_data.append(trial_data)
 
     def save(self):
-        save_trial_data(self.trial_data, str(msw_file(self.out_path, "df.jsonl")))
+        save_trial_data(self.trial_data, msw_file(self.out_path, "df.jsonl"))
         logging.debug(f"Saved session data to {str(self.out_path)}")
 
     def __exit__(self, exc_type, exc_val, exc_tb):

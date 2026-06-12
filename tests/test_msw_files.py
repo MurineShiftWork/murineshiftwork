@@ -18,8 +18,8 @@ def test_msw_yaml_loads():
     from murineshiftwork.namespace.spec import NamespaceBuilder
 
     b = NamespaceBuilder.from_yaml(_NAMESPACE_DIR / "namespace.msw.yaml")
-    assert b.spec.version == "2.0"
-    assert b.hierarchy == ["subject", "acquisition", "session", "file"]
+    assert b.spec.version == "3.0"
+    assert b.hierarchy == ["subject", "session", "acquisition", "file"]
     assert "acquisition" not in b.optional_levels
 
 
@@ -29,7 +29,7 @@ def test_msw_yaml_loads_correctly():
     p = _NAMESPACE_DIR / "namespace.msw.yaml"
     assert p.exists(), f"Missing: {p}"
     b = NamespaceBuilder.from_yaml(p)
-    assert b.hierarchy == ["subject", "acquisition", "session", "file"]
+    assert b.hierarchy == ["subject", "session", "acquisition", "file"]
 
 
 # ---------------------------------------------------------------------------
@@ -40,7 +40,7 @@ def test_get_msw_builder_returns_builder():
     from murineshiftwork.namespace.paths import get_msw_builder
 
     b = get_msw_builder()
-    assert b.hierarchy == ["subject", "acquisition", "session", "file"]
+    assert b.hierarchy == ["subject", "session", "acquisition", "file"]
     assert "acquisition" not in b.optional_levels
 
 

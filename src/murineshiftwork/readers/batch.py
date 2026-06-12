@@ -85,11 +85,15 @@ def load_session(
 
 
 def load_acquisition(acquisition_dir) -> list[MswSession]:
-    """Load all sessions under an acquisition directory.
+    """Load all acquisitions inside a session container directory.
 
-    Reads acquisition_manifest.yaml when present to determine which session
-    dirs to load.  Falls back to scanning for subdirectories that look like
-    MSW session basenames.
+    ``acquisition_dir`` is the SESSION container (e.g. an Open Ephys recording
+    dir, or a standalone MSW session wrapper) that holds one or more MSW
+    acquisition subdirectories.
+
+    Reads acquisition_manifest.yaml when present to determine which acquisition
+    dirs to load.  Falls back to scanning for subdirectories whose name
+    contains ``__`` (MSW basename-like).
 
     Returns sessions sorted by datetime_str (ascending).
     """
@@ -99,11 +103,14 @@ def load_acquisition(acquisition_dir) -> list[MswSession]:
     manifest_path = acquisition_dir / "acquisition_manifest.yaml"
     if manifest_path.exists():
         manifest = yaml.safe_load(manifest_path.read_text()) or {}
-        session_dirs = [
-            acquisition_dir / s["session_dir"]
-            for s in manifest.get("sessions", [])
-            if (acquisition_dir / s["session_dir"]).is_dir()
-        ]
+        session_dirs = []
+        for s in manifest.get("sessions", []):
+            # schema uses "basename"; older writes may have used "session_dir"
+            name = s.get("basename") or s.get("session_dir")
+            if name:
+                d = acquisition_dir / name
+                if d.is_dir():
+                    session_dirs.append(d)
     else:
         # heuristic: subdirs whose name contains "__" (basename-like)
         session_dirs = sorted(
@@ -126,12 +133,33 @@ def load_acquisition(acquisition_dir) -> list[MswSession]:
     return sessions
 
 
+def _has_session_files(directory: Path) -> bool:
+    """True if *directory* directly contains any MSW or legacy session files."""
+    from murineshiftwork.readers.namespace import test_is_recognized_msw_file
+
+    try:
+        return any(
+            test_is_recognized_msw_file(f) for f in directory.iterdir() if f.is_file()
+        )
+    except PermissionError:
+        return False
+
+
 def load_subject(subject_dir) -> list[MswSession]:
     """Load all sessions under a subject directory.
 
-    Handles both:
-    - 2-level (legacy): subject_dir/session_dir/
-    - 3-level (current): subject_dir/acquisition_dir/session_dir/
+    Current layout (all new sessions, both standalone and host-linked)::
+
+        subject_dir / session_container / acquisition_dir /   (3-level)
+
+    Legacy layout (pre-rename standalone sessions, no session container)::
+
+        subject_dir / session_dir /   (2-level, backward compat)
+
+    Detection is file-based: a child directory that directly contains .msw.
+    files is a legacy session dir (load directly); a child directory that
+    contains no .msw. files but has ``__``-named subdirs is a session container
+    (call load_acquisition to walk its acquisition dirs).
 
     Returns sessions sorted by datetime_str (ascending).
     """
@@ -141,16 +169,19 @@ def load_subject(subject_dir) -> list[MswSession]:
     for child in sorted(subject_dir.iterdir()):
         if not child.is_dir():
             continue
-        # 3-level: child is an acquisition dir (contains session subdirs)
-        nested_sessions = [d for d in child.iterdir() if d.is_dir() and "__" in d.name]
-        if nested_sessions:
-            sessions.extend(load_acquisition(child))
-        elif "__" in child.name:
-            # 2-level: child is a session dir directly under subject
+        if _has_session_files(child):
+            # legacy 2-level: session dir directly under subject (backward compat)
             try:
                 sessions.append(load_session(child))
             except Exception as exc:
                 log.warning("load_subject: skipping %s — %s", child, exc)
+        else:
+            # current 3-level: subject / session_container / acquisition_dir
+            nested_sessions = [
+                d for d in child.iterdir() if d.is_dir() and "__" in d.name
+            ]
+            if nested_sessions:
+                sessions.extend(load_acquisition(child))
 
     sessions.sort(key=lambda s: s.datetime_str)
     return sessions

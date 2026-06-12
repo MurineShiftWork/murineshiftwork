@@ -42,11 +42,11 @@ def test_parse_host_hostname():
 def test_host_session_info_fields():
     info = HostSessionInfo(
         backend="openephys",
-        acquisition_name="m01__20260101_120000__ephys",
+        session_name="m01__20260101_120000__ephys",
         subject="m01",
         parent_directory="/data",
     )
-    assert info.acquisition_name == "m01__20260101_120000__ephys"
+    assert info.session_name == "m01__20260101_120000__ephys"
     assert info.backend == "openephys"
     assert info.extra == {}
 
@@ -147,7 +147,7 @@ def test_attach_valid_three_part_base_text():
     client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
-    assert info.acquisition_name == "m01__20260101_120000__ephys"
+    assert info.session_name == "m01__20260101_120000__ephys"
     assert info.subject == "m01"
     assert info.parent_directory == "/data/rig1"
     assert info.backend == "openephys"
@@ -162,7 +162,7 @@ def test_attach_two_part_base_text_still_works():
     client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
-    assert info.acquisition_name == "m01__20260101_120000__ephys"
+    assert info.session_name == "m01__20260101_120000__ephys"
     assert info.extra["oe_session_name"] == ""
 
 
@@ -195,7 +195,7 @@ def test_attach_require_recording_passes_when_recording():
     client = OpenEphysHostSession(url="127.0.0.1", require_recording=True)
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
-    assert info.acquisition_name == "m01__20260101_120000__ephys"
+    assert info.session_name == "m01__20260101_120000__ephys"
 
 
 def test_attach_host_parsed_from_url():
@@ -221,7 +221,7 @@ def test_attach_second_precision_datetime():
     client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
-    assert info.acquisition_name == "m01__20260524_143022__ephys"
+    assert info.session_name == "m01__20260524_143022__ephys"
 
 
 def test_attach_microsecond_precision_datetime():
@@ -232,7 +232,7 @@ def test_attach_microsecond_precision_datetime():
     client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
-    assert info.acquisition_name == "m01__20260524_143022_123456__ephys"
+    assert info.session_name == "m01__20260524_143022_123456__ephys"
 
 
 def test_attach_leading_trailing_slashes_stripped():
@@ -243,7 +243,7 @@ def test_attach_leading_trailing_slashes_stripped():
     client = OpenEphysHostSession(url="127.0.0.1")
     info = _attach_with_mock_gui(client, gui)
     assert info is not None
-    assert info.acquisition_name == "m01__20260101_120000__ephys"
+    assert info.session_name == "m01__20260101_120000__ephys"
 
 
 def test_attach_invalid_acq_segment_returns_none():
@@ -268,7 +268,7 @@ def test_attach_acquisition_and_session_levels_have_same_template():
 
 
 # ---------------------------------------------------------------------------
-# Integration: base_text -> acquisition_name -> generate_session_paths
+# Integration: base_text -> session_name -> generate_session_paths
 
 
 def test_attach_feeds_generate_session_paths_correctly(tmp_path):
@@ -287,13 +287,14 @@ def test_attach_feeds_generate_session_paths_correctly(tmp_path):
         subject="m01",
         task="sequence",
         basepath=tmp_path,
-        linked_to=info.acquisition_name,
+        linked_to=info.session_name,
         printout=False,
     )
 
     rel_parts = Path(paths["session_folder_relative"]).parts
     assert rel_parts[0] == "m01"
-    assert rel_parts[1] == "m01__20260524_143022__ephys"
-    assert rel_parts[2].startswith("m01__")
+    assert rel_parts[1] == "m01__20260524_143022__ephys"  # host session dir
+    assert rel_parts[2].startswith("m01__")  # MSW acquisition dir
     assert rel_parts[2].endswith("__sequence")
-    assert paths["acquisition_name"] == "m01__20260524_143022__ephys"
+    assert paths["host_session_name"] == "m01__20260524_143022__ephys"
+    assert paths["acquisition_name"] == paths["session_basename"]
