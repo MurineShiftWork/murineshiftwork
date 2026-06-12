@@ -3,8 +3,8 @@ message: "If you use this software, please cite it as below."
 type: software
 title: "Murine Shift Work: behavioural task acquisition with hardware support"
 version: "2.6.0"
-repository-code: https://github.com/larsrollik/murineshiftwork
-license-url: https://github.com/larsrollik/murineshiftwork/blob/main/LICENSE
+repository-code: https://github.com/murineshiftwork/murineshiftwork
+license-url: https://github.com/murineshiftwork/murineshiftwork/blob/main/LICENSE
 authors:
   - family-names: Rollik
     given-names: Lars B.

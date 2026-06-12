@@ -36,9 +36,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/larsrollik/murineshiftwork"
-Documentation = "https://larsrollik.github.io/murineshiftwork/"
-"Issue Tracker" = "https://github.com/larsrollik/murineshiftwork/issues"
+Homepage = "https://github.com/murineshiftwork/murineshiftwork"
+Documentation = "https://murineshiftwork.github.io/murineshiftwork/"
+"Issue Tracker" = "https://github.com/murineshiftwork/murineshiftwork/issues"
 
 [project.optional-dependencies]
 dev = [
