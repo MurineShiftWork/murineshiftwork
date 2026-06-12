@@ -204,8 +204,6 @@ environments = [
     "sys_platform == 'win32'",
 ]
 
-[tool.uv.sources]
-msw-open-ephys = { workspace = true }
 
 [dependency-groups]
 dev = [
