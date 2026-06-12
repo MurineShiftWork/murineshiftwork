@@ -203,9 +203,3 @@ environments = [
     "sys_platform == 'darwin'",
     "sys_platform == 'win32'",
 ]
-
-
-[dependency-groups]
-dev = [
-    "msw-open-ephys",
-]
