@@ -21,4 +21,6 @@ def test_version_exits_cleanly():
 
 def test_tasks_list_runs(capsys):
     run_tasks_list()
-    assert isinstance(capsys.readouterr().out, str)
+    out = capsys.readouterr().out
+    assert isinstance(out, str)
+    assert len(out) > 0, "run_tasks_list() produced no output; expected at least one task listed"

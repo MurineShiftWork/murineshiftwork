@@ -127,3 +127,57 @@ def test_msw_io_subpackages_importable_with_oe_stack():
         init_acquisition_manifest,  # noqa: F401
     )
     from murineshiftwork.readers import MswSession  # noqa: F401
+
+
+# ---------------------------------------------------------------------------
+# Version floor checks (pyproject.toml lower bounds)
+
+
+def test_installed_dep_versions_meet_floors():
+    """Installed versions of core deps must meet pyproject.toml lower bounds."""
+    from importlib.metadata import version
+    from packaging.version import Version
+
+    floors = {
+        "msw-core": "0.3.0",
+        "msw-io": "1.2.0",
+        "msw-plugin-api": "0.2.0",
+    }
+    for pkg, floor in floors.items():
+        installed = Version(version(pkg))
+        assert installed >= Version(floor), (
+            f"{pkg} {installed} is below required floor {floor}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Namespace contributor count: msw-core must be present
+
+
+def test_murineshiftwork_namespace_has_msw_core_contributor():
+    """msw-core must be a namespace contributor (adds cli/, hardware/, etc.)."""
+    from pathlib import Path
+    import murineshiftwork
+
+    roots = [Path(p) for p in murineshiftwork.__path__]
+    has_cli = any((r / "cli").is_dir() for r in roots)
+    assert has_cli, (
+        f"cli/ not found in any namespace root: {roots}. "
+        "Is msw-core installed correctly?"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Optional: msw-tasks-core entry points (if installed)
+
+
+def test_msw_tasks_core_entry_points_if_installed():
+    """When msw-tasks-core is installed, its tasks must appear in msw.tasks group."""
+    msw_tasks_core = pytest.importorskip(
+        "murineshiftwork.tasks._calibration_liquid_static",
+        reason="msw-tasks-core not installed; skipping",
+    )
+    names = {ep.name for ep in entry_points(group="msw.tasks")}
+    assert "_calibration_liquid_static" in names, (
+        f"msw-tasks-core entry points not registered. Got: {names!r}"
+    )

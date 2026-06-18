@@ -3,7 +3,7 @@
 import pytest
 import yaml
 
-pytest.importorskip("ttl_barcoder")  # skip until package is published
+pytest.importorskip("ttl_barcoder")
 
 
 def _make_subject_yaml(tmp_path, subject="mouse001"):

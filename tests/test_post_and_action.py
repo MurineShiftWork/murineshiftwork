@@ -185,7 +185,7 @@ def test_run_action_unsupported_device_type_raises(tmp_path, monkeypatch):
     )
     from murineshiftwork.cli.execute import run_action
 
-    with pytest.raises((ValueError, Exception)):
+    with pytest.raises(ValueError, match="No action driver"):
         run_action(
             setup="cam_setup",
             device="camera",
