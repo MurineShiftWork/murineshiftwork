@@ -1,5 +1,9 @@
 # msw agent
 
+!!! note "Plugin subcommand"
+    `msw agent` is provided by the `msw-agent` package via the `msw.cli` entry-point group.
+    It is **not present** on a base `murineshiftwork` install. Install the `[agent]` extra first.
+
 Start a long-lived hardware agent that owns the Bpod connection across sessions.
 
 ```

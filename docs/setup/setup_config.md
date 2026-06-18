@@ -38,9 +38,9 @@ devices:
     type: stage_tower
     port_by_path: pci-0000:00:14.0-usb-0:10.4.4.3:1.0-port0
     axes:
-      x: {motor_id: 11, position_min: 1, position_max: 999, velocity_max: 200, operating_mode: OP_POSITION}
-      y: {motor_id: 12, position_min: 1, position_max: 999, velocity_max: 200, operating_mode: OP_POSITION}
-      z: {motor_id: 13, position_min: 1, position_max: 999, velocity_max: 200, operating_mode: OP_POSITION}
+      x: {id: 11, position_min: 1, position_max: 999, velocity_max: 200, operating_mode: OP_POSITION}
+      y: {id: 12, position_min: 1, position_max: 999, velocity_max: 200, operating_mode: OP_POSITION}
+      z: {id: 13, position_min: 1, position_max: 999, velocity_max: 200, operating_mode: OP_POSITION}
     known_positions:
       reward: {x: 500, y: 200, z: 300}
   pulsepal:
@@ -66,6 +66,7 @@ calibrations:
 | `bpod` | `port_by_path` |
 | `pulsepal` | `port_by_path` |
 | `stage_tower` | `port_by_path`, `axes` |
+| `scale` | `port_by_path`, `scale_type` (`hx711`\|`bench`), `baudrate` |
 | `serial_generic` | `port_by_path` |
 
 ## Camera config

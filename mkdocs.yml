@@ -1,10 +1,10 @@
 site_name: Murine Shift Work
 site_description: Behaviour acquisition framework for murine research
-site_url: https://larsrollik.github.io/murineshiftwork/
+site_url: https://MurineShiftWork.github.io/murineshiftwork/
 site_author: Lars B. Rollik
-repo_url: https://github.com/larsrollik/murineshiftwork
-repo_name: larsrollik/murineshiftwork
-edit_uri: edit/main/murineshiftwork/docs/
+repo_url: https://github.com/MurineShiftWork/murineshiftwork
+repo_name: MurineShiftWork/murineshiftwork
+edit_uri: edit/main/docs/
 docs_dir: docs
 
 theme:
@@ -31,14 +31,15 @@ nav:
     - DHCP: setup/DHCP.md
     - Cameras: setup/CAMERAS_2026.md
   - CLI Reference:
+    - init: cli/init.md
     - run: cli/run.md
     - action: cli/action.md
     - setup: cli/setup.md
     - subject: cli/subject.md
     - calibration: cli/calibration.md
-    - agent: cli/agent.md
     - post: cli/post.md
     - tasks: cli/tasks.md
+    - agent (plugin): cli/agent.md
   - Concepts:
     - Architecture: concepts/architecture.md
     - Config System: concepts/config_system.md
