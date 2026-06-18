@@ -49,7 +49,7 @@ jobs:
         run: git checkout -- pyproject.toml
 
       - name: Run pre-commit (ruff + mypy + commitizen + gitleaks)
-        run: uv run pre-commit run --all-files --show-diff-on-failure
+        run: .venv/bin/pre-commit run --all-files --show-diff-on-failure
 
   test:
     name: Test (Python ${{ matrix.python-version }} · ${{ matrix.os }})
