@@ -1,0 +1,39 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/London",
+  "schedule": ["every weekend"],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Group all MSW namespace and hardware packages into one PR",
+      "matchPackagePatterns": [
+        "^msw-",
+        "^acquisition-namespace",
+        "^ttl-barcoder",
+        "^pypulsepal",
+        "^one-axis-stage",
+        "^serial-scale-hx711",
+        "^serial-scale-bench",
+        "^rpi-camera-ensemble",
+        "^safe-and-collaborative-architecture"
+      ],
+      "groupName": "MSW packages",
+      "automerge": false,
+      "labels": ["dependencies", "msw-packages"]
+    },
+    {
+      "description": "Group Python toolchain updates (uv, pre-commit, actions)",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "automerge": false,
+      "labels": ["dependencies", "ci"]
+    }
+  ],
+  "ignoreDeps": [
+    "msw-agent"
+  ],
+  "pep621": {
+    "enabled": true
+  }
+}
