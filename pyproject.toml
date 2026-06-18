@@ -1,0 +1,192 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "murineshiftwork"
+dynamic = ["version"]
+description = "Murine Shift Work — behavioural task acquisition with hardware support."
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { file = "LICENSE" }
+authors = [
+    { name = "Lars B. Rollik", email = "lars@rollik.me" },
+]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "msw-core>=0.2.0",
+    "msw-io>=1.0.2",
+    "tqdm",
+    "plotly>=5.0",
+    "pyarrow>=24.0.0",
+    "ipython>=9.14.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/larsrollik/murineshiftwork"
+Documentation = "https://larsrollik.github.io/murineshiftwork/"
+"Issue Tracker" = "https://github.com/larsrollik/murineshiftwork/issues"
+
+[project.optional-dependencies]
+dev = [
+    "commitizen",
+    "pytest",
+    "pytest-cov",
+    "pre-commit",
+    "ruff",
+    "mypy",
+    "gitpython",
+    "httpx",
+    "pyarrow",
+    "murineshiftwork[pulsepal]",
+]
+docs = [
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
+tasks = [
+    "msw-tasks-core",
+    "msw-tasks-example",
+]
+agent = [
+    "msw-agent>=0.1.0",
+]
+oe = [
+    "msw-open-ephys",
+]
+pulsepal = [
+    "pypulsepal",
+]
+calibration = [
+    "serial-scale-hx711",
+    "serial-scale-bench",
+]
+keyboard = [
+    "sshkeyboard",
+]
+qt = [
+    "PyQt6",
+    "pyqtgraph",
+    "myterial",
+    "opencv-python-headless",
+]
+rce = [
+    "rpi-camera-ensemble[conductor]",
+]
+full = [
+    "murineshiftwork[tasks,agent,calibration,keyboard,qt,rce,oe]",
+]
+
+[project.scripts]
+murineshiftwork = "murineshiftwork.cli:run_cli"
+msw = "murineshiftwork.cli:run_cli"
+
+# External task packages register here — bundled tasks need no entry-point.
+# Example (in an external package's pyproject.toml):
+#   [project.entry-points."msw.tasks"]
+#   my_task = "my_package.tasks.my_task.my_task"
+
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.1.0"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/murineshiftwork"]
+artifacts = [
+    "src/murineshiftwork/**/*.yaml",
+    "src/murineshiftwork/**/*.yml",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src/murineshiftwork",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+    "/CITATION.cff",
+    "/VERSION",
+]
+
+# ---------------------------------------------------------------------------
+# Commitizen
+# ---------------------------------------------------------------------------
+# Bump workflow:
+#   cz bump --yes    → reads conventional commits, determines next semver,
+#                      updates [tool.commitizen] version + VERSION file,
+#                      creates "bump: ..." commit and annotated tag v{version}.
+#   git push && git push --tags → pushes bump commit + tag; triggers release CI.
+#
+# cz bump always produces a clean X.Y.Z tag — never dev or rc unless you pass
+# --prerelease explicitly. Do NOT pass --prerelease in normal releases.
+# .devN versions in pip show / __version__ between tags are computed at install
+# time by hatch-vcs from git tags and are NOT written as git tags.
+#
+# version = "x.y.z" below is commitizen's own version tracking (updated on
+# each bump commit). hatch-vcs derives the *package* version from git tags.
+#
+# Commit types that drive version:
+#   feat:                      → minor  (x.1.0)
+#   fix:                       → patch  (x.x.1)
+#   feat!: / BREAKING CHANGE:  → major  (x.0.0)
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "commitizen"
+version = "2.14.7"
+tag_format = "v$version"
+update_changelog_on_bump = false
+version_files = ["VERSION"]
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=murineshiftwork --durations=0"
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+exclude = ["external", "playground", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "YTT", "SIM", "PTH", "TCH", "PYI"]
+fixable = ["ALL"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+
+[tool.mypy]
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+ignore_missing_imports = true
+exclude = ["external"]
+
+# ---------------------------------------------------------------------------
+# uv
+# ---------------------------------------------------------------------------
+
+[tool.uv]
+environments = [
+    "sys_platform == 'linux'",
+    "sys_platform == 'darwin'",
+    "sys_platform == 'win32'",
+]

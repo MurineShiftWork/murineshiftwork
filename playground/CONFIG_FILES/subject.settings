@@ -1,0 +1,1121 @@
+[_test_subject]
+    project = "test_project"
+    experiment = "test_experiment"
+
+    [[_test_minimal_task]]
+        test_argument = "minimal"
+
+    [[_test_video]]
+        test_argument = "vid"
+
+    [[probabilistic_switching]]
+        probabilities = [(100,99), (99,100)]
+        delay_until_center_init = [0.050, 0.060, 0.005]
+        reward_amount_ul = 8
+        criterion_contrast_blocks = .1
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .2
+        inter_trial_interval = [1, 2, 0.5]
+        lick_detection_events = "ports"
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+
+# ------------------------------------------------------------------
+# SLEEP LHb
+# - COHORT 1
+[sleep_lhb_c344986_m1097354_ctl]
+    [[probabilistic_switching]]
+        probabilities = [(80,0), (0,80)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+[sleep_lhb_c344987_m1097355_ctl]
+    [[probabilistic_switching]]
+        probabilities = [(80,0), (0,80)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+[sleep_lhb_c345002_m1097356_exp]
+    [[probabilistic_switching]]
+        probabilities = [(80,0), (0,80)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+# - COHORT 2
+[sleep_lhb_c345014_m1097342_exp]
+    [[probabilistic_switching]]
+        probabilities = [(80,0), (0,80)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+[sleep_lhb_c345016_m1097344_exp]
+    [[probabilistic_switching]]
+        probabilities = [(80,0), (0,80)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+[sleep_lhb_c345017_m1097357_exp]
+    [[probabilistic_switching]]
+        probabilities = [(80,0), (0,80)]
+        delay_until_center_init = [0.125, 0.150, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+# - COHORT 3
+[sleep_lhb_c345041_m49_exp]
+    [[probabilistic_switching]]
+        probabilities = [(80,0), (0,80)]
+        delay_until_center_init = [0.100, 0.120, 0.005]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+
+[sleep_lhb_c345042_m50_exp]
+    [[probabilistic_switching]]
+        probabilities = [(80,0), (0,80)]
+        delay_until_center_init = [0.100, 0.120, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+[sleep_lhb_c345043_m51_exp]
+    [[probabilistic_switching]]
+        probabilities = [(80,0), (0,80)]
+        delay_until_center_init = [0.100, 0.120, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+[sleep_lhb_c345044_m52_exp]
+    [[probabilistic_switching]]
+        probabilities = [(80,0), (0,80)]
+        delay_until_center_init = [0.100, 0.120, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+
+# ------------------------------------------------------------------
+# TAB for NPX
+# ---- tab_npx 001 and 002
+[s008_tab_m1113182_LR]
+        comment = "first implant"
+        aliases = "tab_npx_001_m1113182__LR__npx_chrimson_on"
+
+#[tab_npx_002_m]
+#	comment = "pv/ai32 used for tagging trial"
+
+
+# ------------------------------------------------------------------
+# ---- cage: c345048
+[s025_tabnpxon_m1114795_No]
+# [tab_npx_003_m1114795_No_chrOn]
+    aliases = "tab_npx_003_m1114795_No_chrOn"
+    [[probabilistic_switching]]
+        # probabilities = [(10, 50), (50, 10), (10, 90), (90, 10), (50, 50), (50, 90), (90, 50),]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+
+[s026_tabnpxon_m1114796_L]
+# [tab_npx_004_m1114796_L_chrOn]
+    aliases = "tab_npx_004_m1114796_L_chrOn"
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+
+[s027_tabnpxon_m1114797_R]
+# [tab_npx_005_m1114797_R_chrOn]
+    aliases = "tab_npx_005_m1114797_R_chrOn"
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+
+[s028_tabnpxon_m1114798_LR]
+# [tab_npx_006_m1114798_LR_chrOn]
+    aliases = "s028_tabnpxon_m1114798_LR"
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+
+[s029_tabnpxon_m1114799_LL]
+#[tab_npx_007_m1114799_LL_chrOn]
+    aliases = "s029_tabnpxon_m1114799_LL"
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .75
+
+
+# ------------------------------------------------------------------
+[s030_tabnpxon_m1097516_No]
+    aliases = "s030_tabnpxon_m1097516_No"
+    comment = "UC/PV-cre Ai32"
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+
+[s031_tabnpxon_m1097517_L]
+    aliases = "s031_tabnpxon_m1097517_L"
+    comment = "UC/PV-cre Ai32"
+    [[probabilistic_switching]]
+	delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+
+# ------------------------------------------------------------------
+[s032_tabnpxon_m1097522_No]
+    aliases = "s032_tabnpxon_m1097522_No"
+    comment = "UC/PV-cre Ai32"
+    [[probabilistic_switching]]
+	delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+
+[s033_tabnpxon_m1097523_L]
+    aliases = "s033_tabnpxon_m1097523_L"
+    comment = "UC/PV-cre Ai32"
+    [[probabilistic_switching]]
+	delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+
+[s034_tabnpxon_m1097524_R]
+    aliases = "s034_tabnpxon_m1097524_R"
+    comment = "UC/PV-cre Ai32"
+    [[probabilistic_switching]]
+	delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+# ------------------------------------------------------------------
+[s056_tabnpxon_m1097600_L]
+    comment = "HM/PV-cre Chr2-EYFP"
+
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+
+[s057_tabnpxon_m1097601_R]
+    comment = "HM/PV-cre Chr2-EYFP"
+
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+
+[s058_tabnpxon_m1097602_LR]
+    comment = "HM/PV-cre Chr2-EYFP"
+
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+
+[s059_tabnpxon_m1097603_LL]
+    comment = "HM/PV-cre Chr2-EYFP"
+
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+# ------------------------------------------------------------------
+
+
+[s060_tabnpxon_m1098207_L]
+    comment = "HM/PV-cre Chr2-EYFP"
+
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+# ------------------------------------------------------------------
+
+
+[s061_tabnpxon_m1116533_No]
+    comment = "AN/PV-cre"
+
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+
+[s062_tabnpxon_m1116534_L]
+    comment = "AN/PV-cre"
+
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+
+[s063_tabnpxon_m1116535_R]
+    comment = "AN/PV-cre"
+
+    [[probabilistic_switching]]
+        delay_until_center_init = [0.150, 0.200, 0.005]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .5
+
+
+# ------------------------------------------------------------------
+
+
+[s071_tabfixedctrl_m1099155_No]
+    comment = "wild-type for behavior figure"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .4
+        # forced_choice_threshold = 20
+
+
+[s072_tabfixedctrl_m1099156_L]
+    comment = "wild-type for behavior figure"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .4
+        # forced_choice_threshold = 20
+
+
+[s073_tabfixedctrl_m1099157_R]
+    comment = "wild-type for behavior figure"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .4
+        # forced_choice_threshold = 20
+
+
+[s074_tabfixedctrl_m1099158_LR]
+    comment = "wild-type for behavior figure"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .4
+        # forced_choice_threshold = 20
+
+
+# ------------------------------------------------------------------
+
+[s075_tabfixedctrl_m1099163_No]
+    comment = "wild-type for behavior figure"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(90, 10), (50, 10)]   # anti-bias !!
+        probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .2
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+
+[s076_tabfixedctrl_m1099164_L]
+    comment = "wild-type for behavior figure"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(90, 10), (10, 90)]
+        probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .2
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+
+[s077_tabfixedctrl_m1099165_R]
+    comment = "wild-type for behavior figure"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(90, 10), (10, 90)]
+        probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .2
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 20
+
+
+[s078_tabfixedctrl_m1099166_LR]
+    comment = "wild-type for behavior figure"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(100, 0), (0, 100)]
+        probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2
+        criterion_contrast_blocks = .2
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+
+
+# ------------------------------------------------------------------
+# ON, cage 345 478
+
+[s080_tabfixed_m1099613_No]
+    comment = "pv/chr2"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2.4
+        criterion_contrast_blocks = .25
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        forced_choice_threshold = 20
+        stage_anti_bias_bool = True
+        stage_anti_bias_max = 25
+        stage_anti_bias_n_back = 15
+
+
+[s081_tabfixed_m1099614_L]
+    comment = "pv/chr2"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2.4
+        criterion_contrast_blocks = .25
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        forced_choice_threshold = 20
+        stage_anti_bias_bool = True
+        stage_anti_bias_max = 25
+        stage_anti_bias_n_back = 15
+
+
+[s082_tabfixed_m1099615_R]
+    comment = "pv/chr2"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(90, 10), (50, 10)]   # anti-bias !!
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2.4
+        criterion_contrast_blocks = .25
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        forced_choice_threshold = 20
+        stage_anti_bias_bool = True
+        stage_anti_bias_max = 25
+        stage_anti_bias_n_back = 15
+
+
+# ------------------------------------------------------------------
+# OFF, cage 345 528
+
+[s083_tabfixed_m1130739_L]
+    comment = "pv-cre with chrimson-off in GPe"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2.4
+        criterion_contrast_blocks = .20
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        stage_anti_bias_bool = False
+        # forced_choice_threshold = 5
+        stage_anti_bias_max = 25
+        stage_anti_bias_n_back = 15
+
+[s084_tabfixed_m1130740_R]
+    comment = "pv-cre with chrimson-off in GPe"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2.4
+        criterion_contrast_blocks = .20
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        stage_anti_bias_bool = False
+        # forced_choice_threshold = 5
+        stage_anti_bias_max = 25
+        stage_anti_bias_n_back = 15
+
+# ------------------------------------------------------------------
+# OFF, cage 345 945
+
+[s085_tabfixed_m1119777_L]
+    comment = "pv-cre with chrimson-off in GPe"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2.4
+        criterion_contrast_blocks = .20
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        stage_anti_bias_bool = False
+        # forced_choice_threshold = 5
+        stage_anti_bias_max = 25
+        stage_anti_bias_n_back = 15
+
+[s086_tabfixed_m1119778_LR]
+    comment = "pv-cre with chrimson-off in GPe"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2.4
+        criterion_contrast_blocks = .20
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        stage_anti_bias_bool = False
+        stage_anti_bias_max = 25
+        stage_anti_bias_n_back = 20
+        # forced_choice_threshold = 5
+
+# ------------------------------------------------------------------
+# OFF, cage 527
+
+[s087_tabfixed_m1130736_L]
+    comment = "pv-cre with chrimson-off in GPe"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2.7
+        criterion_contrast_blocks = .20
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        stage_anti_bias_bool = False
+        stage_anti_bias_max = 25
+        stage_anti_bias_n_back = 5
+        # forced_choice_threshold = 5
+
+[s088_tabfixed_m1130737_R]
+    comment = "pv-cre with chrimson-off in GPe"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2.7
+        criterion_contrast_blocks = .20
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        stage_anti_bias_bool = False
+        stage_anti_bias_max = 25
+        stage_anti_bias_n_back = 5
+        # forced_choice_threshold = 5
+
+# ------------------------------------------------------------------
+# ON, cage 345 555
+
+[s089_tabfixed_m1119773_L]
+    comment = "pv/chr2"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 2.7
+        criterion_contrast_blocks = .20
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        stage_anti_bias_bool = False
+        stage_anti_bias_max = 25
+        stage_anti_bias_n_back = 5
+        # forced_choice_threshold = 5
+
+# ------------------------------------------------------------------
+# ON, cage 345 556
+
+[s090_tabfixed_m1119775_LR]
+    comment = "pv/chr2"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        # probabilities = [(80, 10), (10, 80),  (60, 10), (10, 60),  (30, 10), (10, 30),  (25, 25), (25, 25)]
+        reward_amount_ul = 3
+        criterion_contrast_blocks = .20
+        # inter_trial_interval = [5, 7, 0.5]
+        # max_block_length = 10
+        stage_anti_bias_bool = False
+        stage_anti_bias_max = 25
+        stage_anti_bias_n_back = 5
+        # forced_choice_threshold = 5
+
+
+# ------------------------------------------------------------------
+# TAB only cohort for testing of food restriction performance / new stage firmware
+# ------------------------------------------------------------------
+[s111_tabonly_m1102022_No]
+    project = "gpe"
+    experiment = "gpe-tab-only"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 3
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [4.5, 5.5, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+
+[s112_tabonly_m1102023_L]
+    project = "gpe"
+    experiment = "gpe-tab-only"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 3
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [4.5, 5.5, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+[s113_tabonly_m1102024_R]
+    project = "gpe"
+    experiment = "gpe-tab-only"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 3
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [4.5, 5.5, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+[s114_tabonly_m1102025_LR]
+    project = "gpe"
+    experiment = "gpe-tab-only"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 3
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [4.5, 5.5, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+# ------------------------------------------------------------------
+# ------------------------------------------------------------------
+
+[s115_acute_m1102187_120]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+        lick_detection_events = "ports"  # setup3
+
+[s116_acute_m1102188_132]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+
+[s117_acute_m1102189_137]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+
+[s118_acute_m1102190_242]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+        lick_detection_events = "ports"  # setup3
+
+[s119_acute_m1102317_174]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+        lick_detection_events = "ports"  # setup1, not ports
+
+
+[s120_acute_m1102318_175]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+        lick_detection_events = "ports"  # setup1
+
+# ------------------------------------------------------------------
+# ------------------------------------------------------------------
+[t001_acute_m1102387_160]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+        lick_detection_events = "ports"
+        # setup1 # FIXME:: This should be in setup.cfg, not subject.cfg
+
+[t002_acute_m1102388_161]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+        lick_detection_events = "ports"  # setup3
+
+[t003_acute_m1102389_176]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+        lick_detection_events = "ports"  # setup3
+
+[t004_acute_m1102390_177]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+        lick_detection_events = "ports"  # setup3
+
+[t005_acute_m1102323_203]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+        lick_detection_events = "ports"
+
+[t006_acute_m1102321_201]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+        lick_detection_events = "ports"
+
+[t007_acute_m1102322_202]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = "wild-type"
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+
+        lick_detection_events = "ports"
+
+
+# ------------------------------------------------------------------
+[t008_acute_m1145939_205]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+# ------------------------------------------------------------------
+[t009_acute_m1102626_206]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+[t010_acute_m1102627_207]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+[t011_acute_m1102262_208]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+[t012_acute_m1102263_209]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+# ------------------------------------------------------------------
+
+[t013_acute_m1102591_211]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+[t014_acute_m1102592_212]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+[t015_acute_m1102266_214]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+[t016_acute_m1102267_215]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        # probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+# ------------------------------------------------------------------
+
+[t017_acute_m1102265_213]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 2.5
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+
+# ------------------------------------------------------------------
+# white
+[t018_acute_m1145940_216]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 4
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+[t019_acute_m1146078_217]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 4
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+
+[t020_acute_m1146078_218]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 4
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+
+
+[t022_acute_m1102629_220]
+    project = "gpe"
+    experiment = "gpe-acute-4sh"
+    comment = ""
+
+    [[probabilistic_switching_fixedsubjects]]
+        # probabilities = [(100, 99), (99, 100)]
+        probabilities = [(100, 0), (0, 100)]
+        # probabilities = [(90, 10), (10, 90)]
+        reward_amount_ul = 4
+        criterion_contrast_blocks = .25
+        inter_trial_interval = [3, 4, 0.25]
+        # max_block_length = 10
+        # forced_choice_threshold = 5
+        lick_detection_events = "ports"
+# ------------------------------------------------------------------
+# END
+# ------------------------------------------------------------------

@@ -1,0 +1,34 @@
+axes:
+  x:
+    id: 11
+    name: x
+    operating_mode: OP_POSITION
+    position_max: 510
+    position_min: 0
+    position_raw: 418
+    velocity_max: 0
+  y:
+    id: 12
+    name: y
+    operating_mode: OP_POSITION
+    position_max: 840
+    position_min: 350
+    position_raw: 497
+    velocity_max: 0
+  z:
+    id: 13
+    name: z
+    operating_mode: OP_POSITION
+    position_max: 580
+    position_min: 270
+    position_raw: 418
+    velocity_max: 0
+connection:
+  baudrate: 115200
+  serial_port: /dev/ttyUSB0
+  timeout: 1
+known_positions:
+  back:
+    y:
+      position_raw: 780
+stage_id: 1

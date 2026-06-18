@@ -1,0 +1,34 @@
+Cameras
+
+IP	Label		FPS	Resolution	Use
+
+60	Purple		60	960 720	    TAB front view ????
+61	Blue		60	960 720	    TAB top view
+62	Red		    40	2000 1200	OF top view
+63	Yellow		40	2000 1200	Sleep top view
+64	White		40	2000 1200	OF left view (right in box)
+65	Pink		40	2000 1200	OF right view (left in box)
+
+
+Camera configs
+
+Paradigm	Cameras
+
+TAB		    60, 61
+OF		    62, 64, 65
+Sleep		63
+Opto		62
+
+
+# 1600, 720, 40
+# 960, 720, 60
+# 1920, 1080 30
+# 1600, 1200, 30
+
+# Working resolutions for HQ camera:
+# - (1280, 720) @ 60
+# - (960, 720) @ 60
+# - (1640, 1232) @ 40
+# - (1600, 1200) @ 40 - doesnt work
+# - (2180, 720) @ 40 - doesnt work
+# - (640, 480) @ 90

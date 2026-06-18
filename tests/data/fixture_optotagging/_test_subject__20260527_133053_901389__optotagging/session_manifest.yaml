@@ -1,0 +1,14 @@
+msw_manifest_version: 1
+type: session
+session_basename: _test_subject__20260527_133053_901389__optotagging
+subprotocols:
+- name: power_ramp_1mw
+  file: _test_subject__20260527_133053_901389__optotagging_power_ramp_1mw.msw.df.jsonl
+  barcode_start: 130617617295
+  barcode_end: 130617640698
+  status: complete
+- name: power_ramp_2mw
+  file: _test_subject__20260527_133053_901389__optotagging_power_ramp_2mw.msw.df.jsonl
+  barcode_start: 130617650423
+  barcode_end: null
+  status: aborted

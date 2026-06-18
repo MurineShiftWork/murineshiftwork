@@ -1,0 +1,189 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags-ignore: ["v*"]   # tag pushes are handled by release.yml
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0   # needed for hatch-vcs version derivation
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+
+      - name: Configure git for private repos
+        env:
+          PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$PRIVATE_REPO_ACCESS_TOKEN" ]; then
+            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Run pre-commit (ruff + mypy + commitizen + gitleaks)
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
+  test:
+    name: Test (Python ${{ matrix.python-version }} · ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    if: github.event_name == 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Configure git for private repos (Linux/macOS)
+        if: runner.os != 'Windows'
+        env:
+          PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$PRIVATE_REPO_ACCESS_TOKEN" ]; then
+            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
+
+      - name: Configure git for private repos (Windows)
+        if: runner.os == 'Windows'
+        env:
+          PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
+        run: |
+          if ($env:PRIVATE_REPO_ACCESS_TOKEN) {
+            git config --global url."https://$($env:PRIVATE_REPO_ACCESS_TOKEN)@github.com/".insteadOf "https://github.com/"
+          }
+
+      - name: Install dependencies
+        run: uv sync --extra dev --extra oe
+
+      - name: Verify entry points
+        run: |
+          uv run murineshiftwork --version
+          uv run msw --version
+
+      - name: Run tests
+        run: uv run pytest
+        env:
+          MSW_CI: "1"
+          MPLBACKEND: Agg
+
+  integration:
+    name: Integration (full deps chain)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+
+      - name: Configure git for private repos
+        env:
+          PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$PRIVATE_REPO_ACCESS_TOKEN" ]; then
+            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
+
+      - name: Install with OE extra (msw-io + msw-open-ephys + murineshiftwork)
+        run: uv sync --extra dev --extra oe
+
+      - name: Run integration and namespace tests
+        run: uv run pytest tests/test_integration_deps.py tests/test_namespace_readiness.py -v
+        env:
+          MSW_CI: "1"
+
+  namespace-check:
+    name: Namespace package readiness
+    runs-on: ubuntu-latest
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install (no deps — only murineshiftwork namespace itself needed)
+        run: pip install --no-deps .
+
+      - name: Check tasks/ boundary (no __init__.py)
+        run: |
+          python -c "
+          from pathlib import Path
+          import murineshiftwork
+          tasks_init = Path(list(murineshiftwork.__path__)[0]) / 'tasks' / '__init__.py'
+          if tasks_init.exists():
+              raise SystemExit(
+                  f'FAIL: {tasks_init} exists. '
+                  'Remove it to allow task sub-packages to contribute to '
+                  'the murineshiftwork.tasks namespace independently.'
+              )
+          print(f'OK: tasks/__init__.py absent — namespace boundary clean.')
+          "
+
+      - name: Check namespace root has no __init__.py (namespace-split ready)
+        run: |
+          python -c "
+          from pathlib import Path
+          import murineshiftwork
+          root_init = Path(list(murineshiftwork.__path__)[0]) / '__init__.py'
+          if root_init.exists():
+              raise SystemExit(
+                  f'FAIL: {root_init} exists. '
+                  'Remove it to allow msw-logic, msw-tasks-*, and msw-agent '
+                  'to be installed as separate namespace contributors (PEP 420).'
+              )
+          print('OK: murineshiftwork/__init__.py absent — namespace-split ready.')
+          "
+
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    needs: [lint, test, integration, namespace-check]
+    if: always()
+    steps:
+      - name: Check required jobs
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" && "${{ needs.lint.result }}" != "skipped" ]]; then
+            echo "lint failed" && exit 1
+          fi
+          if [[ "${{ needs.test.result }}" != "success" && "${{ needs.test.result }}" != "skipped" ]]; then
+            echo "test failed" && exit 1
+          fi
+          if [[ "${{ needs.integration.result }}" != "success" && "${{ needs.integration.result }}" != "skipped" ]]; then
+            echo "integration failed" && exit 1
+          fi
+          if [[ "${{ needs.namespace-check.result }}" != "success" && "${{ needs.namespace-check.result }}" != "skipped" ]]; then
+            echo "namespace-check failed" && exit 1
+          fi
+          echo "All required checks passed."
