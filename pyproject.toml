@@ -45,7 +45,6 @@ docs = [
 ]
 tasks = [
     "msw-tasks-core",
-    "msw-tasks-example",
 ]
 agent = [
     "msw-agent>=0.1.0",
