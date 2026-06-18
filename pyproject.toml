@@ -13,8 +13,8 @@ authors = [
 ]
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "msw-core>=0.2.0",
-    "msw-io>=1.0.2",
+    "msw-core>=0.3.0",
+    "msw-io>=1.2.0",
     "tqdm",
     "plotly>=5.0",
     "pyarrow>=24.0.0",
@@ -22,9 +22,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/larsrollik/murineshiftwork"
-Documentation = "https://larsrollik.github.io/murineshiftwork/"
-"Issue Tracker" = "https://github.com/larsrollik/murineshiftwork/issues"
+Homepage = "https://github.com/MurineShiftWork/murineshiftwork"
+Documentation = "https://MurineShiftWork.github.io/murineshiftwork/"
+"Issue Tracker" = "https://github.com/MurineShiftWork/murineshiftwork/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -44,20 +44,20 @@ docs = [
     "mkdocstrings[python]",
 ]
 tasks = [
-    "msw-tasks-core",
+    "msw-tasks-core>=0.2.0",
 ]
 agent = [
     "msw-agent>=0.1.0",
 ]
 oe = [
-    "msw-open-ephys",
+    "msw-open-ephys>=3.0.0",
 ]
 pulsepal = [
-    "pypulsepal",
+    "pypulsepal>=0.4.0",
 ]
 calibration = [
-    "serial-scale-hx711",
-    "serial-scale-bench",
+    "serial-scale-hx711>=2.1.0",
+    "serial-scale-bench>=0.2.0",
 ]
 keyboard = [
     "sshkeyboard",
@@ -69,7 +69,7 @@ qt = [
     "opencv-python-headless",
 ]
 rce = [
-    "rpi-camera-ensemble[conductor]",
+    "rpi-camera-ensemble[conductor]>=0.5.0",
 ]
 full = [
     "murineshiftwork[tasks,calibration,keyboard,qt,rce,oe]",
@@ -90,7 +90,7 @@ msw = "murineshiftwork.cli:run_cli"
 
 [tool.hatch.version]
 source = "vcs"
-fallback-version = "0.1.0"
+fallback-version = "2.14.7"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/murineshiftwork"]
