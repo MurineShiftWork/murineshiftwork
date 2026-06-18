@@ -2,7 +2,6 @@
 
 import pytest
 import yaml
-
 from murineshiftwork.logic.task_settings import parse_key_value_list
 
 # ---------------------------------------------------------------------------

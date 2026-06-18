@@ -45,6 +45,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev
 
+      - name: Restore pyproject.toml (remove injected sources before pre-commit)
+        run: git checkout -- pyproject.toml
+
       - name: Run pre-commit (ruff + mypy + commitizen + gitleaks)
         run: uv run pre-commit run --all-files --show-diff-on-failure
 
