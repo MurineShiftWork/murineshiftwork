@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
-    tags-ignore: ["v*"]   # tag pushes are handled by release.yml
+    tags-ignore: ["v*"]
   pull_request:
     branches: [main]
 
@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0   # needed for hatch-vcs version derivation
+          fetch-depth: 0
 
       - uses: astral-sh/setup-uv@v7
         with:
@@ -32,8 +32,15 @@ jobs:
           PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
         run: |
           if [ -n "$PRIVATE_REPO_ACCESS_TOKEN" ]; then
-            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@github.com/".insteadOf "https://github.com/"
+            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@${GITHUB_SERVER_URL#https://}/".insteadOf "${GITHUB_SERVER_URL}/"
           fi
+
+      - name: Add private package sources (not on PyPI)
+        shell: python
+        run: |
+          with open('pyproject.toml', 'a') as f:
+              f.write('\n[tool.uv.sources]\n')
+              f.write('msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }\n')
 
       - name: Install dependencies
         run: uv sync --extra dev
@@ -65,7 +72,7 @@ jobs:
           PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
         run: |
           if [ -n "$PRIVATE_REPO_ACCESS_TOKEN" ]; then
-            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@github.com/".insteadOf "https://github.com/"
+            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@${GITHUB_SERVER_URL#https://}/".insteadOf "${GITHUB_SERVER_URL}/"
           fi
 
       - name: Configure git for private repos (Windows)
@@ -74,8 +81,16 @@ jobs:
           PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
         run: |
           if ($env:PRIVATE_REPO_ACCESS_TOKEN) {
-            git config --global url."https://$($env:PRIVATE_REPO_ACCESS_TOKEN)@github.com/".insteadOf "https://github.com/"
+            $githubHost = ($env:GITHUB_SERVER_URL -split '//')[1]
+            git config --global url."https://$($env:PRIVATE_REPO_ACCESS_TOKEN)@$githubHost/".insteadOf "$($env:GITHUB_SERVER_URL)/"
           }
+
+      - name: Add private package sources (not on PyPI)
+        shell: python
+        run: |
+          with open('pyproject.toml', 'a') as f:
+              f.write('\n[tool.uv.sources]\n')
+              f.write('msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }\n')
 
       - name: Install dependencies
         run: uv sync --extra dev --extra oe
@@ -91,8 +106,8 @@ jobs:
           MSW_CI: "1"
           MPLBACKEND: Agg
 
-  integration:
-    name: Integration (full deps chain)
+  integration-full:
+    name: Integration (released extras - PyPI only)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
@@ -109,11 +124,60 @@ jobs:
           PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
         run: |
           if [ -n "$PRIVATE_REPO_ACCESS_TOKEN" ]; then
-            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@github.com/".insteadOf "https://github.com/"
+            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@${GITHUB_SERVER_URL#https://}/".insteadOf "${GITHUB_SERVER_URL}/"
           fi
 
-      - name: Install with OE extra (msw-io + msw-open-ephys + murineshiftwork)
-        run: uv sync --extra dev --extra oe
+      - name: Add private package sources (not on PyPI)
+        shell: python
+        run: |
+          with open('pyproject.toml', 'a') as f:
+              f.write('\n[tool.uv.sources]\n')
+              f.write('msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }\n')
+
+      - name: Install with full extra (released, PyPI only)
+        run: uv sync --extra dev --extra full
+
+      - name: Run integration and namespace tests
+        run: uv run pytest tests/test_integration_deps.py tests/test_namespace_readiness.py -v
+        env:
+          MSW_CI: "1"
+
+  integration-dev:
+    name: Integration (full + dev packages - not yet on PyPI)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+
+      - name: Configure git for private repos
+        env:
+          PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$PRIVATE_REPO_ACCESS_TOKEN" ]; then
+            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@${GITHUB_SERVER_URL#https://}/".insteadOf "${GITHUB_SERVER_URL}/"
+          fi
+
+      - name: Add private package sources (not on PyPI)
+        shell: python
+        run: |
+          # Add git sources for packages not yet released to PyPI.
+          # To add a new dev package: append an f.write line below.
+          dev_sources = [
+              'msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }',
+          ]
+          with open('pyproject.toml', 'a') as f:
+              f.write('\n[tool.uv.sources]\n')
+              for src in dev_sources:
+                  f.write(src + '\n')
+
+      - name: Install with full and dev extras
+        run: uv sync --extra dev --extra full --extra agent
 
       - name: Run integration and namespace tests
         run: uv run pytest tests/test_integration_deps.py tests/test_namespace_readiness.py -v
@@ -133,7 +197,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install (no deps — only murineshiftwork namespace itself needed)
+      - name: Install (no deps - only murineshiftwork namespace itself needed)
         run: pip install --no-deps .
 
       - name: Check tasks/ boundary (no __init__.py)
@@ -148,7 +212,7 @@ jobs:
                   'Remove it to allow task sub-packages to contribute to '
                   'the murineshiftwork.tasks namespace independently.'
               )
-          print(f'OK: tasks/__init__.py absent — namespace boundary clean.')
+          print(f'OK: tasks/__init__.py absent - namespace boundary clean.')
           "
 
       - name: Check namespace root has no __init__.py (namespace-split ready)
@@ -163,13 +227,13 @@ jobs:
                   'Remove it to allow msw-logic, msw-tasks-*, and msw-agent '
                   'to be installed as separate namespace contributors (PEP 420).'
               )
-          print('OK: murineshiftwork/__init__.py absent — namespace-split ready.')
+          print('OK: murineshiftwork/__init__.py absent - namespace-split ready.')
           "
 
   ci:
     name: CI
     runs-on: ubuntu-latest
-    needs: [lint, test, integration, namespace-check]
+    needs: [lint, test, integration-full, integration-dev, namespace-check]
     if: always()
     steps:
       - name: Check required jobs
@@ -180,8 +244,11 @@ jobs:
           if [[ "${{ needs.test.result }}" != "success" && "${{ needs.test.result }}" != "skipped" ]]; then
             echo "test failed" && exit 1
           fi
-          if [[ "${{ needs.integration.result }}" != "success" && "${{ needs.integration.result }}" != "skipped" ]]; then
-            echo "integration failed" && exit 1
+          if [[ "${{ needs.integration-full.result }}" != "success" && "${{ needs.integration-full.result }}" != "skipped" ]]; then
+            echo "integration-full failed" && exit 1
+          fi
+          if [[ "${{ needs.integration-dev.result }}" != "success" && "${{ needs.integration-dev.result }}" != "skipped" ]]; then
+            echo "integration-dev failed" && exit 1
           fi
           if [[ "${{ needs.namespace-check.result }}" != "success" && "${{ needs.namespace-check.result }}" != "skipped" ]]; then
             echo "namespace-check failed" && exit 1

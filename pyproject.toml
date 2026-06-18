@@ -73,7 +73,7 @@ rce = [
     "rpi-camera-ensemble[conductor]",
 ]
 full = [
-    "murineshiftwork[tasks,agent,calibration,keyboard,qt,rce,oe]",
+    "murineshiftwork[tasks,calibration,keyboard,qt,rce,oe]",
 ]
 
 [project.scripts]
