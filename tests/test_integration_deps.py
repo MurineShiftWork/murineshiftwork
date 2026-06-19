@@ -96,22 +96,24 @@ def test_make_host_session_resolves_openephys_without_mock():
 
 
 def test_all_namespace_contributors_have_no_root_init():
-    """All murineshiftwork namespace contributors must omit root __init__.py.
-
-    With msw-io installed, murineshiftwork.__path__ contains entries from both
-    murineshiftwork main and msw-io. Neither may have a root __init__.py or
+    """No murineshiftwork namespace contributor may have a root __init__.py, or
     Python will not treat the directory as an implicit namespace package.
+
+    Contributor count is not asserted: when distributions are installed as
+    wheels into the same site-packages they share one __path__ entry, while
+    editable installs expose one entry each. Instead we (a) confirm msw-io's
+    contribution is importable and (b) check every __path__ entry for a root
+    __init__.py.
     """
+    import importlib.util
     from pathlib import Path
 
     import murineshiftwork
 
-    roots = list(murineshiftwork.__path__)
-    assert len(roots) >= 2, (
-        f"Expected >= 2 namespace contributors (murineshiftwork + msw-io), "
-        f"got {len(roots)}: {roots}. Is msw-io installed?"
+    assert importlib.util.find_spec("murineshiftwork.namespace") is not None, (
+        "murineshiftwork.namespace not importable - is msw-io installed?"
     )
-    for root in roots:
+    for root in murineshiftwork.__path__:
         init = Path(root) / "__init__.py"
         assert not init.exists(), (
             f"{init} exists. Namespace contributor at {root!r} must not have "

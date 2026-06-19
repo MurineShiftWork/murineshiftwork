@@ -16,10 +16,12 @@ from murineshiftwork.cli.tasks import (
 
 
 def test_filesystem_returns_known_bundled_tasks():
+    # Use msw-tasks-core tasks (public, installed via the `tasks` extra) - lab
+    # tasks (sequence/airpuff/optotagging) are tested in msw-tasks-lab.
     tasks = list_available_tasks()
-    assert "sequence" in tasks
-    assert "airpuff" in tasks
-    assert "optotagging" in tasks
+    assert "_calibration_liquid_dynamic" in tasks
+    assert "_calibration_liquid_static" in tasks
+    assert "_calibration_sound_latency" in tasks
 
 
 def test_filesystem_result_is_sorted():
@@ -84,8 +86,8 @@ def test_external_task_path_is_dir_of_ep_module():
 
 
 def test_bundled_task_takes_precedence_over_entry_point():
-    # Register "sequence" as an entry point - bundled must win.
-    ep = _make_ep("sequence", "murineshiftwork.cli.tasks")
+    # Register a clashing bundled name as an entry point - bundled must win.
+    ep = _make_ep("_calibration_liquid_dynamic", "murineshiftwork.cli.tasks")
     with (
         patch("murineshiftwork.cli.tasks.entry_points", return_value=[ep]),
         patch("murineshiftwork.cli.tasks.importlib.import_module") as mock_import,
@@ -94,7 +96,7 @@ def test_bundled_task_takes_precedence_over_entry_point():
     # import_module must NOT be called for the clashing name.
     mock_import.assert_not_called()
     # The path from filesystem (a real dir with task.py) is used.
-    assert (tasks["sequence"] / "task.py").exists()
+    assert (tasks["_calibration_liquid_dynamic"] / "task.py").exists()
 
 
 def test_failed_entry_point_load_is_silently_skipped():
@@ -109,12 +111,14 @@ def test_failed_entry_point_load_is_silently_skipped():
 
 
 def test_find_task_exact_match():
-    assert find_task_by_name("sequence") == "sequence"
+    assert (
+        find_task_by_name("_calibration_sound_latency") == "_calibration_sound_latency"
+    )
 
 
 def test_find_task_partial_unique_match():
-    result = find_task_by_name("sequ")
-    assert result == "sequence"
+    result = find_task_by_name("_calibration_sound")
+    assert result == "_calibration_sound_latency"
 
 
 def test_find_task_not_found_returns_none():
@@ -133,9 +137,9 @@ def test_find_task_ambiguous_returns_first_alphabetically():
 
 
 def test_load_bundled_task_module():
-    mod = load_task_module("sequence")
+    mod = load_task_module("_calibration_liquid_dynamic")
     assert mod.__file__ is not None
-    assert "sequence" in mod.__file__
+    assert "_calibration_liquid_dynamic" in mod.__file__
 
 
 def test_load_task_module_via_entry_point():
@@ -148,5 +152,5 @@ def test_load_task_module_via_entry_point():
 def test_load_task_module_bundled_ignores_absent_entry_point():
     # Even with no entry points registered, bundled tasks load by module path.
     with patch("murineshiftwork.cli.tasks.entry_points", return_value=[]):
-        mod = load_task_module("sequence")
+        mod = load_task_module("_calibration_liquid_dynamic")
     assert mod.__file__ is not None
