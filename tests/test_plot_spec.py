@@ -24,7 +24,9 @@ def _find_plot_specs() -> list[Path]:
 
 def test_plot_spec_files_exist():
     """Ensure TASKS_DIR is reachable and contains at least one plot_spec.yaml."""
-    assert TASKS_DIR.exists(), f"tasks dir not found at {TASKS_DIR} (editable install required)"
+    assert TASKS_DIR.exists(), (
+        f"tasks dir not found at {TASKS_DIR} (editable install required)"
+    )
     specs = _find_plot_specs()
     assert len(specs) > 0, f"No plot_spec.yaml found under {TASKS_DIR}"
 

@@ -258,14 +258,17 @@ def test_attach_invalid_acq_segment_returns_none():
     assert "not a valid MSW session name" in client.fail_reason
 
 
-def test_attach_acquisition_and_session_levels_have_same_template():
+def test_attach_acquisition_and_session_levels_are_distinct_in_v42():
+    # v4.2 deliberately differentiates the two levels: the acquisition carries
+    # acq_type + optional version, the session container carries session_type.
     from murineshiftwork.namespace.paths import get_msw_builder
 
     b = get_msw_builder()
     acq_spec = b.spec.levels["acquisition"]
     ses_spec = b.spec.levels["session"]
-    assert acq_spec.template == ses_spec.template
-    assert acq_spec.regex == ses_spec.regex
+    assert acq_spec.template != ses_spec.template
+    assert "acq_type" in acq_spec.template
+    assert "session_type" in ses_spec.template
 
 
 # ---------------------------------------------------------------------------
@@ -287,6 +290,7 @@ def test_attach_feeds_generate_session_paths_correctly(tmp_path):
     paths = generate_session_paths(
         subject="m01",
         task="sequence",
+        acq_type="sequence",
         basepath=tmp_path,
         linked_to=info.session_name,
         printout=False,
@@ -296,6 +300,8 @@ def test_attach_feeds_generate_session_paths_correctly(tmp_path):
     assert rel_parts[0] == "m01"
     assert rel_parts[1] == "m01__20260524_143022__ephys"  # host session dir
     assert rel_parts[2].startswith("m01__")  # MSW acquisition dir
-    assert rel_parts[2].endswith("__sequence")
+    # v4.2: acquisition dir carries acq_type + default version suffix.
+    assert "__sequence" in rel_parts[2]
+    assert rel_parts[2].endswith("__v1")
     assert paths["host_session_name"] == "m01__20260524_143022__ephys"
     assert paths["acquisition_name"] == paths["session_basename"]

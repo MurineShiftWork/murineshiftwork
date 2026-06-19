@@ -185,7 +185,9 @@ def test_run_action_unsupported_device_type_raises(tmp_path, monkeypatch):
     )
     from murineshiftwork.cli.execute import run_action
 
-    with pytest.raises(ValueError, match="No action driver"):
+    # 'flir' is not a valid device type (DeviceUnion has no camera), so the
+    # SetupConfig is rejected at load with a union-tag validation error.
+    with pytest.raises(ValueError, match="does not match any of the expected tags"):
         run_action(
             setup="cam_setup",
             device="camera",

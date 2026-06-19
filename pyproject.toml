@@ -13,8 +13,8 @@ authors = [
 ]
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "msw-core>=0.3.0",
-    "msw-io>=1.2.0",
+    "msw-core>=0.6.0",
+    "msw-io>=1.6.0",
     "tqdm",
     "plotly>=5.0",
     "pyarrow>=24.0.0",

@@ -8,8 +8,14 @@ Tests run without hardware.  They verify that:
 
 from pathlib import Path
 
-from murineshiftwork.hardware.bpod.sim import SimBpod
-from murineshiftwork.hardware.scale import SimWeighingScale
+import pytest
+
+# Calibration tasks live in msw-tasks-core; skip when that package is absent
+# (the lean `test` job runs without --extra tasks).
+pytest.importorskip("murineshiftwork.tasks._calibration_liquid_static")
+
+from murineshiftwork.hardware.bpod.sim import SimBpod  # noqa: E402
+from murineshiftwork.hardware.scale import SimWeighingScale  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers

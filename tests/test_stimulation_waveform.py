@@ -342,7 +342,7 @@ def test_stimulation_waveform_params_not_left_in_in_dict():
 
 def _make_stim_with_mock_pp(**waveform_kwargs):
     stim = _make_stim(**waveform_kwargs)
-    stim.pulsePal = MagicMock()
+    stim.pulsepal = MagicMock()
     return stim
 
 
@@ -353,7 +353,7 @@ def test_setup_custom_waveform_calls_upload():
         waveform_center_duration_s=0.003,
     )
     stim.setup_custom_waveform(slot=0)
-    stim.pulsePal.upload_custom_waveform.assert_called_once()
+    stim.pulsepal.upload_custom_waveform.assert_called_once()
 
 
 def test_setup_custom_waveform_uses_correct_slot():
@@ -363,7 +363,7 @@ def test_setup_custom_waveform_uses_correct_slot():
         waveform_center_duration_s=0.003,
     )
     stim.setup_custom_waveform(slot=1)
-    _, kwargs = stim.pulsePal.upload_custom_waveform.call_args
+    _, kwargs = stim.pulsepal.upload_custom_waveform.call_args
     assert kwargs["pulse_train_id"] == 1
 
 
@@ -374,7 +374,7 @@ def test_setup_custom_waveform_sample_width_matches_sample_rate():
         waveform_center_duration_s=0.003,
     )
     stim.setup_custom_waveform()
-    _, kwargs = stim.pulsePal.upload_custom_waveform.call_args
+    _, kwargs = stim.pulsepal.upload_custom_waveform.call_args
     assert kwargs["pulse_width"] == pytest.approx(1.0 / _PULSEPAL_SAMPLE_RATE)
 
 
@@ -385,7 +385,7 @@ def test_setup_custom_waveform_sets_custom_train_id_1indexed():
         waveform_center_duration_s=0.003,
     )
     stim.setup_custom_waveform(slot=0)
-    calls = stim.pulsePal.program_one_param.call_args_list
+    calls = stim.pulsepal.program_one_param.call_args_list
     custom_id_calls = [c for c in calls if c.args[1] == "customTrainID"]
     assert custom_id_calls
     assert custom_id_calls[0].args[2] == 1  # slot 0 → customTrainID 1
@@ -398,7 +398,7 @@ def test_setup_custom_waveform_sets_custom_train_target_zero():
         waveform_center_duration_s=0.003,
     )
     stim.setup_custom_waveform()
-    calls = stim.pulsePal.program_one_param.call_args_list
+    calls = stim.pulsepal.program_one_param.call_args_list
     target_calls = [c for c in calls if c.args[1] == "customTrainTarget"]
     assert target_calls
     assert target_calls[0].args[2] == 0
@@ -411,7 +411,7 @@ def test_setup_custom_waveform_sets_custom_train_loop_one():
         waveform_center_duration_s=0.003,
     )
     stim.setup_custom_waveform()
-    calls = stim.pulsePal.program_one_param.call_args_list
+    calls = stim.pulsepal.program_one_param.call_args_list
     loop_calls = [c for c in calls if c.args[1] == "customTrainLoop"]
     assert loop_calls
     assert loop_calls[0].args[2] == 1
@@ -425,7 +425,7 @@ def test_setup_custom_waveform_sets_phase1_duration_to_sample_period():
         waveform_center_duration_s=0.003,
     )
     stim.setup_custom_waveform()
-    calls = stim.pulsePal.program_one_param.call_args_list
+    calls = stim.pulsepal.program_one_param.call_args_list
     p1d_calls = [c for c in calls if c.args[1] == "phase1Duration"]
     assert p1d_calls
     assert p1d_calls[0].args[2] == pytest.approx(1.0 / _PULSEPAL_SAMPLE_RATE)
@@ -439,7 +439,7 @@ def test_setup_custom_waveform_sets_inter_pulse_interval_zero():
         waveform_center_duration_s=0.003,
     )
     stim.setup_custom_waveform()
-    calls = stim.pulsePal.program_one_param.call_args_list
+    calls = stim.pulsepal.program_one_param.call_args_list
     ipi_calls = [c for c in calls if c.args[1] == "interPulseInterval"]
     assert ipi_calls
     assert ipi_calls[0].args[2] == pytest.approx(0.0)
@@ -461,9 +461,9 @@ def test_setup_custom_waveform_pads_to_full_cycle():
             "waveform_off_ramp_duration_s": 0.001,
         },
     )
-    stim.pulsePal = MagicMock()
+    stim.pulsepal = MagicMock()
     stim.setup_custom_waveform()
-    _, kwargs = stim.pulsePal.upload_custom_waveform.call_args
+    _, kwargs = stim.pulsepal.upload_custom_waveform.call_args
     uploaded = kwargs["pulse_voltages"]
     expected_n = round(_PULSEPAL_SAMPLE_RATE / pulse_frequency)
     assert len(uploaded) == expected_n
@@ -485,9 +485,9 @@ def test_setup_custom_waveform_padded_tail_is_zero():
             "waveform_off_ramp_duration_s": 0.001,
         },
     )
-    stim.pulsePal = MagicMock()
+    stim.pulsepal = MagicMock()
     stim.setup_custom_waveform()
-    _, kwargs = stim.pulsePal.upload_custom_waveform.call_args
+    _, kwargs = stim.pulsepal.upload_custom_waveform.call_args
     uploaded = kwargs["pulse_voltages"]
     n_shaped = round((0.001 + 0.003 + 0.001) * _PULSEPAL_SAMPLE_RATE)
     tail = uploaded[n_shaped:]
@@ -508,11 +508,11 @@ def test_setup_custom_waveform_returns_total_duration():
 
 def test_setup_custom_waveform_noop_without_waveform_params():
     stim = Stimulation(port="/dev/null", in_dict={"channels_stimulation": [0]})
-    stim.pulsePal = MagicMock()
+    stim.pulsepal = MagicMock()
     result = stim.setup_custom_waveform()
     assert result == 0.0
-    stim.pulsePal.upload_custom_waveform.assert_not_called()
-    stim.pulsePal.program_one_param.assert_not_called()
+    stim.pulsepal.upload_custom_waveform.assert_not_called()
+    stim.pulsepal.program_one_param.assert_not_called()
 
 
 def test_setup_custom_waveform_gated_sets_large_pulse_train_duration():
@@ -523,7 +523,7 @@ def test_setup_custom_waveform_gated_sets_large_pulse_train_duration():
         trigger_mode="gated",
     )
     stim.setup_custom_waveform()
-    calls = stim.pulsePal.program_one_param.call_args_list
+    calls = stim.pulsepal.program_one_param.call_args_list
     ptd_calls = [c for c in calls if c.args[1] == "pulseTrainDuration"]
     assert ptd_calls
     assert ptd_calls[0].args[2] == pytest.approx(3600.0)
@@ -537,7 +537,7 @@ def test_setup_custom_waveform_non_gated_no_pulse_train_duration_override():
         trigger_mode="normal",
     )
     stim.setup_custom_waveform()
-    calls = stim.pulsePal.program_one_param.call_args_list
+    calls = stim.pulsepal.program_one_param.call_args_list
     ptd_calls = [c for c in calls if c.args[1] == "pulseTrainDuration"]
     assert not ptd_calls
 

@@ -1,7 +1,12 @@
 """Tests for flag_outlier_points: calibration data outlier detection."""
 
+import pytest
 from murineshiftwork.logic.calibration import flag_outlier_points
-from murineshiftwork.tasks._calibration_liquid_dynamic.task import (
+
+# Calibration task lives in msw-tasks-core; skip when that package is absent.
+pytest.importorskip("murineshiftwork.tasks._calibration_liquid_dynamic")
+
+from murineshiftwork.tasks._calibration_liquid_dynamic.task import (  # noqa: E402
     _compute_n_pulses,
     _estimate_ul,
     _suggest_additional_times,

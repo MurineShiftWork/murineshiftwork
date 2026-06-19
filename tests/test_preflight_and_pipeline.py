@@ -55,20 +55,19 @@ def test_resolve_data_dir_machine_config(tmp_path, monkeypatch):
 def test_list_available_tasks_nonempty():
     from murineshiftwork.cli.tasks import list_available_tasks
 
+    # Public msw-tasks-core tasks (the `tasks` extra); lab tasks are tested in
+    # msw-tasks-lab.
     tasks = list_available_tasks()
     assert len(tasks) >= 5
     assert "_test_flush_valves" in tasks
-    assert "sequence" in tasks
-    assert "probabilistic_switching" in tasks
+    assert "_calibration_liquid_dynamic" in tasks
 
 
 def test_find_task_by_name():
     from murineshiftwork.cli.tasks import find_task_by_name, list_available_tasks
 
     assert find_task_by_name("flush") == "_test_flush_valves"
-    assert (
-        find_task_by_name("sequence") in list_available_tasks()
-    )  # "sequence" substring also matches _test_ttl_sequences
+    assert find_task_by_name("_calibration_sound") in list_available_tasks()
     assert find_task_by_name("nonexistent_xyz_task") is None
 
 

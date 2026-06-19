@@ -1,8 +1,8 @@
 """CLI entry-point registration and dispatch smoke tests."""
 
-import pytest
 from importlib.metadata import entry_points
 
+import pytest
 from murineshiftwork.cli.parser import parse_args
 from murineshiftwork.cli.tasks import run_tasks_list
 
@@ -23,4 +23,6 @@ def test_tasks_list_runs(capsys):
     run_tasks_list()
     out = capsys.readouterr().out
     assert isinstance(out, str)
-    assert len(out) > 0, "run_tasks_list() produced no output; expected at least one task listed"
+    assert len(out) > 0, (
+        "run_tasks_list() produced no output; expected at least one task listed"
+    )
