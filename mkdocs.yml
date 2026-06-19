@@ -29,7 +29,7 @@ nav:
     - Serial Ports: setup/SERIAL.md
     - Wiring: setup/WIRING.md
     - DHCP: setup/DHCP.md
-    - Cameras: setup/CAMERAS_2026.md
+    - Cameras: setup/cameras.md
   - CLI Reference:
     - init: cli/init.md
     - run: cli/run.md
@@ -55,6 +55,7 @@ nav:
     - Sequence: tasks/sequence.md
     - Probabilistic Switching: tasks/probabilistic_switching.md
     - Probabilistic Switching (Fixed): tasks/probabilistic_switching_fixedsubjects.md
+    - Calibration & Test: tasks/calibration_and_test.md
   - API Reference: api.md
 
 plugins:

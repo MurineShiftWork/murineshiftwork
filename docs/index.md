@@ -32,19 +32,32 @@ msw run -t _test_flush_valves -s mouse001 --setup setup-1 \
 
 ## Package layout
 
+`murineshiftwork` is an umbrella distribution. The framework is split across
+several independently versioned packages that all contribute to the shared
+`murineshiftwork.*` namespace (a PEP 420 namespace package), so
+`import murineshiftwork.<module>` works regardless of which package ships it:
+
 ```
-murineshiftwork/
-├── src/murineshiftwork/      # main package
-│   ├── cli/                  # CLI entry points
-│   ├── logic/                # core logic (config, calibration, barcode, …)
-│   ├── tasks/                # task protocols
-│   ├── namespace/            # path generation
-│   └── readers/              # session data readers
-├── tests/                    # pytest test suite
-├── playground/               # debug scripts, Arduino sketches, MATLAB reference
-├── docs/                     # this documentation (MkDocs)
-└── msw_configs/              # shared setup/subject configs (separate git repo)
+murineshiftwork.*  (namespace)
+├── msw-core            → murineshiftwork.{cli, logic, hardware, hooks}
+├── msw-io             → murineshiftwork.{namespace, readers, io}
+├── msw-tasks-core      → murineshiftwork.tasks._calibration_*, _test_*   (bundled utility protocols)
+├── msw-tasks-lab       → murineshiftwork.tasks.{sequence, …}             (lab science tasks, private)
+├── msw-tasks-example   → murineshiftwork.tasks.<example>                 (template for external tasks)
+└── msw-agent          → murineshiftwork.logagent                        (session/trial relay)
+
+Standalone plugin packages (own top-level package, register via entry points):
+├── msw-open-ephys      → `msw oe` ephys host-session control
+└── msw-flir-bonsai     → FLIR/Bonsai camera backend
+
+Supporting libraries: acquisition-namespace (path spec), pypulsepal,
+one-axis-stage, serial-scale-*, ttl-barcoder, rpi-camera-ensemble.
 ```
+
+Optional extras pull these in: `murineshiftwork[tasks]` (msw-tasks-core),
+`[oe]` (msw-open-ephys), `[agent]` (msw-agent), `[full]` for the rig bundle.
+Per-machine setup and subject YAML live in a separate `msw_configs/` git repo,
+pointed to via `msw init`.
 
 ## Documentation structure
 

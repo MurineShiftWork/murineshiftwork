@@ -18,8 +18,10 @@ individual ports. At early levels LEDs illuminate the expected port; LEDs are fa
 progressively across the 50 training levels so that the mouse must rely on memory rather
 than visual guidance.
 
-This design follows the general class of serial-order memory tasks used to study
-hippocampal and prefrontal contributions to sequential behaviour.
+The paradigm implemented here follows the sequence-learning task described by
+Thompson & Rollik (2024); see [References](#references). More broadly it belongs
+to the class of serial-order memory tasks used to study hippocampal and
+prefrontal contributions to sequential behaviour.
 
 ---
 
@@ -68,9 +70,14 @@ The buffer is cleared on every level change.
 
 | Condition | Result |
 |---|---|
-| Buffer full and `perf > progression_threshold` (0.9) | Advance one level |
+| Buffer full and `perf > progression_threshold` (0.9) | Advance one level (capped at the last level) |
 | Buffer full and `perf < regression_threshold` (0.2) | Regress one level |
-| `prevent_regression_below_start = true` | Floor at the level the session started at |
+| `prevent_regression_below_start = true` | Raise the regression floor to the level the session started at |
+
+Level 1 is a one-way launch level: once a subject advances out of it, levels are
+transient up/down but it can **never regress back to level 1** (hard regression
+floor is 2, regardless of config). `prevent_regression_below_start` only raises
+that floor further, never below 2.
 
 Two performance metrics are tracked simultaneously:
 
@@ -249,3 +256,11 @@ msw run -t sequence -s mouse001 --setup setup-1
 msw run -t sequence -s mouse001 --setup setup-1 --task-mode habituation
 msw run -t sequence -s mouse001 --setup setup-1 -ts start_level=5 scoring_metric=perfect
 ```
+
+---
+
+## References
+
+- Thompson & Rollik (2024). *bioRxiv* (preprint). The sequence-learning paradigm
+  underlying this task.
+<!-- TODO: add the bioRxiv DOI/URL once confirmed. -->
