@@ -1,7 +1,0 @@
-_hostname: murinemanager
-axes: {}
-connection:
-  baudrate: 115200
-  serial_port: /dev/ttyUSB5
-  timeout: 0.1
-known_positions: {}
