@@ -23,7 +23,6 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [pydantic>=2.0, types-PyYAML]
-        exclude: '^(external|playground)/'
 
   # commit-msg stage: fix first, then validate
   - repo: local
