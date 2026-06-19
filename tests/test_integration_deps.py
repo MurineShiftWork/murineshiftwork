@@ -175,7 +175,7 @@ def test_murineshiftwork_namespace_has_msw_core_contributor():
 
 def test_msw_tasks_core_entry_points_if_installed():
     """When msw-tasks-core is installed, its tasks must appear in msw.tasks group."""
-    msw_tasks_core = pytest.importorskip(
+    pytest.importorskip(
         "murineshiftwork.tasks._calibration_liquid_static",
         reason="msw-tasks-core not installed; skipping",
     )
