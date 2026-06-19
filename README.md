@@ -1,6 +1,6 @@
 # Murine Shift Work
 
-Behavioural task acquisition with hardware support.
+Behaviour acquisition framework for standardised, scalable experiments.
 
 ```bash
 msw run --setup rig-a --subject mouse001 --task sequence
@@ -10,12 +10,12 @@ msw run --setup rig-a --subject mouse001 --task sequence
 
 ## What it does
 
-- **Behavioural tasks** — sequence learning, probabilistic switching, optotagging, calibration routines
-- **Hardware abstraction** — interchangeable backends for behaviour controllers, cameras, stage, scale, stimulators
-- **Config system** — layered YAML overrides: bundled defaults → rig overlay → task mode → subject → CLI
-- **Session files** — structured `.msw.session.yaml` + JSONL trial data; reader API for analysis
-- **Live plot** — per-task online performance display during acquisition
-- **TTL barcodes** — unique per-trial barcodes on BNC output for alignment with parallel recordings
+- **Behavioural tasks**: sequence learning, probabilistic switching, optotagging, calibration routines
+- **Hardware abstraction**: interchangeable backends for behaviour controllers, cameras, stage, scale, stimulators
+- **Config system**: layered YAML overrides (bundled defaults, rig overlay, task mode, subject, CLI)
+- **Session files**: structured `.msw.session.yaml` + JSONL trial data; reader API for analysis
+- **Live plot**: per-task online performance display during acquisition
+- **TTL barcodes**: unique per-trial barcodes on BNC output for alignment with parallel recordings
 
 ---
 
@@ -40,7 +40,7 @@ msw subject add -s mouse001
 ## Development
 
 ```bash
-git clone https://github.com/larsrollik/murineshiftwork.git
+git clone https://github.com/MurineShiftWork/murineshiftwork.git
 cd murineshiftwork
 uv sync --group dev
 uv run pytest tests/
@@ -63,5 +63,5 @@ Key architecture decisions are in `docs/MASTER_PLAN.md`.
 
 ## License
 
-Copyright © 2021–2026 Lars B. Rollik.
+Copyright © 2021-2026 Lars B. Rollik.
 See [LICENSE](LICENSE) for terms.

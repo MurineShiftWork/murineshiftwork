@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "murineshiftwork"
 dynamic = ["version"]
-description = "Murine Shift Work — behavioural task acquisition with hardware support."
+description = "Behaviour acquisition framework for standardised, scalable experiments."
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE" }
 authors = [
@@ -79,7 +79,7 @@ full = [
 murineshiftwork = "murineshiftwork.cli:run_cli"
 msw = "murineshiftwork.cli:run_cli"
 
-# External task packages register here — bundled tasks need no entry-point.
+# External task packages register here; bundled tasks need no entry-point.
 # Example (in an external package's pyproject.toml):
 #   [project.entry-points."msw.tasks"]
 #   my_task = "my_package.tasks.my_task.my_task"
@@ -119,7 +119,7 @@ include = [
 #                      creates "bump: ..." commit and annotated tag v{version}.
 #   git push && git push --tags → pushes bump commit + tag; triggers release CI.
 #
-# cz bump always produces a clean X.Y.Z tag — never dev or rc unless you pass
+# cz bump always produces a clean X.Y.Z tag, never dev or rc unless you pass
 # --prerelease explicitly. Do NOT pass --prerelease in normal releases.
 # .devN versions in pip show / __version__ between tags are computed at install
 # time by hatch-vcs from git tags and are NOT written as git tags.
