@@ -90,7 +90,7 @@ with its SDK index, a role name, and its manufacturer serial number:
 cameras:
   backend: flir_bonsai
   driver: flycap                # flycap (FlyCapture2) or spinnaker (Spinnaker SDK)
-  bonsai_exe: C:\Users\lab\AppData\Local\Bonsai\Bonsai.exe
+  bonsai_exe: C:\Users\<user>\AppData\Local\Bonsai\Bonsai.exe
   cameras:
     - index: 0
     - index: 1
@@ -122,7 +122,7 @@ as a system environment variable and omit the field from the YAML.
 cameras:
   backend: flir_bonsai
   driver: flycap
-  bonsai_exe: C:\Users\lab\AppData\Local\Bonsai\Bonsai.exe
+  bonsai_exe: C:\Users\<user>\AppData\Local\Bonsai\Bonsai.exe
   n_cameras: 2
 ```
 
@@ -147,7 +147,7 @@ session: s001__20260609_143022
 datetime: "2026-06-09T14:30:22"
 driver: flycap
 workflow: run-flir-flycap-1cam
-bonsai_exe: C:\Users\lab\AppData\Local\Bonsai\Bonsai.exe
+bonsai_exe: C:\Users\<user>\AppData\Local\Bonsai\Bonsai.exe
 cameras:
   - cam_index: 0
     serial: "12345678"
