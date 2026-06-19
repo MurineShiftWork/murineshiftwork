@@ -96,7 +96,7 @@ jobs:
               f.write('msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }\n')
 
       - name: Install dependencies
-        run: uv sync --extra dev --extra oe
+        run: uv sync --extra dev --extra oe --extra tasks
 
       - name: Verify entry points
         run: |
