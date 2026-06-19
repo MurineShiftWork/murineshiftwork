@@ -136,6 +136,7 @@ def test_msw_io_subpackages_importable_with_oe_stack():
 def test_installed_dep_versions_meet_floors():
     """Installed versions of core deps must meet pyproject.toml lower bounds."""
     from importlib.metadata import version
+
     from packaging.version import Version
 
     floors = {
@@ -157,6 +158,7 @@ def test_installed_dep_versions_meet_floors():
 def test_murineshiftwork_namespace_has_msw_core_contributor():
     """msw-core must be a namespace contributor (adds cli/, hardware/, etc.)."""
     from pathlib import Path
+
     import murineshiftwork
 
     roots = [Path(p) for p in murineshiftwork.__path__]

@@ -54,7 +54,7 @@ def test_filesystem_excludes_other_private_dirs():
 def test_filesystem_task_dir_contains_expected_module():
     tasks = list_available_tasks(detailed=True)
     for name, path in tasks.items():
-        assert (path / f"{name}.py").exists(), f"{name}: expected {name}.py in {path}"
+        assert (path / "task.py").exists(), f"{name}: expected task.py in {path}"
 
 
 # ---------------------------------------------------------------------------
@@ -93,8 +93,8 @@ def test_bundled_task_takes_precedence_over_entry_point():
         tasks = list_available_tasks(detailed=True)
     # import_module must NOT be called for the clashing name.
     mock_import.assert_not_called()
-    # The path from filesystem (a real dir with sequence.py) is used.
-    assert (tasks["sequence"] / "sequence.py").exists()
+    # The path from filesystem (a real dir with task.py) is used.
+    assert (tasks["sequence"] / "task.py").exists()
 
 
 def test_failed_entry_point_load_is_silently_skipped():

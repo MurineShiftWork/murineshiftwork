@@ -1,8 +1,8 @@
 """CLI entry-point registration and dispatch smoke tests."""
 
-import pytest
 from importlib.metadata import entry_points
 
+import pytest
 from murineshiftwork.cli.parser import parse_args
 from murineshiftwork.cli.tasks import run_tasks_list
 

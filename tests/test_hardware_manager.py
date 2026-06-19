@@ -182,10 +182,12 @@ class TestBpodDevice:
 
         assert BpodDevice(serial_port="/dev/ttyACM0").name == "bpod"
 
-    def test_preflight_raises_on_missing_port(self, tmp_path):
+    def test_preflight_raises_on_missing_port(self):
         from murineshiftwork.hardware.bpod.device import BpodDevice
 
-        dev = BpodDevice(serial_port=str(tmp_path / "nonexistent"))
+        # serial_port_present only filesystem-checks /dev/* paths; use a missing
+        # /dev node so preflight detects the absent device cross-platform.
+        dev = BpodDevice(serial_port="/dev/msw_nonexistent_bpod_xyz")
         with pytest.raises(ValueError, match="not accessible"):
             dev.preflight()
 
