@@ -4,6 +4,8 @@ import pytest
 import yaml
 
 pytest.importorskip("ttl_barcoder")
+# sequence is a lab task (msw-tasks-lab, private); skip when absent.
+pytest.importorskip("murineshiftwork.tasks.sequence")
 
 
 def _make_subject_yaml(tmp_path, subject="mouse001"):

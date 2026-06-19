@@ -6,6 +6,8 @@ import pandas as pd
 import pytest
 
 pytest.importorskip("ttl_barcoder")
+# sequence is a lab task (msw-tasks-lab, private); skip when absent.
+pytest.importorskip("murineshiftwork.tasks.sequence")
 
 # ---------------------------------------------------------------------------
 # Helpers
