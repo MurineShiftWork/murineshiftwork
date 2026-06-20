@@ -113,6 +113,13 @@ hooks:
 
 ## Config schema upgrade
 
+!!! note "Planned"
+    The `msw config upgrade` command described below is planned and not yet
+    implemented. The on-load schema-version warning and in-place migration are
+    the target behaviour; until then, refresh an overlay manually or re-scaffold
+    with `msw tasks init-configs <name> --force` (which overwrites, so back up
+    local edits first).
+
 When the bundled `task.yaml` (or setup/subject schema) gains new fields, the
 locally stored overlay in `msw_configs/` does not automatically pick them up
 : the overlay only stores intentional user deviations from bundled defaults.
