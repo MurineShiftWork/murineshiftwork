@@ -1,5 +1,5 @@
 """Migrate water calibration CSVs, stage calibration YAMLs, and camera config paths
-into /mnt/maindata/msw_configs/setups/*.yaml.
+into /data/msw_configs/setups/*.yaml.
 
 Run once from the repo root:
     python tools/migrate_calibrations_to_setup_yaml.py
@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from murineshiftwork.logic.config_models import ValveCalibration
 
 HOME_MSW = Path.home() / ".murineshiftwork"
-CONFIGS_DIR = Path("/mnt/maindata/msw_configs/setups")
+CONFIGS_DIR = Path("/data/msw_configs/setups")
 
 # ---------------------------------------------------------------------------
 # Per-setup sources

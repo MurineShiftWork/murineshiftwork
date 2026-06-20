@@ -14,8 +14,8 @@
 #   --dry-run         Show which files would be modified; do not change anything
 #
 # Example:
-#   ./clean_msw_files.sh --data-dir=/mnt/maindata/data
-#   ./clean_msw_files.sh --data-dir=/mnt/maindata/data --event=Port4 --dry-run
+#   ./clean_msw_files.sh --data-dir=/data/data
+#   ./clean_msw_files.sh --data-dir=/data/data --event=Port4 --dry-run
 
 set -euo pipefail
 

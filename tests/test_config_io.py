@@ -133,7 +133,7 @@ def test_load_setup_config_with_calibration(tmp_path):
 
 
 def test_load_subject_config_missing(tmp_path):
-    result = load_subject_config(tmp_path, "s001_tabfixed_m1099615")
+    result = load_subject_config(tmp_path, "s001_tabfixed_m0000001")
     assert result is None
 
 
@@ -146,14 +146,14 @@ def test_load_subject_config_test_subject_skipped(tmp_path):
 def test_load_subject_config_valid(tmp_path):
     (tmp_path / "subjects").mkdir()
     data = {
-        "name": "s001_tabfixed_m1099615",
-        "project": "sleep_lhb",
+        "name": "s001_tabfixed_m0000001",
+        "project": "example_project",
         "task_overrides": {"_test_flush_valves": {"VALVE_OPENING_TIME_MS": 70}},
     }
-    (tmp_path / "subjects" / "s001_tabfixed_m1099615.yaml").write_text(yaml.dump(data))
-    cfg = load_subject_config(tmp_path, "s001_tabfixed_m1099615")
+    (tmp_path / "subjects" / "s001_tabfixed_m0000001.yaml").write_text(yaml.dump(data))
+    cfg = load_subject_config(tmp_path, "s001_tabfixed_m0000001")
     assert cfg is not None
-    assert cfg.name == "s001_tabfixed_m1099615"
+    assert cfg.name == "s001_tabfixed_m0000001"
     assert cfg.task_overrides["_test_flush_valves"]["VALVE_OPENING_TIME_MS"] == 70
 
 

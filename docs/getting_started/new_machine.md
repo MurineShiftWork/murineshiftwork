@@ -11,7 +11,7 @@
 ```bash
 # Tell MSW where the shared config directory lives.
 # This writes ~/.murineshiftwork/msw_machine.yaml.
-msw init /mnt/maindata/msw_configs
+msw init /data/msw_configs
 ```
 
 After this, all `msw run` calls find configs automatically: no `--config-dir` needed.
@@ -23,7 +23,7 @@ MSW resolves the config directory in this order (first match wins):
 1. `--config-dir /path` CLI argument (per-call override)
 2. `MSW_CONFIG_DIR` environment variable
 3. `~/.murineshiftwork/msw_machine.yaml` (written by `msw init`)
-4. `/mnt/maindata/msw_configs` (historical default, used if the directory exists)
+4. `/data/msw_configs` (historical default, used if the directory exists)
 
 ## Create a setup config
 
@@ -32,7 +32,7 @@ MSW resolves the config directory in this order (first match wins):
 msw setup create setup-5
 
 # Edit the file to fill in port_by_path values
-nano /mnt/maindata/msw_configs/setups/setup-5.yaml
+nano /data/msw_configs/setups/setup-5.yaml
 
 # List all available setups
 msw setup list

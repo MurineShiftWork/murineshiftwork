@@ -118,5 +118,5 @@ Site-specific probability sets (e.g. omitting neutral blocks) can be set via a c
 msw run -t probabilistic_switching -s mouse001 --setup setup-1
 # With camera video:
 msw run -t probabilistic_switching -s mouse001 --setup setup-1 \
-    -ts config_file_camera=/mnt/maindata/msw_configs/cameras/setup-1.yaml
+    -ts config_file_camera=/data/msw_configs/cameras/setup-1.yaml
 ```

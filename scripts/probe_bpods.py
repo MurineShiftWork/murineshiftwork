@@ -6,7 +6,7 @@ Logs connection attempts (retries, timing) and prints a summary table.
 
 Usage:
     python3 scripts/probe_bpods.py
-    python3 scripts/probe_bpods.py --config-dir /mnt/maindata/msw_configs
+    python3 scripts/probe_bpods.py --config-dir /data/msw_configs
     python3 scripts/probe_bpods.py --setups setup-1 setup-npxb   # subset
     python3 scripts/probe_bpods.py --retries 5 --retry-delay 3.0
 """
@@ -88,7 +88,7 @@ def _read_config_dir() -> Path:
             return Path(mc["config_dir"])
     except Exception:
         pass
-    return Path("/mnt/maindata/msw_configs")
+    return Path("/data/msw_configs")
 
 
 def _find_setup_files(config_dir: Path, names: list[str]) -> list[Path]:
@@ -247,7 +247,7 @@ def main() -> None:
         "--config-dir",
         type=Path,
         default=None,
-        help="Config directory (default: from machine config or /mnt/maindata/msw_configs)",
+        help="Config directory (default: from machine config or /data/msw_configs)",
     )
     parser.add_argument(
         "--setups",

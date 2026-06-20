@@ -17,7 +17,7 @@ Behaviour acquisition framework for head-fixed and freely moving murine experime
 
 ```bash
 # 1. Point MSW at your shared config directory (once per machine)
-msw init /mnt/maindata/msw_configs
+msw init /data/msw_configs
 
 # 2. Register a subject
 msw subject add -s mouse001
