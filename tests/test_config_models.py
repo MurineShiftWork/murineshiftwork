@@ -30,20 +30,20 @@ POINTS_SETUP3_VALVE1 = [
 ]
 
 
-def test_valve_calibration_validate_pass():
+def test_valve_calibration_check_quality_pass():
     vc = ValveCalibration(points=POINTS_SETUP3_VALVE1)
-    ok, reason = vc.validate()
+    ok, reason = vc.check_quality()
     assert ok, reason
 
 
-def test_valve_calibration_validate_too_few_points():
+def test_valve_calibration_check_quality_too_few_points():
     vc = ValveCalibration(points=[[10.0, 0.5], [20.0, 1.0]])
-    ok, reason = vc.validate()
+    ok, reason = vc.check_quality()
     assert not ok
     assert "3" in reason
 
 
-def test_valve_calibration_validate_non_monotonic():
+def test_valve_calibration_check_quality_non_monotonic():
     vc = ValveCalibration(
         points=[
             [10.0, 1.0],
@@ -53,7 +53,7 @@ def test_valve_calibration_validate_non_monotonic():
             [50.0, 2.5],
         ]
     )
-    ok, reason = vc.validate()
+    ok, reason = vc.check_quality()
     assert not ok
     assert "monoton" in reason.lower()
 
