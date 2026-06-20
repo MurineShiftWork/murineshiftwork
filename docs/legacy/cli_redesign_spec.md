@@ -194,12 +194,12 @@ Assembly order:
 
 ```
 msw run \
-  --config-dir /mnt/maindata/CONFIG_FILES \
+  --config-dir /data/CONFIG_FILES \
   --setup setup_1 \
   --subject mouse_01 \
   --task probabilistic_switching_fixedsubjects \
   --namespace default \
-  [--out /mnt/maindata/data/]
+  [--out /data/data/]
 ```
 
 Removed flags (absorbed into setup config):

@@ -48,7 +48,7 @@ devices:
     port_by_path: pci-0000:00:14.0-usb-0:10.2:1.0
 cameras:
   backend: rce
-  config: /mnt/maindata/msw_configs/device_configs/cameras/setup-1.cameras.yaml
+  config: /data/msw_configs/device_configs/cameras/setup-1.cameras.yaml
 calibrations:
   bpod_valve:
     1:
@@ -76,7 +76,7 @@ calibrations:
 ```yaml
 cameras:
   backend: rce
-  config: /mnt/maindata/msw_configs/device_configs/cameras/setup-1.cameras.yaml
+  config: /data/msw_configs/device_configs/cameras/setup-1.cameras.yaml
 ```
 
 `config` is the path to the RCE ensemble YAML. Absolute or relative to `msw_configs/`.

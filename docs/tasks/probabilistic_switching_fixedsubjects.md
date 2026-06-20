@@ -165,5 +165,5 @@ msw run -t probabilistic_switching_fixedsubjects -s mouse001 --setup setup-1 \
 msw run -t probabilistic_switching_fixedsubjects -s mouse001 --setup setup-1
 # Video explicitly configured:
 msw run -t probabilistic_switching_fixedsubjects -s mouse001 --setup setup-1 \
-    -ts config_file_camera=/mnt/maindata/msw_configs/cameras/setup-1.yaml
+    -ts config_file_camera=/data/msw_configs/cameras/setup-1.yaml
 ```

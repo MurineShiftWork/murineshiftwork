@@ -441,4 +441,4 @@ _In rough priority order._
 
 **Suite migration (longer horizon):**
 6. Suite namespace split: `msw-logic`, `msw-tasks-*`, `msw-agent` sub-packages per
-   suite design docs at `/mnt/maindata/code/murineshiftwork_suite/design/`.
+   suite design docs at `/data/code/murineshiftwork_suite/design/`.

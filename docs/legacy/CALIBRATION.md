@@ -42,7 +42,7 @@ can also come from `setup.calibrations.bpod_valve.keys()`.
 ### Serial scale speed: root cause and fixes
 
 Scale hardware: custom HX711-based Arduino (firmware in
-`/mnt/maindata/code/serial_weighing_scale/scale_firmware/scale_firmware.ino`).
+`/data/code/serial_weighing_scale/scale_firmware/scale_firmware.ino`).
 
 **Root cause of 10-20 s initialisation and non-decodable (NaN) readings:**
 

@@ -18,13 +18,13 @@ msw init <config_dir> [--data-dir <path>] [--force]
 
 ```bash
 # Basic init pointing at a network configs directory
-msw init /mnt/maindata/msw_configs
+msw init /data/msw_configs
 
 # With explicit data dir
-msw init /mnt/maindata/msw_configs --data-dir /mnt/maindata/data
+msw init /data/msw_configs --data-dir /data/data
 
 # Overwrite existing machine config
-msw init /mnt/maindata/msw_configs --force
+msw init /data/msw_configs --force
 ```
 
 ## Notes

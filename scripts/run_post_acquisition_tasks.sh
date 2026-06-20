@@ -31,7 +31,7 @@
 #   --provision-scripts=PATH Path to provision_rpi/scripts/ directory (required)
 #   --rpi-group=GROUP        Ansible inventory group for RPi cameras (default: rpis)
 #   --setup-group=GROUP      Ansible inventory group for setup machines
-#   --target-dir=PATH        Remote upload destination (default: /ceph/sjones/users/lars/data/)
+#   --target-dir=PATH        Remote upload destination (default: $MSW_UPLOAD_TARGET or /data/)
 #   --skip-upload            Skip remote upload step
 #   --skip-rpi               Skip RPi data collation
 #   --skip-setups            Skip setup machine data collation
@@ -47,7 +47,7 @@ CENTRAL_DATA=''
 PROVISION_SCRIPTS=''
 RPI_GROUP='rpis'
 SETUP_GROUP=''
-TARGET_DIR='/ceph/sjones/users/lars/data/'
+TARGET_DIR="${MSW_UPLOAD_TARGET:-/data/}"
 SKIP_UPLOAD=false
 SKIP_RPI=false
 SKIP_SETUPS=false

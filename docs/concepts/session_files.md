@@ -29,8 +29,8 @@ process:
   subject: mouse001
   setup: setup-npx2
   serial_port: /dev/ttyACM5
-  out_path: /mnt/maindata/data
-  session_folder: /mnt/maindata/data/mouse001/mouse001__20260526_100149_223167__sequence
+  out_path: /data/data
+  session_folder: /data/data/mouse001/mouse001__20260526_100149_223167__sequence
   session_basename: mouse001__20260526_100149_223167__sequence
   datetime: "20260526_100149_223167"
 task_settings:

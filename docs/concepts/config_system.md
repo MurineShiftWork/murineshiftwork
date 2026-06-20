@@ -30,7 +30,7 @@ config-dir tree.  Keys absent from the overlay are inherited from the bundled fi
 For example, to change the default valve list and flush time for `_test_flush_valves`:
 
 ```
-/mnt/maindata/msw_configs/tasks/_test_flush_valves/task.yaml
+/data/msw_configs/tasks/_test_flush_valves/task.yaml
 ```
 
 ```yaml

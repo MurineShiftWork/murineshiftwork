@@ -3,8 +3,8 @@
 Usage:
     python tools/migrate_subjects_ini_to_yaml.py
 
-Reads:   /mnt/maindata/CONFIG_FILES/subject.settings
-Writes:  /mnt/maindata/msw_configs/subjects/{subject_name}.yaml
+Reads:   /data/CONFIG_FILES/subject.settings
+Writes:  /data/msw_configs/subjects/{subject_name}.yaml
 
 Rules:
 - Each top-level [section] is a subject.
@@ -25,8 +25,8 @@ from pathlib import Path
 import yaml
 from configobj import ConfigObj
 
-INI_PATH = Path("/mnt/maindata/CONFIG_FILES/subject.settings")
-OUT_DIR = Path("/mnt/maindata/msw_configs/subjects")
+INI_PATH = Path("/data/CONFIG_FILES/subject.settings")
+OUT_DIR = Path("/data/msw_configs/subjects")
 SKIP_SECTIONS = {"_test_subject"}
 
 # Top-level scalar fields we recognise as SubjectConfig fields

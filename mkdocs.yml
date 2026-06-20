@@ -26,9 +26,7 @@ nav:
     - New Machine Setup: getting_started/new_machine.md
   - Setup & Hardware:
     - Setup Config: setup/setup_config.md
-    - Serial Ports: setup/SERIAL.md
     - Wiring: setup/WIRING.md
-    - DHCP: setup/DHCP.md
     - Cameras: setup/cameras.md
   - CLI Reference:
     - init: cli/init.md

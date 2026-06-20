@@ -2,7 +2,7 @@ import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-root_dir = "/ceph/sjones/projects/sequence_squad/revision_data/lars_recordings/ephys"
+root_dir = os.environ.get("MSW_EPHYS_ROOT", "/path/to/ephys")
 target_field = "probe_serial_number"
 
 for dirpath, dirnames, filenames in os.walk(root_dir):
