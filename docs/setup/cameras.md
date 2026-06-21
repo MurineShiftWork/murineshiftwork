@@ -29,7 +29,7 @@ orientation and per-backend bring-up checklist.
 ## RCE bring-up (freely moving)
 
 1. Flash each RPi and install the RCE agent package; bring each Pi onto the rig
-   network with a known, reserved address (see [DHCP](DHCP.md)).
+   network with a known, reserved address (reserved in your lab network config).
 2. Author the ensemble YAML describing each agent (host, camera id, role) and
    place it under `msw_configs/device_configs/cameras/`.
 3. Point the setup at it:

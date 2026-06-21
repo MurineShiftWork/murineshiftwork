@@ -4,10 +4,6 @@
 ::: murineshiftwork.logic.machine_config
 ::: murineshiftwork.logic.task_process
 
-## Log agent
-::: murineshiftwork.logagent.logagent
-::: murineshiftwork.logagent.plot_spec
-
 ## Config models
 ::: murineshiftwork.logic.config.models.SetupConfig
 ::: murineshiftwork.logic.config.models.SubjectConfig
