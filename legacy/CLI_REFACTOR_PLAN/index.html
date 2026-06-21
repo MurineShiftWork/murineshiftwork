@@ -1,0 +1,2561 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Behaviour acquisition framework for murine research">
+      
+      
+        <meta name="author" content="Lars B. Rollik">
+      
+      
+        <link rel="canonical" href="https://MurineShiftWork.github.io/murineshiftwork/legacy/CLI_REFACTOR_PLAN/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>CLI Refactor Plan - Murine Shift Work</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cli-refactor-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Murine Shift Work" class="md-header__button md-logo" aria-label="Murine Shift Work" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Murine Shift Work
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              CLI Refactor Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/MurineShiftWork/murineshiftwork" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    MurineShiftWork/murineshiftwork
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Murine Shift Work" class="md-nav__button md-logo" aria-label="Murine Shift Work" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Murine Shift Work
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/MurineShiftWork/murineshiftwork" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    MurineShiftWork/murineshiftwork
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/new_machine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    New Machine Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup & Hardware
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Setup & Hardware
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../setup/setup_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../setup/WIRING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../setup/cameras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/init/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    init
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/run/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    action
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/subject/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    subject
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/calibration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    calibration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/post/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    post
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    agent (plugin)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/config_system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/hook_system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hook System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/plugin_system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/session_files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Session Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/multi_acquisition_and_photometry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Acquisition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/00_overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/01_install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installing MSW
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/02_first_session/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Session
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/03_setup_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/04_task_settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Task Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/05_config_overlays/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config Overlays
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/06_subject_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subject Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/07_session_files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Session Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/08_plot_spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plot Spec
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/09_live_plot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live Plot (optional)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/10_monitor_ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitor UI (optional)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/11_hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks (optional)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/12_post_processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-Processing (optional)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/13_hardware_abstraction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Abstraction (optional)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/14_calibration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Valve Calibration (optional)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/calibration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Calibration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/adding_setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adding a Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/adding_subject/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adding a Subject
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tasks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tasks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tasks/sequence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sequence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tasks/probabilistic_switching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Probabilistic Switching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tasks/probabilistic_switching_fixedsubjects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Probabilistic Switching (Fixed)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tasks/calibration_and_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Calibration & Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="cli-refactor-plan">CLI Refactor Plan<a class="headerlink" href="#cli-refactor-plan" title="Permanent link">&para;</a></h1>
+<p><em>Scope: improve option grouping, naming, and code structure. No changes to the core session
+interface (<code>-s/-t/--setup/--task-mode/-o</code>). No behaviour changes to evaluate pipeline.</em></p>
+<hr />
+<h2 id="1-decisions-resolved">1. Decisions resolved<a class="headerlink" href="#1-decisions-resolved" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--serial-port-scale</code> → <code>--port-scale</code></td>
+<td><strong>Keep, visible in <code>run</code> help.</strong> All tasks: including calibration tasks: go through <code>msw run</code>. Hiding it from <code>run</code> help means users have no way to discover it when running <code>_calibration_liquid_dynamic</code>. Keep it in the Hardware group with a note <code>(calibration tasks only)</code>.</td>
+</tr>
+<tr>
+<td>Calibration file args (<code>-cwater/-csound/-cstage</code>)</td>
+<td><strong>Remove.</strong> Calibration data is now embedded in setup YAML files. No CLI override needed.</td>
+</tr>
+<tr>
+<td>Metadata: experimenter</td>
+<td><strong>Formalise as <code>--experimenter</code>.</strong> First-class field, not a key-value pair. Stored in session YAML.</td>
+</tr>
+<tr>
+<td>Metadata: experiment/project</td>
+<td><strong>Remove <code>--experiment</code>.</strong> Experiment/project dimension is managed at subject registration, outside acquisition scope.</td>
+</tr>
+<tr>
+<td>Metadata: free-form key-value</td>
+<td><strong>Keep <code>--meta KEY=VALUE</code>.</strong> No category prefix; just <code>--meta</code>.</td>
+</tr>
+<tr>
+<td>Log file default</td>
+<td><strong>Switch to rotating logs in <code>~/.murineshiftwork/logs/</code></strong>, <code>RotatingFileHandler</code>, same pattern as RCE. <code>--log-file</code> stays as an optional path override.</td>
+</tr>
+<tr>
+<td>Version in preamble</td>
+<td><strong>Print <code>msw vX.Y.Z</code> + copyright line at every <code>run</code> invocation</strong>, before the first task output. Not in help text.</td>
+</tr>
+<tr>
+<td>CLI entry point</td>
+<td><strong>Add <code>msw</code> as a second entry point alias</strong> alongside <code>murineshiftwork</code>. Change <code>prog="msw"</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-problems-fixed">2. Problems fixed<a class="headerlink" href="#2-problems-fixed" title="Permanent link">&para;</a></h2>
+<h3 id="21-task-mode-ts-float-to-top-of-help">2.1 <code>--task-mode</code> / <code>-ts</code> float to top of help<a class="headerlink" href="#21-task-mode-ts-float-to-top-of-help" title="Permanent link">&para;</a></h3>
+<p>Added with bare <code>parser.add_argument()</code> (no group) inside <code>add_args_for_task_settings_override</code>.
+Argparse puts ungrouped options in the implicit <code>options:</code> bucket, which renders before all named
+groups. Fix: attach them to a named <code>"Task settings"</code> group.</p>
+<h3 id="22-add_args_for_general_use-monolith">2.2 <code>add_args_for_general_use</code> monolith<a class="headerlink" href="#22-add_args_for_general_use-monolith" title="Permanent link">&para;</a></h3>
+<p>One function creates three groups (General, Metadata, Config files) and attaches them to any parser
+that calls it. <code>register</code> inherits metadata and config-file args it does not use. Fix: break into
+focused helper functions, each creating exactly one group.</p>
+<h3 id="23-register-over-loaded">2.3 <code>register</code> over-loaded<a class="headerlink" href="#23-register-over-loaded" title="Permanent link">&para;</a></h3>
+<p>Gets ~15 args it does not consume. Fix: slim to only what it actually reads (<code>-s</code>, <code>-t</code>, <code>-o</code>,
+<code>-cd</code>, <code>-n</code>, <code>-m</code>). Mark as legacy in top-level help once <code>subject remove/rename</code> exists.</p>
+<h3 id="24-subject-and-setup-have-no-groups-missing-help-text">2.4 <code>subject</code> and <code>setup</code> have no groups, missing help text<a class="headerlink" href="#24-subject-and-setup-have-no-groups-missing-help-text" title="Permanent link">&para;</a></h3>
+<p>All options under generic <code>options:</code>. <code>--force</code>, <code>--project</code>, <code>--experiment</code>, <code>--comment</code> have no
+descriptions. Fix: add named groups and help strings.</p>
+<h3 id="25-dead-options-removed">2.5 Dead options removed<a class="headerlink" href="#25-dead-options-removed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>-cs / --config-file-subjects</code>: legacy INI, never read. Remove.</li>
+<li><code>--experiment</code>: project/experiment dimension is out of scope for acquisition CLI. Remove.</li>
+<li>Calibration file args: integrated into setup YAML. Remove all three.</li>
+</ul>
+<h3 id="26-development-options-typo">2.6 <code>"Development options."</code> typo<a class="headerlink" href="#26-development-options-typo" title="Permanent link">&para;</a></h3>
+<p>Trailing period. Fix: <code>"Development"</code>.</p>
+<h3 id="27-top-level-description">2.7 Top-level description<a class="headerlink" href="#27-top-level-description" title="Permanent link">&para;</a></h3>
+<p>Mentions "RPi Camera Colony and stimulation with PulsePal": implementation details, not purpose.
+Fix: see §4.</p>
+<hr />
+<h2 id="3-arg-rename-table">3. Arg rename table<a class="headerlink" href="#3-arg-rename-table" title="Permanent link">&para;</a></h2>
+<p>Pattern: <code>--{maincategory}-{specificparam}</code>. Core session args unchanged.</p>
+<table>
+<thead>
+<tr>
+<th>Current short</th>
+<th>Current long</th>
+<th>Proposed long</th>
+<th>Short kept</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-b</code></td>
+<td><code>--serial-port-bpod</code></td>
+<td><code>--port-bpod</code></td>
+<td><code>-b</code></td>
+<td>drop "serial" prefix</td>
+</tr>
+<tr>
+<td><code>-p</code></td>
+<td><code>--serial-port-pulsepal</code></td>
+<td><code>--port-pulsepal</code></td>
+<td><code>-p</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>-stage</code></td>
+<td><code>--serial-port-stage</code></td>
+<td><code>--port-stage</code></td>
+<td>:</td>
+<td>fix single-dash prefix</td>
+</tr>
+<tr>
+<td><code>-scale</code></td>
+<td><code>--serial-port-scale</code></td>
+<td><code>--port-scale</code></td>
+<td>:</td>
+<td>move to calibration-hardware group; not in standard <code>run</code> help</td>
+</tr>
+<tr>
+<td><code>-cwater</code></td>
+<td><code>--calibration-file-water</code></td>
+<td><em>remove</em></td>
+<td>:</td>
+<td>in setup YAML</td>
+</tr>
+<tr>
+<td><code>-csound</code></td>
+<td><code>--calibration-file-sound</code></td>
+<td><em>remove</em></td>
+<td>:</td>
+<td>in setup YAML</td>
+</tr>
+<tr>
+<td><code>-cstage</code></td>
+<td><code>--calibration-file-stage</code></td>
+<td><em>remove</em></td>
+<td>:</td>
+<td>in setup YAML</td>
+</tr>
+<tr>
+<td><code>-cd</code></td>
+<td><code>--config-dir</code></td>
+<td><code>--config-dir</code></td>
+<td><code>-cd</code></td>
+<td>already correct</td>
+</tr>
+<tr>
+<td><code>-ct</code></td>
+<td><code>--config-file-task</code></td>
+<td><code>--config-task</code></td>
+<td>:</td>
+<td>drop "file"</td>
+</tr>
+<tr>
+<td><code>-cc</code></td>
+<td><code>--config-file-camera</code></td>
+<td><code>--config-camera</code></td>
+<td>:</td>
+<td>drop "file"</td>
+</tr>
+<tr>
+<td><code>-cs</code></td>
+<td><code>--config-file-subjects</code></td>
+<td><em>remove</em></td>
+<td>:</td>
+<td>dead legacy option</td>
+</tr>
+<tr>
+<td><code>--researcher</code></td>
+<td></td>
+<td><code>--experimenter</code></td>
+<td>:</td>
+<td>formalised; rename to standard term</td>
+</tr>
+<tr>
+<td><code>--experiment</code></td>
+<td></td>
+<td><em>remove</em></td>
+<td>:</td>
+<td>out of scope</td>
+</tr>
+<tr>
+<td><code>-meta</code></td>
+<td><code>--metadata</code></td>
+<td><code>--meta</code></td>
+<td><code>-m</code></td>
+<td>drop redundant suffix; short <code>-m</code></td>
+</tr>
+<tr>
+<td><code>-child-to</code></td>
+<td><code>--is-child-session-to</code></td>
+<td><code>--session-child-of</code></td>
+<td>:</td>
+<td>reads as a statement</td>
+</tr>
+<tr>
+<td><code>-lf</code></td>
+<td><code>--log-file</code></td>
+<td><code>--log-file</code></td>
+<td><code>-lf</code></td>
+<td>unchanged; now an override over rotating default</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-description-string-and-preamble">4. Description string and preamble<a class="headerlink" href="#4-description-string-and-preamble" title="Permanent link">&para;</a></h2>
+<h3 id="description-shown-in-every-h"><code>description=</code> (shown in every <code>-h</code>)<a class="headerlink" href="#description-shown-in-every-h" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Murine Shift Work: behavioural task acquisition with hardware support.
+</code></pre></div>
+<h3 id="epilog-on-main-parser-shown-only-on-msw-h"><code>epilog=</code> on main parser (shown only on <code>msw -h</code>)<a class="headerlink" href="#epilog-on-main-parser-shown-only-on-msw-h" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Source: https://github.com/larsrollik/murineshiftwork
+</code></pre></div>
+<h3 id="-version-output"><code>--version</code> output<a class="headerlink" href="#-version-output" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>msw 1.1.0  |  © Lars B. Rollik  |  PolyForm Internal Use 1.0.0
+</code></pre></div>
+<h3 id="run-invocation-banner-printed-at-the-start-of-every-msw-run">Run invocation banner (printed at the start of every <code>msw run</code>)<a class="headerlink" href="#run-invocation-banner-printed-at-the-start-of-every-msw-run" title="Permanent link">&para;</a></h3>
+<p>Printed once to stdout before any task output. Not in argparse at all: called inside <code>run_cli</code>
+or <code>run_task</code> when <code>command == "run"</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_print_run_banner</span><span class="p">():</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">murineshiftwork</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;msw </span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="s2">  |  © Lars B. Rollik  |  PolyForm Internal Use 1.0.0&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>This ensures every acquisition log and terminal session captures the exact software version and
+license notice. No other subcommands print this (init/setup/subject are admin ops, not
+acquisition).</p>
+<hr />
+<h2 id="5-logging-rotating-file-handler">5. Logging: rotating file handler<a class="headerlink" href="#5-logging-rotating-file-handler" title="Permanent link">&para;</a></h2>
+<h3 id="current-behaviour">Current behaviour<a class="headerlink" href="#current-behaviour" title="Permanent link">&para;</a></h3>
+<p><code>get_default_log_file_path()</code> writes a timestamped file to <code>/tmp/</code>. Each invocation creates a new
+file. <code>/tmp/</code> is cleared on reboot. <code>setup_logging</code> uses a plain <code>FileHandler</code>.</p>
+<h3 id="target-behaviour">Target behaviour<a class="headerlink" href="#target-behaviour" title="Permanent link">&para;</a></h3>
+<p><strong>Home log directory:</strong> <code>~/.murineshiftwork/logs/</code>. One file per <code>msw</code> invocation (timestamp in
+name). <code>RotatingFileHandler</code> caps total disk use and auto-purges oldest files. Same pattern as the
+RCE agent (<code>rce--{prefix}--{timestamp}.log</code>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">LOG_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;~/.murineshiftwork/logs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">LOG_MAX_BYTES</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span>   <span class="c1"># 10 MB per file</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">LOG_BACKUP_COUNT</span> <span class="o">=</span> <span class="mi">100</span>             <span class="c1"># keep last 100 invocation files</span>
+</code></pre></div>
+<p>Filename: <code>msw--{timestamp}.log</code>.</p>
+<p><strong>Session log (for <code>run</code> only):</strong> Also write the log to the session folder alongside the data
+files as <code>{session_basename}.msw.log</code>. Added as a second <code>FileHandler</code> once session paths are
+known (i.e. inside <code>TaskProcess.__init__</code> after <code>persist_settings()</code>). This is data provenance,
+not noise: it captures the exact hardware connection sequence, trial-by-trial state, and any
+warnings for that specific acquisition.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Inside TaskProcess.__init__, after persist_settings():</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">session_log</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session_paths</span><span class="p">[</span><span class="s2">&quot;session_file_path&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;.msw.log&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">session_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">session_log</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">session_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">session_handler</span><span class="p">)</span>
+</code></pre></div>
+<p><code>get_default_log_file_path</code> is removed from <code>defaults.py</code> (no longer needed to pre-compute the
+path before logging is set up). The <code>--log-file</code> arg default changes from a computed path to <code>""</code>
+(empty string = use rotating default). If <code>--log-file PATH</code> is given, the home log writes to that
+path instead; the session log is unaffected either way.</p>
+<h3 id="open-question">Open question<a class="headerlink" href="#open-question" title="Permanent link">&para;</a></h3>
+<p>Format for session log: same plain-text <code>%(message)s</code> formatter as current, or JSON lines (like
+RCE) so the session log is machine-readable for post-hoc analysis? RCE uses JSON because logs are
+parsed programmatically. MSW session logs are currently only read by humans for debugging. Plain
+text is sufficient for now; can switch to JSON later.</p>
+<hr />
+<h2 id="6-target-help-layout">6. Target help layout<a class="headerlink" href="#6-target-help-layout" title="Permanent link">&para;</a></h2>
+<h3 id="msw-run"><code>msw run</code><a class="headerlink" href="#msw-run" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Session:
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  -s / --subject
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  -t / --task
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  --setup
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  -o / --out-path
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  --experimenter
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>Task settings:
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>  --task-mode
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>  -ts / --task-settings
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>Hardware:
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>  -b / --port-bpod
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>  -p / --port-pulsepal
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>  --port-stage
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>Advanced:
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>  -cd / --config-dir
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>  --config-task
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>  --config-camera
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>  --session-child-of
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>Metadata (free-form):
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>  -m / --meta  KEY=VALUE [KEY=VALUE ...]
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>Development:
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>  -l / --log-level
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>  -lf / --log-file
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>  -d / --debug
+</code></pre></div>
+<p>Note: <code>--port-scale</code> IS in <code>run</code> help (Hardware group, annotated "calibration tasks only").
+All tasks go through <code>msw run</code>; hiding it would make it undiscoverable when running
+<code>_calibration_liquid_dynamic</code>.</p>
+<h3 id="msw-subject"><code>msw subject</code><a class="headerlink" href="#msw-subject" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>positional: {add, list, remove, rename}
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>Subject:
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  -s / --subject
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>Subject details:   (add / rename)
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  --project
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  --comment
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>Options:
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>  -cd / --config-dir
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>  -f / --filter      (list only)
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>  --force
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>Development:
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>  -l / --log-level
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>  -d / --debug
+</code></pre></div>
+<h3 id="msw-setup"><code>msw setup</code><a class="headerlink" href="#msw-setup" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>positional: {create, list}
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>positional: setup_name (optional, required for create)
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>Options:
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  -cd / --config-dir
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>  -f / --filter
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>  --force
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>Development:
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>  -l / --log-level
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>  -d / --debug
+</code></pre></div>
+<h3 id="msw-register-legacy"><code>msw register</code> (legacy)<a class="headerlink" href="#msw-register-legacy" title="Permanent link">&para;</a></h3>
+<p>Slimmed to: <code>-s</code>, <code>-t</code>, <code>-o</code> (relabelled "Data root"), <code>-cd</code>, <code>-n</code>, <code>-m</code>.
+Appears last in top-level subcommand list. Marked <code>(legacy: use 'subject' instead)</code> in help
+string once <code>subject remove/rename</code> exist.</p>
+<h3 id="msw-calibration-msw-action-msw-init"><code>msw calibration</code>, <code>msw action</code>, <code>msw init</code><a class="headerlink" href="#msw-calibration-msw-action-msw-init" title="Permanent link">&para;</a></h3>
+<p>Minor: consistent group names, add <code>Development</code> group to <code>calibration</code>.</p>
+<hr />
+<h2 id="7-code-structure-changes-in-parserpy">7. Code structure changes in <code>parser.py</code><a class="headerlink" href="#7-code-structure-changes-in-parserpy" title="Permanent link">&para;</a></h2>
+<p>Replace three monolithic helpers with eight focused ones. Each creates exactly one named group.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">_add_session_args</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>           <span class="err">→</span> <span class="s2">&quot;Session&quot;</span><span class="p">:</span>       <span class="o">-</span><span class="n">s</span> <span class="o">-</span><span class="n">t</span> <span class="o">--</span><span class="n">setup</span> <span class="o">-</span><span class="n">o</span> <span class="o">--</span><span class="n">experimenter</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">_add_task_override_args</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>     <span class="err">→</span> <span class="s2">&quot;Task settings&quot;</span><span class="p">:</span> <span class="o">--</span><span class="n">task</span><span class="o">-</span><span class="n">mode</span> <span class="o">-</span><span class="n">ts</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">_add_hardware_args</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>          <span class="err">→</span> <span class="s2">&quot;Hardware&quot;</span><span class="p">:</span>      <span class="o">-</span><span class="n">b</span> <span class="o">-</span><span class="n">p</span> <span class="o">--</span><span class="n">port</span><span class="o">-</span><span class="n">stage</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">_add_scale_arg</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>              <span class="err">→</span> <span class="s2">&quot;Calibration hardware&quot;</span><span class="p">:</span> <span class="o">--</span><span class="n">port</span><span class="o">-</span><span class="n">scale</span>  <span class="p">(</span><span class="ow">not</span> <span class="n">called</span> <span class="kn">from</span><span class="w"> </span><span class="nn">run</span><span class="p">)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">_add_advanced_args</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>          <span class="err">→</span> <span class="s2">&quot;Advanced&quot;</span><span class="p">:</span>      <span class="o">-</span><span class="n">cd</span> <span class="o">--</span><span class="n">config</span><span class="o">-</span><span class="n">task</span> <span class="o">--</span><span class="n">config</span><span class="o">-</span><span class="n">camera</span> <span class="o">--</span><span class="n">session</span><span class="o">-</span><span class="n">child</span><span class="o">-</span><span class="n">of</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">_add_meta_args</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>              <span class="err">→</span> <span class="s2">&quot;Metadata&quot;</span><span class="p">:</span>      <span class="o">-</span><span class="n">m</span><span class="o">/--</span><span class="n">meta</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">_add_dev_args</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>               <span class="err">→</span> <span class="s2">&quot;Development&quot;</span><span class="p">:</span>   <span class="o">-</span><span class="n">l</span> <span class="o">-</span><span class="n">lf</span> <span class="o">-</span><span class="n">d</span>
+</code></pre></div>
+<p>Old <code>add_args_for_general_use</code>, <code>add_args_for_hardware_and_calibration</code>, and
+<code>add_args_for_task_settings_override</code> are deleted (no external callers).</p>
+<hr />
+<h2 id="8-impact-on-evaluatepy">8. Impact on <code>evaluate.py</code><a class="headerlink" href="#8-impact-on-evaluatepy" title="Permanent link">&para;</a></h2>
+<p>Key names in <code>args_dict</code> that change:</p>
+<table>
+<thead>
+<tr>
+<th>Old key</th>
+<th>New key</th>
+<th>Action in evaluate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>serial_port_bpod</code></td>
+<td><code>port_bpod</code></td>
+<td>rename read sites</td>
+</tr>
+<tr>
+<td><code>serial_port_pulsepal</code></td>
+<td><code>port_pulsepal</code></td>
+<td>rename read sites</td>
+</tr>
+<tr>
+<td><code>serial_port_stage</code></td>
+<td><code>port_stage</code></td>
+<td>rename read sites</td>
+</tr>
+<tr>
+<td><code>serial_port_scale</code></td>
+<td><code>port_scale</code></td>
+<td>rename read sites</td>
+</tr>
+<tr>
+<td><code>researcher</code></td>
+<td><code>experimenter</code></td>
+<td>rename read sites</td>
+</tr>
+<tr>
+<td><code>config_file_task</code></td>
+<td><code>config_task</code></td>
+<td>rename read sites</td>
+</tr>
+<tr>
+<td><code>config_file_camera</code></td>
+<td><code>config_camera</code></td>
+<td>rename read sites</td>
+</tr>
+<tr>
+<td><code>config_file_subjects</code></td>
+<td><em>(removed)</em></td>
+<td>delete read site, hardcode <code>""</code></td>
+</tr>
+<tr>
+<td><code>experiment</code></td>
+<td><em>(removed)</em></td>
+<td>delete from <code>_evaluate_metadata</code></td>
+</tr>
+<tr>
+<td><code>calibration_file_water</code></td>
+<td><em>(removed)</em></td>
+<td>delete from <code>_evaluate_and_load_configs</code></td>
+</tr>
+<tr>
+<td><code>calibration_file_sound</code></td>
+<td><em>(removed)</em></td>
+<td>delete from <code>_evaluate_and_load_configs</code></td>
+</tr>
+<tr>
+<td><code>calibration_file_stage</code></td>
+<td><em>(removed)</em></td>
+<td>delete; stage calib comes from setup YAML</td>
+</tr>
+<tr>
+<td><code>is_child_session_to</code></td>
+<td><code>session_child_of</code></td>
+<td>rename read sites</td>
+</tr>
+</tbody>
+</table>
+<p>Also check <code>task_process.py</code>, <code>preflight.py</code>, <code>execute.py</code>, and task <code>task_objects.py</code> files for
+any direct reads of the old key names.</p>
+<hr />
+<h2 id="9-setupcfg-changes">9. <code>setup.cfg</code> changes<a class="headerlink" href="#9-setupcfg-changes" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">[options.entry_points]</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="na">console_scripts</span><span class="w"> </span><span class="o">=</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="na">murineshiftwork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">murineshiftwork.cli:run_cli</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="na">msw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">murineshiftwork.cli:run_cli</span>
+</code></pre></div>
+<hr />
+<h2 id="10-implementation-order">10. Implementation order<a class="headerlink" href="#10-implementation-order" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Files</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>setup.cfg</code></td>
+<td>Add <code>msw</code> entry point</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>parser.py</code></td>
+<td>Change <code>prog="msw"</code>, update description/epilog</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>logic/log.py</code></td>
+<td>Rotating file handler; update <code>setup_logging</code>; remove <code>get_default_log_file_path</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>defaults.py</code></td>
+<td>Remove <code>get_default_log_file_path</code> import; move <code>CALIBRATION_FILE_PATH</code> in (if still needed); add <code>--log-file</code> default <code>""</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>parser.py</code></td>
+<td>Replace three monolithic helpers with focused <code>_add_*</code> functions; fix group names; reorder subcommands</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>parser.py</code></td>
+<td>Add <code>--experimenter</code>; remove dead args; rename port/config args</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>evaluate.py</code></td>
+<td>Update all read sites for renamed keys; remove deleted fields</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>execute.py</code>, <code>preflight.py</code>, <code>task_process.py</code>, tasks</td>
+<td>Update remaining key reads</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>cli/__init__.py</code></td>
+<td>Add <code>_print_run_banner()</code> call for <code>command == "run"</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>subject</code> add <code>remove</code>/<code>rename</code>; mark <code>register</code> legacy</td>
+<td><code>parser.py</code>, <code>execute.py</code></td>
+</tr>
+</tbody>
+</table>
+<p>Steps 1-9 are one PR. Step 10 is a follow-on.</p>
+<hr />
+<h2 id="11-tests">11. Tests<a class="headerlink" href="#11-tests" title="Permanent link">&para;</a></h2>
+<p>Existing: <code>tests/test_preflight_and_pipeline.py</code>, <code>tests/test_cli_evaluate.py</code>: run after every
+step; key renames will break them and must be updated in the same commit.</p>
+<p>New <code>tests/test_cli_help.py</code>:
+- <code>test_run_help_contains_session_group</code>
+- <code>test_run_help_task_settings_before_hardware</code>: check group ordering
+- <code>test_run_help_no_calibration_file_args</code>: <code>-cwater/-csound/-cstage</code> absent
+- <code>test_run_help_no_config_file_subjects</code>: <code>-cs</code> absent
+- <code>test_run_help_port_scale_present_with_note</code>: <code>--port-scale</code> present; help text says "calibration"
+- <code>test_subject_help_contains_details_group</code>
+- <code>test_register_appears_last_in_top_level_help</code>
+- <code>test_version_string_contains_version_number</code>
+- <code>test_run_banner_contains_version</code>: call <code>_print_run_banner()</code>, capture stdout</p>
+<hr />
+<h2 id="12-epilog-spacing">12. Epilog spacing<a class="headerlink" href="#12-epilog-spacing" title="Permanent link">&para;</a></h2>
+<p>All subparser epilog strings should end with a trailing blank line so there is a visible gap
+between the last epilog line and the shell prompt:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">epilog</span> <span class="o">=</span> <span class="n">dedent</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;Examples:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="s2">    ...</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="s2">Available tasks:</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="si">{</span><span class="n">available_tasks</span><span class="si">}</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>   <span class="c1"># ← trailing newline creates the gap</span>
+</code></pre></div>
+<hr />
+<h2 id="13-decisions-resolved-round-2">13. Decisions resolved (round 2)<a class="headerlink" href="#13-decisions-resolved-round-2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Log level: session folder</td>
+<td>INFO: sufficient for per-session debugging</td>
+</tr>
+<tr>
+<td>Log level: central rotating</td>
+<td>DEBUG: full detail, keep last 100 invocations</td>
+</tr>
+<tr>
+<td>Log file naming</td>
+<td>Central: <code>msw-{datetime}.log</code>. Session: <code>msw-{datetime}-{session_basename}.log</code></td>
+</tr>
+<tr>
+<td>Log file format</td>
+<td><strong>Plain text</strong> for now. JSON lines deferred until log parsing is needed programmatically.</td>
+</tr>
+<tr>
+<td><code>--experimenter</code> CLI position</td>
+<td>Below <code>--meta</code> in help. Named <code>--meta-experimenter</code>. Internally joins the <code>--meta</code> KEY=VALUE basket in the evaluate pipeline: not a separate field.</td>
+</tr>
+<tr>
+<td><code>--experimenter</code> session storage</td>
+<td>Lands in the session YAML <code>metadata:</code> dict alongside any other <code>--meta</code> pairs. Not in <code>process:</code>.</td>
+</tr>
+<tr>
+<td><code>--meta</code> storage</td>
+<td>Session YAML top-level <code>metadata:</code> dict. All <code>--meta KEY=VALUE</code> pairs merged in, including <code>experimenter</code> if given.</td>
+</tr>
+<tr>
+<td><code>subject</code> subcommand verbs</td>
+<td><code>add</code>, <code>rename</code>, <code>remove</code>, <code>list</code> (rename before remove; fix plan item 5).</td>
+</tr>
+<tr>
+<td><code>register</code> subcommand</td>
+<td>Keep slimmed for backward compat; mark legacy in help. Retire fully only after <code>subject</code> has all four verbs.</td>
+</tr>
+<tr>
+<td>Log handler cleanup</td>
+<td>Session <code>FileHandler</code> stored as <code>self._session_log_handler</code>; removed and closed in <code>exit_safely()</code> to avoid leaking into controller multi-session scenarios.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="14-open-questions-resolve-before-implementation">14. Open questions (resolve before implementation)<a class="headerlink" href="#14-open-questions-resolve-before-implementation" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong>Python scripted import wiring</strong>: when MSW is used via <code>from murineshiftwork.logic.task_process import TaskProcess</code> (no CLI), <code>--meta-experimenter</code> and <code>--meta KEY=VALUE</code> are not parsed. The equivalent is passing <code>metadata={"experimenter": "...", "key": "val"}</code> as a kwarg to <code>TaskProcess</code>. Confirm this is the right API surface, or should <code>TaskProcess</code> accept <code>experimenter=</code> directly?</p>
+</li>
+<li>
+<p><strong>100 vs 50 log files</strong>: central rotating log should keep last 100 invocations (updated from 50). Confirm <code>LOG_BACKUP_COUNT = 100</code>.</p>
+</li>
+</ol>
+<hr />
+<h2 id="14-completed-2026-05-17">14. Completed (2026-05-17)<a class="headerlink" href="#14-completed-2026-05-17" title="Permanent link">&para;</a></h2>
+<p>All CLI refactor steps implemented:</p>
+<ul>
+<li><code>setup.cfg</code>: added <code>msw</code> entry point alongside <code>murineshiftwork</code></li>
+<li><code>parser.py</code>: full rewrite: <code>prog="msw"</code>, new description, 6 focused <code>_add_*</code> helpers,
+  renamed flags (<code>--port-bpod</code>, <code>--port-pulsepal</code>, <code>--port-scale</code>, <code>--port-stage</code>), all <code>dest=</code>
+  unchanged so downstream code needs no key renames; removed dead args
+  (<code>-cs</code>, <code>--researcher</code>, <code>--experiment</code>, <code>-cwater</code>, <code>-csound</code>, <code>-cstage</code>);
+  added <code>--meta-experimenter</code>; subcommand order: init/setup/subject/run/calibration/action/register;
+  <code>register</code> marked legacy; <code>subject</code> has all four verbs (add/list/rename/remove)</li>
+<li><code>logic/log.py</code>: per-run timestamped files in <code>~/.murineshiftwork/logs/</code>, pruned to 100 files;
+  added <code>add_session_log_handler()</code> (INFO level)</li>
+<li><code>logic/task_process.py</code>: importlib.metadata for version; session log handler wired in</li>
+<li><code>logic/misc.py</code>: namespace-package fallback uses <code>__path__</code> not <code>__file__</code></li>
+<li><code>cli/__init__.py</code>: <code>_print_run_banner()</code> for <code>run</code>; action/register added to bypass list</li>
+<li><code>cli/evaluate.py</code>: <code>_evaluate_metadata</code> now uses experimenter key (not researcher/experiment);
+  <code>_evaluate_and_load_configs</code> uses <code>.get()</code> with defaults for all removed CLI keys</li>
+<li><code>cli/execute.py</code>: <code>run_subject</code> handles rename and remove</li>
+<li><code>cli/defaults.py</code>: calibration file path defaults added</li>
+<li><code>src/murineshiftwork/__init__.py</code>: <strong>deleted</strong>: murineshiftwork is now a proper namespace package</li>
+<li><code>tests/test_namespace_readiness.py</code>: both tests pass (no xfail); uses <code>__path__</code> not <code>__file__</code></li>
+<li><code>.github/workflows/install_and_test.yaml</code>: namespace checks updated; both must pass</li>
+</ul>
+<p>Test result: 195 passed, 0 xfailed, 3 warnings.</p>
+<hr />
+<h2 id="15-next-action-items-msw-general-work-plan">15. Next action items (MSW general work plan)<a class="headerlink" href="#15-next-action-items-msw-general-work-plan" title="Permanent link">&para;</a></h2>
+<p><em>In rough priority order.</em></p>
+<p><strong>Immediate:</strong>
+1. Hook system: implement <code>logic/hooks.py</code>, wire into <code>TaskProcess</code>, add
+   <code>sequence/hooks.py::FetchSubjectLevel</code>. Plan in <code>FLIR_AND_HOOKS_PLAN.md</code>.
+2. FLIR <code>BonsaiRunner</code>: subprocess launcher for Bonsai workflows (both flycap+spinnaker,
+   up to 3 cameras with input index). Plan in <code>FLIR_AND_HOOKS_PLAN.md</code>.</p>
+<p><strong>Short term:</strong>
+3. <code>logic/misc.py</code> cleanup: move <code>test_serial_port_is_accessible</code> to hardware/preflight module;
+   move <code>list_available_tasks</code>/<code>find_task_by_name</code> into CLI; move <code>draw_jittered_trial_time</code> into
+   task-supplementary module.
+4. Simulation mode: <code>SimBpod</code>, <code>SimPulsePal</code>, <code>SimStageController</code>; <code>--simulate</code> flag.
+5. Hardware action API Phase 2: <code>ControllerSession</code> owns hardware for full session.</p>
+<p><strong>Suite migration (longer horizon):</strong>
+6. Suite namespace split: <code>msw-logic</code>, <code>msw-tasks-*</code>, <code>msw-agent</code> sub-packages per
+   suite design docs at <code>/data/code/murineshiftwork_suite/design/</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "toc.integrate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
