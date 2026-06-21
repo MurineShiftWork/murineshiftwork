@@ -68,7 +68,7 @@ pointed to via `msw init`.
 | [Tasks](tasks/sequence.md) | Per-task behavioural paradigm, implementation, and parameter reference |
 | [Tutorials](tutorials/calibration.md) | Calibration, adding setups and subjects |
 | [CLI reference](cli/run.md) | Per-subcommand reference pages (`run`, `action`, `calibration`, `post`, `setup`, `subject`, `tasks`, `agent`, `init`) |
-| [Hardware setup](setup/SERIAL.md) | Serial ports, wiring, cameras, DHCP |
+| [Hardware setup](setup/setup_config.md) | Devices, serial ports, cameras |
 
 ## See also
 
