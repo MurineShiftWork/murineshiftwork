@@ -40,8 +40,8 @@ dev = [
     "murineshiftwork[pulsepal]",
 ]
 docs = [
-    "mkdocs-material",
-    "mkdocstrings[python]",
+    "mkdocs-material>=9.6,<10",  # pin below v10: the team warns it is a breaking rewrite
+    "mkdocstrings[python]>=1,<2",
 ]
 tasks = [
     "msw-tasks-core>=0.2.0",
