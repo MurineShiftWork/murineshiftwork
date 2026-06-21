@@ -29,6 +29,13 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Add private package sources (not on PyPI)
+        shell: python
+        run: |
+          with open('pyproject.toml', 'a') as f:
+              f.write('\n[tool.uv.sources]\n')
+              f.write('msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }\n')
+
       - name: Install dependencies
         run: uv sync --extra docs
 
