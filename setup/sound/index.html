@@ -12,13 +12,13 @@
         <meta name="author" content="Lars B. Rollik">
       
       
-        <link rel="canonical" href="https://MurineShiftWork.github.io/murineshiftwork/tutorials/12_post_processing/">
+        <link rel="canonical" href="https://MurineShiftWork.github.io/murineshiftwork/setup/sound/">
       
       
-        <link rel="prev" href="../11_hooks/">
+        <link rel="prev" href="../cameras/">
       
       
-        <link rel="next" href="../13_hardware_abstraction/">
+        <link rel="next" href="../../cli/init/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Post-Processing (optional) - Murine Shift Work</title>
+        <title>Sound Output - Murine Shift Work</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#tutorial-12-post-processing-optional" class="md-skip">
+        <a href="#sound-output" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Post-Processing (optional)
+              Sound Output
             
           </span>
         </div>
@@ -407,8 +407,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -419,13 +421,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
@@ -446,7 +446,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -464,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../setup/setup_config/" class="md-nav__link">
+      <a href="../setup_config/" class="md-nav__link">
         
   
   
@@ -492,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../setup/WIRING/" class="md-nav__link">
+      <a href="../WIRING/" class="md-nav__link">
         
   
   
@@ -520,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../setup/cameras/" class="md-nav__link">
+      <a href="../cameras/" class="md-nav__link">
         
   
   
@@ -545,10 +545,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../setup/sound/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sound Output
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -564,6 +591,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#windows-11-xonar-required-driver-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows 11 + XONAR: required driver settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-app-behaves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the app behaves
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verifying-a-rig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifying a rig
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1122,8 +1202,6 @@
       
   
   
-    
-  
   
   
     
@@ -1136,11 +1214,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
@@ -1161,7 +1241,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1179,7 +1259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../00_overview/" class="md-nav__link">
+      <a href="../../tutorials/00_overview/" class="md-nav__link">
         
   
   
@@ -1207,7 +1287,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../01_install/" class="md-nav__link">
+      <a href="../../tutorials/01_install/" class="md-nav__link">
         
   
   
@@ -1235,7 +1315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../02_first_session/" class="md-nav__link">
+      <a href="../../tutorials/02_first_session/" class="md-nav__link">
         
   
   
@@ -1263,7 +1343,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../03_setup_config/" class="md-nav__link">
+      <a href="../../tutorials/03_setup_config/" class="md-nav__link">
         
   
   
@@ -1291,7 +1371,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../04_task_settings/" class="md-nav__link">
+      <a href="../../tutorials/04_task_settings/" class="md-nav__link">
         
   
   
@@ -1319,7 +1399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../05_config_overlays/" class="md-nav__link">
+      <a href="../../tutorials/05_config_overlays/" class="md-nav__link">
         
   
   
@@ -1347,7 +1427,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../06_subject_management/" class="md-nav__link">
+      <a href="../../tutorials/06_subject_management/" class="md-nav__link">
         
   
   
@@ -1375,7 +1455,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../07_session_files/" class="md-nav__link">
+      <a href="../../tutorials/07_session_files/" class="md-nav__link">
         
   
   
@@ -1403,7 +1483,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../08_plot_spec/" class="md-nav__link">
+      <a href="../../tutorials/08_plot_spec/" class="md-nav__link">
         
   
   
@@ -1431,7 +1511,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../09_live_plot/" class="md-nav__link">
+      <a href="../../tutorials/09_live_plot/" class="md-nav__link">
         
   
   
@@ -1459,7 +1539,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../10_monitor_ui/" class="md-nav__link">
+      <a href="../../tutorials/10_monitor_ui/" class="md-nav__link">
         
   
   
@@ -1487,7 +1567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../11_hooks/" class="md-nav__link">
+      <a href="../../tutorials/11_hooks/" class="md-nav__link">
         
   
   
@@ -1512,37 +1592,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Post-Processing (optional)
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../tutorials/12_post_processing/" class="md-nav__link">
         
   
   
@@ -1558,114 +1611,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-youll-learn" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What you'll learn
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#1-what-post-processing-is-for" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. What post-processing is for
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-clean-noise-events-from-event-logs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Clean noise events from event logs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-run-the-full-pipeline" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Run the full pipeline
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-when-to-run-it" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. When to run it
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#you-now-know" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        You now know
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1678,7 +1623,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../13_hardware_abstraction/" class="md-nav__link">
+      <a href="../../tutorials/13_hardware_abstraction/" class="md-nav__link">
         
   
   
@@ -1706,7 +1651,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../14_calibration/" class="md-nav__link">
+      <a href="../../tutorials/14_calibration/" class="md-nav__link">
         
   
   
@@ -1734,7 +1679,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../calibration/" class="md-nav__link">
+      <a href="../../tutorials/calibration/" class="md-nav__link">
         
   
   
@@ -1762,7 +1707,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adding_setup/" class="md-nav__link">
+      <a href="../../tutorials/adding_setup/" class="md-nav__link">
         
   
   
@@ -1790,7 +1735,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adding_subject/" class="md-nav__link">
+      <a href="../../tutorials/adding_subject/" class="md-nav__link">
         
   
   
@@ -2038,87 +1983,78 @@
   
 
 
-<h1 id="tutorial-12-post-processing-optional">Tutorial 12: Post-processing <em>(optional)</em><a class="headerlink" href="#tutorial-12-post-processing-optional" title="Permanent link">&para;</a></h1>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<p><a href="../11_hooks/">Tutorial 11: Hooks</a>, and at least one session on disk.</p>
-<h2 id="what-youll-learn">What you'll learn<a class="headerlink" href="#what-youll-learn" title="Permanent link">&para;</a></h2>
-<ul>
-<li>What the post-acquisition pipeline does and when to run it.</li>
-<li>The two <code>msw post</code> subcommands and their required arguments.</li>
-<li>How to preview a run safely before it touches anything.</li>
-</ul>
-<h2 id="1-what-post-processing-is-for">1. What post-processing is for<a class="headerlink" href="#1-what-post-processing-is-for" title="Permanent link">&para;</a></h2>
-<p>Hooks run inside a session. Post-processing runs after sessions, as a separate
-batch step, to move and tidy data once acquisition is done. It is the place for
-work that should not slow down or risk a live session: syncing files off the rig,
-converting video, and cleaning known noise out of event logs. The commands live
-under <code>msw post</code>.</p>
-<h2 id="2-clean-noise-events-from-event-logs">2. Clean noise events from event logs<a class="headerlink" href="#2-clean-noise-events-from-event-logs" title="Permanent link">&para;</a></h2>
-<p><code>msw post clean</code> removes rows for a known noise event from <code>.msw.csv</code> event logs
-under a directory tree. Always preview first with <code>--dry-run</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>msw<span class="w"> </span>post<span class="w"> </span>clean<span class="w"> </span>--data-dir<span class="w"> </span>~/data/mouse001<span class="w"> </span>--event<span class="w"> </span>Port4<span class="w"> </span>--dry-run
-</code></pre></div>
-<p>This reports which files would change without modifying anything. Drop
-<code>--dry-run</code> to apply:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>msw<span class="w"> </span>post<span class="w"> </span>clean<span class="w"> </span>--data-dir<span class="w"> </span>~/data/mouse001<span class="w"> </span>--event<span class="w"> </span>Port4
-</code></pre></div>
-<p><code>--data-dir</code> is required and is searched recursively. Each modified file is
-backed up alongside the original before being changed; files with no matching
-rows are left untouched.</p>
-<h2 id="3-run-the-full-pipeline">3. Run the full pipeline<a class="headerlink" href="#3-run-the-full-pipeline" title="Permanent link">&para;</a></h2>
-<p><code>msw post run</code> orchestrates the end-to-end pipeline: sync from rigs and cameras,
-convert video, optionally clean event logs, and upload to central storage.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>msw<span class="w"> </span>post<span class="w"> </span>run<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>--central-data<span class="w"> </span>/mnt/central/data<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--provision-scripts<span class="w"> </span>/opt/provision_rpi/scripts<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>--dry-run
-</code></pre></div>
-<p><code>--central-data</code> and <code>--provision-scripts</code> are required. Run with <code>--dry-run</code>
-first; the flag is passed through to the underlying steps so you can see the full
-plan before any data moves.</p>
-<p>Individual stages can be skipped when you only need part of the pipeline:</p>
+<h1 id="sound-output">Sound Output<a class="headerlink" href="#sound-output" title="Permanent link">&para;</a></h1>
+<p>The reward/feedback sound is played through a low-latency output stream
+(<code>StereoSound</code>). Most rigs use an <strong>ASUS XONAR</strong> sound card; the default device
+name searched for is <code>XONAR SOUND CARD</code> (override with the <code>sound_device</code> key in
+the setup config to pin an exact device).</p>
+<h2 id="windows-11-xonar-required-driver-settings">Windows 11 + XONAR: required driver settings<a class="headerlink" href="#windows-11-xonar-required-driver-settings" title="Permanent link">&para;</a></h2>
+<p>On Windows 11, audible, correct-speed playback at the full rate depends on three
+XONAR driver / Windows settings. <strong>All three must be set on each rig</strong> — getting
+any one wrong produces silent or distorted output:</p>
 <table>
 <thead>
 <tr>
-<th>Flag</th>
-<th>Skips</th>
+<th>Setting</th>
+<th>Required value</th>
+<th>Symptom if wrong</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--skip-rpi</code></td>
-<td>syncing from RPi cameras</td>
+<td><strong>Channels</strong></td>
+<td><strong>7.1</strong></td>
+<td>partial / no output</td>
 </tr>
 <tr>
-<td><code>--skip-setups</code></td>
-<td>syncing from setup machines</td>
+<td><strong>Sample rate</strong></td>
+<td><strong>192000 Hz</strong> — in <em>both</em> the XONAR driver output format <em>and</em> the Windows "Default Format" for the device</td>
+<td>sound plays too slow / deflated, or is rejected</td>
 </tr>
 <tr>
-<td><code>--skip-h264</code></td>
-<td>video conversion</td>
-</tr>
-<tr>
-<td><code>--skip-msw-clean</code></td>
-<td>the event-log cleaning step</td>
-</tr>
-<tr>
-<td><code>--skip-upload</code></td>
-<td>the remote upload step</td>
+<td><strong>Reverb / environment effect</strong></td>
+<td><strong>ON, "studio" preset</strong></td>
+<td>turning reverb fully <em>off</em> silenced the card under test; "studio" is near-dry and works</td>
 </tr>
 </tbody>
 </table>
-<h2 id="4-when-to-run-it">4. When to run it<a class="headerlink" href="#4-when-to-run-it" title="Permanent link">&para;</a></h2>
-<p>Post-processing is a batch operation, typically run on a schedule (for example
-overnight) or by hand at the end of a day, not after every session. Because the
-clean and run commands both support <code>--dry-run</code>, you can always rehearse a run
-before committing to it.</p>
-<h2 id="you-now-know">You now know<a class="headerlink" href="#you-now-know" title="Permanent link">&para;</a></h2>
-<p><code>msw post</code> is the post-acquisition pipeline: <code>post clean</code> strips known noise
-events from event logs, and <code>post run</code> orchestrates sync, conversion, and upload.
-Both support <code>--dry-run</code>, so you can preview every change before it happens.</p>
-<h2 id="next">Next<a class="headerlink" href="#next" title="Permanent link">&para;</a></h2>
-<p><a href="../13_hardware_abstraction/">Tutorial 13: Hardware abstraction</a> <em>(optional)</em>. For
-every flag, see the <a href="../../cli/post/">post reference</a>.</p>
+<p>The Windows default format and the XONAR driver output format must <strong>match</strong> at
+192000 Hz. If they disagree, Windows resamples and the chirp comes out at the
+wrong speed.</p>
+<h2 id="how-the-app-behaves">How the app behaves<a class="headerlink" href="#how-the-app-behaves" title="Permanent link">&para;</a></h2>
+<p>These code-side guards mean a misconfigured card degrades gracefully instead of
+crashing the session, but they do <strong>not</strong> replace the driver settings above:</p>
+<ul>
+<li><strong>No <code>sysdefault</code> fallback.</strong> If the configured device is not found, the app
+  resolves PortAudio's real default output device (cross-platform), not the
+  invalid <code>sysdefault</code> literal that was silent on Windows.</li>
+<li><strong>WASAPI shared mode</strong> is used. WASAPI <em>exclusive</em> mode was silent on the
+  XONAR output under test, so it is <strong>not</strong> auto-enabled (opt in per rig with
+  <code>use_wasapi_exclusive: true</code> only if you have verified it).</li>
+<li><strong>Rate validation + fallback.</strong> If the device rejects the configured rate
+  (e.g. <code>192000</code> when the driver/Windows format is not at 192000, raising
+  <code>PaErrorCode -9997</code>), the app falls back to the device's default rate so
+  playback is correct-speed (audible) rather than deflated.</li>
+<li><strong>Adopts the stream's actual rate.</strong> Sound is generated at the rate the
+  output stream actually opened at, so it never plays slow/fast relative to the
+  open stream.</li>
+<li><strong>Guarded playback.</strong> A playback error is logged as a warning and never
+  crashes the task thread.</li>
+</ul>
+<h2 id="verifying-a-rig">Verifying a rig<a class="headerlink" href="#verifying-a-rig" title="Permanent link">&para;</a></h2>
+<p>On session start, look for this log line — it reports the rate the stream
+actually opened at:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>StereoSound: persistent output stream open at &lt;N&gt; Hz (latency~&lt;M&gt; ms)
+</code></pre></div>
+<ul>
+<li><code>&lt;N&gt; = 192000</code> → full rate, driver triplet correct.</li>
+<li><code>&lt;N&gt;</code> lower than expected (e.g. 48000) → the device rejected 192000 and fell
+  back; playback will be correct-speed but not full-rate. Check the driver
+  triplet above.</li>
+</ul>
+<p>To characterise the true Bpod-state → sound-onset latency, run the
+<code>_calibration_sound_latency</code> action (see
+<a href="../../tasks/calibration_and_test/">Calibration &amp; Test</a>).</p>
 
 
 
