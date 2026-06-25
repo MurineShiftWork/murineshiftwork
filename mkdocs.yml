@@ -28,6 +28,7 @@ nav:
     - Setup Config: setup/setup_config.md
     - Wiring: setup/WIRING.md
     - Cameras: setup/cameras.md
+    - Sound Output: setup/sound.md
   - CLI Reference:
     - init: cli/init.md
     - run: cli/run.md
