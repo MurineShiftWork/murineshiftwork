@@ -13,8 +13,8 @@ authors = [
 ]
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "msw-core>=0.6.0",
-    "msw-io>=1.6.0",
+    "msw-core>=0.11.5",
+    "msw-io>=1.9.0",
     "tqdm",
     "plotly>=5.0",
     "pyarrow>=24.0.0",
@@ -44,16 +44,16 @@ docs = [
     "mkdocstrings[python]>=1,<2",
 ]
 tasks = [
-    "msw-tasks-core>=0.2.0",
+    "msw-tasks-core>=0.5.3",
 ]
 agent = [
     "msw-agent>=0.1.0",
 ]
 oe = [
-    "msw-open-ephys>=3.0.0",
+    "msw-open-ephys>=3.3.1",
 ]
 pulsepal = [
-    "pypulsepal>=0.4.0",
+    "pypulsepal>=0.4.5",
 ]
 calibration = [
     "serial-scale-hx711>=2.1.0",
