@@ -16,7 +16,9 @@ theme:
     - toc.integrate
     - content.code.copy
   palette:
-    scheme: default
+    scheme: slate
+    primary: teal
+    accent: teal
 
 nav:
   - Home: index.md
