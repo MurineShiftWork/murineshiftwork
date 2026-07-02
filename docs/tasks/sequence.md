@@ -263,4 +263,3 @@ msw run -t sequence -s mouse001 --setup setup-1 -ts start_level=5 scoring_metric
 
 - Thompson & Rollik (2024). *bioRxiv* (preprint). The sequence-learning paradigm
   underlying this task.
-<!-- TODO: add the bioRxiv DOI/URL once confirmed. -->

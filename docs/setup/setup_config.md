@@ -5,7 +5,7 @@ Each physical setup has a YAML file at `msw_configs/setups/<setup_name>.yaml`.
 ## Skeleton
 
 `msw setup create <name>` generates a complete skeleton showing all fields with their
-defaults.  Edit `port_by_path` and add devices as needed.
+defaults.  Edit the serial port (`port_by_path` on Linux, or `port: COM3` on Windows — see below) and add devices as needed.
 
 ```yaml
 name: my-setup
@@ -68,6 +68,34 @@ calibrations:
 | `stage_tower` | `port_by_path`, `axes` |
 | `scale` | `port_by_path`, `scale_type` (`hx711`\|`bench`), `baudrate` |
 | `serial_generic` | `port_by_path` |
+
+### Serial ports: Linux vs Windows
+
+Every serial device (`bpod`, `pulsepal`, `stage_tower`, `scale`, `serial_generic`)
+needs **exactly one** of two port keys:
+
+| key | platform | value | notes |
+|-----|----------|-------|-------|
+| `port_by_path` | **Linux** | a `/dev/serial/by-path` suffix, e.g. `pci-0000:00:14.0-usb-0:10.1:1.0` | Stable across reboots / re-plugging (recommended on Linux); resolved to a `/dev/tty*` at runtime. |
+| `port` | **Windows** or direct | `COM3` (Windows) or `/dev/ttyACM0` (Linux) | Used verbatim, no resolution. Required on Windows — there is no `by-path`. |
+
+On **Linux** (recommended — stable across reboots):
+
+```yaml
+bpod:
+  type: bpod
+  port_by_path: pci-0000:00:14.0-usb-0:10.1:1.0
+```
+
+On **Windows** (use the COM port from Device Manager):
+
+```yaml
+bpod:
+  type: bpod
+  port: COM3
+```
+
+Setting both `port` and `port_by_path`, or neither, is a config error.
 
 ## Camera config
 
@@ -204,10 +232,16 @@ To migrate water and stage calibrations from the legacy `~/.murineshiftwork/` fl
 python tools/migrate_calibrations_to_setup_yaml.py
 ```
 
-## Finding port_by_path
+## Finding the serial port
+
+**Linux** — the stable `by-path` suffix for `port_by_path`:
 
 ```bash
 udevadm info /dev/ttyACM0 | grep by-path
 # or
 ls -la /dev/serial/by-path/
 ```
+
+**Windows** — the `COM` port for `port`: open **Device Manager → Ports (COM & LPT)**
+(or run `mode` in a terminal) and read the `COMn` assigned to the device's USB
+serial adapter (Bpod, Pulsepal, ...). Then set `port: COM3`.

@@ -40,7 +40,6 @@ nav:
     - calibration: cli/calibration.md
     - post: cli/post.md
     - tasks: cli/tasks.md
-    - agent (plugin): cli/agent.md
   - Concepts:
     - Architecture: concepts/architecture.md
     - Config System: concepts/config_system.md
@@ -59,7 +58,6 @@ nav:
     - Session Files: tutorials/07_session_files.md
     - Plot Spec: tutorials/08_plot_spec.md
     - Live Plot (optional): tutorials/09_live_plot.md
-    - Monitor UI (optional): tutorials/10_monitor_ui.md
     - Hooks (optional): tutorials/11_hooks.md
     - Post-Processing (optional): tutorials/12_post_processing.md
     - Hardware Abstraction (optional): tutorials/13_hardware_abstraction.md

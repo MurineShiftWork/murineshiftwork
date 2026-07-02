@@ -67,4 +67,4 @@ It never affects what data is written, so it is safe to disable on headless rigs
 
 ## Next
 
-[Tutorial 10: The central monitor UI](10_monitor_ui.md) *(optional)*.
+[Tutorial 11: Hooks](11_hooks.md).

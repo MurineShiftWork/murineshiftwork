@@ -5,6 +5,22 @@ The reward/feedback sound is played through a low-latency output stream
 name searched for is `XONAR SOUND CARD` (override with the `sound_device` key in
 the setup config to pin an exact device).
 
+## Platform: Linux vs Windows
+
+`sound_device` is a **PortAudio device name**, which differs by OS. Find it per
+rig with:
+
+```bash
+python -c "import sounddevice; print(sounddevice.query_devices())"
+```
+
+- **Linux** — use the ALSA / PipeWire name from `query_devices` (e.g. `pipewire`,
+  `default`, or the exact card name). No extra driver configuration is needed.
+  (On the task side the key is `reward_sound_device`.)
+- **Windows** — use the XONAR device name (default search: `XONAR SOUND CARD`)
+  **and** apply the driver / Default-Format settings in the next section. Windows
+  requires this extra configuration that Linux does not.
+
 ## Windows 11 + XONAR: required driver settings
 
 On Windows 11, audible, correct-speed playback at the full rate depends on three

@@ -2,8 +2,7 @@
 
 ## Prerequisites
 
-[Tutorial 10: The central monitor UI](10_monitor_ui.md), and familiarity with
-the [setup config](03_setup_config.md).
+Familiarity with the [setup config](03_setup_config.md).
 
 ## What you'll learn
 

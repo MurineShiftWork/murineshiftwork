@@ -236,8 +236,8 @@ optionally register it in `acquisition_manifest.yaml` so readers discover it:
 ```python
 from murineshiftwork.namespace.manifest import (
     init_acquisition_manifest,
-    append_session_to_acquisition,
-    finalize_session_in_acquisition,
+    append_acquisition_to_session,
+    finalize_acquisition_in_session,
 )
 
 session_container = Path(...)   # the SESSION dir
@@ -245,11 +245,11 @@ acq_basename = "mouse001__20260611_090015__photometry"
 
 # idempotent: creates manifest if absent, no-op otherwise
 init_acquisition_manifest(session_container, acq_basename)
-append_session_to_acquisition(session_container, acq_basename)
+append_acquisition_to_session(session_container, acq_basename)
 
 # ... run photometry ...
 
-finalize_session_in_acquisition(session_container, acq_basename, status="complete")
+finalize_acquisition_in_session(session_container, acq_basename, status="complete")
 ```
 
 After this, `load_acquisition(session_container)` returns all acquisitions
