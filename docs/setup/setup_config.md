@@ -136,8 +136,7 @@ session output directory, merging per-camera meta files written by Bonsai at
 startup.  The Bonsai workflows query the camera serial number via the
 FlyCapture2Managed / Spinnaker .NET API and write
 `{output_dir}/{session}__cam{index}__meta.yaml` before opening the capture
-stream (see `docs/plans/PLAN_flir_bonsai_serial.md` for the workflow
-change details).
+stream.
 
 Example sidecar once the Bonsai workflows are updated:
 

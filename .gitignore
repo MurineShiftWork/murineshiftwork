@@ -94,3 +94,6 @@ external/
 # ...but never track build artifacts, even under tests/data
 tests/data/**/__pycache__/
 *.pyc
+
+# mkdocs build output
+site/
