@@ -608,6 +608,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#platform-linux-vs-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform: Linux vs Windows
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#windows-11-xonar-required-driver-settings" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -921,34 +932,6 @@
     
   
     tasks
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../cli/agent/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    agent (plugin)
   
 
     
@@ -1539,34 +1522,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/10_monitor_ui/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Monitor UI (optional)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../tutorials/11_hooks/" class="md-nav__link">
         
   
@@ -1988,6 +1943,19 @@
 (<code>StereoSound</code>). Most rigs use an <strong>ASUS XONAR</strong> sound card; the default device
 name searched for is <code>XONAR SOUND CARD</code> (override with the <code>sound_device</code> key in
 the setup config to pin an exact device).</p>
+<h2 id="platform-linux-vs-windows">Platform: Linux vs Windows<a class="headerlink" href="#platform-linux-vs-windows" title="Permanent link">&para;</a></h2>
+<p><code>sound_device</code> is a <strong>PortAudio device name</strong>, which differs by OS. Find it per
+rig with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import sounddevice; print(sounddevice.query_devices())&quot;</span>
+</code></pre></div>
+<ul>
+<li><strong>Linux</strong> — use the ALSA / PipeWire name from <code>query_devices</code> (e.g. <code>pipewire</code>,
+  <code>default</code>, or the exact card name). No extra driver configuration is needed.
+  (On the task side the key is <code>reward_sound_device</code>.)</li>
+<li><strong>Windows</strong> — use the XONAR device name (default search: <code>XONAR SOUND CARD</code>)
+  <strong>and</strong> apply the driver / Default-Format settings in the next section. Windows
+  requires this extra configuration that Linux does not.</li>
+</ul>
 <h2 id="windows-11-xonar-required-driver-settings">Windows 11 + XONAR: required driver settings<a class="headerlink" href="#windows-11-xonar-required-driver-settings" title="Permanent link">&para;</a></h2>
 <p>On Windows 11, audible, correct-speed playback at the full rate depends on three
 XONAR driver / Windows settings. <strong>All three must be set on each rig</strong> — getting
@@ -2044,7 +2012,7 @@ crashing the session, but they do <strong>not</strong> replace the driver settin
 <h2 id="verifying-a-rig">Verifying a rig<a class="headerlink" href="#verifying-a-rig" title="Permanent link">&para;</a></h2>
 <p>On session start, look for this log line — it reports the rate the stream
 actually opened at:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>StereoSound: persistent output stream open at &lt;N&gt; Hz (latency~&lt;M&gt; ms)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>StereoSound: persistent output stream open at &lt;N&gt; Hz (latency~&lt;M&gt; ms)
 </code></pre></div>
 <ul>
 <li><code>&lt;N&gt; = 192000</code> → full rate, driver triplet correct.</li>

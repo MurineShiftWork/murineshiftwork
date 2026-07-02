@@ -554,6 +554,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Device types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#serial-ports-linux-vs-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Serial ports: Linux vs Windows
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -651,10 +668,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#finding-port_by_path" class="md-nav__link">
+  <a href="#finding-the-serial-port" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Finding port_by_path
+        Finding the serial port
       
     </span>
   </a>
@@ -1026,34 +1043,6 @@
     
   
     tasks
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../cli/agent/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    agent (plugin)
   
 
     
@@ -1644,34 +1633,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/10_monitor_ui/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Monitor UI (optional)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../tutorials/11_hooks/" class="md-nav__link">
         
   
@@ -2092,7 +2053,7 @@
 <p>Each physical setup has a YAML file at <code>msw_configs/setups/&lt;setup_name&gt;.yaml</code>.</p>
 <h2 id="skeleton">Skeleton<a class="headerlink" href="#skeleton" title="Permanent link">&para;</a></h2>
 <p><code>msw setup create &lt;name&gt;</code> generates a complete skeleton showing all fields with their
-defaults.  Edit <code>port_by_path</code> and add devices as needed.</p>
+defaults.  Edit the serial port (<code>port_by_path</code> on Linux, or <code>port: COM3</code> on Windows — see below) and add devices as needed.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-setup</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">devices</span><span class="p">:</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">bpod</span><span class="p">:</span>
@@ -2170,23 +2131,61 @@ override.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="serial-ports-linux-vs-windows">Serial ports: Linux vs Windows<a class="headerlink" href="#serial-ports-linux-vs-windows" title="Permanent link">&para;</a></h3>
+<p>Every serial device (<code>bpod</code>, <code>pulsepal</code>, <code>stage_tower</code>, <code>scale</code>, <code>serial_generic</code>)
+needs <strong>exactly one</strong> of two port keys:</p>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>platform</th>
+<th>value</th>
+<th>notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>port_by_path</code></td>
+<td><strong>Linux</strong></td>
+<td>a <code>/dev/serial/by-path</code> suffix, e.g. <code>pci-0000:00:14.0-usb-0:10.1:1.0</code></td>
+<td>Stable across reboots / re-plugging (recommended on Linux); resolved to a <code>/dev/tty*</code> at runtime.</td>
+</tr>
+<tr>
+<td><code>port</code></td>
+<td><strong>Windows</strong> or direct</td>
+<td><code>COM3</code> (Windows) or <code>/dev/ttyACM0</code> (Linux)</td>
+<td>Used verbatim, no resolution. Required on Windows — there is no <code>by-path</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>On <strong>Linux</strong> (recommended — stable across reboots):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">bpod</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bpod</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">port_by_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pci-0000:00:14.0-usb-0:10.1:1.0</span>
+</code></pre></div>
+<p>On <strong>Windows</strong> (use the COM port from Device Manager):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">bpod</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bpod</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">COM3</span>
+</code></pre></div>
+<p>Setting both <code>port</code> and <code>port_by_path</code>, or neither, is a config error.</p>
 <h2 id="camera-config">Camera config<a class="headerlink" href="#camera-config" title="Permanent link">&para;</a></h2>
 <h3 id="rce-backend-rpi-camera-colony">RCE backend (RPi camera colony)<a class="headerlink" href="#rce-backend-rpi-camera-colony" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">cameras</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rce</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">config</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/data/msw_configs/device_configs/cameras/setup-1.cameras.yaml</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">cameras</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rce</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">config</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/data/msw_configs/device_configs/cameras/setup-1.cameras.yaml</span>
 </code></pre></div>
 <p><code>config</code> is the path to the RCE ensemble YAML. Absolute or relative to <code>msw_configs/</code>.</p>
 <h3 id="flir-bonsai-backend">FLIR + Bonsai backend<a class="headerlink" href="#flir-bonsai-backend" title="Permanent link">&para;</a></h3>
 <p>One Bonsai subprocess is launched per camera entry.  Each camera is specified
 with its SDK index, a role name, and its manufacturer serial number:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">cameras</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flir_bonsai</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flycap</span><span class="w">                </span><span class="c1"># flycap (FlyCapture2) or spinnaker (Spinnaker SDK)</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">bonsai_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">C:\Users\&lt;user&gt;\AppData\Local\Bonsai\Bonsai.exe</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nt">cameras</span><span class="p">:</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">cameras</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flir_bonsai</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flycap</span><span class="w">                </span><span class="c1"># flycap (FlyCapture2) or spinnaker (Spinnaker SDK)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nt">bonsai_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">C:\Users\&lt;user&gt;\AppData\Local\Bonsai\Bonsai.exe</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="nt">cameras</span><span class="p">:</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 </code></pre></div>
 <table>
 <thead>
@@ -2234,11 +2233,11 @@ Viewer) and saved to camera non-volatile memory, not via this config.</p>
 The printed path goes directly into this field. Alternatively export <code>BONSAI_EXE</code>
 as a system environment variable and omit the field from the YAML.</p>
 <p><strong>Shorthand</strong> (consecutive indices from 0):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">cameras</span><span class="p">:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flir_bonsai</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flycap</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">bonsai_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">C:\Users\&lt;user&gt;\AppData\Local\Bonsai\Bonsai.exe</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nt">n_cameras</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">cameras</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flir_bonsai</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flycap</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nt">bonsai_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">C:\Users\&lt;user&gt;\AppData\Local\Bonsai\Bonsai.exe</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="nt">n_cameras</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
 </code></pre></div>
 <p><strong>Per-camera optical parameters</strong> (gain, shutter, exposure) are set inside the
 Bonsai workflow XML: open it in the Bonsai editor on the acquisition machine.</p>
@@ -2250,27 +2249,27 @@ FlyCapture2Managed / Spinnaker .NET API and write
 <code>{output_dir}/{session}__cam{index}__meta.yaml</code> before opening the capture
 stream.</p>
 <p>Example sidecar once the Bonsai workflows are updated:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">flir_acq_format_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">session</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s001__20260609_143022</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nt">datetime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2026-06-09T14:30:22&quot;</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flycap</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nt">workflow</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">run-flir-flycap-1cam</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nt">bonsai_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">C:\Users\&lt;user&gt;\AppData\Local\Bonsai\Bonsai.exe</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="nt">cameras</span><span class="p">:</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">cam_index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="nt">serial</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12345678&quot;</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="nt">datetime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2026-06-09T14:30:23&quot;</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="nt">bonsai_session</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s001__20260609_143022__cam0</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">cam_index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span><span class="nt">serial</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;87654321&quot;</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="nt">datetime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2026-06-09T14:30:23&quot;</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span><span class="nt">bonsai_session</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s001__20260609_143022__cam1</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">flir_acq_format_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nt">session</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s001__20260609_143022</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nt">datetime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2026-06-09T14:30:22&quot;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flycap</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="nt">workflow</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">run-flir-flycap-1cam</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="nt">bonsai_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">C:\Users\&lt;user&gt;\AppData\Local\Bonsai\Bonsai.exe</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="nt">cameras</span><span class="p">:</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">cam_index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="nt">serial</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12345678&quot;</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="nt">datetime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2026-06-09T14:30:23&quot;</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="nt">bonsai_session</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s001__20260609_143022__cam0</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">cam_index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">    </span><span class="nt">serial</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;87654321&quot;</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">    </span><span class="nt">datetime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2026-06-09T14:30:23&quot;</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">    </span><span class="nt">bonsai_session</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s001__20260609_143022__cam1</span>
 </code></pre></div>
 <p><code>bonsai_session</code> is the subdirectory Bonsai creates under <code>output_dir</code> for
 that camera.  Post-processing resolves <code>cam_index → serial</code> from this file.</p>
 <h2 id="open-ephys-integration">Open Ephys integration<a class="headerlink" href="#open-ephys-integration" title="Permanent link">&para;</a></h2>
 <p>Set <code>open_ephys_url</code> to the IP or hostname of the Open Ephys GUI process for this rig:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">open_ephys_url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0.10.111</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">open_ephys_url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0.10.111</span>
 </code></pre></div>
 <p>This enables <code>--host openephys</code> without passing the address on the CLI each time.
 <code>msw run</code> reads the URL from the active setup config, so setups without OE simply omit the field.
@@ -2278,11 +2277,11 @@ Machine config (<code>~/.murineshiftwork/msw_machine.yaml</code>) is checked as 
 <h2 id="hooks">Hooks<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
 <p>Pre- and post-task hooks are Python classes registered by dotted import path.
 See <code>concepts/hook_system.md</code> for the full API.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">hooks</span><span class="p">:</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">pre_task</span><span class="p">:</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mypackage.hooks.FetchSubjectLevel</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="nt">post_task</span><span class="p">:</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mypackage.hooks.UploadResults</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">hooks</span><span class="p">:</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">pre_task</span><span class="p">:</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mypackage.hooks.FetchSubjectLevel</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="nt">post_task</span><span class="p">:</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mypackage.hooks.UploadResults</span>
 </code></pre></div>
 <p>Empty lists (the default) mean no hooks run.</p>
 <h2 id="valve-calibration-behaviour">Valve calibration behaviour<a class="headerlink" href="#valve-calibration-behaviour" title="Permanent link">&para;</a></h2>
@@ -2294,13 +2293,17 @@ See <code>concepts/hook_system.md</code> for the full API.</p>
 </ul>
 <h2 id="calibration-migration">Calibration migration<a class="headerlink" href="#calibration-migration" title="Permanent link">&para;</a></h2>
 <p>To migrate water and stage calibrations from the legacy <code>~/.murineshiftwork/</code> flat files:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>python<span class="w"> </span>tools/migrate_calibrations_to_setup_yaml.py
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python<span class="w"> </span>tools/migrate_calibrations_to_setup_yaml.py
 </code></pre></div>
-<h2 id="finding-port_by_path">Finding port_by_path<a class="headerlink" href="#finding-port_by_path" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>udevadm<span class="w"> </span>info<span class="w"> </span>/dev/ttyACM0<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>by-path
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1"># or</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>ls<span class="w"> </span>-la<span class="w"> </span>/dev/serial/by-path/
+<h2 id="finding-the-serial-port">Finding the serial port<a class="headerlink" href="#finding-the-serial-port" title="Permanent link">&para;</a></h2>
+<p><strong>Linux</strong> — the stable <code>by-path</code> suffix for <code>port_by_path</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>udevadm<span class="w"> </span>info<span class="w"> </span>/dev/ttyACM0<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>by-path
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># or</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>ls<span class="w"> </span>-la<span class="w"> </span>/dev/serial/by-path/
 </code></pre></div>
+<p><strong>Windows</strong> — the <code>COM</code> port for <code>port</code>: open <strong>Device Manager → Ports (COM &amp; LPT)</strong>
+(or run <code>mode</code> in a terminal) and read the <code>COMn</code> assigned to the device's USB
+serial adapter (Bpod, Pulsepal, ...). Then set <code>port: COM3</code>.</p>
 
 
 

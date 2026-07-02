@@ -854,34 +854,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../cli/agent/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    agent (plugin)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -1611,34 +1583,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/10_monitor_ui/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Monitor UI (optional)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../tutorials/11_hooks/" class="md-nav__link">
         
   
@@ -2242,8 +2186,8 @@ write its own acquisition dir <em>inside</em> that container.</p>
 optionally register it in <code>acquisition_manifest.yaml</code> so readers discover it:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">murineshiftwork.namespace.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">init_acquisition_manifest</span><span class="p">,</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">append_session_to_acquisition</span><span class="p">,</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">finalize_session_in_acquisition</span><span class="p">,</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">append_acquisition_to_session</span><span class="p">,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">finalize_acquisition_in_session</span><span class="p">,</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="p">)</span>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">session_container</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>   <span class="c1"># the SESSION dir</span>
@@ -2251,11 +2195,11 @@ optionally register it in <code>acquisition_manifest.yaml</code> so readers disc
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
 <a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># idempotent: creates manifest if absent, no-op otherwise</span>
 <a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="n">init_acquisition_manifest</span><span class="p">(</span><span class="n">session_container</span><span class="p">,</span> <span class="n">acq_basename</span><span class="p">)</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="n">append_session_to_acquisition</span><span class="p">(</span><span class="n">session_container</span><span class="p">,</span> <span class="n">acq_basename</span><span class="p">)</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="n">append_acquisition_to_session</span><span class="p">(</span><span class="n">session_container</span><span class="p">,</span> <span class="n">acq_basename</span><span class="p">)</span>
 <a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
 <a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="c1"># ... run photometry ...</span>
 <a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
-<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="n">finalize_session_in_acquisition</span><span class="p">(</span><span class="n">session_container</span><span class="p">,</span> <span class="n">acq_basename</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;complete&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="n">finalize_acquisition_in_session</span><span class="p">(</span><span class="n">session_container</span><span class="p">,</span> <span class="n">acq_basename</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;complete&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p>After this, <code>load_acquisition(session_container)</code> returns all acquisitions
 (both MSW behaviour and photometry) sorted by datetime.</p>
