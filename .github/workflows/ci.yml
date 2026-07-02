@@ -27,13 +27,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Configure git for private repos
-        env:
-          PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
-        run: |
-          if [ -n "$PRIVATE_REPO_ACCESS_TOKEN" ]; then
-            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@${GITHUB_SERVER_URL#https://}/".insteadOf "${GITHUB_SERVER_URL}/"
-          fi
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ secrets.CI_APP_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: msw-agent
+
+      - name: Configure git to use the App token for private repos
+        run: git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Add private package sources (not on PyPI)
         shell: python
@@ -69,24 +72,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Configure git for private repos (Linux/macOS)
-        if: runner.os != 'Windows'
-        env:
-          PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
-        run: |
-          if [ -n "$PRIVATE_REPO_ACCESS_TOKEN" ]; then
-            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@${GITHUB_SERVER_URL#https://}/".insteadOf "${GITHUB_SERVER_URL}/"
-          fi
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ secrets.CI_APP_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: msw-agent
 
-      - name: Configure git for private repos (Windows)
-        if: runner.os == 'Windows'
-        env:
-          PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
-        run: |
-          if ($env:PRIVATE_REPO_ACCESS_TOKEN) {
-            $githubHost = ($env:GITHUB_SERVER_URL -split '//')[1]
-            git config --global url."https://$($env:PRIVATE_REPO_ACCESS_TOKEN)@$githubHost/".insteadOf "$($env:GITHUB_SERVER_URL)/"
-          }
+      - name: Configure git to use the App token for private repos
+        run: git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Add private package sources (not on PyPI)
         shell: python
@@ -122,13 +117,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Configure git for private repos
-        env:
-          PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
-        run: |
-          if [ -n "$PRIVATE_REPO_ACCESS_TOKEN" ]; then
-            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@${GITHUB_SERVER_URL#https://}/".insteadOf "${GITHUB_SERVER_URL}/"
-          fi
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ secrets.CI_APP_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: msw-agent
+
+      - name: Configure git to use the App token for private repos
+        run: git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Add private package sources (not on PyPI)
         shell: python
@@ -158,13 +156,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Configure git for private repos
-        env:
-          PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
-        run: |
-          if [ -n "$PRIVATE_REPO_ACCESS_TOKEN" ]; then
-            git config --global url."https://${PRIVATE_REPO_ACCESS_TOKEN}@${GITHUB_SERVER_URL#https://}/".insteadOf "${GITHUB_SERVER_URL}/"
-          fi
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ secrets.CI_APP_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: msw-agent
+
+      - name: Configure git to use the App token for private repos
+        run: git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Add private package sources (not on PyPI)
         shell: python
