@@ -106,7 +106,7 @@ Run `msw tasks modes <task>` to see the current modes for any task.
 | `optotagging` | per-protocol settings in `stimulation_protocols` list |
 | `_test_flush_valves` | `fill`, `wash`, `test` |
 
-See [Tutorial: Adding a Subject](../tutorials/adding_subject.md) for how sticky task modes are
+See [Manage Subjects](../howto/subjects.md) for how sticky task modes are
 saved per-subject and persist across sessions.
 
 ## Optotagging waveform shaping

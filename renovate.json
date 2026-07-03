@@ -2,7 +2,10 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "timezone": "Europe/London",
-  "schedule": ["every weekend"],
+  "rangeStrategy": "bump",
+  "semanticCommits": "enabled",
+  "semanticCommitType": "fix",
+  "platformAutomerge": false,
   "labels": ["dependencies"],
   "packageRules": [
     {
@@ -19,14 +22,25 @@
         "safe-and-collaborative-architecture"
       ],
       "groupName": "MSW packages",
-      "automerge": false,
+      "automerge": true,
       "labels": ["dependencies", "msw-packages"]
     },
     {
-      "description": "Group GitHub Actions version bumps",
+      "description": "Auto-merge non-major dependency bumps once CI is green, so each release pins the latest floors",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "Major bumps always land as a manual PR (review before release)",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "Group GitHub Actions version bumps (CI-only: chore, no release, manual)",
       "matchManagers": ["github-actions"],
       "groupName": "GitHub Actions",
       "automerge": false,
+      "semanticCommitType": "chore",
       "labels": ["dependencies", "ci"]
     }
   ],

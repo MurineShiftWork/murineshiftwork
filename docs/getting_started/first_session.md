@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-[Tutorial 1: Installing MSW](01_install.md), with the `tasks` extra installed.
+[Tutorial 1: Installing MSW](installation.md), with the `tasks` extra installed.
 
 ## What you'll learn
 
@@ -80,7 +80,7 @@ The two flags you used here are the core of every run:
 - `-s / --subject`: the subject name.
 
 Without `--simulate`, MSW would try to open a serial connection to real
-hardware. You will attach a real rig in [Tutorial 3](03_setup_config.md).
+hardware. You will attach a real rig in [Tutorial 3](../setup/setup_config.md).
 
 ## 4. Find the files the session wrote
 
@@ -102,7 +102,7 @@ The three files you will care about most:
 - `.msw.df.jsonl`: the trial-by-trial data, one JSON record per line.
 - `.msw.log`: a human-readable log of the run.
 
-You will learn to read these in [Tutorial 7](07_session_files.md).
+You will learn to read these in [Tutorial 7](../concepts/session_files.md).
 
 ## You now know
 
@@ -112,5 +112,5 @@ three core files every session writes and where they land.
 
 ## Next
 
-[Tutorial 3: Describing a rig with a setup config](03_setup_config.md). To see
+[Tutorial 3: Describing a rig with a setup config](../setup/setup_config.md). To see
 every task available to run, use `msw tasks list`.

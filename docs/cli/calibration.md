@@ -26,4 +26,4 @@ msw calibration plot --out ~/calibration_plots/
 msw calibration plot --setup setup_a --out ~/calibration_plots/
 ```
 
-For the calibration procedure, see [Tutorial: Valve Calibration](../tutorials/calibration.md).
+For the calibration procedure, see [Tutorial: Valve Calibration](../howto/valve_calibration.md).

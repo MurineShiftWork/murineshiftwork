@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-[Tutorial 4: Task settings and overrides](04_task_settings.md).
+[Tutorial 4: Task settings and overrides](task_settings.md).
 
 ## What you'll learn
 
@@ -102,6 +102,6 @@ version-controlled directory.
 
 ## Next
 
-[Tutorial 6: Managing subjects](06_subject_management.md). For the design behind
+[Tutorial 6: Managing subjects](subjects.md). For the design behind
 deep-merging and schema handling, see the
 [Config System](../concepts/config_system.md) concept page.

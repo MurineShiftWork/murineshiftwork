@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-[Tutorial 5: The config overlay chain](05_config_overlays.md).
+[Tutorial 5: The config overlay chain](config_overlays.md).
 
 ## What you'll learn
 
@@ -50,7 +50,7 @@ task_overrides: {}
 ```
 
 The important field is `task_overrides`: per-animal, per-task settings that sit
-at layer 4 of the [overlay chain](05_config_overlays.md). They override the rig
+at layer 4 of the [overlay chain](config_overlays.md). They override the rig
 overlay and task defaults, but a CLI `-ts` flag still wins over them.
 
 ## 3. Set per-animal overrides
@@ -102,6 +102,6 @@ the next session resumes cleanly.
 
 ## Next
 
-[Tutorial 7: Reading session files](07_session_files.md). For the place subject
+[Tutorial 7: Reading session files](../concepts/session_files.md). For the place subject
 overrides occupy in the merge order, revisit
-[Tutorial 5](05_config_overlays.md).
+[Tutorial 5](config_overlays.md).

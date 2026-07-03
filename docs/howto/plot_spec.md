@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-[Tutorial 7: Reading session files](07_session_files.md).
+[Tutorial 7: Reading session files](../concepts/session_files.md).
 
 ## What you'll learn
 
@@ -60,7 +60,7 @@ Each panel has three parts:
 - `options`: panel-specific display settings (axis ranges, labels, filters).
 
 Because `fields` reference the trial data by column name, the spec is the bridge
-between [the session's trial file](07_session_files.md) and a figure.
+between [the session's trial file](../concepts/session_files.md) and a figure.
 
 ## 3. Why the spec is copied into each session
 
@@ -77,7 +77,7 @@ data even after the task has moved on.
 The workflow to redraw an old session is:
 
 1. Load the session's trial data into a DataFrame (see
-   [Tutorial 7](07_session_files.md)).
+   [Tutorial 7](../concepts/session_files.md)).
 2. Read the session's own `*.msw.plot_spec.yaml`.
 3. For each panel, pull the columns named in `fields` from the DataFrame and draw
    the `type` of plot the panel asks for.
@@ -94,6 +94,6 @@ as intended.
 
 ## Next
 
-[Tutorial 9: The live plot](09_live_plot.md) *(optional)*. To see the trial
+[Tutorial 9: The live plot](live_plot.md) *(optional)*. To see the trial
 columns a spec references, inspect a session's `.msw.df.jsonl` from
-[Tutorial 7](07_session_files.md).
+[Tutorial 7](../concepts/session_files.md).

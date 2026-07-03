@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-[Tutorial 12: Post-processing](12_post_processing.md). This page is for
+[Tutorial 12: Post-processing](../howto/post_processing.md). This page is for
 developers adding a new device type.
 
 ## What you'll learn
@@ -79,5 +79,5 @@ and constructing it from the setup config, with no changes to task code.
 
 ## Next
 
-[Tutorial 14: Valve calibration](14_calibration.md) *(optional)*. For how devices
-fit the wider system, see [Architecture](../concepts/architecture.md).
+[Valve calibration](../howto/valve_calibration.md). For how devices
+fit the wider system, see [Architecture](architecture.md).

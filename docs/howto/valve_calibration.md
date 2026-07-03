@@ -2,8 +2,8 @@
 
 ## Prerequisites
 
-[Tutorial 13: Hardware abstraction](13_hardware_abstraction.md), a configured
-[setup](03_setup_config.md), and the `calibration` extra installed.
+[Tutorial 13: Hardware abstraction](../concepts/hardware_abstraction.md), a configured
+[setup](../setup/setup_config.md), and the `calibration` extra installed.
 
 ## What you'll learn
 
@@ -82,6 +82,5 @@ whenever the liquid path changes or a curve fits poorly.
 
 ## Next
 
-You have reached the end of the tutorial series. For the calibration
-troubleshooting table and YAML details, see
-[Valve Calibration](calibration.md).
+For the calibration CLI options and YAML details, see the
+[calibration reference](../cli/calibration.md).

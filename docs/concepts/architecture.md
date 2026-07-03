@@ -18,7 +18,7 @@ graph TD
         FLIR["msw-flir-bonsai\nFLIR camera via Bonsai"]
         Barcode["ttl-barcoder\nbarcode encode / decode"]
         NS["acquisition-namespace\npath and file naming"]
-        Hooks["hooks\nLabWatch · custom integrations"]
+        Hooks["hooks\ncustom integrations"]
     end
 
     subgraph rpi["RPi cluster"]
