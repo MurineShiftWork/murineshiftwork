@@ -12,13 +12,13 @@
         <meta name="author" content="Lars B. Rollik">
       
       
-        <link rel="canonical" href="https://MurineShiftWork.github.io/murineshiftwork/getting_started/quickstart/">
+        <link rel="canonical" href="https://MurineShiftWork.github.io/murineshiftwork/concepts/hardware_abstraction/">
       
       
-        <link rel="prev" href="../installation/">
+        <link rel="prev" href="../multi_acquisition_and_photometry/">
       
       
-        <link rel="next" href="../first_session/">
+        <link rel="next" href="../../cli/init/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Quick Start - Murine Shift Work</title>
+        <title>Hardware Abstraction - Murine Shift Work</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#quick-start" class="md-skip">
+        <a href="#tutorial-13-hardware-abstraction-optional" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Quick Start
+              Hardware Abstraction
             
           </span>
         </div>
@@ -262,8 +262,6 @@
       
   
   
-    
-  
   
   
     
@@ -276,11 +274,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
@@ -301,7 +301,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -319,7 +319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../../getting_started/installation/" class="md-nav__link">
         
   
   
@@ -344,37 +344,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Quick Start
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstart/" class="md-nav__link">
         
   
   
@@ -390,92 +363,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#running-a-task" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Running a task
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#task-settings-overrides" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Task-settings overrides
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#named-task-modes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Named task modes
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#listing-available-tasks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Listing available tasks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#serial-port-resolution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Serial-port resolution
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inspecting-task-defaults-before-running" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inspecting task defaults before running
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -488,7 +375,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../first_session/" class="md-nav__link">
+      <a href="../../getting_started/first_session/" class="md-nav__link">
         
   
   
@@ -973,8 +860,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -985,13 +874,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
@@ -1012,7 +899,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1030,7 +917,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         
   
   
@@ -1058,7 +945,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/config_system/" class="md-nav__link">
+      <a href="../config_system/" class="md-nav__link">
         
   
   
@@ -1086,7 +973,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/hook_system/" class="md-nav__link">
+      <a href="../hook_system/" class="md-nav__link">
         
   
   
@@ -1114,7 +1001,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/plugin_system/" class="md-nav__link">
+      <a href="../plugin_system/" class="md-nav__link">
         
   
   
@@ -1142,7 +1029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/session_files/" class="md-nav__link">
+      <a href="../session_files/" class="md-nav__link">
         
   
   
@@ -1170,7 +1057,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/multi_acquisition_and_photometry/" class="md-nav__link">
+      <a href="../multi_acquisition_and_photometry/" class="md-nav__link">
         
   
   
@@ -1195,10 +1082,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../concepts/hardware_abstraction/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Abstraction
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1214,6 +1128,114 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-youll-learn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you'll learn
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-why-an-abstraction-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Why an abstraction layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-device-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The device contract
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-how-devices-are-wired-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. How devices are wired in
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-adding-a-new-device-type-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Adding a new device type (shape)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#you-now-know" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        You now know
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1787,56 +1809,93 @@
   
 
 
-<h1 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h1>
-<h2 id="running-a-task">Running a task<a class="headerlink" href="#running-a-task" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>msw<span class="w"> </span>run<span class="w"> </span>-t<span class="w"> </span>&lt;task_name&gt;<span class="w"> </span>-s<span class="w"> </span>&lt;subject_name&gt;<span class="w"> </span>--setup<span class="w"> </span>&lt;setup_name&gt;
+<h1 id="tutorial-13-hardware-abstraction-optional">Tutorial 13: Hardware abstraction <em>(optional)</em><a class="headerlink" href="#tutorial-13-hardware-abstraction-optional" title="Permanent link">&para;</a></h1>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p><a href="../../howto/post_processing/">Tutorial 12: Post-processing</a>. This page is for
+developers adding a new device type.</p>
+<h2 id="what-youll-learn">What you'll learn<a class="headerlink" href="#what-youll-learn" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The four-method contract every device must satisfy.</li>
+<li>How devices are opened, handed to a task, and closed.</li>
+<li>The shape of adding a new device type.</li>
+</ul>
+<h2 id="1-why-an-abstraction-layer">1. Why an abstraction layer<a class="headerlink" href="#1-why-an-abstraction-layer" title="Permanent link">&para;</a></h2>
+<p>A task asks for a capability ("I need a Bpod"), not a specific connection. The
+hardware layer turns that request into a real, opened device and hands the task
+only a handle. This is what lets the same task run on any rig: the rig's setup
+file says where the device is, the hardware layer connects it, and the task never
+sees a port string. Adding a new kind of device means satisfying one small
+contract, with no changes to task code.</p>
+<h2 id="2-the-device-contract">2. The device contract<a class="headerlink" href="#2-the-device-contract" title="Permanent link">&para;</a></h2>
+<p>Every device implements the same structural interface, <code>DeviceProtocol</code>. It has a
+<code>name</code> attribute and four methods:</p>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>the key the device is exposed under (for example <code>"bpod"</code>)</td>
+</tr>
+<tr>
+<td><code>preflight()</code></td>
+<td>check the device is reachable before connecting; raise a clear error if not</td>
+</tr>
+<tr>
+<td><code>connect()</code></td>
+<td>open the hardware connection (with retries as appropriate)</td>
+</tr>
+<tr>
+<td><code>disconnect()</code></td>
+<td>close the connection gracefully</td>
+</tr>
+<tr>
+<td><code>handle</code></td>
+<td>the raw object handed to the task (a property)</td>
+</tr>
+</tbody>
+</table>
+<p>The split between <code>preflight</code> and <code>connect</code> is deliberate: preflight catches
+"the device is not there" with a readable message before any connection state is
+created, so failures are clean.</p>
+<h2 id="3-how-devices-are-wired-in">3. How devices are wired in<a class="headerlink" href="#3-how-devices-are-wired-in" title="Permanent link">&para;</a></h2>
+<p>The <code>HardwareManager</code> takes a list of devices and manages their lifecycle as a
+context manager. For each device it calls <code>preflight()</code>, then <code>connect()</code>, and on
+exit calls <code>disconnect()</code> in reverse order. It returns a dict mapping each
+device's <code>name</code> to its <code>handle</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">murineshiftwork.hardware.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">HardwareManager</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">with</span> <span class="n">HardwareManager</span><span class="p">([</span><span class="n">BpodDevice</span><span class="p">(</span><span class="n">port</span><span class="p">)])</span> <span class="k">as</span> <span class="n">devices</span><span class="p">:</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="c1"># devices == {&quot;bpod&quot;: &lt;raw Bpod handle&gt;}</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">run_task</span><span class="p">(</span><span class="n">bpod</span><span class="o">=</span><span class="n">devices</span><span class="p">[</span><span class="s2">&quot;bpod&quot;</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># disconnect() has now run for every opened device</span>
 </code></pre></div>
-<p>Example: probabilistic switching task:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>msw<span class="w"> </span>run<span class="w"> </span>-t<span class="w"> </span>probabilistic_switching<span class="w"> </span>-s<span class="w"> </span>mouse001<span class="w"> </span>--setup<span class="w"> </span>setup-1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>--meta-experimenter<span class="w"> </span>LBR<span class="w"> </span>-m<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>GPe_cohort3
-</code></pre></div>
-<h2 id="task-settings-overrides">Task-settings overrides<a class="headerlink" href="#task-settings-overrides" title="Permanent link">&para;</a></h2>
-<p>Any key defined in a task's <code>task.yaml</code> can be overridden at runtime:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>msw<span class="w"> </span>run<span class="w"> </span>-t<span class="w"> </span>probabilistic_switching<span class="w"> </span>-s<span class="w"> </span>mouse001<span class="w"> </span>--setup<span class="w"> </span>setup-1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-ts<span class="w"> </span><span class="nv">n_max_trials</span><span class="o">=</span><span class="m">500</span><span class="w"> </span><span class="nv">reward_amount_ul</span><span class="o">=</span><span class="m">2</span>.5
-</code></pre></div>
-<p>Override priority (lowest → highest):</p>
+<p>The task receives only <code>devices["bpod"]</code>, the raw handle, and is unaware of the
+device class or its port.</p>
+<h2 id="4-adding-a-new-device-type-shape">4. Adding a new device type (shape)<a class="headerlink" href="#4-adding-a-new-device-type-shape" title="Permanent link">&para;</a></h2>
+<p>To support a new device, the work is:</p>
 <ol>
-<li>Bundled <code>task.yaml</code> defaults (shipped with the package)</li>
-<li><code>&lt;config_dir&gt;/tasks/&lt;task_name&gt;/task.yaml</code> overlay (user-managed, git-tracked)</li>
-<li>Named mode (<code>--task-mode &lt;name&gt;</code>: picks a preset from the <code>mode:</code> section)</li>
-<li>Subject YAML <code>task_overrides[&lt;task_name&gt;]</code></li>
-<li>CLI <code>-ts KEY=VALUE</code></li>
+<li>Write a class that satisfies <code>DeviceProtocol</code>: set <code>name</code>, and implement
+   <code>preflight</code>, <code>connect</code>, <code>disconnect</code>, and the <code>handle</code> property.</li>
+<li>Construct it from the rig's setup config (the device's <code>type</code> and port live in
+   the setup YAML under <code>devices</code>).</li>
+<li>Include it in the list passed to <code>HardwareManager</code> for tasks that require it.</li>
 </ol>
-<p>The config-dir overlay lets you keep site-specific parameter adjustments in your
-<code>msw_configs/</code> repo without modifying the installed package or repeating <code>-ts</code> flags
-on every run.  Create the overlay at:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>msw_configs/tasks/&lt;task_name&gt;/task.yaml
-</code></pre></div>
-<p>Use the same <code>default:</code> / <code>mode:</code> structure as the bundled file.  Keys absent from the
-overlay are inherited from the bundled defaults.</p>
-<h2 id="named-task-modes">Named task modes<a class="headerlink" href="#named-task-modes" title="Permanent link">&para;</a></h2>
-<p>Named modes let you switch between preconfigured parameter sets without editing any file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Run a habituation session (100% reward, no punishments)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>msw<span class="w"> </span>run<span class="w"> </span>-t<span class="w"> </span>probabilistic_switching_fixedsubjects<span class="w"> </span>-s<span class="w"> </span>mouse001<span class="w"> </span>--setup<span class="w"> </span>setup-1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>--task-mode<span class="w"> </span>stage00habituation
-</code></pre></div>
-<p>Modes are defined in <code>task.yaml</code> under the <code>mode:</code> key.  Each mode is a dict of
-overrides applied on top of the <code>default:</code> section.</p>
-<h2 id="listing-available-tasks">Listing available tasks<a class="headerlink" href="#listing-available-tasks" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>msw<span class="w"> </span>tasks<span class="w"> </span>list<span class="w">                   </span><span class="c1"># all tasks (marks [overlay] if config-dir override exists)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>msw<span class="w"> </span>tasks<span class="w"> </span>list<span class="w"> </span>--filter<span class="w"> </span>opto<span class="w">     </span><span class="c1"># filter by name fragment</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>msw<span class="w"> </span>run<span class="w"> </span>--help<span class="w">                   </span><span class="c1"># also shows the task list in the epilog</span>
-</code></pre></div>
-<h2 id="serial-port-resolution">Serial-port resolution<a class="headerlink" href="#serial-port-resolution" title="Permanent link">&para;</a></h2>
-<p>When <code>--setup setup-1</code> is passed and <code>msw_configs/setups/setup-1.yaml</code> contains a
-<code>bpod</code> device with <code>port_by_path</code>, MSW resolves the correct <code>/dev/ttyXXX</code> automatically.
-The <code>-b / --port-bpod</code> flag is only needed on machines without a setup YAML.</p>
-<h2 id="inspecting-task-defaults-before-running">Inspecting task defaults before running<a class="headerlink" href="#inspecting-task-defaults-before-running" title="Permanent link">&para;</a></h2>
-<p>Before writing a config-dir overlay, check what parameters a task exposes:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>msw<span class="w"> </span>tasks<span class="w"> </span>defaults<span class="w"> </span>_test_flush_valves<span class="w">   </span><span class="c1"># print bundled task.yaml</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>msw<span class="w"> </span>tasks<span class="w"> </span>modes<span class="w"> </span>sequence<span class="w">                </span><span class="c1"># list named mode presets</span>
-</code></pre></div>
+<p>Because the contract is small and structural, a new device participates in
+preflight, connection, and cleanup automatically once it implements the four
+members. No task or framework code needs to know the new type by name.</p>
+<h2 id="you-now-know">You now know<a class="headerlink" href="#you-now-know" title="Permanent link">&para;</a></h2>
+<p>Every device satisfies a four-member <code>DeviceProtocol</code> (<code>name</code>, <code>preflight</code>,
+<code>connect</code>, <code>disconnect</code>, <code>handle</code>), and <code>HardwareManager</code> opens, hands off, and
+closes devices uniformly. Adding a device type means implementing that contract
+and constructing it from the setup config, with no changes to task code.</p>
+<h2 id="next">Next<a class="headerlink" href="#next" title="Permanent link">&para;</a></h2>
+<p><a href="../../howto/valve_calibration/">Valve calibration</a>. For how devices
+fit the wider system, see <a href="../architecture/">Architecture</a>.</p>
 
 
 

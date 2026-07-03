@@ -12,13 +12,13 @@
         <meta name="author" content="Lars B. Rollik">
       
       
-        <link rel="canonical" href="https://MurineShiftWork.github.io/murineshiftwork/getting_started/quickstart/">
+        <link rel="canonical" href="https://MurineShiftWork.github.io/murineshiftwork/howto/open_ephys/">
       
       
-        <link rel="prev" href="../installation/">
+        <link rel="prev" href="../../setup/sound/">
       
       
-        <link rel="next" href="../first_session/">
+        <link rel="next" href="../barcode_sync/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Quick Start - Murine Shift Work</title>
+        <title>Open Ephys - Murine Shift Work</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#quick-start" class="md-skip">
+        <a href="#record-with-open-ephys" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Quick Start
+              Open Ephys
             
           </span>
         </div>
@@ -262,8 +262,6 @@
       
   
   
-    
-  
   
   
     
@@ -276,11 +274,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
@@ -301,7 +301,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -319,7 +319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../../getting_started/installation/" class="md-nav__link">
         
   
   
@@ -344,37 +344,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Quick Start
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstart/" class="md-nav__link">
         
   
   
@@ -390,92 +363,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#running-a-task" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Running a task
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#task-settings-overrides" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Task-settings overrides
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#named-task-modes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Named task modes
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#listing-available-tasks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Listing available tasks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#serial-port-resolution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Serial-port resolution
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inspecting-task-defaults-before-running" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inspecting task defaults before running
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -488,7 +375,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../first_session/" class="md-nav__link">
+      <a href="../../getting_started/first_session/" class="md-nav__link">
         
   
   
@@ -520,8 +407,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -532,13 +421,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
@@ -559,7 +446,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -605,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../howto/task_settings/" class="md-nav__link">
+      <a href="../task_settings/" class="md-nav__link">
         
   
   
@@ -633,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../howto/config_overlays/" class="md-nav__link">
+      <a href="../config_overlays/" class="md-nav__link">
         
   
   
@@ -661,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../howto/subjects/" class="md-nav__link">
+      <a href="../subjects/" class="md-nav__link">
         
   
   
@@ -742,10 +629,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../howto/open_ephys/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Open Ephys
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -761,6 +675,92 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#wiring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wiring
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-start-the-ephys-recording" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Start the ephys recording
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-run-the-behaviour-session-attached-to-the-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Run the behaviour session, attached to the host
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Stop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-align-offline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Align offline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -773,7 +773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../howto/barcode_sync/" class="md-nav__link">
+      <a href="../barcode_sync/" class="md-nav__link">
         
   
   
@@ -801,7 +801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../howto/photometry/" class="md-nav__link">
+      <a href="../photometry/" class="md-nav__link">
         
   
   
@@ -829,7 +829,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../howto/valve_calibration/" class="md-nav__link">
+      <a href="../valve_calibration/" class="md-nav__link">
         
   
   
@@ -857,7 +857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../howto/plot_spec/" class="md-nav__link">
+      <a href="../plot_spec/" class="md-nav__link">
         
   
   
@@ -885,7 +885,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../howto/live_plot/" class="md-nav__link">
+      <a href="../live_plot/" class="md-nav__link">
         
   
   
@@ -913,7 +913,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../howto/hooks/" class="md-nav__link">
+      <a href="../hooks/" class="md-nav__link">
         
   
   
@@ -941,7 +941,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../howto/post_processing/" class="md-nav__link">
+      <a href="../post_processing/" class="md-nav__link">
         
   
   
@@ -1787,56 +1787,68 @@
   
 
 
-<h1 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h1>
-<h2 id="running-a-task">Running a task<a class="headerlink" href="#running-a-task" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>msw<span class="w"> </span>run<span class="w"> </span>-t<span class="w"> </span>&lt;task_name&gt;<span class="w"> </span>-s<span class="w"> </span>&lt;subject_name&gt;<span class="w"> </span>--setup<span class="w"> </span>&lt;setup_name&gt;
+<h1 id="record-with-open-ephys">Record with Open Ephys<a class="headerlink" href="#record-with-open-ephys" title="Permanent link">&para;</a></h1>
+<p>This guide covers running an MSW behaviour session alongside an Open Ephys
+electrophysiology recording, with the two datastreams aligned by TTL barcodes.</p>
+<p>Install the ephys extra:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;murineshiftwork[oe]&quot;</span>
 </code></pre></div>
-<p>Example: probabilistic switching task:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>msw<span class="w"> </span>run<span class="w"> </span>-t<span class="w"> </span>probabilistic_switching<span class="w"> </span>-s<span class="w"> </span>mouse001<span class="w"> </span>--setup<span class="w"> </span>setup-1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>--meta-experimenter<span class="w"> </span>LBR<span class="w"> </span>-m<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>GPe_cohort3
+<p>MSW controls the Open Ephys GUI remotely over its HTTP API. The full command
+reference is on the <a href="../../cli/oe/">msw oe</a> page; this page is the end-to-end
+procedure.</p>
+<hr />
+<h2 id="wiring">Wiring<a class="headerlink" href="#wiring" title="Permanent link">&para;</a></h2>
+<p>Route the MSW barcode BNC output into a spare digital input on the Open Ephys
+acquisition board so the ephys recording carries the same time anchors as the
+behaviour session. See <a href="../barcode_sync/">Barcode Sync</a> for the concept.</p>
+<hr />
+<h2 id="1-start-the-ephys-recording">1. Start the ephys recording<a class="headerlink" href="#1-start-the-ephys-recording" title="Permanent link">&para;</a></h2>
+<p>Start Open Ephys as the session <strong>host</strong> so it owns the session container that
+MSW and any other systems write into.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Standalone ephys, or...</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>msw<span class="w"> </span>oe<span class="w"> </span>record<span class="w"> </span>--subject<span class="w"> </span>mouse001<span class="w"> </span>--session-extension<span class="w"> </span>pxi
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># ...a parent acquisition container that behaviour will join</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>msw<span class="w"> </span>oe<span class="w"> </span>record<span class="w"> </span>--subject<span class="w"> </span>mouse001<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span>--acquisition-extension<span class="w"> </span>ephys_multi_behavior<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span>--session-extension<span class="w"> </span>pxi
 </code></pre></div>
-<h2 id="task-settings-overrides">Task-settings overrides<a class="headerlink" href="#task-settings-overrides" title="Permanent link">&para;</a></h2>
-<p>Any key defined in a task's <code>task.yaml</code> can be overridden at runtime:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>msw<span class="w"> </span>run<span class="w"> </span>-t<span class="w"> </span>probabilistic_switching<span class="w"> </span>-s<span class="w"> </span>mouse001<span class="w"> </span>--setup<span class="w"> </span>setup-1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-ts<span class="w"> </span><span class="nv">n_max_trials</span><span class="o">=</span><span class="m">500</span><span class="w"> </span><span class="nv">reward_amount_ul</span><span class="o">=</span><span class="m">2</span>.5
+<p>On <code>record</code>, the plugin puts the GUI into <code>RECORD</code> and captures <strong>probe
+metadata</strong> (probe count and channel/stream layout) live from the GUI's
+<code>/api/processors</code> endpoint. That metadata is written to a session metadata JSON
+and, when an <code>acquisition_manifest.yaml</code> is present, stamped into it under
+<code>metadata.open_ephys</code>.</p>
+<p>Check the state at any time:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>msw<span class="w"> </span>oe<span class="w"> </span>status<span class="w">      </span><span class="c1"># -&gt; IDLE / ACQUIRE / RECORD</span>
 </code></pre></div>
-<p>Override priority (lowest → highest):</p>
-<ol>
-<li>Bundled <code>task.yaml</code> defaults (shipped with the package)</li>
-<li><code>&lt;config_dir&gt;/tasks/&lt;task_name&gt;/task.yaml</code> overlay (user-managed, git-tracked)</li>
-<li>Named mode (<code>--task-mode &lt;name&gt;</code>: picks a preset from the <code>mode:</code> section)</li>
-<li>Subject YAML <code>task_overrides[&lt;task_name&gt;]</code></li>
-<li>CLI <code>-ts KEY=VALUE</code></li>
-</ol>
-<p>The config-dir overlay lets you keep site-specific parameter adjustments in your
-<code>msw_configs/</code> repo without modifying the installed package or repeating <code>-ts</code> flags
-on every run.  Create the overlay at:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>msw_configs/tasks/&lt;task_name&gt;/task.yaml
+<hr />
+<h2 id="2-run-the-behaviour-session-attached-to-the-host">2. Run the behaviour session, attached to the host<a class="headerlink" href="#2-run-the-behaviour-session-attached-to-the-host" title="Permanent link">&para;</a></h2>
+<p>Point <code>msw run</code> at the running Open Ephys host with <code>--host openephys</code>. MSW
+attaches to the same session container and writes its behaviour acquisition
+inside it, so ephys and behaviour share one session folder.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>msw<span class="w"> </span>run<span class="w"> </span>-s<span class="w"> </span>mouse001<span class="w"> </span>-t<span class="w"> </span>sequence<span class="w"> </span>--host<span class="w"> </span>openephys
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># override the host address if it is not the machine default:</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>msw<span class="w"> </span>run<span class="w"> </span>-s<span class="w"> </span>mouse001<span class="w"> </span>-t<span class="w"> </span>sequence<span class="w"> </span>--host<span class="w"> </span>openephys:10.0.10.111
 </code></pre></div>
-<p>Use the same <code>default:</code> / <code>mode:</code> structure as the bundled file.  Keys absent from the
-overlay are inherited from the bundled defaults.</p>
-<h2 id="named-task-modes">Named task modes<a class="headerlink" href="#named-task-modes" title="Permanent link">&para;</a></h2>
-<p>Named modes let you switch between preconfigured parameter sets without editing any file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Run a habituation session (100% reward, no punishments)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>msw<span class="w"> </span>run<span class="w"> </span>-t<span class="w"> </span>probabilistic_switching_fixedsubjects<span class="w"> </span>-s<span class="w"> </span>mouse001<span class="w"> </span>--setup<span class="w"> </span>setup-1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>--task-mode<span class="w"> </span>stage00habituation
+<p>Throughout the session MSW emits TTL barcodes on its BNC output, which the ephys
+board records on the digital input wired in above.</p>
+<hr />
+<h2 id="3-stop">3. Stop<a class="headerlink" href="#3-stop" title="Permanent link">&para;</a></h2>
+<p>Stop the behaviour session normally, then return the GUI to idle:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>msw<span class="w"> </span>oe<span class="w"> </span>stop
 </code></pre></div>
-<p>Modes are defined in <code>task.yaml</code> under the <code>mode:</code> key.  Each mode is a dict of
-overrides applied on top of the <code>default:</code> section.</p>
-<h2 id="listing-available-tasks">Listing available tasks<a class="headerlink" href="#listing-available-tasks" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>msw<span class="w"> </span>tasks<span class="w"> </span>list<span class="w">                   </span><span class="c1"># all tasks (marks [overlay] if config-dir override exists)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>msw<span class="w"> </span>tasks<span class="w"> </span>list<span class="w"> </span>--filter<span class="w"> </span>opto<span class="w">     </span><span class="c1"># filter by name fragment</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>msw<span class="w"> </span>run<span class="w"> </span>--help<span class="w">                   </span><span class="c1"># also shows the task list in the epilog</span>
-</code></pre></div>
-<h2 id="serial-port-resolution">Serial-port resolution<a class="headerlink" href="#serial-port-resolution" title="Permanent link">&para;</a></h2>
-<p>When <code>--setup setup-1</code> is passed and <code>msw_configs/setups/setup-1.yaml</code> contains a
-<code>bpod</code> device with <code>port_by_path</code>, MSW resolves the correct <code>/dev/ttyXXX</code> automatically.
-The <code>-b / --port-bpod</code> flag is only needed on machines without a setup YAML.</p>
-<h2 id="inspecting-task-defaults-before-running">Inspecting task defaults before running<a class="headerlink" href="#inspecting-task-defaults-before-running" title="Permanent link">&para;</a></h2>
-<p>Before writing a config-dir overlay, check what parameters a task exposes:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>msw<span class="w"> </span>tasks<span class="w"> </span>defaults<span class="w"> </span>_test_flush_valves<span class="w">   </span><span class="c1"># print bundled task.yaml</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>msw<span class="w"> </span>tasks<span class="w"> </span>modes<span class="w"> </span>sequence<span class="w">                </span><span class="c1"># list named mode presets</span>
-</code></pre></div>
+<hr />
+<h2 id="4-align-offline">4. Align offline<a class="headerlink" href="#4-align-offline" title="Permanent link">&para;</a></h2>
+<p>Decode the barcode edges recorded on the Open Ephys digital input and match them
+to the behaviour barcodes to put ephys samples and trials on one timeline. The
+procedure is described in <a href="../barcode_sync/">Barcode Sync</a>.</p>
+<hr />
+<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../cli/oe/">msw oe</a> — full command reference</li>
+<li><a href="../barcode_sync/">Barcode Sync</a></li>
+<li><a href="../../concepts/multi_acquisition_and_photometry/">Multi-Acquisition &amp; Photometry</a></li>
+</ul>
 
 
 
