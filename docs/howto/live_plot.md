@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-[Tutorial 8: The plot spec](08_plot_spec.md).
+[Tutorial 8: The plot spec](plot_spec.md).
 
 ## What you'll learn
 
@@ -14,7 +14,7 @@
 
 The live plot is an on-rig window that draws the current session's panels as
 trials complete, so you can watch behaviour in real time. It is rendered from the
-same task-owned [plot spec](08_plot_spec.md) used for re-plotting, so what you
+same task-owned [plot spec](plot_spec.md) used for re-plotting, so what you
 see live matches what you can redraw later. It needs a desktop session with Qt
 available; install the `qt` extra:
 
@@ -35,7 +35,7 @@ msw run -t sequence -s mouse001 --setup rig-a -ts show_live_plot=false
 ```
 
 To make the choice permanent for a task or rig, set `show_live_plot` in the
-task's [config-dir overlay](05_config_overlays.md) instead of passing the flag
+task's [config-dir overlay](config_overlays.md) instead of passing the flag
 each time:
 
 ```yaml
@@ -48,7 +48,7 @@ default:
 When the plot is shown, a family of `online_plot_*` keys in the task's `task.yaml`
 tune its appearance. They are ordinary task settings, so you can inspect them
 with `msw tasks defaults <task>` and override them through any layer of the
-[overlay chain](05_config_overlays.md). Examples from the `sequence` task:
+[overlay chain](config_overlays.md). Examples from the `sequence` task:
 
 | Setting | Effect |
 |---|---|
@@ -67,4 +67,4 @@ It never affects what data is written, so it is safe to disable on headless rigs
 
 ## Next
 
-[Tutorial 11: Hooks](11_hooks.md).
+[Tutorial 11: Hooks](hooks.md).

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-Familiarity with the [setup config](03_setup_config.md).
+Familiarity with the [setup config](../setup/setup_config.md).
 
 ## What you'll learn
 
@@ -66,7 +66,7 @@ hooks:
 ```
 
 For one task regardless of rig, register in the task's `task.yaml` (so it travels
-through the [overlay chain](05_config_overlays.md)):
+through the [overlay chain](config_overlays.md)):
 
 ```yaml
 default:
@@ -87,5 +87,5 @@ protocol.
 
 ## Next
 
-[Tutorial 12: Post-processing](12_post_processing.md) *(optional)*. For the call
+[Tutorial 12: Post-processing](post_processing.md) *(optional)*. For the call
 order and error semantics, see the [Hook System](../concepts/hook_system.md).

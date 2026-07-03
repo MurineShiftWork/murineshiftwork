@@ -29,5 +29,5 @@ overwrite an existing target name.
 
 ## Next steps after creating a setup
 
-See [Tutorial: Adding a Setup](../tutorials/adding_setup.md) for the full workflow:
+See [Configure a Setup](../setup/setup_config.md) for the full workflow:
 device port paths, stage config, calibration, and optional hooks.

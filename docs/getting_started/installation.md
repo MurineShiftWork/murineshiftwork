@@ -17,12 +17,11 @@ pip install murineshiftwork
 | `.[pulsepal]` | `pypulsepal` | PulsePal optogenetic stimulator |
 | `.[calibration]` | `serial-scale-hx711`, `serial-scale-bench` | Valve calibration with serial scales |
 | `.[keyboard]` | `sshkeyboard` | Remote keyboard input |
-| `.[agent]` | `msw-agent` | Log relay daemon for real-time session monitoring |
-| `.[full]` | all of the above except `agent` | Full acquisition stack |
+| `.[full]` | all of the above | Full acquisition stack |
 
 ```bash
 pip install "murineshiftwork[tasks,rce,oe]"   # tasks + cameras + ephys
-pip install "murineshiftwork[full]"            # everything except agent
+pip install "murineshiftwork[full]"            # everything
 ```
 
 ## Development install (from source)

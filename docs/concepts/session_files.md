@@ -181,7 +181,7 @@ acquisition dir holds only the shared `.msw.session.yaml`, `.msw.log`, and
 ## Sequence task: subject state fields
 
 At session end, `save_session_end()` writes a summary to the per-subject state store
-(`~/.murineshiftwork/sequence/<subject>_level.json`) and the labwatch payload:
+(`~/.murineshiftwork/sequence/<subject>_level.json`) and the post-session hook payload:
 
 | Field | Description |
 |---|---|

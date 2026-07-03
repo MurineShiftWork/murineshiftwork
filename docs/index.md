@@ -8,10 +8,10 @@ Behaviour acquisition framework for head-fixed and freely moving murine experime
 - **TTL barcode synchronisation**: encodes Unix timestamps as a 37-bit pulse train for offline alignment of Bpod, cameras (RCE), and ephys (Open Ephys / Neuropixels)
 - **Setup configs**: per-setup YAML files in a shared git-tracked directory (`msw_configs/`)
 - **Subject configs**: per-subject YAML with per-task parameter overrides
-- **CLI**: `msw run`, `msw action`, `msw calibration`, `msw post`, `msw setup`, `msw subject`, `msw tasks`, `msw init`, `msw agent`
+- **CLI**: `msw run`, `msw action`, `msw calibration`, `msw post`, `msw setup`, `msw subject`, `msw tasks`, `msw init`
 - **Config overlay**: site-specific parameter adjustments in `msw_configs/tasks/<name>/task.yaml`; merged on top of bundled defaults without touching the installed package
 - **Named task modes**: `--task-mode <preset>` switches between `mode:` sections in `task.yaml` (e.g. habituation, deterministic, probe); mode is written to subject YAML and persists across sessions
-- **Pre/post session hooks**: custom Python classes registered in setup or task YAML; run before task init and after session end to integrate databases, Slack, LabWatch, etc.
+- **Pre/post session hooks**: custom Python classes registered in setup or task YAML; run before task init and after session end to integrate databases, Slack, etc.
 
 ## Quick start
 
@@ -43,8 +43,7 @@ murineshiftwork.*  (namespace)
 ├── msw-io             → murineshiftwork.{namespace, readers, io}
 ├── msw-tasks-core      → murineshiftwork.tasks._calibration_*, _test_*   (bundled utility protocols)
 ├── msw-tasks-lab       → murineshiftwork.tasks.{sequence, …}             (lab science tasks, private)
-├── msw-tasks-example   → murineshiftwork.tasks.<example>                 (template for external tasks)
-└── msw-agent          → murineshiftwork.logagent                        (session/trial relay)
+└── msw-tasks-example   → murineshiftwork.tasks.<example>                 (template for external tasks)
 
 Standalone plugin packages (own top-level package, register via entry points):
 ├── msw-open-ephys      → `msw oe` ephys host-session control
@@ -55,7 +54,7 @@ one-axis-stage, serial-scale-*, ttl-barcoder, rpi-camera-ensemble.
 ```
 
 Optional extras pull these in: `murineshiftwork[tasks]` (msw-tasks-core),
-`[oe]` (msw-open-ephys), `[agent]` (msw-agent), `[full]` for the rig bundle.
+`[oe]` (msw-open-ephys), `[full]` for the rig bundle.
 Per-machine setup and subject YAML live in a separate `msw_configs/` git repo,
 pointed to via `msw init`.
 
@@ -63,15 +62,15 @@ pointed to via `msw init`.
 
 | Section | Contents |
 |---|---|
-| [Getting started](getting_started/quickstart.md) | Installation, new machine, quickstart |
-| [Concepts](concepts/architecture.md) | Architecture, config system, hooks, session files |
+| [Getting started](getting_started/installation.md) | Installation, quick start, your first session |
+| [How-to guides](howto/task_settings.md) | Task settings, overlays, subjects, cameras, ephys, barcode sync, calibration, plotting, hooks |
+| [Concepts](concepts/architecture.md) | Architecture, config system, hooks, plugins, session files, hardware abstraction |
 | [Tasks](tasks/sequence.md) | Per-task behavioural paradigm, implementation, and parameter reference |
-| [Tutorials](tutorials/calibration.md) | Calibration, adding setups and subjects |
-| [CLI reference](cli/run.md) | Per-subcommand reference pages (`run`, `action`, `calibration`, `post`, `setup`, `subject`, `tasks`, `agent`, `init`) |
+| [CLI reference](cli/run.md) | Per-subcommand reference pages (`run`, `action`, `calibration`, `post`, `setup`, `subject`, `tasks`, `oe`, `flir`, `init`) |
 | [Hardware setup](setup/setup_config.md) | Devices, serial ports, cameras |
 
 ## See also
 
-- [New Machine Setup](getting_started/new_machine.md)
+- [Your First Session](getting_started/first_session.md)
 - [Setup Config reference](setup/setup_config.md)
 - [Hook System](concepts/hook_system.md)

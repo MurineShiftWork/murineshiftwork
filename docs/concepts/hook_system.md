@@ -1,7 +1,7 @@
 # Hook System
 
 Hooks are Python classes that run before and after each task session. They let you integrate
-external systems (databases, Slack, LabWatch) without modifying task code.
+external systems (databases, Slack, and other integrations) without modifying task code.
 
 ## Call points
 

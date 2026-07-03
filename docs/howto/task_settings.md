@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-[Tutorial 3: Describing a rig with a setup config](03_setup_config.md).
+[Tutorial 3: Describing a rig with a setup config](../setup/setup_config.md).
 
 ## What you'll learn
 
@@ -96,5 +96,5 @@ Permanent per-animal and per-rig changes live in config files, covered next.
 
 ## Next
 
-[Tutorial 5: The config overlay chain](05_config_overlays.md). For the full task
+[Tutorial 5: The config overlay chain](config_overlays.md). For the full task
 list and per-task modes, see the [tasks reference](../cli/tasks.md).

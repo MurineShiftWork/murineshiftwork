@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-[Tutorial 11: Hooks](11_hooks.md), and at least one session on disk.
+[Tutorial 11: Hooks](hooks.md), and at least one session on disk.
 
 ## What you'll learn
 
@@ -79,5 +79,5 @@ Both support `--dry-run`, so you can preview every change before it happens.
 
 ## Next
 
-[Tutorial 13: Hardware abstraction](13_hardware_abstraction.md) *(optional)*. For
+[Tutorial 13: Hardware abstraction](../concepts/hardware_abstraction.md) *(optional)*. For
 every flag, see the [post reference](../cli/post.md).
