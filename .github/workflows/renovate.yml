@@ -14,6 +14,7 @@ permissions:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   LOG_LEVEL: debug
+  RENOVATE_REPOSITORIES: ${{ github.repository }}  # operate on this repo only
 
 jobs:
   renovate:
