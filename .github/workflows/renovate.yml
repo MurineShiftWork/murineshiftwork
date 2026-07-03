@@ -35,7 +35,7 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: murineshiftwork
 
-      - uses: renovatebot/github-action@v41
+      - uses: renovatebot/github-action@v46
         with:
           configurationFile: renovate.json
           token: ${{ steps.app-token.outputs.token }}
