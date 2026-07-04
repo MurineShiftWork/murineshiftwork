@@ -27,6 +27,9 @@ Documentation = "https://MurineShiftWork.github.io/murineshiftwork/"
 "Issue Tracker" = "https://github.com/MurineShiftWork/murineshiftwork/issues"
 
 [project.optional-dependencies]
+# Analysis needs only the readers: `pip install msw-io` (lean, standalone). There is
+# deliberately no [io] extra, since any murineshiftwork extra also pulls the heavier
+# msw-core (scipy/matplotlib/seaborn/pybpod/sounddevice), defeating a lean install.
 dev = [
     "commitizen",
     "pytest",
@@ -52,6 +55,9 @@ agent = [
 oe = [
     "msw-open-ephys>=3.4.1",
 ]
+flir = [
+    "msw-flir-bonsai>=0.4.1",
+]
 pulsepal = [
     "pypulsepal>=0.4.6",
 ]
@@ -70,8 +76,14 @@ qt = [
 rce = [
     "rpi-camera-ensemble[conductor]>=0.6.2",
 ]
+stage = [
+    "one-axis-stage>=0.2.2",
+]
+# Full software stack: framework + tasks + first-party plugins (oe, flir). Rig-specific
+# hardware is a la carte on top: [rce] cameras, [pulsepal] stim, [calibration] scales,
+# [stage] linear stage.
 full = [
-    "murineshiftwork[tasks,calibration,keyboard,qt,rce,oe]",
+    "murineshiftwork[tasks,oe,flir]",
 ]
 
 [project.scripts]
