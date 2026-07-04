@@ -18,7 +18,7 @@ dependencies = [
     "tqdm",
     "plotly>=5.0",
     "pyarrow>=24.0.0",
-    "ipython>=9.14.1",
+    "ipython>=9.15.0",
 ]
 
 [project.urls]
