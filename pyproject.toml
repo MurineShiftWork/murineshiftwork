@@ -13,7 +13,7 @@ authors = [
 ]
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "msw-core>=0.12.0",
+    "msw-core>=0.12.1",
     "msw-io>=1.10.0",
     "tqdm",
     "plotly>=5.0",
@@ -44,20 +44,20 @@ docs = [
     "mkdocstrings[python]>=1.0.4,<2",
 ]
 tasks = [
-    "msw-tasks-core>=0.5.3",
+    "msw-tasks-core>=0.5.5",
 ]
 agent = [
     "msw-agent>=0.1.0",
 ]
 oe = [
-    "msw-open-ephys>=3.3.1",
+    "msw-open-ephys>=3.4.1",
 ]
 pulsepal = [
-    "pypulsepal>=0.4.5",
+    "pypulsepal>=0.4.6",
 ]
 calibration = [
-    "serial-scale-hx711>=2.1.0",
-    "serial-scale-bench>=0.2.0",
+    "serial-scale-hx711>=2.1.4",
+    "serial-scale-bench>=0.2.4",
 ]
 keyboard = [
     "sshkeyboard",
@@ -68,7 +68,7 @@ qt = [
     "myterial",
 ]
 rce = [
-    "rpi-camera-ensemble[conductor]>=0.5.0",
+    "rpi-camera-ensemble[conductor]>=0.6.2",
 ]
 full = [
     "murineshiftwork[tasks,calibration,keyboard,qt,rce,oe]",
