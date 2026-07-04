@@ -12,6 +12,11 @@
   "labels": ["dependencies"],
   "packageRules": [
     {
+      "description": "Never bump the Python runtime: the project pins requires-python <3.14; Renovate must not propose 3.14+",
+      "matchDepNames": ["python"],
+      "enabled": false
+    },
+    {
       "description": "Batch all non-major updates into one weekly auto-merged PR; each merge cuts one release with the latest floors",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "weekly dependencies",
