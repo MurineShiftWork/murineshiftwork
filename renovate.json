@@ -12,28 +12,35 @@
   "labels": ["dependencies"],
   "packageRules": [
     {
-      "description": "Never bump the Python runtime: the project pins requires-python <3.14; Renovate must not propose 3.14+",
-      "matchDepNames": ["python"],
+      "description": "Ignore everything by default (third-party libs, GitHub Actions, Python runtime): no continuous churn",
+      "matchPackageNames": ["*"],
       "enabled": false
     },
     {
-      "description": "Batch all non-major updates into one weekly auto-merged PR; each merge cuts one release with the latest floors",
+      "description": "Manage only the MSW ecosystem packages; bump their floors, batched into one weekly PR",
+      "matchPackageNames": [
+        "/^msw-/",
+        "acquisition-namespace",
+        "ttl-barcoder",
+        "pypulsepal",
+        "one-axis-stage",
+        "serial-scale-hx711",
+        "serial-scale-bench",
+        "rpi-camera-ensemble",
+        "safe-and-collaborative-architecture"
+      ],
+      "enabled": true,
+      "groupName": "msw packages"
+    },
+    {
+      "description": "Non-major MSW bumps auto-merge on green CI (each cuts a release pinning the latest floors)",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "groupName": "weekly dependencies",
       "automerge": true
     },
     {
-      "description": "Major bumps land as separate manual PRs (review before release)",
+      "description": "Major MSW bumps land as a manual PR (review before release)",
       "matchUpdateTypes": ["major"],
       "automerge": false
-    },
-    {
-      "description": "GitHub Actions bumps: CI-only chore, manual, no release",
-      "matchManagers": ["github-actions"],
-      "groupName": "github actions",
-      "automerge": false,
-      "semanticCommitType": "chore",
-      "labels": ["dependencies", "ci"]
     }
   ],
   "ignoreDeps": [
