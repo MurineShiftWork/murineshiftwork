@@ -1,10 +1,10 @@
 name: Renovate
 
 on:
+  # Nightly run; Renovate honours the weekly window in renovate.json for opening
+  # PRs, and the nightly cadence lets a green weekly PR auto-merge within a day.
   schedule:
-    - cron: "0 2 * * *"  # nightly 02:00 UTC (testing cadence)
-  push:
-    branches: [main]     # also refresh deps in the normal flow, ahead of versioning
+    - cron: "0 2 * * *"
   workflow_dispatch:
 
 permissions:

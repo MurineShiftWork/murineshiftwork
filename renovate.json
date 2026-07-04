@@ -2,43 +2,30 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "timezone": "Europe/London",
+  "schedule": ["before 6am on monday"],
   "rangeStrategy": "bump",
   "semanticCommits": "enabled",
   "semanticCommitType": "fix",
   "platformAutomerge": false,
+  "minimumReleaseAge": "3 days",
+  "internalChecksFilter": "strict",
   "labels": ["dependencies"],
   "packageRules": [
     {
-      "description": "Group all MSW namespace and hardware packages into one PR",
-      "matchPackageNames": [
-        "/^msw-/",
-        "acquisition-namespace",
-        "ttl-barcoder",
-        "pypulsepal",
-        "one-axis-stage",
-        "serial-scale-hx711",
-        "serial-scale-bench",
-        "rpi-camera-ensemble",
-        "safe-and-collaborative-architecture"
-      ],
-      "groupName": "MSW packages",
-      "automerge": true,
-      "labels": ["dependencies", "msw-packages"]
-    },
-    {
-      "description": "Auto-merge non-major dependency bumps once CI is green, so each release pins the latest floors",
+      "description": "Batch all non-major updates into one weekly auto-merged PR; each merge cuts one release with the latest floors",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "weekly dependencies",
       "automerge": true
     },
     {
-      "description": "Major bumps always land as a manual PR (review before release)",
+      "description": "Major bumps land as separate manual PRs (review before release)",
       "matchUpdateTypes": ["major"],
       "automerge": false
     },
     {
-      "description": "Group GitHub Actions version bumps (CI-only: chore, no release, manual)",
+      "description": "GitHub Actions bumps: CI-only chore, manual, no release",
       "matchManagers": ["github-actions"],
-      "groupName": "GitHub Actions",
+      "groupName": "github actions",
       "automerge": false,
       "semanticCommitType": "chore",
       "labels": ["dependencies", "ci"]
