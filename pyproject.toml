@@ -8,6 +8,9 @@ dynamic = ["version"]
 description = "Behaviour acquisition framework for standardised, scalable experiments."
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE" }
+classifiers = [
+    "License :: Free for non-commercial use",
+]
 authors = [
     { name = "Lars B. Rollik", email = "lars@rollik.me" },
 ]
