@@ -1,7 +1,9 @@
-# The create-github-app-token steps mint via `client-id` (the old `app-id` input is deprecated on
-# @v3). `MURINESHIFTWORK_CI_CLIENT_ID` = the murineshiftwork-ci App's Client ID string (Iv23li…),
-# paired with its private key in `CI_APP_PRIVATE_KEY`. The org secret must exist BEFORE this runs —
-# an empty client-id resolves to a failed token mint on every job.
+# The create-github-app-token steps mint via `app-id` (numeric App ID 4203266 = murineshiftwork-ci,
+# in `CI_APP_ID`) + its `CI_APP_PRIVATE_KEY`. `app-id` is deprecated on @v3 in favour of `client-id`,
+# but GitHub currently rejects the client-id-issued JWT on the installation lookup ("JSON web token
+# could not be decoded", 401 — verified 2026-08-06), so we stay on the warning-only app-id until
+# that is fixed upstream. murineshiftwork-ci Client ID (Iv23liaP7u2T0HsqR03a) is kept in the
+# `MURINESHIFTWORK_CI_CLIENT_ID` org secret for the retry.
 name: CI
 
 on:
@@ -34,7 +36,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
+          app-id: ${{ secrets.CI_APP_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: msw-agent
@@ -79,7 +81,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
+          app-id: ${{ secrets.CI_APP_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: msw-agent
@@ -124,7 +126,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
+          app-id: ${{ secrets.CI_APP_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: msw-agent
@@ -163,7 +165,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
+          app-id: ${{ secrets.CI_APP_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: msw-agent

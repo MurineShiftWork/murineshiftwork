@@ -29,13 +29,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Mints via `client-id` (deprecated `app-id` input on @v3). `MURINESHIFTWORK_CI_CLIENT_ID` =
-      # the murineshiftwork-ci App's Client ID string (Iv23li…), paired with `CI_APP_PRIVATE_KEY`.
-      # The org secret must exist BEFORE this runs — an empty client-id fails the token mint.
+      # Mints via `app-id` (numeric App ID 4203266 = murineshiftwork-ci, in `CI_APP_ID`) + its
+      # `CI_APP_PRIVATE_KEY`. `app-id` is deprecated on @v3 in favour of `client-id`, but GitHub
+      # currently rejects the client-id-issued JWT on the installation lookup ("JSON web token could
+      # not be decoded", 401), so we stay on the (warning-only) app-id until that is fixed upstream.
+      # murineshiftwork-ci Client ID (Iv23liaP7u2T0HsqR03a) is kept in `MURINESHIFTWORK_CI_CLIENT_ID`
+      # for the retry.
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
+          app-id: ${{ secrets.CI_APP_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: msw-agent
