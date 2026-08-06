@@ -1,3 +1,7 @@
+# The create-github-app-token steps mint via `client-id` (the old `app-id` input is deprecated on
+# @v3). `MURINESHIFTWORK_CI_CLIENT_ID` = the murineshiftwork-ci App's Client ID string (Iv23li…),
+# paired with its private key in `CI_APP_PRIVATE_KEY`. The org secret must exist BEFORE this runs —
+# an empty client-id resolves to a failed token mint on every job.
 name: CI
 
 on:
@@ -30,7 +34,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ secrets.CI_APP_ID }}
+          client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: msw-agent
@@ -75,7 +79,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ secrets.CI_APP_ID }}
+          client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: msw-agent
@@ -120,7 +124,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ secrets.CI_APP_ID }}
+          client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: msw-agent
@@ -159,7 +163,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ secrets.CI_APP_ID }}
+          client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: msw-agent
