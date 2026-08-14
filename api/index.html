@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1368,6 +1368,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../cli/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../cli/tasks/" class="md-nav__link">
         
   
@@ -1759,6 +1787,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#murineshiftwork.logic.machine_config.resolve_config_dir_with_source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resolve_config_dir_with_source
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#murineshiftwork.logic.machine_config.resolve_data_dir" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1810,17 +1849,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#murineshiftwork.logic.task_process.TaskProcess.connect_bpod" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        connect_bpod
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#murineshiftwork.logic.task_process.TaskProcess.init_task" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1858,6 +1886,17 @@
   
     <nav class="md-nav" aria-label="TaskRunner">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#murineshiftwork.logic.task_process.TaskRunner.emit_trial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        emit_trial
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#murineshiftwork.logic.task_process.TaskRunner.get_path" class="md-nav__link">
@@ -2163,6 +2202,28 @@ Machine config is checked as a fallback; reads new-style key first:
 <div class="doc doc-object doc-function">
 
 
+<h3 id="murineshiftwork.logic.machine_config.resolve_config_dir_with_source" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">resolve_config_dir_with_source</span><span class="p">(</span><span class="n">cli_override</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+
+<a href="#murineshiftwork.logic.machine_config.resolve_config_dir_with_source" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return <code>(config_dir, source)</code> where <code>source</code> names the winning layer.</p>
+<p>The single definition of the config-dir priority chain; <code>resolve_config_dir</code> and
+<code>msw config show</code> both read it so the reported source can never drift from the value
+actually used. <code>source</code> is a human-readable label; <code>config_dir</code> is <code>""</code> if nothing
+is set.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="murineshiftwork.logic.machine_config.resolve_data_dir" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">resolve_data_dir</span><span class="p">(</span><span class="n">cli_override</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
 
@@ -2286,26 +2347,6 @@ the caller (controller/hardware manager) own the hardware connection.  When
 <div class="doc doc-object doc-function">
 
 
-<h4 id="murineshiftwork.logic.task_process.TaskProcess.connect_bpod" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">connect_bpod</span><span class="p">(</span><span class="n">max_try</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">retry_delay_s</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
-
-<a href="#murineshiftwork.logic.task_process.TaskProcess.connect_bpod" class="headerlink" title="Permanent link">&para;</a></h4>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Connect device on serial port.</p>
-<p>max_try and retry_delay_s are forwarded to BpodFactory; when None,
-BpodFactory uses its own defaults (connect_retries=3, retry_delay_s=2.0).</p>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
 <h4 id="murineshiftwork.logic.task_process.TaskProcess.init_task" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">init_task</span><span class="p">()</span></code>
 
@@ -2389,6 +2430,28 @@ can wrap this in a QThread adapter if needed.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="murineshiftwork.logic.task_process.TaskRunner.emit_trial" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">emit_trial</span><span class="p">(</span><span class="n">trial</span><span class="p">)</span></code>
+
+<a href="#murineshiftwork.logic.task_process.TaskRunner.emit_trial" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Persist one scored trial through the framework's trial-data writer.</p>
+<p>A migrated task calls this once per scored trial instead of writing the file itself: the
+durable write goes through the injected <code>TrialDataWriter</code> (<code>input_kwargs['trial_writer']</code>)
+so the framework owns the destination path and on-disk format. A task that has not migrated
+never calls this, and the writer stays empty.</p>
+
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
@@ -2701,7 +2764,7 @@ config source becomes available.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "toc.integrate", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
