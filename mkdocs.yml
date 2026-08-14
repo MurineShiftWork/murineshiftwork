@@ -57,6 +57,7 @@ nav:
     - subject: cli/subject.md
     - calibration: cli/calibration.md
     - post: cli/post.md
+    - config: cli/config.md
     - tasks: cli/tasks.md
     - oe: cli/oe.md
     - flir: cli/flir.md
