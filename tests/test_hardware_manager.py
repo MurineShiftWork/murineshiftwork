@@ -265,7 +265,11 @@ class TestBpodDevice:
             MockFactory.return_value = MagicMock()
             dev.connect()
         MockFactory.assert_called_once_with(
-            serial_port=str(port), connect_retries=5, retry_delay_s=0.1
+            serial_port=str(port),
+            workspace_path=None,
+            session_name=None,
+            connect_retries=5,
+            retry_delay_s=0.1,
         )
 
 
