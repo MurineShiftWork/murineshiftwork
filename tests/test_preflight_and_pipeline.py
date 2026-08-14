@@ -285,7 +285,7 @@ def test_preflight_fails_on_bad_bpod_port(tmp_path):
         preflight_hardware_check as _preflight_hardware_check,
     )
 
-    with pytest.raises(RuntimeError, match="Bpod serial port not accessible"):
+    with pytest.raises(RuntimeError, match="bpod serial port not accessible"):
         _preflight_hardware_check(
             {
                 "debug": False,
@@ -358,7 +358,7 @@ def test_preflight_collects_multiple_errors(tmp_path):
             }
         )
     msg = str(exc_info.value)
-    assert "Bpod" in msg
+    assert "bpod" in msg
     assert "Camera" in msg
 
 
