@@ -24,6 +24,13 @@ pip install "murineshiftwork[tasks,rce,oe]"   # tasks + cameras + ephys
 pip install "murineshiftwork[full]"            # everything
 ```
 
+## System dependencies
+
+On Linux, sound output needs the native PortAudio library, which `pip` does not
+install: `sudo apt install libportaudio2` on every rig (the macOS and Windows
+wheels bundle it). Without it sessions run silently without sound; see
+[Sound Output](../setup/sound.md).
+
 ## Development install (from source)
 
 ```bash

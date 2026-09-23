@@ -5,6 +5,47 @@ The reward/feedback sound is played through a low-latency output stream
 name searched for is `XONAR SOUND CARD` (override with the `sound_device` key in
 the setup config to pin an exact device).
 
+## Required system library: PortAudio
+
+`sounddevice` (the Python package `msw-core` depends on) is a thin wrapper
+around the native **PortAudio** library. `pip install` only installs the Python
+wheel — the native library is a separate, OS-level dependency that is **not**
+declared in any `pyproject.toml` and must be installed manually on every
+machine that runs a task with sound (i.e. every rig).
+
+If it's missing, `import sounddevice` raises at import time:
+
+```
+OSError: PortAudio library not found
+```
+
+On Linux (Debian/Ubuntu):
+
+```bash
+sudo apt install libportaudio2
+```
+
+On macOS and Windows the PyPI `sounddevice` wheels bundle PortAudio, so no
+separate install is needed.
+
+**This failure is silent in real sessions.** Lab tasks play sound through
+`SoundServerClient`, which runs PortAudio in an isolated subprocess specifically
+so an audio failure can't crash the session — it catches the `OSError` and
+degrades to no-sound, logging only:
+
+```
+sound server: failed to open sound device; running WITHOUT sound
+```
+
+So a rig with sound genuinely broken can run a full session with no audible or
+fatal error. The sound server subprocess does not write to the session log: the
+line (with the traceback) appears on the console (stderr) of the `msw run`
+process, so check the terminal if reward/feedback sound is missing.
+(`_calibration_sound_latency`, which constructs `StereoSound` directly instead
+of through `SoundServerClient`, is the exception: there the same error is
+**not** caught and the task crashes at startup — useful as a quick, loud check
+that PortAudio is actually present on a rig.)
+
 ## Platform: Linux vs Windows
 
 `sound_device` is a **PortAudio device name**, which differs by OS. Find it per
