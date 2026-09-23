@@ -24,6 +24,23 @@ pip install "murineshiftwork[tasks,rce,oe]"   # tasks + cameras + ephys
 pip install "murineshiftwork[full]"            # everything
 ```
 
+## System dependencies
+
+Sound output (reward/feedback chirps) requires the native **PortAudio**
+library, which `pip install` does **not** provide — it's a separate OS-level
+package, not declared in any `pyproject.toml`. Install it on every rig:
+
+```bash
+sudo apt install libportaudio2   # Debian/Ubuntu
+brew install portaudio           # macOS
+```
+
+Without it, `import sounddevice` fails at import time with
+`OSError: PortAudio library not found`. Real sessions degrade silently to
+no-sound rather than crashing (see [Sound Output](../setup/sound.md) for why
+and how to detect it) — worth verifying explicitly on a fresh rig rather than
+relying on a session to surface it.
+
 ## Development install (from source)
 
 ```bash
