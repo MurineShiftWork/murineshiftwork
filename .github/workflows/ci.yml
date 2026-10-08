@@ -22,7 +22,7 @@ env:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: "!startsWith(github.event.head_commit.message, 'bump:')"
     steps:
       - uses: actions/checkout@v6
@@ -67,7 +67,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-26.04]
         python-version: ["3.12", "3.13"]
     steps:
       - uses: actions/checkout@v6
@@ -112,7 +112,7 @@ jobs:
 
   integration-full:
     name: Integration (released extras - PyPI only)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v6
@@ -151,7 +151,7 @@ jobs:
 
   integration-dev:
     name: Integration (full + dev packages - not yet on PyPI)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v6
@@ -196,7 +196,7 @@ jobs:
 
   namespace-check:
     name: Namespace package readiness
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: "!startsWith(github.event.head_commit.message, 'bump:')"
     steps:
       - uses: actions/checkout@v6
@@ -242,7 +242,7 @@ jobs:
 
   ci:
     name: CI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: [lint, test, integration-full, integration-dev, namespace-check]
     if: always()
     steps:
