@@ -2154,7 +2154,7 @@ Machine config is checked as a fallback; reads new-style key first:
 
 
 <h3 id="murineshiftwork.logic.machine_config.resolve_config_dir" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">resolve_config_dir</span><span class="p">(</span><span class="n">cli_override</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">resolve_config_dir</span><span class="p">(</span><span class="n">cli_override</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span></code>
 
 <a href="#murineshiftwork.logic.machine_config.resolve_config_dir" class="headerlink" title="Permanent link">&para;</a></h3>
 
@@ -2203,7 +2203,7 @@ Machine config is checked as a fallback; reads new-style key first:
 
 
 <h3 id="murineshiftwork.logic.machine_config.resolve_config_dir_with_source" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">resolve_config_dir_with_source</span><span class="p">(</span><span class="n">cli_override</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">resolve_config_dir_with_source</span><span class="p">(</span><span class="n">cli_override</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span></code>
 
 <a href="#murineshiftwork.logic.machine_config.resolve_config_dir_with_source" class="headerlink" title="Permanent link">&para;</a></h3>
 
@@ -2225,7 +2225,7 @@ is set.</p>
 
 
 <h3 id="murineshiftwork.logic.machine_config.resolve_data_dir" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">resolve_data_dir</span><span class="p">(</span><span class="n">cli_override</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">resolve_data_dir</span><span class="p">(</span><span class="n">cli_override</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span></code>
 
 <a href="#murineshiftwork.logic.machine_config.resolve_data_dir" class="headerlink" title="Permanent link">&para;</a></h3>
 
@@ -2435,18 +2435,23 @@ can wrap this in a QThread adapter if needed.</p>
 
 
 <h4 id="murineshiftwork.logic.task_process.TaskRunner.emit_trial" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">emit_trial</span><span class="p">(</span><span class="n">trial</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">emit_trial</span><span class="p">(</span><span class="n">trial</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">relay</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#murineshiftwork.logic.task_process.TaskRunner.emit_trial" class="headerlink" title="Permanent link">&para;</a></h4>
 
 
     <div class="doc doc-contents ">
 
-        <p>Persist one scored trial through the framework's trial-data writer.</p>
-<p>A migrated task calls this once per scored trial instead of writing the file itself: the
-durable write goes through the injected <code>TrialDataWriter</code> (<code>input_kwargs['trial_writer']</code>)
-so the framework owns the destination path and on-disk format. A task that has not migrated
-never calls this, and the writer stays empty.</p>
+        <p>Persist one scored trial through the framework, and optionally relay it.</p>
+<p>A migrated task calls this once per scored trial instead of writing the file and pushing to
+the monitor itself:
+  - the durable write goes through the injected <code>TrialDataWriter</code>
+    (<code>input_kwargs['trial_writer']</code>), so the framework owns the destination path and the
+    on-disk format;
+  - if <code>relay</code> is given (the task's flat monitor event - a different, smaller shape than
+    the stored <code>trial</code>), it is dispatched to the LogAgent relay queue best-effort (a down
+    monitor never interrupts the task).</p>
+<p>A task that has not migrated never calls this, and the writer stays empty.</p>
 
 
     </div>

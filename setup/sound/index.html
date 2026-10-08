@@ -1801,7 +1801,7 @@ the setup config to pin an exact device).</p>
 <h2 id="platform-linux-vs-windows">Platform: Linux vs Windows<a class="headerlink" href="#platform-linux-vs-windows" title="Permanent link">&para;</a></h2>
 <p><code>sound_device</code> is a <strong>PortAudio device name</strong>, which differs by OS. Find it per
 rig with:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import sounddevice; print(sounddevice.query_devices())&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import sounddevice; print(sounddevice.query_devices())"</span>
 </code></pre></div>
 <ul>
 <li><strong>Linux</strong> — use the ALSA / PipeWire name from <code>query_devices</code> (e.g. <code>pipewire</code>,

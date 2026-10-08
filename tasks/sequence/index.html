@@ -2315,7 +2315,7 @@ making it git-tracked and portable across machines. A crash-recovery backup
 (<code>~/.murineshiftwork/sequence/&lt;subject&gt;_level.json</code>) is updated after every level
 change but is never read at session start — the subject YAML is authoritative.</p>
 <p>On session end the log reports, for example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Session end: &#39;mouse001&#39;: level 12, trials 312 (289 task, 23 no-response)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Session end: 'mouse001': level 12, trials 312 (289 task, 23 no-response)
 </code></pre></div>
 <hr />
 <h2 id="key-parameters">Key parameters<a class="headerlink" href="#key-parameters" title="Permanent link">&para;</a></h2>
@@ -2386,7 +2386,7 @@ disabled by default and can be combined or activated per-mode.</p>
 positions or ports on a per-trial draw.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">reward_perturbation</span><span class="p">:</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">position</span><span class="w">          </span><span class="c1"># &quot;position&quot; (0-indexed slot) or &quot;port&quot; (hardware port)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">position</span><span class="w">          </span><span class="c1"># "position" (0-indexed slot) or "port" (hardware port)</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">matched_omission_duration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nt">distribution</span><span class="p">:</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nt">4</span><span class="p">:</span><span class="w">                      </span><span class="c1"># apply to the final poke (position index 4)</span>

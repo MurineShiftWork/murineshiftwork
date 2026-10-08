@@ -1950,8 +1950,8 @@ YAML so the next session auto-picks it up without the CLI flag.</p>
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span><span class="nt">known_positions</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
 <a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="nt">calibrations</span><span class="p">:</span>
 <a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">  </span><span class="nt">bpod_valve</span><span class="p">:</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span><span class="s">&quot;1&quot;</span><span class="p p-Indicator">:</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">      </span><span class="nt">updated</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2025-08-07T10:00:00&quot;</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span><span class="s">"1"</span><span class="p p-Indicator">:</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">      </span><span class="nt">updated</span><span class="p">:</span><span class="w"> </span><span class="s">"2025-08-07T10:00:00"</span>
 <a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">      </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">0.01</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.7</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.028</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2.1</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">]</span>
 <a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="nt">hooks</span><span class="p">:</span>
 <a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">  </span><span class="nt">pre_task</span><span class="p">:</span>
@@ -1975,7 +1975,7 @@ locally stored overlay in <code>msw_configs/</code> does not automatically pick 
 <h3 id="on-load-behaviour">On-load behaviour<a class="headerlink" href="#on-load-behaviour" title="Permanent link">&para;</a></h3>
 <p>When MSW loads a config file whose <code>msw_schema_version</code> is behind the bundled
 version, it emits a one-time console warning:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>WARNING  Config &#39;tasks/sequence/task.yaml&#39; is at schema v2, bundled is v3.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>WARNING  Config 'tasks/sequence/task.yaml' is at schema v2, bundled is v3.
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>         Run `msw config upgrade task sequence` to add new defaults.
 </code></pre></div>
 <p>MSW <strong>never writes to config files on load</strong>. The warning is informational
