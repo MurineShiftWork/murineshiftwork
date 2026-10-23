@@ -664,6 +664,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#required-system-library-portaudio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required system library: PortAudio
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#platform-linux-vs-windows" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1798,10 +1809,38 @@
 (<code>StereoSound</code>). Most rigs use an <strong>ASUS XONAR</strong> sound card; the default device
 name searched for is <code>XONAR SOUND CARD</code> (override with the <code>sound_device</code> key in
 the setup config to pin an exact device).</p>
+<h2 id="required-system-library-portaudio">Required system library: PortAudio<a class="headerlink" href="#required-system-library-portaudio" title="Permanent link">&para;</a></h2>
+<p><code>sounddevice</code> (the Python package <code>msw-core</code> depends on) is a thin wrapper
+around the native <strong>PortAudio</strong> library. <code>pip install</code> only installs the Python
+wheel — the native library is a separate, OS-level dependency that is <strong>not</strong>
+declared in any <code>pyproject.toml</code> and must be installed manually on every
+machine that runs a task with sound (i.e. every rig).</p>
+<p>If it's missing, <code>import sounddevice</code> raises at import time:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>OSError: PortAudio library not found
+</code></pre></div>
+<p>On Linux (Debian/Ubuntu):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>libportaudio2
+</code></pre></div>
+<p>On macOS and Windows the PyPI <code>sounddevice</code> wheels bundle PortAudio, so no
+separate install is needed.</p>
+<p><strong>This failure is silent in real sessions.</strong> Lab tasks play sound through
+<code>SoundServerClient</code>, which runs PortAudio in an isolated subprocess specifically
+so an audio failure can't crash the session — it catches the <code>OSError</code> and
+degrades to no-sound, logging only:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>sound server: failed to open sound device; running WITHOUT sound
+</code></pre></div>
+<p>So a rig with sound genuinely broken can run a full session with no audible or
+fatal error. The sound server subprocess does not write to the session log: the
+line (with the traceback) appears on the console (stderr) of the <code>msw run</code>
+process, so check the terminal if reward/feedback sound is missing.
+(<code>_calibration_sound_latency</code>, which constructs <code>StereoSound</code> directly instead
+of through <code>SoundServerClient</code>, is the exception: there the same error is
+<strong>not</strong> caught and the task crashes at startup — useful as a quick, loud check
+that PortAudio is actually present on a rig.)</p>
 <h2 id="platform-linux-vs-windows">Platform: Linux vs Windows<a class="headerlink" href="#platform-linux-vs-windows" title="Permanent link">&para;</a></h2>
 <p><code>sound_device</code> is a <strong>PortAudio device name</strong>, which differs by OS. Find it per
 rig with:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import sounddevice; print(sounddevice.query_devices())"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import sounddevice; print(sounddevice.query_devices())"</span>
 </code></pre></div>
 <ul>
 <li><strong>Linux</strong> — use the ALSA / PipeWire name from <code>query_devices</code> (e.g. <code>pipewire</code>,
@@ -1867,7 +1906,7 @@ crashing the session, but they do <strong>not</strong> replace the driver settin
 <h2 id="verifying-a-rig">Verifying a rig<a class="headerlink" href="#verifying-a-rig" title="Permanent link">&para;</a></h2>
 <p>On session start, look for this log line — it reports the rate the stream
 actually opened at:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>StereoSound: persistent output stream open at &lt;N&gt; Hz (latency~&lt;M&gt; ms)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>StereoSound: persistent output stream open at &lt;N&gt; Hz (latency~&lt;M&gt; ms)
 </code></pre></div>
 <ul>
 <li><code>&lt;N&gt; = 192000</code> → full rate, driver triplet correct.</li>

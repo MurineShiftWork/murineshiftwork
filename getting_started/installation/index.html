@@ -401,6 +401,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#system-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#development-install-from-source" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1852,6 +1863,11 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"murineshiftwork[tasks,rce,oe]"</span><span class="w">   </span><span class="c1"># tasks + cameras + ephys</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"murineshiftwork[full]"</span><span class="w">            </span><span class="c1"># everything</span>
 </code></pre></div>
+<h2 id="system-dependencies">System dependencies<a class="headerlink" href="#system-dependencies" title="Permanent link">&para;</a></h2>
+<p>On Linux, sound output needs the native PortAudio library, which <code>pip</code> does not
+install: <code>sudo apt install libportaudio2</code> on every rig (the macOS and Windows
+wheels bundle it). Without it sessions run silently without sound; see
+<a href="../../setup/sound/">Sound Output</a>.</p>
 <h2 id="development-install-from-source">Development install (from source)<a class="headerlink" href="#development-install-from-source" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/MurineShiftWork/murineshiftwork
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>murineshiftwork
