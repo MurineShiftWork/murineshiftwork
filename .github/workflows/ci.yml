@@ -18,6 +18,11 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # A PR from a fork gets no repo secrets, so it cannot mint the App token and the private
+  # msw-agent (not on PyPI) cannot be fetched. Fork PRs skip the private sources and install with
+  # `uv pip install`, which resolves only the selected extras (`uv sync` resolves every extra,
+  # including `agent`). The agent-dependent job is skipped for forks.
+  FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
 
 jobs:
   lint:
@@ -34,12 +39,18 @@ jobs:
           python-version: "3.12"
 
       - uses: ./.github/actions/private-sources
+        if: env.FORK_PR != 'true'
         with:
           client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.MURINESHIFTWORK_CI_PRIVATE_KEY }}
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: |
+          if [ "$FORK_PR" = "true" ]; then
+            uv venv && uv pip install -e ".[dev]"
+          else
+            uv sync --extra dev
+          fi
 
       - name: Restore pyproject.toml (remove injected sources before pre-commit)
         run: git checkout -- pyproject.toml
@@ -66,20 +77,26 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - uses: ./.github/actions/private-sources
+        if: env.FORK_PR != 'true'
         with:
           client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.MURINESHIFTWORK_CI_PRIVATE_KEY }}
 
       - name: Install dependencies
-        run: uv sync --extra dev --extra oe --extra tasks
+        run: |
+          if [ "$FORK_PR" = "true" ]; then
+            uv venv && uv pip install -e ".[dev,oe,tasks]"
+          else
+            uv sync --extra dev --extra oe --extra tasks
+          fi
 
       - name: Verify entry points
         run: |
-          uv run murineshiftwork --version
-          uv run msw --version
+          uv run --no-sync murineshiftwork --version
+          uv run --no-sync msw --version
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run --no-sync pytest
         env:
           MSW_CI: "1"
           MPLBACKEND: Agg
@@ -98,22 +115,29 @@ jobs:
           python-version: "3.12"
 
       - uses: ./.github/actions/private-sources
+        if: env.FORK_PR != 'true'
         with:
           client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.MURINESHIFTWORK_CI_PRIVATE_KEY }}
 
       - name: Install with full extra (released, PyPI only)
-        run: uv sync --extra dev --extra full
+        run: |
+          if [ "$FORK_PR" = "true" ]; then
+            uv venv && uv pip install -e ".[dev,full]"
+          else
+            uv sync --extra dev --extra full
+          fi
 
       - name: Run integration and namespace tests
-        run: uv run pytest tests/test_integration_deps.py tests/test_namespace_readiness.py -v
+        run: uv run --no-sync pytest tests/test_integration_deps.py tests/test_namespace_readiness.py -v
         env:
           MSW_CI: "1"
 
   integration-dev:
     name: Integration (full + dev packages - not yet on PyPI)
     runs-on: ubuntu-26.04
-    if: github.event_name == 'pull_request'
+    # Needs the private msw-agent: skipped for fork PRs (no secrets); the CI gate accepts skipped.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: actions/checkout@v6
         with:
@@ -132,7 +156,7 @@ jobs:
         run: uv sync --extra dev --extra full --extra agent
 
       - name: Run integration and namespace tests
-        run: uv run pytest tests/test_integration_deps.py tests/test_namespace_readiness.py -v
+        run: uv run --no-sync pytest tests/test_integration_deps.py tests/test_namespace_readiness.py -v
         env:
           MSW_CI: "1"
 
