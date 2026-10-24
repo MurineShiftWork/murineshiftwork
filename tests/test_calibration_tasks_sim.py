@@ -49,7 +49,8 @@ def _make_sim_kwargs(tmp_path: Path, valve_id: int = 1) -> dict:
             "TARGET_RANGE_UL": [0.1, 5.0],
         },
         "calibration_file_liquid": str(cal_file),
-        "scale": SimWeighingScale(weight_g=0.004),
+        # the framework injects the opened scale via the device collection (msw-tasks-core >= 0.5.7)
+        "devices": {"scale": SimWeighingScale(weight_g=0.004)},
         "config_dir": "",
         "setup": "unknown_setup",
     }
@@ -98,7 +99,7 @@ class TestCalibrationLiquidStaticSim:
 
         kwargs = _make_sim_kwargs(tmp_path)
         scale = SimWeighingScale(weight_g=0.004)
-        kwargs["scale"] = scale
+        kwargs["devices"] = {"scale": scale}
         bpod = SimBpod()
         bpod.open()
 
@@ -150,7 +151,7 @@ class TestCalibrationLiquidDynamicSim:
 
         kwargs = _make_sim_kwargs(tmp_path)
         scale = SimWeighingScale(weight_g=0.004)
-        kwargs["scale"] = scale
+        kwargs["devices"] = {"scale": scale}
         bpod = SimBpod()
         bpod.open()
 
