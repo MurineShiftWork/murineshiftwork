@@ -14,7 +14,7 @@ mkdir -p "$PROJECT_DIR"
 cd "$PROJECT_DIR"
 
 REPOS=(
-    "https://github.com/larsrollik/murineshiftwork"
+    "https://github.com/MurineShiftWork/murineshiftwork"
     "https://github.com/MurineShiftWork/msw-core"
     "https://github.com/MurineShiftWork/msw-io"
     "https://github.com/MurineShiftWork/msw-tasks-core"
