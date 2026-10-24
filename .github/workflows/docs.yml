@@ -32,23 +32,10 @@ jobs:
       # Single org CI bot = the murineshiftwork-ci App (4203266): mints via `client-id`
       # (`MURINESHIFTWORK_CI_CLIENT_ID`) + that same app's `MURINESHIFTWORK_CI_PRIVATE_KEY`. Both
       # app-scoped so the client-id and key can't drift onto different apps.
-      - uses: actions/create-github-app-token@v3
-        id: app-token
+      - uses: ./.github/actions/private-sources
         with:
           client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.MURINESHIFTWORK_CI_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: msw-agent
-
-      - name: Configure git to use the App token for private repos
-        run: git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
-
-      - name: Add private package sources (not on PyPI)
-        shell: python
-        run: |
-          with open('pyproject.toml', 'a') as f:
-              f.write('\n[tool.uv.sources]\n')
-              f.write('msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }\n')
 
       - name: Install dependencies
         run: uv sync --extra docs

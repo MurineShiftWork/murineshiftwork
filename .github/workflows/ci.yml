@@ -1,5 +1,5 @@
-# Single org CI bot = the murineshiftwork-ci App (App ID 4203266). The create-github-app-token steps
-# mint via `client-id` (`MURINESHIFTWORK_CI_CLIENT_ID` = Iv23liaP7u2T0HsqR03a) + that same app's
+# Single org CI bot = the murineshiftwork-ci App (App ID 4203266). The private-sources action
+# (.github/actions/private-sources) mints via `client-id` (`MURINESHIFTWORK_CI_CLIENT_ID` = Iv23liaP7u2T0HsqR03a) + that same app's
 # private key (`MURINESHIFTWORK_CI_PRIVATE_KEY`). Both are app-scoped names so they can't be paired
 # with a different app's credential (the earlier "JSON web token could not be decoded" 401 was
 # exactly that: murineshiftwork-ci's client-id against labwatch-ci's key). The app must be installed
@@ -33,23 +33,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - uses: actions/create-github-app-token@v3
-        id: app-token
+      - uses: ./.github/actions/private-sources
         with:
           client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.MURINESHIFTWORK_CI_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: msw-agent
-
-      - name: Configure git to use the App token for private repos
-        run: git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
-
-      - name: Add private package sources (not on PyPI)
-        shell: python
-        run: |
-          with open('pyproject.toml', 'a') as f:
-              f.write('\n[tool.uv.sources]\n')
-              f.write('msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }\n')
 
       - name: Install dependencies
         run: uv sync --extra dev
@@ -78,23 +65,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/create-github-app-token@v3
-        id: app-token
+      - uses: ./.github/actions/private-sources
         with:
           client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.MURINESHIFTWORK_CI_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: msw-agent
-
-      - name: Configure git to use the App token for private repos
-        run: git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
-
-      - name: Add private package sources (not on PyPI)
-        shell: python
-        run: |
-          with open('pyproject.toml', 'a') as f:
-              f.write('\n[tool.uv.sources]\n')
-              f.write('msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }\n')
 
       - name: Install dependencies
         run: uv sync --extra dev --extra oe --extra tasks
@@ -123,23 +97,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - uses: actions/create-github-app-token@v3
-        id: app-token
+      - uses: ./.github/actions/private-sources
         with:
           client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.MURINESHIFTWORK_CI_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: msw-agent
-
-      - name: Configure git to use the App token for private repos
-        run: git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
-
-      - name: Add private package sources (not on PyPI)
-        shell: python
-        run: |
-          with open('pyproject.toml', 'a') as f:
-              f.write('\n[tool.uv.sources]\n')
-              f.write('msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }\n')
 
       - name: Install with full extra (released, PyPI only)
         run: uv sync --extra dev --extra full
@@ -162,29 +123,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - uses: actions/create-github-app-token@v3
-        id: app-token
+      - uses: ./.github/actions/private-sources
         with:
           client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
           private-key: ${{ secrets.MURINESHIFTWORK_CI_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: msw-agent
-
-      - name: Configure git to use the App token for private repos
-        run: git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
-
-      - name: Add private package sources (not on PyPI)
-        shell: python
-        run: |
-          # Add git sources for packages not yet released to PyPI.
-          # To add a new dev package: append an f.write line below.
-          dev_sources = [
-              'msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }',
-          ]
-          with open('pyproject.toml', 'a') as f:
-              f.write('\n[tool.uv.sources]\n')
-              for src in dev_sources:
-                  f.write(src + '\n')
 
       - name: Install with full and dev extras
         run: uv sync --extra dev --extra full --extra agent

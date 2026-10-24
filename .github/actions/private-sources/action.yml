@@ -1,0 +1,41 @@
+name: Private package sources
+description: >
+  Make packages that are not on PyPI installable: mint a murineshiftwork-ci App token
+  scoped to those repos, route github.com git fetches through it, and append their git
+  sources to pyproject.toml (CI only; the committed pyproject keeps PyPI references,
+  per the workspace rule). Jobs that run pre-commit afterwards restore pyproject.toml.
+  Run after actions/checkout.
+inputs:
+  client-id:
+    description: murineshiftwork-ci App client ID (secrets.MURINESHIFTWORK_CI_CLIENT_ID)
+    required: true
+  private-key:
+    description: murineshiftwork-ci App private key (secrets.MURINESHIFTWORK_CI_PRIVATE_KEY)
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/create-github-app-token@v3
+      id: app-token
+      with:
+        client-id: ${{ inputs.client-id }}
+        private-key: ${{ inputs.private-key }}
+        owner: ${{ github.repository_owner }}
+        # Every repo listed in the sources below.
+        repositories: msw-agent
+
+    - name: Configure git to use the App token for private repos
+      shell: bash
+      run: git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
+
+    - name: Add private package sources (not on PyPI)
+      shell: python
+      run: |
+        # To add a package that is not on PyPI: append its source here and its repo above.
+        dev_sources = [
+            'msw-agent = { git = "https://github.com/MurineShiftWork/msw-agent" }',
+        ]
+        with open("pyproject.toml", "a") as f:
+            f.write("\n[tool.uv.sources]\n")
+            for src in dev_sources:
+                f.write(src + "\n")
