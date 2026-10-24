@@ -237,21 +237,20 @@ def test_task_overlay_deep_merges_nested_keys(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Sticky task_mode from subject YAML
+# task_mode: chosen per run with --task-mode, never stored in the subject YAML
 
 
-def _write_task_overlay_with_mode(tmp_path, task, mode_name, mode_params):
-    """Write overlay task.yaml with both default: and mode: sections."""
+def _write_task_overlay_with_mode(tmp_path, task, modes):
+    """Write overlay task.yaml with an empty default: and the given mode: sections."""
     overlay_dir = tmp_path / "tasks" / task
     overlay_dir.mkdir(parents=True, exist_ok=True)
-    (overlay_dir / "task.yaml").write_text(
-        yaml.dump({"default": {}, "mode": {mode_name: mode_params}})
-    )
+    (overlay_dir / "task.yaml").write_text(yaml.dump({"default": {}, "mode": modes}))
 
 
-def test_sticky_task_mode_from_subject_yaml_applied(tmp_path):
-    """task_mode in subject YAML task_overrides is applied like --task-mode."""
+def test_sticky_task_mode_in_subject_yaml_is_rejected(tmp_path):
+    """A task_mode key in subject YAML task_overrides is refused, not applied."""
     from murineshiftwork.cli.evaluate import evaluate_args
+    from murineshiftwork.logic.task_settings import StickyTaskModeError
 
     subject = "s082_tabfixed_m3000001"
     _write_subject_yaml(
@@ -260,49 +259,33 @@ def test_sticky_task_mode_from_subject_yaml_applied(tmp_path):
         task_overrides={"_test_flush_valves": {"task_mode": "low_volume"}},
     )
     _write_task_overlay_with_mode(
-        tmp_path, "_test_flush_valves", "low_volume", {"VALVE_OPENING_TIME_MS": 25.0}
+        tmp_path, "_test_flush_valves", {"low_volume": {"VALVE_OPENING_TIME_MS": 25.0}}
     )
-    args = _base_args(tmp_path, subject)
-    result = evaluate_args(args_dict=args)
-    assert result["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 25.0
+    with pytest.raises(StickyTaskModeError, match="--task-mode"):
+        evaluate_args(args_dict=_base_args(tmp_path, subject))
 
 
-def test_cli_task_mode_beats_sticky_subject_yaml_mode(tmp_path):
-    """CLI --task-mode overrides task_mode stored in subject YAML."""
+def test_cli_task_mode_selects_overlay_mode(tmp_path):
+    """--task-mode applies the named mode from the config-dir overlay."""
     from murineshiftwork.cli.evaluate import evaluate_args
 
     subject = "s082_tabfixed_m3000002"
-    _write_subject_yaml(
-        tmp_path,
-        subject,
-        task_overrides={"_test_flush_valves": {"task_mode": "low_volume"}},
-    )
+    _write_subject_yaml(tmp_path, subject)
     _write_task_overlay_with_mode(
         tmp_path,
         "_test_flush_valves",
-        "low_volume",
-        {"VALVE_OPENING_TIME_MS": 25.0},
-    )
-    # Add a second mode to select via CLI
-    overlay_dir = tmp_path / "tasks" / "_test_flush_valves"
-    (overlay_dir / "task.yaml").write_text(
-        yaml.dump(
-            {
-                "default": {},
-                "mode": {
-                    "low_volume": {"VALVE_OPENING_TIME_MS": 25.0},
-                    "high_volume": {"VALVE_OPENING_TIME_MS": 99.0},
-                },
-            }
-        )
+        {
+            "low_volume": {"VALVE_OPENING_TIME_MS": 25.0},
+            "high_volume": {"VALVE_OPENING_TIME_MS": 99.0},
+        },
     )
     args = _base_args(tmp_path, subject, task_mode="high_volume")
     result = evaluate_args(args_dict=args)
     assert result["settings.task.patched"]["VALVE_OPENING_TIME_MS"] == 99.0
 
 
-def test_subject_yaml_overrides_stack_on_top_of_sticky_mode(tmp_path):
-    """Non-mode keys in subject YAML override the mode's params."""
+def test_subject_yaml_overrides_stack_on_top_of_cli_mode(tmp_path):
+    """Subject YAML keys override the params of the mode chosen with --task-mode."""
     from murineshiftwork.cli.evaluate import evaluate_args
 
     subject = "s082_tabfixed_m3000003"
@@ -311,19 +294,20 @@ def test_subject_yaml_overrides_stack_on_top_of_sticky_mode(tmp_path):
         subject,
         task_overrides={
             "_test_flush_valves": {
-                "task_mode": "low_volume",
-                "N_FLUSH_CYCLES": 7,  # subject key on top of mode
+                "VALVE_OPENING_TIME_MS": 30.0,  # subject beats the mode
+                "N_FLUSH_CYCLES": 7,
             }
         },
     )
     _write_task_overlay_with_mode(
-        tmp_path, "_test_flush_valves", "low_volume", {"VALVE_OPENING_TIME_MS": 25.0}
+        tmp_path,
+        "_test_flush_valves",
+        {"low_volume": {"VALVE_OPENING_TIME_MS": 25.0, "N_FLUSH_CYCLES": 2}},
     )
-    args = _base_args(tmp_path, subject)
-    result = evaluate_args(args_dict=args)
-    patched = result["settings.task.patched"]
-    assert patched["VALVE_OPENING_TIME_MS"] == 25.0  # from mode
-    assert patched["N_FLUSH_CYCLES"] == 7  # subject key on top of mode
+    args = _base_args(tmp_path, subject, task_mode="low_volume")
+    patched = evaluate_args(args_dict=args)["settings.task.patched"]
+    assert patched["VALVE_OPENING_TIME_MS"] == 30.0
+    assert patched["N_FLUSH_CYCLES"] == 7
 
 
 def test_full_priority_chain_order(tmp_path):
