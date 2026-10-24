@@ -50,7 +50,7 @@ docs = [
     "mkdocstrings[python]>=1.0.4,<2",
 ]
 tasks = [
-    "msw-tasks-core>=0.5.6",  # >=0.5.6 declares sshkeyboard (formerly the umbrella [keyboard] extra)
+    "msw-tasks-core>=0.5.7",  # >=0.5.6 declares sshkeyboard; >=0.5.7 takes the scale from the device collection
 ]
 agent = [
     "msw-agent>=0.1.0",
