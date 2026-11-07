@@ -23,14 +23,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Author PRs with a dedicated PAT (RENOVATE_TOKEN), not GITHUB_TOKEN: a PR
-      # opened with GITHUB_TOKEN does not trigger other workflows, so ci.yml would
-      # not run on the PR (breaking the CI-gated automerge) and the merge would not
-      # trigger versioning.yml. A PAT's events do trigger those, so the dep bump
-      # flows PR -> CI -> automerge -> versioning -> release as intended.
-      # RENOVATE_TOKEN must be a fine-grained PAT on this repo with
-      # Contents + Pull requests + Workflows: read and write.
+      # Author PRs as the murineshiftwork-ci App, not GITHUB_TOKEN: a PR opened with
+      # GITHUB_TOKEN triggers no other workflow, so CI would not run on it and its
+      # merge would not trigger versioning. The App also sees private repos and has
+      # Commit statuses, which minimumReleaseAge needs. Without owner/repositories
+      # the token is scoped to this repo.
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.MURINESHIFTWORK_CI_CLIENT_ID }}
+          private-key: ${{ secrets.MURINESHIFTWORK_CI_PRIVATE_KEY }}
+
       - uses: renovatebot/github-action@v46.1.17
         with:
           configurationFile: renovate.json
-          token: ${{ secrets.RENOVATE_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
