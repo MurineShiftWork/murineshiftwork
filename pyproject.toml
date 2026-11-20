@@ -16,7 +16,7 @@ authors = [
 ]
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "msw-core>=0.36.3",
+    "msw-core>=0.38.0",
     "msw-io>=1.16.0",
     "tqdm",
     "plotly>=5.0",
@@ -59,7 +59,7 @@ oe = [
     "msw-open-ephys>=3.5.4",
 ]
 flir = [
-    "msw-flir-bonsai>=0.6.1",
+    "msw-flir-bonsai>=0.8.0",
 ]
 pulsepal = [
     "pypulsepal>=0.4.7",
@@ -72,7 +72,7 @@ calibration = [
 # stack ships with the task packages that plot (e.g. msw-tasks-lab[qt]). Both former
 # umbrella extras ([keyboard], [qt]) are therefore removed.
 rce = [
-    "rpi-camera-ensemble[conductor]>=0.18.1",
+    "rpi-camera-ensemble[msw]>=0.18.1",
 ]
 stage = [
     "one-axis-stage>=0.3.0",
