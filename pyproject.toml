@@ -62,7 +62,7 @@ flir = [
     "msw-flir-bonsai>=0.8.0",
 ]
 pulsepal = [
-    "pypulsepal>=0.4.7",
+    "pypulsepal>=1.0.0",
 ]
 calibration = [
     "serial-scale-hx711>=2.1.4",
