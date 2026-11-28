@@ -16,8 +16,8 @@ authors = [
 ]
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "msw-core>=0.38.0",
-    "msw-io>=1.16.0",
+    "msw-core>=0.39.0",
+    "msw-io>=1.18.0",
     "tqdm",
     "plotly>=5.0",
     "pyarrow>=24.0.0",
@@ -50,13 +50,13 @@ docs = [
     "mkdocstrings[python]>=1.0.8,<2",
 ]
 tasks = [
-    "msw-tasks-core>=0.5.13",  # >=0.5.6 declares sshkeyboard; >=0.5.7 takes the scale from the device collection
+    "msw-tasks-core>=0.5.16",  # >=0.5.6 declares sshkeyboard; >=0.5.7 takes the scale from the device collection
 ]
 agent = [
     "msw-agent>=0.1.0",
 ]
 oe = [
-    "msw-open-ephys>=3.5.4",
+    "msw-open-ephys>=3.6.2",
 ]
 flir = [
     "msw-flir-bonsai>=0.8.0",
@@ -72,7 +72,7 @@ calibration = [
 # stack ships with the task packages that plot (e.g. msw-tasks-lab[qt]). Both former
 # umbrella extras ([keyboard], [qt]) are therefore removed.
 rce = [
-    "rpi-camera-ensemble[msw]>=0.18.1",
+    "rpi-camera-ensemble[msw]>=0.24.0",
 ]
 stage = [
     "one-axis-stage>=0.3.0",
